@@ -1,0 +1,4 @@
+<map id="molecule::molecule" name="molecule::molecule">
+<area shape="rect" id="node2" href="$classatom.html" title="{atom\n||+ initdefault()\l+ atom_test()\l&#45; copyatom()\l&#45; destroyatom()\l&#45; str()\l&#45; show()\l&#45; isconnectedwith()\l&#45; covalentradius()\l&#45; mass()\l}" alt="" coords="5,28,136,223"/>
+<area shape="rect" id="node3" href="$classmatrix.html" title="{matrix\n||+ initdefaultmatrix()\l&#45; fromarray()\l&#45; fromarraydiag()\l&#45; identity()\l&#45; random()\l&#45; columnvector()\l&#45; rowvector()\l&#45; copymatrix()\l&#45; destroymatrix()\l&#45; eigen()\l&#45; inverse()\land 35 more...\l}" alt="" coords="161,6,295,245"/>
+</map>

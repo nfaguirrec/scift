@@ -1,0 +1,16 @@
+FCFLAGS = -fopenmp -O3 -mkl=parallel -static -static-intel -static-libgcc -traceback -w -I. -fpp -g
+
+
+
+1) La clase MoldenParser deberia ser hija de ParseTextBlock, asi que seria bueno reprogramar
+lo del proyecto piamod en scift
+
+
+Mon Feb  3 20:51:04 CET 2014
+2) Hay que convertir a RealHistogram a un template llamado Histogram, de donde sale RealHistogram y IntegerHistogram
+3) Hay que renombrar:
+        RealHistogram  --->  RHistogram 
+     IntegerHistogram  --->  IHistogram 
+   o probablemente
+        RealHistogram  --->  Histogram_real
+     IntegerHistogram  --->  Histogram_integer

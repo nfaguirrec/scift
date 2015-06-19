@@ -1,0 +1,674 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!!  This file is part of scift (Scientific Fortran Tools).
+!!  Copyright (C) by authors (2013-2013)
+!!  
+!!  Authors (alphabetic order):
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2013-2013)
+!!  
+!!  Contributors (alphabetic order):
+!!  
+!!  Redistribution and use in source and binary forms, with or
+!!  without modification, are permitted provided that the
+!!  following conditions are met:
+!!  
+!!   * Redistributions of binary or source code must retain
+!!     the above copyright notice and this list of conditions
+!!     and/or other materials provided with the distribution.
+!!   * All advertising materials mentioning features or use of
+!!     this software must display the following acknowledgement:
+!!     
+!!     This product includes software from scift
+!!     (Scientific Fortran Tools) project and its contributors.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!>
+!! @brief
+!!
+module RealHistogram_
+	use Math_
+	use RealList_
+	use Grid_
+	use RNFunction_
+	implicit none
+	private
+	
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	! http://en.wikipedia.org/wiki/Histogram
+	integer, public, parameter :: SQUAREROOT = 0
+	integer, public, parameter :: STURGES = 1
+	integer, public, parameter :: RICE = 2
+	integer, public, parameter :: DOANE = 3
+	integer, public, parameter :: SCOTT = 4
+	integer, public, parameter :: FREEDMAN_DIACONIS = 5
+	
+	public :: &
+		RealHistogram_test
+		
+	type, public, extends( RealList ) :: RealHistogram
+		integer, private :: rule
+		type(RNFunction) :: counts
+		type(RNFunction) :: density
+		
+		contains
+			generic :: init => initRealHistogram
+			generic :: assignment(=) => copyRealHistogram
+			
+			procedure :: initRealHistogram
+			procedure :: copyRealHistogram
+			final :: destroyRealHistogram
+			procedure :: str
+			procedure :: show
+			
+			procedure :: setRule
+			generic :: add => addValue, addFArray
+			procedure, private :: addValue
+			procedure, private :: addFArray
+			
+			procedure :: build
+			procedure :: mean
+			procedure :: stdev
+			procedure :: var
+			procedure :: mode
+			procedure :: median
+			procedure :: minimum
+			procedure :: maximum
+			procedure :: skewness
+			procedure :: stderr
+			procedure :: summation
+			
+	end type RealHistogram
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!! @see http://stat.ethz.ch/R-manual/R-devel/library/graphics/html/hist.html
+	!!
+	subroutine initRealHistogram( this, rule )
+		class(RealHistogram) :: this
+		integer, optional :: rule
+		
+		integer :: Effrule
+		
+		Effrule = SQUAREROOT
+		if( present(rule) ) Effrule = rule
+		
+		this.rule = Effrule
+		call this.initList()
+	end subroutine initRealHistogram
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	subroutine copyRealHistogram( this, other )
+		class(RealHistogram), intent(out) :: this
+		class(RealHistogram), intent(in) :: other
+		
+		call this.copyList( other )
+
+		this.rule = other.rule
+		this.counts = other.counts
+		this.density = other.density
+	end subroutine copyRealHistogram
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyRealHistogram( this )
+		type(RealHistogram) :: this
+		
+		! @warning Hay que verificar que el desructor de la clase padre se llama automaticamente
+! 		call this.destroyList()
+	end subroutine destroyRealHistogram
+	
+	!>
+	!! @brief Convert to string
+	!!
+	function str( this, formatted, prefix ) result( output )
+		class(RealHistogram) :: this 
+		character(:), allocatable :: output
+		logical, optional :: formatted
+		character(*), optional :: prefix
+		
+		logical :: effFormatted
+		character(:), allocatable :: effPrefix
+		
+		integer :: fmt
+		character(200) :: fstr
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effPrefix = ""
+		if( present(prefix) ) effPrefix = prefix
+		
+		output = ""
+		
+		if( .not. effFormatted ) then
+#define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
+#define ITEMI(l,v) output = trim(output)//l; write(fstr, "(I20)") v; output = trim(output)//trim(adjustl(fstr))
+#define ITEMR(l,v) output = trim(output)//l; write(fstr, "(F20.6)") v; output = trim(output)//trim(adjustl(fstr))
+#define ITEML(l,v) output = trim(output)//l; write(fstr, "(L3)") v; output = trim(output)//trim(adjustl(fstr))
+		
+			output = trim(output)//"<RealHistogram:"
+! 			ITEMI( "min=", this.min )
+			ITEMI( "size=", this.size() )
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+#undef ITEML
+			output = trim(output)//">"
+		else
+#define LINE(l) output = trim(output)//effPrefix//l//new_line('')
+#define ITEMS(l,v) output = trim(output)//effPrefix//l; write(fstr, "(x,a)") trim(v); output = trim(output)//trim(fstr)//new_line('')
+#define ITEMI(l,v) output = trim(output)//effPrefix//l; write(fstr, "(i20)") v; output = trim(output)//trim(fstr)//new_line('')
+#define ITEMR(l,v) output = trim(output)//effPrefix//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(fstr)//new_line('')
+
+			LINE("RealHistogram")
+			LINE("---------")
+! 			ITEMI( "min=", this.min )
+! 			ITEMR( ",size=", this.size )
+			LINE("")
+#undef LINE
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+		end if
+	end function str
+	
+	!>
+	!! @brief Show 
+	!!
+	subroutine show( this, unit, formatted )
+		class(RealHistogram) :: this
+		integer, optional, intent(in) :: unit
+		logical, optional :: formatted
+		
+		integer :: effunit
+		logical :: effFormatted
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effunit = 6
+		if( present(unit) ) effunit = unit
+		
+		write(effunit,"(a)") trim(str(this,effFormatted))
+	end subroutine show
+	
+	!>
+	!! @brief
+	!!
+	subroutine setRule( this, rule )
+		class(RealHistogram) :: this
+		integer, intent(in), optional :: rule
+		
+		this.rule = rule
+	end subroutine setRule
+	
+	!>
+	!! @brief
+	!!
+	subroutine addValue( this, value )
+		class(RealHistogram) :: this
+		real(8), intent(in) :: value
+		
+		call this.append( value )
+	end subroutine addValue
+	
+	!>
+	!! @brief
+	!!
+	subroutine addFArray( this, array )
+		class(RealHistogram) :: this
+		real(8), intent(in) :: array(:)
+		
+		integer :: i
+		
+		do i=1,size(array)
+			call this.append( array(i) )
+		end do
+	end subroutine addFArray
+	
+	!>
+	!! @brief
+	!!
+	subroutine build( this, binsPrecision )
+		class(RealHistogram) :: this
+		integer, optional, intent(in) :: binsPrecision
+		
+		integer :: EffbinsPrecision
+		
+		class(RealListIterator), pointer :: iter
+		integer :: i, j, k
+		real(8) :: rrange, h, mmin, mmax, x, norm
+		type(Grid) :: xGrid
+		integer, allocatable :: counts(:)
+		
+		EffbinsPrecision = -1
+		if( present(binsPrecision) ) EffbinsPrecision = binsPrecision
+		
+		rrange = this.maximum() - this.minimum()
+		
+		select case( this.rule )
+			
+			! @todo SQUAREROOT no funciona, hay que revisar esta linea. Por el momento es completamente
+			!       satisfactorio STURGES
+			case( SQUAREROOT )
+				k = ceiling( sqrt( real(this.size(),8) ) )
+				
+			case( STURGES )
+				k = ceiling( log( real(this.size(),8) )/log(2.0_8) + 1.0_8 )
+				
+			case( RICE )
+				k = ceiling( 2.0_8*real(this.size(),8)**(1.0_8/3.0_8) )
+			
+			case( DOANE )
+				! Necesita tener implementado skewness
+				stop "### ERROR ### RealHistogram.build(): DOANE rule is not implemented"
+			
+			case( SCOTT )
+				k = ceiling( rrange*real(this.size(),8)**(1.0_8/3.0_8)/3.5_8/this.stdev() )
+			
+			case( FREEDMAN_DIACONIS )
+				! Necesita tener implementado el rango intercuartil
+				stop "### ERROR ### RealHistogram.build(): FREEDMAN_DIACONIS rule is not implemented"
+				
+			case default
+				stop "### ERROR ### RealHistogram.build(): UNKNOWN rule is not implemented"
+				
+		end select
+		
+! 		if( EffbinsPrecision /= -1 ) then
+! 			h = Math_fixPrecision( rrange/real(k,8), EffbinsPrecision )
+! 			mmin = Math_fixPrecision( this.minimum()-0.10_8*h, EffbinsPrecision )
+! 			mmax = Math_fixPrecision( this.maximum()+0.10_8*h, EffbinsPrecision )
+! 		else
+! 			h = rrange/real(k,8)
+! 			mmin = this.minimum()-0.10_8*h
+! 			mmax = this.maximum()+0.10_8*h
+! 		end if
+
+			h = rrange/real(k,8)
+			mmin = this.minimum()
+			mmax = this.maximum()
+		
+! 		h = (mmax-h-mmin)/real(k-1,8)
+		
+! 		write(6,*) "k = ", k
+! 		write(6,*) "h = ", h
+! 		write(6,*) "mmin = ", mmin, this.minimum()
+! 		write(6,*) "mmax = ", mmax, this.maximum()
+		
+! 		call xGrid.init( mmin, mmax-h, stepSize=h ) ! El valor de X es el inicio del intervalo
+! 		call xGrid.init( mmin+0.5_8*h, mmax-0.5_8*h, stepSize=h )   ! El valor de X es el centro del intervalo
+		write(*,*) "Inicializando ", mmin, mmax, h
+		call xGrid.initDefault( mmin, mmax, stepSize=h )   ! El valor de X es el centro del intervalo
+! 		call xGrid.show()
+		
+		allocate( counts(xGrid.nPoints) )
+		
+		counts = 0
+		j = 1
+		iter => this.begin
+		do while( associated(iter) )
+! 			i = floor( ( iter.data - this.minimum() )/h + 1.0_8 )
+			i = int( ( iter.data - mmin )/h ) + 1
+			
+			if( i>this.size() .or. i<1 ) then
+				write(*,*) "Fuera de los limites", i, k, this.size(), h
+				stop
+			end if
+			
+			counts(i) = counts(i) + 1
+			
+			write(6,"(i5,2f10.5,i5)") j, xGrid.at(j), iter.data, i
+			
+			iter => iter.next
+			j = j + 1
+		end do
+		
+		if( sum(counts) /= this.size() ) then
+			write(*,*) "### ERROR ### RealHistogram.build(). Problems in sampling. sum(counts) /= this.size() (", sum(counts), ", ", this.size(), ")"
+			stop
+		end if
+		
+		call this.counts.init( xGrid, real(counts,8) )
+		call this.density.init( xGrid, real(counts,8)*h/real(this.size(),8) )
+		
+		deallocate( counts )
+		
+	end subroutine build
+	
+	!>
+	!! @brief
+	!!
+	function mean( this, weights ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8), optional, intent(in) :: weights(:)
+		real(8) :: output
+		
+		class(RealListIterator), pointer :: iter
+		integer :: i
+
+		if( present(weights) ) then
+			if( size(weights) < this.size() ) then
+				write(*,"(A,I5,A,I5,A)") "### ERROR ### RealHistogram.mean(). Inconsistent size for weights. size(weights) /= this.size() (", size(weights), ", ", this.size(), ")"
+				stop
+			end if
+			
+			output = 0.0_8
+			iter => this.begin
+			i = 1
+			do while( associated(iter) )
+				output = output + iter.data*weights(i)
+				
+				iter => iter.next
+				i = i+1
+			end do
+			
+			output = output/sum(weights(1:i-1))
+		else
+			output = 0.0_8
+			iter => this.begin
+			i = 1
+			do while( associated(iter) )
+				output = output + iter.data
+				
+				iter => iter.next
+				i = i+1
+			end do
+			
+			output = output/real(this.size(),8)
+		end if
+	end function mean
+	
+	!>
+	!! @brief
+	!!
+	function stdev( this, weights ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8), optional, intent(in) :: weights(:)
+		real(8) :: output
+		
+		output = sqrt( this.var( weights ) )
+	end function stdev
+	
+	!>
+	!! @brief
+	!!
+	function var( this, weights ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8), optional, intent(in) :: weights(:)
+		real(8) :: output
+		
+		class(RealListIterator), pointer :: iter
+		real(8) :: mean
+		integer :: i
+		
+		if( this.size() == 1 ) then
+			output = 0.0_8
+			return
+		end if
+
+		if( present(weights) ) then
+			if( size(weights) < this.size() ) then
+				write(*,"(A,I5,A,I5,A)") "### ERROR ### RealHistogram.var(). Inconsistent size for weights. size(weights) /= this.size() (", size(weights), ", ", this.size(), ")"
+				stop
+			end if
+			
+			mean = this.mean( weights )
+			
+			output = 0.0_8
+			iter => this.begin
+			i = 1
+			do while( associated(iter) )
+				output = output + weights(i)*( iter.data - mean )**2
+				
+				iter => iter.next
+				i = i+1
+			end do
+			
+			! Approximation of the unbiased weighted covariance matrix, but without Bessel correction
+			output = output/sum(weights(1:i-1))
+		else
+			mean = this.mean()
+			
+			output = 0.0_8
+			iter => this.begin
+			do while( associated(iter) )
+				output = output + ( iter.data - mean )**2
+				
+				iter => iter.next
+			end do
+			
+			! Bessel's correction
+			! n->n-1
+			! standard deviation of the sample (considered as the entire population) -> Corrected sample standard deviation
+			! Standard deviation of the population -> sample standard deviation
+			! sigma -> s
+			output = output/real(this.size()-1,8)
+		end if
+	end function var
+	
+	!>
+	!! @brief
+	!!
+	function mode( this ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8) :: output
+		
+		stop "### ERROR ### RealHistogram.mode(): This function is unimplemented yet"
+	end function mode
+	
+	!>
+	!! @brief
+	!!
+	function median( this ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8) :: output
+		
+		stop "### ERROR ### RealHistogram.median(): This function is unimplemented yet"
+	end function median
+	
+	!>
+	!! @brief
+	!!
+	function minimum( this ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8) :: output
+		
+		class(RealListIterator), pointer :: iter
+		
+		output = Math_INF
+		iter => this.begin
+		do while( associated(iter) )
+			if( iter.data < output ) then
+				output = iter.data
+			end if
+			
+			iter => iter.next
+		end do
+	end function minimum
+	
+	!>
+	!! @brief
+	!!
+	function maximum( this ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8) :: output
+		
+		class(RealListIterator), pointer :: iter
+		
+		output = -Math_INF
+		iter => this.begin
+		do while( associated(iter) )
+			if( iter.data > output ) then
+				output = iter.data
+			end if
+			
+			iter => iter.next
+		end do
+	end function maximum
+	
+	!>
+	!! @brief
+	!!
+	function skewness( this ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8) :: output
+		
+		stop "### ERROR ### RealHistogram.skewness(): This function is unimplemented yet"
+	end function skewness
+	
+	!>
+	!! @brief
+	!!
+	function stderr( this ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8) :: output
+		
+		output = this.stdev()/sqrt( real(this.size(),8) )
+	end function stderr
+	
+	!>
+	!! @brief
+	!!
+	function summation( this ) result( output )
+		class(RealHistogram), intent(in) :: this
+		real(8) :: output
+		
+		class(RealListIterator), pointer :: iter
+		
+		output = 0.0_8
+		iter => this.begin
+		do while( associated(iter) )
+			output = output + iter.data
+			
+			iter => iter.next
+		end do
+	end function summation
+	
+	!>
+	!! @brief Test method
+	!!
+	subroutine RealHistogram_test()
+		type(RealHistogram) :: histogram
+		type(RNFunction) :: nFunc
+		integer :: i
+		
+! 		call histogram.init()
+! 		call histogram.init( SQUAREROOT )
+		call histogram.init( STURGES )
+! 		call histogram.init( RICE )
+! 		call histogram.init( SCOTT )
+		
+		call histogram.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
+		call histogram.add( [23.21883_8, 25.35600_8, 28.41117_8, 22.08219_8, 19.55053_8, 23.63690_8, 27.07390_8, 25.11683_8] )
+		call histogram.add( [24.07832_8, 22.04728_8, 29.07267_8, 23.84218_8, 24.07261_8, 23.97873_8, 25.67417_8, 23.89337_8] )
+		call histogram.add( [23.49143_8, 26.14219_8, 22.87863_8, 21.59113_8, 23.56555_8, 26.42314_8, 23.51600_8, 26.27489_8] )
+		call histogram.add( [21.07893_8, 20.48072_8, 24.90150_8, 23.17327_8, 23.81940_8, 25.11435_8, 26.52324_8, 18.73398_8] )
+		call histogram.add( [24.09926_8, 23.07400_8, 26.71212_8, 21.77789_8, 25.51567_8, 25.13831_8, 22.11752_8, 22.47796_8] )
+		call histogram.add( [25.39945_8, 26.71204_8, 25.67166_8, 22.52061_8, 23.62552_8, 26.00762_8, 25.37902_8, 26.28057_8] )
+		call histogram.add( [22.61389_8, 24.06349_8, 24.33601_8, 21.97826_8, 26.48619_8, 25.47802_8, 26.89355_8, 26.07590_8] )
+		call histogram.add( [21.74619_8, 21.99553_8, 23.40948_8, 25.48071_8, 23.02762_8, 22.70441_8, 25.03438_8, 25.67790_8] )
+		call histogram.add( [24.68533_8, 21.26442_8, 24.89509_8, 24.71221_8, 25.12706_8, 26.05145_8, 20.59260_8, 22.63209_8] )
+		call histogram.add( [23.35024_8, 26.70019_8, 21.51930_8, 24.98537_8, 24.94632_8, 19.42552_8, 27.00687_8, 21.65142_8] )
+		call histogram.add( [25.00371_8, 23.40407_8, 21.82391_8, 24.25161_8, 24.28748_8, 24.17388_8, 21.20663_8, 26.66869_8] )
+		call histogram.add( [22.89491_8, 24.81186_8, 25.14049_8, 22.61879_8] )
+		
+		! ! http://en.wikipedia.org/wiki/Descriptive_statistics
+		! ! http://personality-project.org/r/html/describe.html
+		! ! http://www.statmethods.net/stats/descriptives.html
+
+		! # Obtenido mediante: BMI<-rnorm(n=100, m=24.2, sd=2.2)
+		! BMI <- c(
+		!    24.15162, 19.56235, 27.82564, 23.38200, 25.19829, 25.26511, 23.81071, 22.70389,
+		!    23.21883, 25.35600, 28.41117, 22.08219, 19.55053, 23.63690, 27.07390, 25.11683,
+		!    24.07832, 22.04728, 29.07267, 23.84218, 24.07261, 23.97873, 25.67417, 23.89337,
+		!    23.49143, 26.14219, 22.87863, 21.59113, 23.56555, 26.42314, 23.51600, 26.27489,
+		!    21.07893, 20.48072, 24.90150, 23.17327, 23.81940, 25.11435, 26.52324, 18.73398,
+		!    24.09926, 23.07400, 26.71212, 21.77789, 25.51567, 25.13831, 22.11752, 22.47796,
+		!    25.39945, 26.71204, 25.67166, 22.52061, 23.62552, 26.00762, 25.37902, 26.28057,
+		!    22.61389, 24.06349, 24.33601, 21.97826, 26.48619, 25.47802, 26.89355, 26.07590,
+		!    21.74619, 21.99553, 23.40948, 25.48071, 23.02762, 22.70441, 25.03438, 25.67790,
+		!    24.68533, 21.26442, 24.89509, 24.71221, 25.12706, 26.05145, 20.59260, 22.63209,
+		!    23.35024, 26.70019, 21.51930, 24.98537, 24.94632, 19.42552, 27.00687, 21.65142,
+		!    25.00371, 23.40407, 21.82391, 24.25161, 24.28748, 24.17388, 21.20663, 26.66869,
+		!    22.89491, 24.81186, 25.14049, 22.61879 )
+		! 
+		! > mean(BMI)
+		! [1] 24.06056
+		! 
+		! > sd(BMI)
+		! [1] 2.030379
+		! 
+		! > summary(BMI)
+		!    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+		!   18.73   22.69   24.09   24.06   25.42   29.07
+		! 
+		! b <- seq(18.7,30.24,1.044444)
+		! > b
+		!  [1] 18.70000 19.74444 20.78889 21.83333 22.87778 23.92222 24.96666 26.01111
+		!  [9] 27.05555 28.10000 29.14444 30.18888
+		! 
+		! > histinfo<-hist(BMI,breaks=b)
+		! > b
+		!  [1] 18.70000 19.74444 20.78889 21.83333 22.87778 23.92222 24.96666 26.01111
+		!  [9] 27.05555 28.10000 29.14444 30.18888
+		! 
+		! > histinfo<-hist(BMI,breaks=b)
+		! > histinfo
+		! $breaks
+		!  [1] 18.70000 19.74444 20.78889 21.83333 22.87778 23.92222 24.96666 26.01111
+		!  [9] 27.05555 28.10000 29.14444 30.18888
+		! 
+		! $counts
+		!  [1]  4  2  9 12 19 16 20 14  2  2  0
+		! 
+		! $intensities
+		!  [1] 0.03829789 0.01914894 0.08617025 0.11489367 0.18191497 0.15319155
+		!  [7] 0.19148944 0.13404261 0.01914894 0.01914894 0.00000000
+		! 
+		! $density
+		!  [1] 0.03829789 0.01914894 0.08617025 0.11489367 0.18191497 0.15319155
+		!  [7] 0.19148944 0.13404261 0.01914894 0.01914894 0.00000000
+		! 
+		! $mids
+		!  [1] 19.22222 20.26667 21.31111 22.35555 23.40000 24.44444 25.48889 26.53333
+		!  [9] 27.57777 28.62222 29.66666
+
+		! @todo Parece que solo funciona con la combinación STURGES y binsPrecision=1
+		call histogram.build( binsPrecision=3 )
+! 		call histogram.build()
+		
+		write(*,"(A20,I15)")   "    size = ", histogram.size()
+		write(*,"(A20,F15.5)") "    mean = ", histogram.mean()
+		write(*,"(A20,F15.5)") "   stdev = ", histogram.stdev()
+		write(*,"(A20,F15.5)") " minimum = ", histogram.minimum()
+		write(*,"(A20,F15.5)") " maximum = ", histogram.maximum()
+		write(*,"(A20,F15.5)") "  stderr = ", histogram.stderr()
+		
+		! plot "./counts.out" w boxes, "./counts.out" w p pt 7
+		call histogram.save("histData.out")
+		call histogram.counts.save("counts.out")
+		call histogram.density.save("density.out")
+		
+		do i=1,1000000
+			call histogram.add( 1.456_8 )
+		end do
+		
+		write(*,"(A)")   ""
+		write(*,"(A20,I15)")   "    size = ", histogram.size()
+		write(*,"(A20,F15.5)") "    mean = ", histogram.mean()
+
+! 		write(*,"(A20,F15.5)") " mode = ", histogram.mode()
+! 		write(*,"(A20,F15.5)") "stdev = ", histogram.median()
+! 		mode = histogram.mode()
+! 		median = histogram.skewness()
+		
+	end subroutine RealHistogram_test
+	
+end module RealHistogram_

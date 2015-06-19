@@ -1,0 +1,83 @@
+#!/bin/bash
+
+IFILE=$1
+# sed -r '/^module [[:alpha:]]+[_]/d; /^end module [[:alpha:]]+[_]/d' $IFILE
+# sed -r 's/_//g' $IFILE
+cpp $IFILE \
+| sed -r 's/^(\s*)(module )([[:alnum:]]+)[_]/\1module \3/g; s/^(\s*)(end module )([[:alnum:]]+)[_]/\1end module \3/g; s/^(\s*)(use )([[:alnum:]]+)[_]/\1use \3/g;'
+# sed -r 's/^(module )([[:alpha:]]+)[_]/module/g; s/^(end module )([[:alpha:]]+)[_]/end module/g' $IFILE
+
+# fileName=`echo ${IFILE##*/} | sed 's/[.].*//g'`
+# moduleName=`sed 's/_//g' $IFILE | awk '($1~/module/){ print $2 }'`
+# className=`awk '($0~/type[[:blank:]]+[,:]*/){ print $NF }' $IFILE`
+# 
+# # if [ "$className" != "$fileName" -o "$className" != "$moduleName" ]
+# if [ "$fileName" != "$moduleName" ]
+# then
+# 	echo "## ERROR ## The Name of the module should be exactly" >> /dev/stderr
+# 	echo "            the same that the name of the file" >> /dev/stderr
+# # 	echo "            $moduleName != $fileName or $className != $moduleName" >> /dev/stderr
+# 	echo "            $fileName != $moduleName" >> /dev/stderr
+# 	exit
+# fi
+# 
+# deps=`sed 's/_//g' $IFILE | awk '($1~/use/){ print $2 }'`
+# 
+# subroutines=( `sed 's/[()]/ &/g' $IFILE | awk '($0~/^[[:blank:]]+subroutine[[:blank:]]+.*$/){ print $2 }'` )
+# for (( i=0; i<${#subroutines[@]}; i++ ))
+# do
+# 	subroutinesParams[$i]=`awk '($0~/subroutine[[:blank:]]+'${subroutines[$i]}'[[:blank:]]*\(.*\)/){print $0}' $IFILE \
+# 		| sed 's/.*(//g;s/).*//g;s/this[,]*//g'`
+# done
+# 
+# functions=( `sed 's/[()]/ &/g' $IFILE | awk '($0~/^[[:blank:]]+function[[:blank:]]+.*$/){ print $2 }'` )
+# for (( i=0; i<${#functions[@]}; i++ ))
+# do
+# 	functionsParams[$i]=`awk '($0~/function[[:blank:]]+'${functions[$i]}'[[:blank:]]*\(.*\)/){print $0}' $IFILE \
+# 		| sed 's/result.*$//g' \
+# 		| sed 's/.*(//g;s/).*//g;s/this[,]*//g'`
+# 		
+# 	functionsOutput[$i]=`awk '($0~/function[[:blank:]]+'${functions[$i]}'[[:blank:](]+.*result[[:blank:]]*\(.*\)/){print $0}' $IFILE \
+# 		| sed 's/^.*(//g;s/).*$//g' \
+# 		| awk '{printf $1}'`
+# 		
+# 	awk 'BEGIN{loc=0}
+# 		{
+# 			if( $0~/end function[[:blank:]]+'${functions[$i]}'/ )
+# 				exit
+# 			if( loc==1 && $0~/^.*::[[:blank:]]+/)
+# 				print $0
+# 			if( $0~/function[[:blank:]]+'${functions[$i]}'.*result[[:blank:]]*\(.*\)/ )
+# 				loc=1
+# 		}' $IFILE > /tmp/${functions[$i]}
+# 		
+# 	sed -i -r 's/^[[:blank:]]+//g; s/[[:blank:]]{2,}/ /g; s/[[:blank:]]+$//g' /tmp/${functions[$i]}
+# 		
+# 	typeOutput[$i]=`awk 'BEGIN{FS="[[:blank:]]+[:]{2,}[[:blank:]]+"}($2~/'${functionsOutput[$i]}'/){print $1}' /tmp/${functions[$i]}`
+# 		
+# 	rm /tmp/${functions[$i]}
+# done
+# 
+# for dep in $deps
+# do
+# 	echo "#include \"$dep.f90\""
+# done
+# 
+# echo ""
+# echo "/*"
+# echo "Prueba"
+# echo "*/"
+# echo "class $className {"
+# echo ""
+# 
+# for (( i=0; i<${#subroutines[@]}; i++ ))
+# do
+# 	echo -e "\tvoid ${subroutines[$i]}(${subroutinesParams[$i]} ) ;"
+# done
+# 
+# for (( i=0; i<${#functions[@]}; i++ ))
+# do
+# 	echo -e "\t${typeOutput[$i]} ${functions[$i]}(${functionsParams[$i]} ) ;"
+# done
+# 
+# echo "};"

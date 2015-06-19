@@ -1,0 +1,363 @@
+#!/bin/bash
+
+PID=$$
+
+getDeps()
+{
+	if [ -f "$1" ]
+	then
+		sed -r '{s/^[[:space:]]+//g;s/[[:space:]]+$//g;s/[[:space:]]+/ /g;s/_[[:blank:],]*.*$//g}' $1 > .tmp.f90
+		
+		gawk '
+		{
+			if( $0~/^[[:space:]]*use[[:space:]]+.*$/ ){
+				depmods[$2] = 1
+			}
+		}
+		
+		END{
+			for( dep in depmods )
+				printf( "%s.f90 ", dep )
+		}
+		' .tmp.f90
+		
+		rm .tmp.f90
+	fi
+}
+
+#######################################################################
+# Esta es una función autorecurrente y busca las dependencias de un
+# archivo a través de todo el arbol de dependencias, aparentemente
+# ifort necesita solo las dependencias a 1 nivel de profundidad
+maxDepth=1
+iterDepth=0
+
+getAllDeps()
+{
+	local deps=""
+	
+	if [ -f .running ]
+	then
+# 		if [ "`cat .running`" -ge $maxDepth ]
+# 		then
+# 				echo "" >> /dev/stderr
+# 				echo "" >> /dev/stderr
+# 				echo "## ERROR ## fmake.getAllDeps()" >> /dev/stderr
+# 				echo "            Cyclic dependency or maximum depth ($maxDepth) reached" >> /dev/stderr
+# 				echo "" >> /dev/stderr
+# 				cat .tmpdeps >> /dev/stderr
+# 				echo "" >> /dev/stderr
+# 				rm -rf .running 2> /dev/null
+# 				rm -rf .tmpdeps 2> /dev/null
+# 				kill -9 $PID 2> /dev/null
+# 				exit
+# 		fi
+		
+		deps=`getDeps $1`
+		
+		################################
+		# Aumenta en 1 el contador
+		# Esto está en pruebas, porque no se como
+		# detectar la máxima profundidad, ya que
+		# se está utilizando una búsqueda en
+		# profundidad
+		val=`cat .running`
+		val=`echo "1+$val" | bc`
+		echo $val > .running
+		################################
+		
+		if [ -n "$deps" ]
+		then
+			echo "$deps" >> .tmpdeps
+			
+			for dep in $deps
+			do
+				getAllDeps $dep
+			done
+		fi
+	else
+		iterDepth=0
+		
+		################################
+		# Inicializa el contador
+		echo "0" > .running
+		cat /dev/null > .tmpdeps
+		################################
+		
+		getAllDeps $1
+		
+		# Elimino dependencias repetidas
+		sed -r '{s/[[:blank:]]+/\n/g}' .tmpdeps | sed -r '{/^[[:blank:]]*$/d}' | gawk '{map[$1]=1}END{for(key in map) printf key" "}' > .tmpdeps2
+		mv .tmpdeps2 .tmpdeps
+		
+		for dep in `cat .tmpdeps`
+		do
+			echo -n "$dep "
+		done
+		
+		################################
+		# Para debug en el contador
+# 		echo ""
+# 		echo "counter = `cat .running`"
+		################################
+		
+		rm .running
+		rm .tmpdeps
+	fi
+}
+
+getDepLine()
+{
+	local deps=""
+	local depsMod=""
+	local depsO=""
+	local moduleName=""
+	local programName=""
+	
+	sed -r '{s/^[[:space:]]+//g;s/[[:space:]]+$//g;s/[[:space:]]+/ /g;s/_[[:blank:],]*.*$//g}' $1 > .tmp.f90
+	moduleName=`grep -E "^[[:blank:]]*end[[:blank:]]+module[[:blank:]]+.*$" .tmp.f90 | gawk '{printf "%s",$3}'`
+	programName=`grep -E "^[[:blank:]]*end[[:blank:]]+program[[:blank:]]+.*$" .tmp.f90 | gawk '{printf "%s",$3}'`
+	rm .tmp.f90
+	
+	if [ -z "$moduleName" -a -z "$programName" ]
+	then
+		echo "" > /dev/stderr
+		echo "## ERROR ## This file ($1) don't corresponds to the standard codification" > /dev/stderr
+		exit
+	fi
+	
+	deps=`getAllDeps $1` # estan como *.f90
+	
+	if [ -n "$moduleName" ]
+	then
+		if [ "$moduleName" != "${1%%.f90}" ]
+		then
+			echo "" >> /dev/stderr
+			echo "## ERROR ## The Name of the module should be exactly" >> /dev/stderr
+			echo "            the same that the name of the file" >> /dev/stderr
+			echo "            ${moduleName} != ${1%%.f90}" >> /dev/stderr
+			exit
+		fi
+		
+# 		depsMod=`echo $deps | sed '{s/.f90/_.mod/g}' | tr '[:upper:]' '[:lower:]'`
+		
+		localDeps=""
+		for dep in $deps
+		do
+			if [ -f "$dep" ]
+			then
+				localDeps="$localDeps $dep"
+			fi
+		done
+		
+		depsMod=`echo $localDeps | sed '{s/.f90/_.mod/g}' | tr '[:upper:]' '[:lower:]'`
+		
+		echo "${1%%.f90}.o `echo ${1%%.f90}_.mod | tr '[:upper:]' '[:lower:]'`: $1 $depsMod"
+		echo -e "\tfmake"
+		echo -e "\techo -n 'Building $1 '"
+		echo -e "\ttime -f \"(%E)\" \$(FC) \$(FCFLAGS) -c $1"
+		return
+	fi
+	
+	if [ -n "$programName" ]
+	then
+		if [ "$programName" != "${1%%.f90}" -a "$programName" != "main" ]
+		then
+			echo "" >> /dev/stderr
+			echo "## ERROR ## The Name of the program should be exactly" >> /dev/stderr
+			echo "            the same that the name of the file" >> /dev/stderr
+			echo "            $programName = ${1%%.f90}" >> /dev/stderr
+			exit
+		fi
+		
+# 		depsMod=`echo $deps | sed '{s/.f90/_.mod/g}' | tr '[:upper:]' '[:lower:]'`
+# 		depsO=`echo $deps | sed '{s/.f90/.o/g}'`
+		
+		localDeps=""
+		for dep in $deps
+		do
+			if [ -f "$dep" ]
+			then
+				localDeps="$localDeps $dep"
+			fi
+		done
+		
+		depsMod=`echo $localDeps | sed '{s/.f90/_.mod/g}' | tr '[:upper:]' '[:lower:]'`
+		depsO=`echo $localDeps | sed '{s/.f90/.o/g}'`
+
+		echo "${1%%.f90}: $1 $depsO $depsMod"
+		echo -e "\tfmake"
+		echo -e "\techo -n 'Building $1 '"
+		echo -e "\ttime -f \"(%E)\" \$(FC) \$(FCFLAGS) $1 $depsO -o ${1%%.f90} \$(LDFLAGS)"
+		echo -n "${1%%.f90} " >> .programs
+
+		return
+	fi
+}
+
+##############################################
+# Verifica si las dependencias han cambiado
+# solo si esto es verdad el comado fmake
+# reconstruirá el archivo Makefile
+checkChangesInDeps()
+{
+	local save=$1 # -w
+	
+	if [ -f .deps ]
+	then
+		grep -E "^[[:blank:]]*use[[:blank:]]+.*_[[:blank:],]*.*$" *.f90 \
+			| sed -r '{s/[[:blank:]]+/ /g;/^[[:blank:]]*$/d;s/_[[:blank:],]*.*$//g}' > .deps2
+		diffDeps="`diff -q .deps .deps2`"
+		
+		if [ -n "$diffDeps" ]
+		then
+			echo "@@ The dependencies have changed @@"
+			mv .deps2 .deps
+		else
+			rm .deps2
+		fi
+		
+		exit
+	else
+		grep -E "^[[:blank:]]*use[[:blank:]]+.*_[[:blank:],]*.*$" *.f90 \
+			| sed -r '{s/[[:blank:]]+/ /g;/^[[:blank:]]*$/d;s/_[[:blank:],]*.*$//g}' > .deps
+	fi
+
+	if [ -f Makefile ]
+	then
+		export FC=`gawk '($1=="FC"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
+		export FCFLAGS=`gawk '($1=="FCFLAGS"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
+		export LDFLAGS=`gawk '($1=="LDFLAGS"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
+		export TLIB=`gawk '($1=="TLIB"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
+	fi
+}
+
+# modulesInLibrary()
+# {
+# 	nm -s libscift.a | grep "^.*.o:" | sed '{s/://g}'
+# }
+
+main()
+{
+	while getopts "l:h" OPTNAME
+	do
+		case $OPTNAME in
+			h)
+# 				usage
+				exit 0
+				;;
+		esac
+	done
+	
+	# El fichero .running monitorea la busqueda
+	# de dependencias y es primordial que no
+	# exista al iniciar la ejecución del programa,
+	# de lo no busca ninguna dependencia
+	if [ -f ".running" ]
+	then
+		rm .running
+	fi
+
+	checkChangesInDeps
+	
+	F90_SOURCES=`ls *.f90`
+	
+	rm -rf depends.Po .programs
+	
+	for FILE in $F90_SOURCES
+	do
+		echo -n "Building dependencies for $FILE ... "
+		getDepLine $FILE >> depends.Po
+		echo "" >> depends.Po
+		echo "OK"
+	done
+
+	objectsToLib=`grep -E "^[[:blank:]]*end[[:blank:]]+module[[:blank:]]+.*$" *.f90 | gawk 'BEGIN{FS="."}{printf "%s.o ", $1}'`
+	
+	if [ -z "$TLIB" -a ! -f ".programs" ]
+	then
+		echo ""
+		echo "## You can create a library using TLIB variable ##"
+	fi
+
+	mv depends.Po depends.Po.tmp
+		
+	echo "all: $objectsToLib \$(TLIB) `cat .programs 2>/dev/null`" > depends.Po
+		
+	echo "" >> depends.Po
+	cat depends.Po.tmp >> depends.Po
+	rm depends.Po.tmp
+	
+	if [ -n "$TLIB" ]
+	then
+		echo "\$(TLIB): $objectsToLib" >> depends.Po
+		echo -e "\techo 'Building library \$(TLIB)'" >> depends.Po
+		echo -e "\tar rvs \$(TLIB) $objectsToLib > /dev/null 2> /dev/null" >> depends.Po
+		echo "" >> depends.Po
+	fi
+
+	echo "clean:" >> depends.Po
+	if [ -f ".programs" ]
+	then
+		echo -e "\trm -f *.o *.mod *~ .deps `cat .programs` 2> /dev/null" >> depends.Po
+	else
+		echo -e "\trm -f *.o *.mod *~ .deps \$(TLIB) 2> /dev/null" >> depends.Po
+	fi
+	echo "" >> depends.Po
+
+	echo "distclean:" >> depends.Po
+	if [ -f ".programs" ]
+	then
+		echo -e "\trm -f *.o *.mod *~ .deps Makefile `cat .programs` 2> /dev/null" >> depends.Po
+	else
+		echo -e "\trm -f *.o *.mod *~ .deps Makefile \$(TLIB) 2> /dev/null" >> depends.Po
+	fi
+
+	echo "" >> depends.Po
+	echo "Makefile: .deps" >> depends.Po
+	echo -e "\tfmake" >> depends.Po
+	echo "" >> depends.Po
+	echo ".deps:" >> depends.Po
+	echo -e "\tfmake" >> depends.Po
+	
+	rm -rf .programs
+	
+	echo ""
+	if [ -z "$FC" ]
+	then
+		FC="ifort"
+	fi
+	echo "FC = $FC"
+
+	if [ -z "$FCFLAGS" ]
+	then
+		FCFLAGS="-traceback -w -I. -g -fpp"
+	fi
+	echo "FCFLAGS = $FCFLAGS"
+
+	if [ -z "$LDFLAGS" ]
+	then
+		LDFLAGS=""
+	fi
+	echo "LDFLAGS = $LDFLAGS"
+
+	echo "TLIB = $TLIB"
+	echo ""
+
+	echo -n "Building Makefile ... "
+	echo "MAKEFLAGS = -s" > Makefile 
+	echo "FC = $FC" >> Makefile
+	echo "FCFLAGS = $FCFLAGS" >> Makefile
+	echo "LDFLAGS = $LDFLAGS" >> Makefile
+	echo "TLIB = $TLIB" >> Makefile
+	echo "OK"
+	echo ""
+
+	echo "" >> Makefile
+	cat depends.Po >> Makefile
+	rm depends.Po
+
+	make
+}
+
+main $*

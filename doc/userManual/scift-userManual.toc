@@ -1,0 +1,7 @@
+\contentsline {section}{\numberline {1}Introduction}{2}
+\contentsline {section}{\numberline {2}Convention}{4}
+\contentsline {section}{\numberline {3}Fast Fourier transform (FFT)}{4}
+\contentsline {subsection}{\numberline {3.1}Directly (High level interface)}{5}
+\contentsline {subsection}{\numberline {3.2}By using plans (Low level interface)}{6}
+\contentsline {subsection}{\numberline {3.3}By using the oriented object interface}{6}
+\contentsline {subsection}{\numberline {3.4}Calculating the derivative of second order of a signal}{7}

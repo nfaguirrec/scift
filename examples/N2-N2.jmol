@@ -1,0 +1,15 @@
+# jmol -ions N2-N2.jmol -w GIF:N2-N2.gif && gwenview N2-N2.gif
+
+load "N2-N2.xyz"
+background [255,255,255]
+wireframe 0.15; spacefill 23%
+zoom IN
+moveto 0 1 0 0 -90
+draw arrow1 arrow {atomno=1} {            -0.01292       -0.00000        0.00538   }
+draw arrow2 arrow {atomno=2} {            -0.01292       -0.00000       -0.00538   }
+draw arrow3 arrow {atomno=3} {             0.01292       -0.00538        0.00000   }
+draw arrow4 arrow {atomno=4} {             0.01292        0.00538        0.00000   }
+set axesMolecular;set axes on
+rotate x 45
+rotate y 45
+write image N2-N2.gif

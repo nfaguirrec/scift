@@ -1,0 +1,2057 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!!  This file is part of scift (Scientific Fortran Tools).
+!!  Copyright (C) by authors (2010-2014)
+!!  
+!!  Authors (alphabetic order):
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2010-2014)
+!!  
+!!  Contributors (alphabetic order):
+!!  
+!!  Redistribution and use in source and binary forms, with or
+!!  without modification, are permitted provided that the
+!!  following conditions are met:
+!!  
+!!   * Redistributions of binary or source code must retain
+!!     the above copyright notice and this list of conditions
+!!     and/or other materials provided with the distribution.
+!!   * All advertising materials mentioning features or use of
+!!     this software must display the following acknowledgement:
+!!     
+!!     This product includes software from scift
+!!     (Scientific Fortran Tools) project and its contributors.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#ifndef NFUNCTION_H90
+#define NFUNCTION_H90 1
+	
+	type, public:: NFunction
+		type(Grid) :: xGrid
+		__TYPE_VALUE__, allocatable :: fArray(:)
+		
+		contains
+			generic :: init => fromGrid, fromGridData, fromArrays, fromGridArray, fromFunction, fromFile, fromFStream
+			procedure :: fromGrid
+			procedure :: fromGridData
+			procedure :: fromArrays
+			procedure :: fromGridArray
+			procedure :: fromFunction
+			procedure :: fromFile
+			procedure :: fromFStream
+			generic :: assignment(=) => copyNFunction
+			procedure :: copy => copyNFunction
+			procedure :: copyNFunction
+			procedure :: copyFArray
+			final :: destroyNFunction
+			
+			procedure :: updateFromFunction
+			
+			procedure :: addition
+			procedure :: subtraction
+			procedure :: multiplication
+			procedure :: division
+			procedure :: exponentiation
+			
+			procedure :: additionGrid
+			procedure :: subtractionGrid
+			procedure :: multiplicationGrid
+			procedure :: divisionGrid
+			procedure :: exponentiationGrid
+			
+			procedure :: additionFC
+			procedure :: subtractionFC
+			procedure :: multiplicationFC
+			procedure :: divisionFC
+			procedure :: exponentiationFC
+			
+			generic :: operator(+) => addition, additionGrid, additionFC
+			generic :: operator(-) => subtraction, subtractionGrid, subtractionFC
+			generic :: operator(*) => multiplication, multiplicationGrid, multiplicationFC
+			generic :: operator(/) => division, divisionGrid, divisionFC
+			generic :: operator(**) => exponentiation, exponentiationGrid, exponentiationFC
+			
+			procedure :: translate
+			procedure :: isEquallyspaced
+			procedure :: checkEquallyspaced
+			
+			procedure :: str
+			procedure :: show
+			procedure :: save
+! 			procedure :: toFStream
+			procedure :: setUnits
+			
+			procedure :: set
+			procedure :: first
+			procedure :: last
+			procedure :: at
+			procedure :: x
+			procedure :: nPoints
+			generic :: min => minInCoord
+			procedure :: minInCoord
+			generic :: max => maxInCoord
+			procedure :: maxInCoord
+			procedure :: stepSize
+			
+			procedure :: loadDAT
+			procedure :: saveDAT => saveBLKS
+			procedure :: loadN1DF
+			procedure :: saveN1DF
+			procedure :: loadCUBE
+			procedure :: saveCUBE
+			procedure :: loadBLKS
+			procedure :: saveBLKS
+			
+			procedure :: checkBox
+			procedure :: resize
+			
+			generic :: expectationValue => expectationValueFromNFunction, expectationValueFromRArray, expectationValueFromCArray
+			procedure :: expectationValueFromNFunction
+			procedure :: expectationValueFromRArray
+			procedure :: expectationValueFromCArray
+			
+			generic :: innerProduct => innerProductWithNFunction, innerProductWithRArray, innerProductWithCArray
+			procedure :: innerProductWithNFunction
+			procedure :: innerProductWithRArray
+			procedure :: innerProductWithCArray
+			procedure :: conjugate
+			procedure :: absoluteSquare
+			
+			procedure :: normalize
+			procedure :: norm2
+			procedure :: norm
+			
+			generic :: interpolate => interpolatePoint, interpolateOnGrid
+			procedure :: interpolatePoint
+			procedure :: interpolateOnGrid
+			
+			__ADD_METHODS__
+	end type NFunction
+	
+	interface
+		function prototypeFunction( x ) result( output )
+			real(8), intent(in) :: x
+			__TYPE_VALUE__ :: output
+		end function prototypeFunction
+	end interface
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGrid( this, xGrid )
+		class(NFunction) :: this 
+		type(Grid), intent(in) :: xGrid
+		
+		this.xGrid = xGrid
+		
+		if( allocated(this.fArray) ) deallocate(this.fArray)
+		allocate( this.fArray(xGrid.nPoints) )
+		this.fArray = 0.0_8
+	end subroutine fromGrid
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGridData( this, min, max, nPoints, stepSize )
+		class(NFunction) :: this
+		real(8) :: min
+		real(8) :: max
+		integer, optional :: nPoints
+		real(8), optional :: stepSize
+		
+		
+		call this.xGrid.init( min, max, nPoints, stepSize )
+		
+		if( allocated(this.fArray) ) deallocate(this.fArray)
+		allocate( this.fArray( nPoints ) )
+		
+		this.fArray = 0.0_8
+	end subroutine fromGridData
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromArrays( this, xArray, fArray, units, cutoff )
+		class(NFunction) :: this
+		real(8), intent(in) :: xArray(:)
+		__TYPE_VALUE__, intent(in) :: fArray(:)
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		
+		integer :: i
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) then
+			effUnits = units
+		end if
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		if( size(xArray) /= size(fArray) ) then
+			write(*,*) "### ERROR ### NFunction.fromArrays: The xArray's size should be equal to fArray's size (", size(xArray),"/=", size(fArray), ")"
+			stop
+		end if
+		
+		call this.xGrid.init( xArray )
+		call this.xGrid.setUnits( effUnits(1) )
+		
+		if( allocated(this.fArray) ) deallocate(this.fArray)
+		allocate( this.fArray( size(xArray) ) )
+		
+		do i=1,size(fArray,dim=1)
+#if __ID_TYPE__ == 0
+			this.fArray(i) = min( max( fArray(i)*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this.fArray(i) = fArray(i)*effUnits(2)
+#endif
+		end do
+	end subroutine fromArrays
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGridArray( this, xGrid, fArray, units, cutoff )
+		class(NFunction) :: this 
+		type(Grid), intent(in) :: xGrid
+		__TYPE_VALUE__, intent(in) :: fArray(:)
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		
+		integer :: i
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) then
+			effUnits = units
+		end if
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		this.xGrid = xGrid
+		call this.xGrid.setUnits( effUnits(1) )
+		
+		if( allocated(this.fArray) ) deallocate(this.fArray)
+		
+		if( xGrid.nPoints /= size(fArray) ) then
+			write(*,*) "### ERROR ### NFunction.fromGridArray: The xArray's size should be equal to fArray's size (", xGrid.nPoints,"/=", size(fArray), ")"
+			stop
+		end if
+		
+		allocate( this.fArray(xGrid.nPoints) )
+		
+		do i=1,size(fArray,dim=1)
+#if __ID_TYPE__ == 0
+			this.fArray(i) = min( max( fArray(i)*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this.fArray(i) = fArray(i)*effUnits(2)
+#endif
+		end do
+		
+	end subroutine fromGridArray
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromFunction( this, xGrid, func, units, cutoff )
+		class(NFunction) :: this 
+		type(Grid), intent(in) :: xGrid
+		procedure(prototypeFunction) :: func
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		
+		integer :: i
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		
+		if( present(units) ) then
+			effUnits = units
+		else
+			effUnits = [1.0_8, 1.0_8]
+		end if
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		this.xGrid = xGrid
+		call this.xGrid.setUnits( effUnits(1) )
+		
+		if( allocated(this.fArray) ) deallocate(this.fArray)
+		allocate( this.fArray(this.nPoints()) )
+		
+		do i=1,this.nPoints()
+#if __ID_TYPE__ == 0
+			this.fArray(i) = min( max( func( xGrid.data(i) )*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this.fArray(i) = func( xGrid.data(i) )*effUnits(2)
+#endif
+		end do
+	end subroutine fromFunction
+	
+	!>
+	!! @brief Reads from a file
+	!!
+	subroutine fromFile( this, fileName, format, cutoff )
+		class(NFunction) :: this
+		character(*), optional, intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		real(8), optional, intent(in) :: cutoff
+		
+		integer :: effFormat
+		real(8) :: effCutoff
+		
+		character(100), allocatable :: tokens(:)
+		character(100) :: extension
+		
+		if( present(cutoff) ) stop "### ERROR ### NFunction.fromFile: cutoff option is not implemented yet"
+		
+		effFormat = AUTO_FORMAT
+		if( present(format) ) effFormat = format
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		select case ( effFormat )
+			case( AUTO_FORMAT )
+				call FString_split( fileName, tokens, "." )
+				extension = ""
+				if( size( tokens ) > 1 ) extension = trim(tokens(size(tokens)))
+				deallocate( tokens )
+				
+				if( trim(extension) == "n1df" ) then
+					call this.loadN1DF( fileName )
+				else if( trim(extension) == "cube" ) then
+					call this.loadCUBE( fileName, CUBE_FORMAT )
+				else if( trim(extension) == "rcube" ) then
+					call this.loadCUBE( fileName, RCUBE_FORMAT )
+				else if( trim(extension) == "icube" ) then
+					call this.loadCUBE( fileName, ICUBE_FORMAT )
+				else if( trim(extension) == "blks" ) then
+					call this.loadBLKS( fileName )
+				else if( trim(extension) == "dat" ) then
+					call this.loadDAT( fileName )
+				else
+					call GOptions_error( &
+						"Unknown format file (AUTO_FORMAT). fileName = "//trim(fileName), &
+						"NFunction.fromFile(extension="//trim(extension)//")" &
+					)
+				end if
+			case( N1DF_FORMAT )
+				call this.loadN1DF( fileName )
+			case( CUBE_FORMAT )
+				call this.loadCUBE( fileName, CUBE_FORMAT )
+			case( RCUBE_FORMAT )
+				call this.loadCUBE( fileName, RCUBE_FORMAT )
+			case( ICUBE_FORMAT )
+				call this.loadCUBE( fileName, ICUBE_FORMAT )
+			case( BLKS_FORMAT )
+				call this.loadBLKS( fileName )
+			case default
+				write(6,*) "### ERROR ### NFunction.fromFile(). The format is not supported (", effFormat, ")"
+				stop
+		end select
+	end subroutine fromFile
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	subroutine copyNFunction( this, other )
+		class(NFunction), intent(inout) :: this
+		class(NFunction), intent(in) :: other
+		
+		call this.xGrid.copy( other.xGrid )
+		
+		if( allocated(this.fArray) ) deallocate( this.fArray )
+		allocate( this.fArray(this.nPoints()) )
+		
+		this.fArray = other.fArray
+	end subroutine copyNFunction
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	pure subroutine copyFArray( this, other )
+		class(NFunction), intent(inout) :: this
+		class(NFunction), intent(in) :: other
+		
+		this.fArray = other.fArray
+	end subroutine copyFArray
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyNFunction( this )
+		type(NFunction) :: this
+		
+! 		call this.xGrid.destroy()
+		
+		if( allocated(this.fArray) ) deallocate( this.fArray )
+	end subroutine destroyNFunction
+	
+	!>
+	!! @brief Constructor. Only y units will take effect
+	!!
+	subroutine updateFromFunction( this, func, units, cutoff )
+		class(NFunction) :: this 
+		procedure(prototypeFunction) :: func
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		
+		integer :: i
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		
+		if( present(units) ) then
+			effUnits = units
+		else
+			effUnits = [1.0_8, 1.0_8]
+		end if
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		do i=1,this.nPoints()
+#if __ID_TYPE__ == 0
+			this.fArray(i) = min( max( func( this.xGrid.data(i) )*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this.fArray(i) = func( this.xGrid.data(i) )*effUnits(2)
+#endif
+		end do
+	end subroutine updateFromFunction
+	
+	!>
+	!! @brief
+	!!
+	function addition( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		class(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= other.nPoints() ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray + other.fArray
+	end function addition
+	
+	!>
+	!! @brief
+	!!
+	function additionGrid( this, xGrid ) result( output )
+		class(NFunction), intent(in) :: this
+		type(Grid), intent(in) :: xGrid
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= xGrid.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray + xGrid.data
+	end function additionGrid
+	
+	!>
+	!! @brief
+	!!
+	function additionFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.fArray = this.fArray+constant
+	end function additionFC
+	
+	!>
+	!! @brief
+	!!
+	function subtraction( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= other.nPoints() ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray - other.fArray
+	end function subtraction
+	
+	!>
+	!! @brief
+	!!
+	function subtractionGrid( this, xGrid ) result( output )
+		class(NFunction), intent(in) :: this
+		type(Grid), intent(in) :: xGrid
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= xGrid.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray - xGrid.data
+	end function subtractionGrid
+	
+	!>
+	!! @brief
+	!!
+	function subtractionFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.fArray = this.fArray-constant
+	end function subtractionFC
+	
+	!>
+	!! @brief
+	!!
+	function multiplication( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= other.nPoints() ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray*other.fArray
+	end function multiplication
+	
+	!>
+	!! @brief
+	!!
+	function multiplicationGrid( this, xGrid ) result( output )
+		class(NFunction), intent(in) :: this
+		type(Grid), intent(in) :: xGrid
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= xGrid.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray*xGrid.data
+	end function multiplicationGrid
+	
+	!>
+	!! @brief
+	!!
+	function multiplicationFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.fArray = this.fArray*constant
+	end function multiplicationFC
+	
+	!>
+	!! @brief
+	!!
+	function division( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= other.nPoints() ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray/other.fArray
+	end function division
+	
+	!>
+	!! @brief
+	!!
+	function divisionGrid( this, xGrid ) result( output )
+		class(NFunction), intent(in) :: this
+		type(Grid), intent(in) :: xGrid
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= xGrid.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray/xGrid.data
+	end function divisionGrid
+	
+	!>
+	!! @brief
+	!!
+	function divisionFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.fArray = this.fArray/constant
+	end function divisionFC
+	
+	!>
+	!! @brief
+	!!
+	function exponentiation( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= other.nPoints() ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray**other.fArray
+	end function exponentiation
+	
+	!>
+	!! @brief
+	!!
+	function exponentiationGrid( this, xGrid ) result( output )
+		class(NFunction), intent(in) :: this
+		type(Grid), intent(in) :: xGrid
+		type(NFunction) :: output
+		
+		if( this.nPoints() /= xGrid.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.fArray = this.fArray**xGrid.data
+	end function exponentiationGrid
+	
+	!>
+	!! @brief
+	!!
+	function exponentiationFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.fArray = this.fArray**constant
+	end function exponentiationFC
+	
+	!>
+	!! Moves the function dx along the x-axis and dy along the y-axis,
+	!! relative to the current position. Positive values move the function
+	!! to the right and upwards.
+	!!
+	subroutine translate( this, dx, dy )
+		class(NFunction) :: this
+		real(8), optional, intent(in) :: dx
+		real(8), optional, intent(in) :: dy
+		
+		if( present(dx) ) then
+			call this.xGrid.translate( dx )
+		end if
+		
+		if( present(dy) ) then
+			this.fArray = this.fArray + dy
+		end if
+	end subroutine translate
+	
+	!>
+	!! @brief
+	!!
+	pure function isEquallyspaced( this ) result( output )
+		class(NFunction), intent(in) :: this
+		logical :: output
+		
+		output = this.xGrid.isEquallyspaced
+	end function isEquallyspaced
+	
+	!>
+	!! @brief
+	!!
+	subroutine checkEquallyspaced( this )
+		class(NFunction) :: this
+		
+		call this.xGrid.checkEquallyspaced()
+	end subroutine checkEquallyspaced
+	
+	!>
+	!! Write the string representation of the object
+	!! in a selected unit
+	!!
+	subroutine show( this, unit )
+		class(NFunction) :: this
+		integer, optional, intent(in) :: unit
+		
+		integer :: effUnit
+		
+		if( present(unit) ) then
+			effUnit = unit
+		else
+			effUnit = 6
+		end if
+		
+		write(effUnit,"(a)") trim(str(this))
+	end subroutine show
+	
+	!>
+	!! @brief Save the funtion in a file
+	!!
+	subroutine save( this, fileName, format, metadata, xrange, ixrange )
+		class(NFunction) :: this
+		character(*), optional, intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		character(*), optional, intent(in) :: metadata
+		real(8), optional, intent(in) :: xrange(2)
+		integer, optional, intent(in) :: ixrange(2)
+		
+		integer :: effFormat
+		
+		character(100), allocatable :: tokens(:)
+		character(100) :: extension
+		
+		effFormat = AUTO_FORMAT
+		if( present(format) ) effFormat = format
+		
+		select case ( effFormat )
+			case( AUTO_FORMAT )
+				call FString_split( fileName, tokens, "." )
+				extension = ""
+				if( size( tokens ) > 1 ) extension = trim(tokens(size(tokens)))
+				deallocate( tokens )
+				
+				if( trim(extension) == "n1df" ) then
+					call this.saveN1DF( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				else if( trim(extension) == "cube" ) then
+					call this.saveCUBE( fileName, CUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				else if( trim(extension) == "rcube" ) then
+					call this.saveCUBE( fileName, RCUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				else if( trim(extension) == "icube" ) then
+					call this.saveCUBE( fileName, ICUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				else if( trim(extension) == "blks" ) then
+					call this.saveBLKS( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				else if( trim(extension) == "dat" ) then
+					call this.saveBLKS( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				else
+					call GOptions_error( &
+						"Unknown format file (AUTO_FORMAT). FileName = "//trim(fileName), &
+						"NFunction.save(extension="//trim(extension)//")" &
+					)
+				end if
+			case( N1DF_FORMAT )
+				call this.saveN1DF( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+			case( CUBE_FORMAT )
+				call this.saveCUBE( fileName, CUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+			case( RCUBE_FORMAT )
+				call this.saveCUBE( fileName, RCUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+			case( ICUBE_FORMAT )
+				call this.saveCUBE( fileName, ICUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+			case( BLKS_FORMAT )
+				call this.saveBLKS( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+			case default
+				write(6,*) "### ERROR ### NFunction.save(). The format is not supported"
+				stop
+		end select
+	end subroutine save
+	
+	!>
+	!! @brief
+	!!
+	subroutine setUnits( this, units )
+		class(NFunction) :: this
+		real(8), intent(in) :: units(2)
+		
+		call this.xGrid.setUnits( units(1) )
+		this.fArray = this.fArray*units(2)
+	end subroutine setUnits
+	
+	!>
+	!! @brief
+	!!
+	subroutine set( this, n, yValue )
+		class(NFunction) :: this
+		integer, intent(in) :: n
+		__TYPE_VALUE__, intent(in) :: yValue
+		
+		if( n <= this.nPoints() ) then
+			this.fArray(n) = yValue
+		else
+			call GOptions_error( &
+				"Accessing an array outside its bounds", &
+				"NFunction.set()", &
+				"("//trim(FString_fromInteger(n))//">"//trim(FString_fromInteger(this.nPoints()))//")" &
+			)
+		end if
+	end subroutine set
+	
+	!>
+	!! @brief
+	!!
+	pure function first( this ) result( output )
+		class(NFunction), intent(in) :: this
+		__TYPE_VALUE__ :: output
+		
+		output = this.fArray(1)
+	end function first
+	
+	!>
+	!! @brief
+	!!
+	pure function last( this ) result( output )
+		class(NFunction), intent(in) :: this
+		__TYPE_VALUE__ :: output
+		
+		output = this.fArray( this.nPoints() )
+	end function last
+	
+	!>
+	!! @brief Returns the function evaluated on pos
+	!!
+	pure function at( this, pos ) result( output )
+		class(NFunction), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_VALUE__ :: output
+		
+		output = this.fArray( pos )
+	end function at
+	
+	!>
+	!! @brief
+	!!
+	pure function x( this, pos ) result( output )
+		class(NFunction), intent(in) :: this
+		integer, intent(in) :: pos
+		real(8) :: output
+		
+		output = this.xGrid.at( pos )
+	end function x
+	
+	!>
+	!! @brief
+	!!
+	pure function nPoints( this ) result( output )
+		class(NFunction), intent(in) :: this
+		integer :: output
+		
+		output = this.xGrid.nPoints
+	end function nPoints
+	
+	!>
+	!! @brief
+	!!
+	pure function minInCoord( this ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8) :: output
+		
+		output = this.xGrid.min
+	end function minInCoord
+	
+	!>
+	!! @brief
+	!!
+	pure function maxInCoord( this ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8) :: output
+		
+		output = this.xGrid.max
+	end function maxInCoord
+	
+	!>
+	!! @brief
+	!!
+	pure function stepSize( this ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8) :: output
+		
+		output = this.xGrid.stepSize
+	end function stepSize
+	
+	!>
+	!! @brief Constructor
+	!! @todo Esto hay que dejarlo directamente como loadDAT y eliminar los fromStream de las clases hijas
+	!!
+	subroutine loadDAT( this, ifileName, columns, cComments, units )
+		class(NFunction) :: this 
+		character(*), intent(in) :: ifileName
+		integer, allocatable, optional, intent(in) :: columns(:)
+		character(*), optional, intent(in) :: cComments
+		real(8), optional, intent(in) :: units(2)
+		
+		type(IFStream) :: ifile
+		real(8) :: effUnits(2)
+		
+		if( present(units) ) then
+			effUnits = units
+		else
+			effUnits = [1.0_8, 1.0_8]
+		end if
+		
+		call ifile.init( ifileName )
+		call this.fromFStream( ifile, columns, cComments, units )
+		call ifile.destroy()
+	end subroutine loadDAT
+	
+	!>
+	!! Save the data in two column format in a
+	!! selected unit
+	!! @todo No la he verificado que funcione ni que esté en compatibilidad con el resto de funciones save
+	!!
+! 	subroutine saveDAT( this, oFileName, append, units, resolution, xrange, ixrange, metadata )
+! 		class(NFunction) :: this
+! 		character(*), optional, intent(in) :: oFileName
+! 		logical, optional, intent(in) :: append
+! 		real(8), optional, intent(in) :: units(2)
+! 		real(8), optional, intent(in) :: resolution
+! 		real(8), optional, intent(in) :: xrange(2)
+! 		integer, optional, intent(in) :: ixrange(2)
+! 		character(*), optional, intent(in) :: metadata
+! 		
+! ! 		integer :: invResolution
+! ! 		logical :: effAppend
+! ! 		
+! ! 		type(OFStream) :: ofile
+! ! 		
+! ! 		effAppend = .false.
+! ! 		if( present(append) ) effAppend = append
+! ! 		
+! ! 		if( present(oFileName) ) then
+! ! 			call ofile.init( oFileName, append=effAppend )
+! ! 			call this.toFStream( ofile, units=units, resolution=resolution, xrange=xrange, ixrange=ixrange, beforeLine=beforeLine )
+! ! 			call ofile.close()
+! ! 		else
+! ! 			call this.toFStream( units=units, resolution=resolution, xrange=xrange, ixrange=ixrange, beforeLine=beforeLine )
+! ! 		end if
+! 
+! 		integer :: effUnit
+! 		real(8) :: effUnits(2)
+! 		integer :: effIXRange(2)
+! 		integer :: invResolution
+! 		
+! 		integer :: i
+! 		character(255) :: date
+! 		character(100), allocatable :: tokens(:)
+! 		
+! 		effUnit = STDOUT
+! 		if( present(ofile) ) effUnit = ofile.unit
+! 		
+! 		effUnits = [1.0_8, 1.0_8]
+! 		if( present(units) ) effUnits = units
+! 		
+! 		effIXRange = [1,this.nPoints()]
+! 		if( present(xrange) ) then
+! 			effIXRange = [ &
+! 				floor( 1.0000001*(xrange(1)-this.xGrid.min)/this.xGrid.stepSize+1.0 ), &
+! 				floor( 1.0000001*(xrange(2)-this.xGrid.min)/this.xGrid.stepSize+1.0 ) ]
+! 		else if( present(ixrange) ) then
+! 			effIXRange = ixrange
+! 		end if
+! 		
+! 		invResolution = 1
+! 		if( present(resolution) ) invResolution = ceiling( 1.0_8/resolution )
+! 		
+! 		call fdate(date)
+! 		
+! #if __ID_TYPE__ == 0
+! 		write(effUnit,"(A)") "# Real Numerical Function"
+! #elif __ID_TYPE__ == 1
+! 		write(effUnit,"(A)") "# Complex Numerical Function"
+! #endif
+! 		
+! 		write(effUnit,"(A)") "# "//trim(date)
+! 		
+! 		if( present(metadata) ) then
+! 			call FString_split( metadata, tokens, "&" )		
+! 			do i=1,size(tokens)
+! 				write(effUnit,"(A)") "# "//trim(tokens(i))
+! 			end do
+! 			if( allocated(tokens) ) deallocate( tokens )
+! 		end if
+! 		
+! 		do i=effIXRange(1),effIXRange(2),invResolution
+! #if __ID_TYPE__ == 0
+! 			if( abs(this.fArray( i )) > 1d-98 ) then
+! 				write(effUnit,"(E15.7,E15.7)") this.xGrid.data(i)/effUnits(1), &
+! 					this.fArray( i )/effUnits(2)
+! 			else
+! 				write(effUnit,"(E15.7,E15.7)") this.xGrid.data(i)/effUnits(1), 0.0_8
+! 			end if
+! #elif __ID_TYPE__ == 1
+! 			if( abs(this.fArray( i )) > 1d-98 ) then
+! 				write(effUnit,"(E15.7,2E15.7)") this.xGrid.data(i)/effUnits(1), &
+! 					real(this.fArray( i ))/effUnits(2), &
+! 					aimag(this.fArray( i ))/effUnits(2)
+! 			else
+! 				write(effUnit,"(E15.7,2E15.7)") this.xGrid.data(i)/effUnits(1), 0.0_8, 0.0_8
+! 			end if
+! #endif
+! 		end do
+! 		
+! 		write(effUnit,"(a)") ""
+! 		write(effUnit,"(a)") ""
+! 		
+! 		call ofile.close()
+! 		
+! 	end subroutine saveDAT
+	
+	!>
+	!! @brief
+	!!
+	subroutine loadN1DF( this, fileName )
+		class(NFunction) :: this
+		character(*) :: fileName
+		
+		real(8) :: xMin
+		real(8) :: xMax
+		real(8) :: hx
+		integer :: nx
+		integer :: idType
+		__TYPE_VALUE__, allocatable :: fArray(:)
+		
+		type(Grid) :: xGrid
+		
+		open( unit=1, file=trim(fileName), action='read', form="unformatted" )
+		
+		! 0 = REAL, 1 COMPLEX
+		read(1) idType
+		
+		if( idType /= __ID_TYPE__ ) then
+			call GOptions_error( "Inconsistent type in file", "NFunction.loadN1DF()" )
+		end if
+		
+		! origin of the grid
+		read(1) xMin
+		
+		! Number of points for each coordinate
+		read(1) nx
+		
+		! Increment for each coordinate
+		read(1) hx
+		
+		xMax = xMin + (nx-1)*hx
+		
+		allocate( fArray(nx) )
+		
+		!!!!!!!!!!!!!!!!!!!!!!!
+		! Volumetric data
+		read(1) fArray
+		
+		call xGrid.init( min=xMin, max=xMax, nPoints=nx )
+		call this.fromGridArray( xGrid, fArray )
+		
+		deallocate( fArray )
+		
+		close(1)
+	end subroutine loadN1DF
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveN1DF( this, fileName, metadata, xrange, ixrange )
+		class(NFunction) :: this
+		character(*) :: fileName
+		character(*), optional, intent(in) :: metadata
+		real(8), optional, intent(in) :: xrange(2)
+		integer, optional, intent(in) :: ixrange(2)
+		
+		integer :: effIXRange(2)
+		
+		integer :: idType
+		
+		effIXRange = [1,this.nPoints()]
+		if( present(xrange) ) then
+			effIXRange = [ &
+				floor( 1.0000001*(xrange(1)-this.xGrid.min)/this.xGrid.stepSize+1.0 ), &
+				floor( 1.0000001*(xrange(2)-this.xGrid.min)/this.xGrid.stepSize+1.0 ) ]
+		else if( present(ixrange) ) then
+			effIXRange = ixrange
+		end if
+		
+		if( .not. this.xGrid.isEquallyspaced ) then
+			call GOptions_error( &
+				"This subroutine is not available for functions wich are not equally spaced", &
+				"NFunction.saveN1DF()" &
+			)
+		end if
+		
+		if( present(metadata) ) call GOptions_warning( "metadata option is not available yet", "NFunction.saveN1DF()" )
+		
+		idType = __ID_TYPE__
+		
+		open( unit=1, file=trim(fileName), action='write', form="unformatted" )
+		
+		! 0 = REAL, 1 COMPLEX
+		write(1) idType
+		
+		! origin of the grid
+! 		write(1) this.xGrid.min
+		write(1) this.xGrid.at( effIXRange(1) )
+		
+		! Number of points for each coordinate
+! 		write(1) this.xGrid.nPoints
+		write(1) effIXRange(2)-effIXRange(1)+1
+		
+		! Increment for each coordinate
+		write(1) this.xGrid.stepSize
+		
+		!!!!!!!!!!!!!!!!!!!!!!!
+		! Volumetric data
+		write(1) this.fArray( effIXRange(1):effIXRange(2) )
+		
+		close(1)
+	end subroutine saveN1DF
+	
+	!>
+	!! @brief
+	!!
+	subroutine loadCUBE( this, fileName, format, debug )
+		class(NFunction) :: this
+		character(*) :: fileName
+		integer, optional, intent(in) :: format
+		logical, optional, intent(in) :: debug
+		
+		integer :: effFormat
+		logical :: effDebug
+		
+		character(100) :: sBuffer
+		integer :: nAtoms
+		real(8) :: rBuffer
+		real(8) :: xMin
+		real(8) :: xMax
+		real(8) :: hx
+		integer :: nx
+		integer :: i, ix
+		__TYPE_VALUE__, allocatable :: fArray(:)
+		real(8), allocatable :: cubeDataLine(:)
+		
+		type(Grid) :: xGrid
+		
+		effFormat = CUBE_FORMAT
+		if( present(format) ) effFormat = format
+		
+		effDebug = .false.
+		if( present(debug) ) effDebug = debug
+		
+		open( unit=1, file=trim(fileName), status='old' )
+		
+		read(1,*) sBuffer ! title
+		read(1,*) sBuffer ! comments
+		read(1,*) nAtoms, xMin
+		read(1,*) nx,      hx
+		
+		if( effDebug ) then
+			write(*,*) "==================================================="
+			write(*,*) " Loading cube "//trim(fileName)
+			write(*,*) "==================================================="
+			select case ( effFormat )
+				case( CUBE_FORMAT )
+					write(*,*) " format = ", "CUBE_FORMAT"
+				case( RCUBE_FORMAT )
+					write(*,*) " format = ", "RCUBE_FORMAT"
+				case( ICUBE_FORMAT )
+					write(*,*) " format = ", "ICUBE_FORMAT"
+				case default
+					write(6,*) "### ERROR ### NFunction.loadCUBE(). The format is not supported"
+					stop
+			end select
+			write(*,"(A,I10)") "  nAtoms = ", nAtoms
+			write(*,"(A,F10.5)") "     min = ", xMin
+			write(*,"(A,I10)") "       n = ", nx
+			write(*,"(A,F10.5)") "       h = ", hx
+		end if
+
+		xMax = xMin + (nx-1)*hx
+		
+		if( effDebug ) then
+			write(*,"(A,F10.5,A)") "     max = ", xMax
+		end if
+		
+		do i=1,nAtoms
+			read(1,"(A)") sBuffer
+		end do
+		
+		allocate( fArray( nx ) )
+		allocate( cubeDataLine(nx) )
+		
+		read(1,"(6E13.5)") ( cubeDataLine(ix), ix=1,nx )
+				
+#if __ID_TYPE__ == 0
+		fArray(:) = cubeDataLine(:)
+#elif __ID_TYPE__ == 1
+		select case ( effFormat )
+			case( CUBE_FORMAT )
+				fArray(:) = cmplx( cubeDataLine(:), 0.0_8 )
+			case( RCUBE_FORMAT )
+				fArray(:) = cmplx( cubeDataLine(:), 0.0_8 )
+			case( ICUBE_FORMAT )
+				fArray(:) = cmplx( 0.0_8, cubeDataLine(:) )
+			case default
+				write(6,*) "### ERROR ### NFunction.loadCUBE(). The format is not supported"
+				stop
+		end select
+#endif
+		
+		call xGrid.init( min=xMin, max=xMax, nPoints=nx )
+		call this.fromGridArray( xGrid, fArray )
+		
+		close(1)
+		
+		deallocate( fArray )
+		deallocate( cubeDataLine )
+	end subroutine loadCUBE
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveCUBE( this, fileName, format, metadata, xrange, ixrange )
+		class(NFunction), intent(in) :: this
+		character(*), intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		character(*), optional, intent(in) :: metadata
+		real(8), optional, intent(in) :: xrange(2)
+		integer, optional, intent(in) :: ixrange(2)
+		
+		integer :: effFormat
+		
+		integer :: ix
+		character(255) :: date
+		
+		if( .not. this.xGrid.isEquallyspaced ) then
+			call GOptions_error( &
+				"This subroutine is not available for functions wich are not equally spaced", &
+				"NFunction.saveCUBE()" &
+			)
+		end if
+		
+		if( present(metadata) ) call GOptions_warning( "metadata option is not available yet", "NFunction.saveCUBE()" )
+		
+		if( present(xrange) .or. present(ixrange) ) call GOptions_warning( "xrange|ixrange option is not available yet", "NFunction.saveCUBE()" )
+		
+		call fdate(date)
+		
+		effFormat = CUBE_FORMAT
+		if( present(format) ) effFormat = format
+		
+		open( unit=1, file=trim(fileName), status="unknown" )
+		
+		! The first and second line are simply comments
+#if __ID_TYPE__ == 0
+		write(1,*) "Real Numerical Function"
+#elif __ID_TYPE__ == 1
+		write(1,"(A)",advance="no") "Complex Numerical Function"
+		select case( effFormat )
+			case( CUBE_FORMAT )
+				write(1,"(A)") "NORM"
+			case( RCUBE_FORMAT )
+				write(1,"(A)") "REAL"
+			case( ICUBE_FORMAT )
+				write(1,"(A)") "IMAG"
+		end select
+#endif
+		write(1,*) trim(date)
+		
+		! The third line has the number of atoms
+		! (in this case is the calcium atom) followed by
+		! the position of the grid
+		write(1, "(I4,F12.5)" ) 0, this.xGrid.min
+		
+		! The next three lines have the following information for each coordinate
+		! <number of points> <x_increment> <y_increment> <z_increment>
+		write(1, "(I4,F12.5)" ) this.xGrid.nPoints, this.xGrid.stepSize
+		
+		! The last section in the header is one for each atom consisting
+		! of 5 numbers
+		! <atomic number(integer)> <atomic number(real)> <x_coordinate> <y_coordinate> <z_coordinate>
+! 		write(1, "(I4,F12.5,F12.5,F12.5,F12.5)" ) 20, 20.0, this.ximp, yimp, zimp
+		
+		!!!!!!!!!!!!!!!!!!!!!!!
+		! Volumetric data
+#if __ID_TYPE__ == 0
+		write(1,"(6E13.5)") ( this.fArray(ix), ix=1,this.xGrid.nPoints )
+#elif __ID_TYPE__ == 1
+		select case ( effFormat )
+			case( CUBE_FORMAT )
+				write(1,"(6E13.5)") ( abs(this.fArray(ix)), ix=1,this.xGrid.nPoints )
+			case( RCUBE_FORMAT )
+				write(1,"(6E13.5)") ( real(this.fArray(ix)), ix=1,this.xGrid.nPoints )
+			case( ICUBE_FORMAT )
+				write(1,"(6E13.5)") ( aimag(this.fArray(ix)), ix=1,this.xGrid.nPoints )
+			case default
+				write(6,*) "### ERROR ### NFunction.saveCUBE(). The format is not supported"
+				stop
+		end select
+#endif
+		
+		close(1)
+	end subroutine saveCUBE
+	
+	!>
+	!! @brief
+	!!
+	subroutine loadBLKS( this, fileName, debug )
+		class(NFunction) :: this
+		character(*) :: fileName
+		logical, optional, intent(in) :: debug
+		
+		logical :: effDebug
+		
+		effDebug = .false.
+		if( present(debug) ) effDebug = debug
+		
+		call GOptions_error( &
+			"This subroutine is not implemented yet", &
+			"NFunction.loadBLKS()" &
+		)
+		
+		open( unit=1, file=trim(fileName), status='old' )
+		
+		
+		
+		close(1)
+	end subroutine loadBLKS
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveBLKS( this, fileName, metadata, xrange, ixrange )
+		class(NFunction), intent(in) :: this
+		character(*), intent(in) :: fileName
+		character(*), optional, intent(in) :: metadata
+		real(8), optional, intent(in) :: xrange(2)
+		integer, optional, intent(in) :: ixrange(2)
+		
+		integer :: ix, i
+		character(255) :: date
+		character(100), allocatable :: tokens(:)
+		
+		integer :: effIXRange(2)
+		__TYPE_VALUE__ :: value
+		
+		effIXRange = [1,this.nPoints()]
+		if( present(xrange) ) then
+			effIXRange = [ &
+				floor( 1.0000001*(xrange(1)-this.xGrid.min)/this.xGrid.stepSize+1.0 ), &
+				floor( 1.0000001*(xrange(2)-this.xGrid.min)/this.xGrid.stepSize+1.0 ) ]
+		else if( present(ixrange) ) then
+			effIXRange = ixrange
+		end if
+		
+		call fdate(date)
+		
+		open( unit=1, file=trim(fileName), status="unknown" )
+		
+		! The first and second line are simply comments
+#if __ID_TYPE__ == 0
+		write(1,"(A)") "# Real Numerical Function"
+#elif __ID_TYPE__ == 1
+		write(1,"(A)") "# Complex Numerical Function"
+#endif
+		write(1,"(A)") "# X"
+		write(1,"(A)") "# "//trim(date)
+		
+		if( present(metadata) ) then
+			call FString_split( metadata, tokens, "&" )
+			do i=1,size(tokens)
+				write(1,"(A)") "# "//trim(tokens(i))
+			end do
+			if( allocated(tokens) ) deallocate( tokens )
+		end if
+		
+! 		do ix=1,this.xGrid.nPoints
+		do ix=effIXRange(1),effIXRange(2)
+			value = this.fArray(ix)
+#if __ID_TYPE__ == 0
+			if( abs(value) > 1d-98 ) then
+				write(1,"(2E20.10)") this.xGrid.at(ix), this.fArray(ix)
+			else
+				write(1,"(2E20.10)") this.xGrid.at(ix), 0.0_8
+			end if
+#elif __ID_TYPE__ == 1
+			if( abs(value) > 1d-98 ) then
+				write(1,"(3E20.10)") this.xGrid.at(ix), this.fArray(ix)
+			else
+				write(1,"(3E20.10)") this.xGrid.at(ix), 0.0_8, 0.0_8
+			end if
+#endif
+		end do
+		
+		close(1)
+	end subroutine saveBLKS
+	
+	!>
+	!! @brief
+	!!
+	pure function checkBox( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		class(NFunction), intent(in) :: other
+		logical :: output
+		
+		output = this.xGrid.isEqualTo( other.xGrid )
+	end function checkBox
+	
+	!>
+	!! @brief Resizes the function by making a larger grid with the same
+	!!        step size by adding zeros at the end of the coordinate.
+	!! @param dn Number of points to add in X coordinate
+	!! @param dir direction +1 right, -1 left, 0 both sides
+	!!
+	subroutine resize( this, dn, dir )
+		class(NFunction) :: this
+		integer, intent(in) :: dn
+		integer, optional, intent(in) :: dir
+		
+		integer :: effDir
+		
+		type(Grid) :: xGrid
+		__TYPE_VALUE__, allocatable :: fArray(:)
+		integer :: oldN
+		integer :: newN
+		integer :: i
+		integer :: ii
+		
+		effDir = 1
+		if( present(dir) ) effDir = dir
+		
+		xGrid = this.xGrid
+		call xGrid.resize( dn, dir )
+		
+		oldN = this.xGrid.nPoints
+		
+		if( dn > 0 ) then
+			if( effDir == 1 ) then
+			
+				newN = xGrid.nPoints
+				allocate( fArray(newN) )
+				fArray = 0.0_8
+				
+				do i=1,oldN
+					fArray(i) = this.fArray(i)
+				end do
+
+			else if( effDir == -1 ) then
+			
+				newN = xGrid.nPoints
+				allocate( fArray(newN) )
+				fArray = 0.0_8
+				
+				do i=dn+1,newN
+					fArray(i) = this.fArray(i-dn)
+				end do
+				
+			else if( effDir == 0 ) then
+				
+				newN = xGrid.nPoints
+				allocate( fArray(newN) )
+				fArray = 0.0_8
+				
+				ii=1
+				do i=dn+1,dn+oldN
+					fArray(i) = this.fArray(ii)
+					ii=ii+1
+				end do
+			else
+				call GOptions_error( &
+					"Bad value for dir. (+1|0|-1)", &
+					"NFunction.resize()" &
+				)
+			end if
+		else
+			if( effDir == 1 ) then
+			
+				newN = xGrid.nPoints
+				allocate( fArray(newN) )
+				fArray = 0.0_8
+				
+				do i=1,newN
+					fArray(i) = this.fArray(i)
+				end do
+
+			else if( effDir == -1 ) then
+			
+				newN = xGrid.nPoints
+				allocate( fArray(newN) )
+				fArray = 0.0_8
+				
+				do i=1,newN
+					fArray(i) = this.fArray(i-dn)
+				end do
+				
+			else if( effDir == 0 ) then
+				
+				newN = xGrid.nPoints
+				allocate( fArray(newN) )
+				fArray = 0.0_8
+				
+				ii=1
+				do i=abs(dn)+1,oldN-abs(dn)
+					fArray(ii) = this.fArray(i)
+					ii=ii+1
+				end do
+			else
+				call GOptions_error( &
+					"Bad value for dir. (+1|0|-1)", &
+					"NFunction.resize()" &
+				)
+			end if
+		end if
+		
+		call this.init( xGrid, fArray )
+		
+		deallocate( fArray )
+	end subroutine resize
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromNFunction( this, oper, checkBox ) result( output )
+		class(NFunction), intent(in) :: this
+		class(NFunction), intent(in) :: oper
+		logical, optional, intent(in) :: checkBox
+		__TYPE_VALUE__ :: output
+		
+		logical :: effCheckBox
+		
+		effCheckBox = .true.
+		if( present(checkBox) ) effCheckBox = checkBox
+		
+		if( effCheckBox ) then
+			if( .not. this.checkBox( oper ) ) then
+				call GOptions_error( "Inconsistent boxes", "NFunction.expectationValueFromNFunction()" )
+			end if
+		end if
+		
+#if __ID_TYPE__ == 1
+		output = sum( conjg(this.fArray)*oper.fArray*this.fArray )*this.xGrid.dV()
+#else
+		output = sum( this.fArray*oper.fArray*this.fArray )*this.xGrid.dV()
+#endif
+	end function expectationValueFromNFunction
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromRArray( this, oper, checkBox, factor ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: oper(:)
+		logical, optional, intent(in) :: checkBox
+		real(8), optional, intent(in) :: factor
+		__TYPE_VALUE__ :: output
+		
+		logical :: effCheckBox
+		real(8) :: effFactor
+		
+		effCheckBox = .true.
+		if( present(checkBox) ) effCheckBox = checkBox
+		
+		effFactor = 1.0_8
+		if( present(factor) ) effFactor = factor
+		
+		if( effCheckBox ) then
+			if( this.nPoints() /= size(oper) ) then
+				call GOptions_error( &
+					"Inconsistent boxes", &
+					"NFunction.expectationValueFromRArray()", &
+					trim(FString_fromInteger(this.nPoints()))//" /= "//trim(FString_fromInteger(size(oper)))//")" &
+					)
+			end if
+		end if
+		
+#if __ID_TYPE__ == 1
+		output = effFactor*sum( conjg(this.fArray)*oper*this.fArray )*this.xGrid.dV()
+#else
+		output = effFactor*sum( this.fArray*oper*this.fArray )*this.xGrid.dV()
+#endif
+	end function expectationValueFromRArray
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromCArray( this, oper, checkBox ) result( output )
+		class(NFunction), intent(in) :: this
+		complex(8), intent(in) :: oper(:)
+		logical, optional, intent(in) :: checkBox
+		__TYPE_VALUE__ :: output
+		
+		logical :: effCheckBox
+		
+		integer :: i
+		integer :: nx
+		
+		nx = this.xGrid.nPoints
+		
+		effCheckBox = .true.
+		if( present(checkBox) ) effCheckBox = checkBox
+		
+		if( effCheckBox ) then
+			if( this.xGrid.nPoints /= size(oper) ) then
+				call GOptions_error( &
+					"Inconsistent boxes", &
+					"NFunction.expectationValueFromCArray()", &
+					trim(FString_fromInteger(this.xGrid.nPoints))//" /= "//trim(FString_fromInteger(size(oper,dim=1))) &
+					)
+			end if
+		end if
+		
+#if __ID_TYPE__ == 1
+		output = sum( conjg(this.fArray)*oper*this.fArray )*this.xGrid.dV()
+#else
+		output = sum( this.fArray*oper*this.fArray )*this.xGrid.dV()
+#endif
+	end function expectationValueFromCArray
+	
+	!>
+	!! @brief
+	!!
+	function innerProductWithNFunction( this, other, hermitian ) result( output )
+		class(NFunction), intent(in) :: this
+		class(NFunction), intent(in) :: other
+		logical, optional, intent(in) :: hermitian
+		__TYPE_VALUE__ :: output
+		
+		logical :: effHermitian
+		
+		effHermitian = .true.
+		if( present(hermitian) ) effHermitian = hermitian
+		
+! 		if( .not. this.xGrid.isEquallyspaced() ) then
+! 			write(6,*) "### ERROR ### The grid is not equally spaced"
+! 			stop
+! 		end if
+		
+#if __ID_TYPE__ == 1
+		if( effHermitian ) then
+			output = sum( conjg(this.fArray)*other.fArray )*this.xGrid.dV()
+		else
+			output = sum( this.fArray*other.fArray )*this.xGrid.dV()
+		end if
+#else
+		output = sum( this.fArray*other.fArray )*this.xGrid.dV()
+#endif
+	end function innerProductWithNFunction
+	
+	!>
+	!! @brief
+	!!
+	function innerProductWithRArray( this, other, hermitian ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: other(:)
+		logical, optional, intent(in) :: hermitian
+		__TYPE_VALUE__ :: output
+		
+		logical :: effHermitian
+		
+		effHermitian = .true.
+		if( present(hermitian) ) effHermitian = hermitian
+		
+! 		if( .not. this.xGrid.isEquallyspaced() ) then
+! 			write(6,*) "### ERROR ### The grid is not equally spaced"
+! 			stop
+! 		end if
+		
+#if __ID_TYPE__ == 1
+		if( effHermitian ) then
+			output = sum( conjg(this.fArray)*other )*this.xGrid.dV()
+		else
+			output = sum( this.fArray*other )*this.xGrid.dV()
+		end if
+#else
+		output = sum( this.fArray*other )*this.xGrid.dV()
+#endif
+	end function innerProductWithRArray
+	
+	!>
+	!! @brief
+	!!
+	function innerProductWithCArray( this, other, hermitian ) result( output )
+		class(NFunction), intent(in) :: this
+		complex(8), intent(in) :: other(:)
+		logical, optional, intent(in) :: hermitian
+		__TYPE_VALUE__ :: output
+		
+		logical :: effHermitian
+		
+		effHermitian = .true.
+		if( present(hermitian) ) effHermitian = hermitian
+		
+! 		if( .not. this.xGrid.isEquallyspaced() ) then
+! 			write(6,*) "### ERROR ### The grid is not equally spaced"
+! 			stop
+! 		end if
+		
+#if __ID_TYPE__ == 1
+		if( effHermitian ) then
+			output = sum( conjg(this.fArray)*other )*this.xGrid.dV()
+		else
+			output = sum( this.fArray*other )*this.xGrid.dV()
+		end if
+#else
+		output = sum( this.fArray*other )*this.xGrid.dV()
+#endif
+	end function innerProductWithCArray
+	
+	!>
+	!! @brief
+	!!
+	function conjugate( this ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction) :: output
+		
+		integer :: i, j, k
+		
+		output = this
+		
+#if __ID_TYPE__ == 1
+			output.fArray = conjg(this.fArray)
+#endif
+	end function conjugate
+	
+	!>
+	!! @brief
+	!!
+	function absoluteSquare( this ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction) :: output
+		
+		integer :: i, j, k
+		
+		output = this
+		
+#if __ID_TYPE__ == 1
+			output.fArray = abs(this.fArray)**2
+#else
+			output.fArray = this.fArray**2
+#endif
+	end function absoluteSquare
+
+	!>
+	!! @brief 
+	!!
+	subroutine normalize( this, constant )
+		class(NFunction) :: this
+		real(8), optional, intent(out) :: constant
+		
+		real(8) :: nConstant
+		
+		nConstant = 1.0_8/this.norm()
+		
+		this.fArray = nConstant*this.fArray
+		
+		if( present(constant) ) then
+			constant = nConstant
+		end if
+	end subroutine normalize
+	
+	!>
+	!! @brief 
+	!!
+	pure function norm2( this ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8) :: output
+		
+#if __ID_TYPE__ == 1
+		output = sum( conjg(this.fArray)*this.fArray )*this.xGrid.dV()
+#else
+		output = sum( this.fArray*this.fArray )*this.xGrid.dV()
+#endif
+	end function norm2
+	
+	!>
+	!! @brief 
+	!!
+	pure function norm( this ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8) :: output
+		
+		output = sqrt( this.norm2() )
+	end function norm
+	
+	!>
+	!! @brief Return 1 if fileName contains real numbers,
+	!!        0 if fileName contains real numbers and
+	!!        -1 elsewhere
+	!!
+	function NFunction_checkTypeN1DF( fileName ) result( idType )
+		character(*) :: fileName
+		integer :: idType
+		
+		integer :: idFormat
+		character(1) :: buffer
+		character(1000) :: line
+		character(100), allocatable :: tokens(:)
+		
+		idFormat = NFunction_getFormatIdFromFileExtension( fileName )
+		
+		select case( idFormat )
+			case( N1DF_FORMAT )
+				open( unit=1, file=trim(fileName), action='read', form="unformatted" )
+				! 0 = REAL, 1 COMPLEX
+				read(1) idType
+				close(1)
+				
+			case( CUBE_FORMAT )
+				idType = 0
+				
+			case( RCUBE_FORMAT )
+				idType = 0
+				
+			case( ICUBE_FORMAT )
+				idType = 0
+				
+			case( BLKS_FORMAT )
+				open( unit=1, file=trim(fileName), action='read', status="old" )
+				
+				do
+					read(1,"(A1)") buffer
+					
+					if( buffer /= "#" ) exit
+				end do
+				
+				read(1,"(A)") line
+				call FString_split( line, tokens, " " )
+				
+				if( size( tokens ) == 3 ) then
+					idType = 1
+				else if( size( tokens ) == 2 ) then
+					idType = 0
+				else
+					idType = -1
+				end if
+				
+				deallocate( tokens )
+				
+				close(1)
+				
+		end select
+		
+		if( idType /= 0 .and. idType /= 1 ) then
+			call GOptions_error( &
+				"Unknown type file. FileName = "//trim(fileName), &
+				"NFunction_checkTypeN1DF()" &
+			)
+		end if
+	end function NFunction_checkTypeN1DF
+	
+	!>
+	!! @brief
+	!!
+	function NFunction_getFormatIdFromFileExtension( fileName ) result( output )
+		character(*), intent(in) :: fileName
+		integer :: output
+		
+		character(100), allocatable :: tokens(:)
+		character(100) :: extension
+
+		call FString_split( fileName, tokens, "." )
+		extension = ""
+		if( size( tokens ) > 1 ) extension = trim(tokens(size(tokens)))
+		deallocate( tokens )
+		
+		if( trim(extension) == "n1df" ) then
+			output = N1DF_FORMAT
+		else if( trim(extension) == "cube" ) then
+			output = CUBE_FORMAT
+		else if( trim(extension) == "rcube" ) then
+			output = RCUBE_FORMAT
+		else if( trim(extension) == "icube" ) then
+			output = ICUBE_FORMAT
+		else if( trim(extension) == "blks" ) then
+			output = BLKS_FORMAT
+		else if( trim(extension) == "dat" ) then
+			output = BLKS_FORMAT
+		else
+			call GOptions_error( &
+				"Unknown format file (AUTO_FORMAT). FileName = "//trim(fileName), &
+				"NFunction_getFormatIdFromFileExtension()" &
+			)
+		end if
+	end function NFunction_getFormatIdFromFileExtension
+	
+	!> 
+	!! \brief Weights for finite difference derivatives
+	!! \author Stamatis Stamatiadis
+	!!
+	!! \sa  B. Fornberg (1988), Math. Comput. 51(1988), 699-706
+	!! \details
+	!! Given:
+	!! x(0), x(1),..., x(n) : grid points (nonrepeated, otherwise arbitrary)
+	!! ksi: point x=ksi at which the approximations are wanted 
+	!!      (may, but need not be a grid point)
+	!! m : highest order of derivative of interest
+	!
+	!! weights c_{i,j}^k [c(i,j,k)] such that the approximations 
+	!!
+	!!  f^{(k)}(ksi) \approx \sum_{j=0}^i c_{i,j}^k f(x(j)),
+	!!
+	!!  k=0,1,...,m,        i = k, k+1,...,n
+	!!
+	!!  are all optimal.
+	!!
+	!!  C(i,j,k) is the weight to be applied at x(j) when the kth derivative is 
+	!!  approximated by a stencil extending over x(0), x(1), ..., x(i). (j <= i)
+	!!
+	!!  The case m=0 provides the fastest way known for polynomial interpolation  
+	!!  at a single point.
+	!!
+	!!  \param[in]  x a zero-based array of reals; the grid points
+	!!  \param[in]  ksi a real; point at which the approximations are wanted
+	!!  \param[in]  m  an integer; highest order of derivative of interest
+	!!  \param[out] c tridimensional zero-based array of reals; 
+	!!  C(i,j,k) is the weight to be applied at x(j) when the kth derivative is 
+	!!  approximated by a stencil extending over x(0), x(1), ..., x(i). (j <= i)
+	!!   
+	!!  \return nothing
+	!!
+	subroutine fornbergWeights( x, ksi, m, c )
+		integer, parameter :: dpk = kind(1.d0)
+		
+		real(dpk), intent(in) :: x(0:)
+		real(dpk), intent(in) :: ksi
+		integer, intent(in) :: m
+		real(dpk), intent(out) :: c(0:,0:,0:)
+			
+		real (dpk) :: a, b, temp1, temp2, d
+		integer :: i, j, k
+		integer :: minim
+		
+		c(0,0,0) = 1.0_dpk
+		
+		a = 1.0_dpk
+		
+		do i=1,ubound(x,1)
+			minim = min(i,m)
+			b = 1.0_dpk
+				
+			temp1 = x(i) - ksi
+				
+			do j=0,i-1
+				temp2 = x(i) - x(j)
+				
+				b = b * temp2
+				
+				if( i <= m ) c(i-1,j,i) = 0.0_dpk
+					
+				c(i,j,0) = temp1 * c(i-1,j,0) / temp2
+					
+				do k = 1, minim
+					c(i,j,k) = (temp1 * c(i-1,j,k) - k * c(i-1,j,k-1)) / temp2
+				enddo
+			enddo
+		
+			d = a / b
+			temp1 = d * (ksi - x(i-1))
+			
+			c(i,i,0) = temp1 * c(i-1,i-1,0)
+			
+			do k = 1, minim
+				c(i,i,k) = d * k * c(i-1,i-1,k-1) + temp1 * c(i-1,i-1,k)
+			enddo
+			
+			a = b
+		enddo
+		
+	end subroutine fornbergWeights
+	
+	!>
+	!! @brief Returns the numeric value of the function or its derivative in the point x
+	!!
+	!! @input     x  Point where the funtion or derivative will be evaluated
+	!! @input stencil  Number of points that will be used to approximate the function (default=3)
+	!! @input order  order of the derivative (default = 0)
+	!!
+	function interpolatePoint( this, x, stencil, order ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: x
+		integer, optional, intent(in) :: stencil
+		integer, optional, intent(in) :: order
+		__TYPE_VALUE__ :: output
+		
+		integer :: effOrder
+		integer :: effStencil
+		
+		integer :: i, pos
+		real(8), allocatable :: coeff(:,:,:)
+		
+		effOrder = 0
+		if( present(order) ) effOrder = order
+		
+		effStencil = 3
+		if( present(stencil) ) effStencil = stencil
+		
+		if( .not. this.xGrid.isEquallyspaced ) then
+			write(6,"(A)") "### ERROR ### Numerical derivatives for non equally spaced grids are not implemented yet"
+			stop
+		end if
+		
+		if( x < this.xGrid.min .or. x > this.xGrid.max ) then
+			output = 0.0_8
+			return
+		end if
+		
+		pos = (x-this.xGrid.min)/this.xGrid.stepSize+1
+		
+		! Diferencias hacia adelante
+		if( pos <= effStencil ) then
+			allocate( coeff(0:effStencil,0:effStencil,0:effOrder) )
+			call fornbergWeights( this.xGrid.data(pos:pos+effStencil), x, effOrder, coeff )
+			output = sum( coeff( effStencil, :, effOrder )*this.fArray(pos:pos+effStencil) )
+		! Diferencias centradas
+		else if( pos > effStencil .and. pos < this.nPoints()-effStencil  ) then
+			allocate( coeff(0:2*effStencil,0:2*effStencil,0:effOrder) )
+			call fornbergWeights( this.xGrid.data(pos-effStencil:pos+effStencil), x, effOrder, coeff )
+			output = sum( coeff( 2*effStencil, :, effOrder )*this.fArray(pos-effStencil:pos+effStencil) )
+		! Diferencias hacia atrás
+		else if( pos-effStencil <= this.nPoints() ) then
+			allocate( coeff(0:effStencil,0:effStencil,0:effOrder) )
+			call fornbergWeights( this.xGrid.data(pos-effStencil:pos), x, effOrder, coeff )
+			output = sum( coeff( effStencil, :, effOrder )*this.fArray(pos-effStencil:pos) )
+		end if
+		
+		deallocate( coeff )
+	end function interpolatePoint
+	
+	!>
+	!! @brief Returns the numeric value of the function or its derivative in a grid of points
+	!!
+	!! @input xGrid  Grid of points where the funtion or derivative will be evaluated
+	!! @input stencil  Number of points that will be used to approximate the function (default=3)
+	!! @input order  order of the derivative (default = 0)
+	!!
+	function interpolateOnGrid( this, xGrid, stencil, order ) result( output )
+		class(NFunction) :: this
+		type(Grid) :: xGrid
+		integer, optional, intent(in) :: stencil
+		integer, optional, intent(in) :: order
+		type(NFunction) :: output
+		
+		__TYPE_VALUE__, allocatable :: dArray(:)
+		integer :: i
+		
+		allocate( dArray(xGrid.nPoints) )
+		
+		do i=1,xGrid.nPoints
+			dArray(i) = this.interpolatePoint( xGrid.at(i), stencil, order )
+		end do
+		
+		call output.fromGridArray( xGrid, dArray )
+		
+		deallocate( dArray )
+	end function interpolateOnGrid
+	
+#endif

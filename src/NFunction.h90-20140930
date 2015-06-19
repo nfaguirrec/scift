@@ -1,0 +1,698 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!!  This file is part of scift (Scientific Fortran Tools).
+!!  Copyright (C) by authors (2010-2014)
+!!  
+!!  Authors (alphabetic order):
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2010-2014)
+!!  
+!!  Contributors (alphabetic order):
+!!  
+!!  Redistribution and use in source and binary forms, with or
+!!  without modification, are permitted provided that the
+!!  following conditions are met:
+!!  
+!!   * Redistributions of binary or source code must retain
+!!     the above copyright notice and this list of conditions
+!!     and/or other materials provided with the distribution.
+!!   * All advertising materials mentioning features or use of
+!!     this software must display the following acknowledgement:
+!!     
+!!     This product includes software from scift
+!!     (Scientific Fortran Tools) project and its contributors.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#ifndef NFUNCTION_H90
+#define NFUNCTION_H90 1
+	
+	type, public:: NFunction
+		integer :: nPoints
+		type(Grid) :: xGrid
+		__TYPE_VALUE__, allocatable :: yArray(:)
+		
+		contains
+			generic :: init => fromGrid, fromGridData, fromArrays, fromGridArray, fromFunction, fromFile, fromFStream
+			procedure :: fromGrid
+			procedure :: fromGridData
+			procedure :: fromArrays
+			procedure :: fromGridArray
+			procedure :: fromFunction
+			procedure :: fromFile
+			procedure :: fromFStream
+			generic :: assignment(=) => copy
+			procedure :: copy
+			final :: destroyNFunction
+			
+			procedure :: addition
+			procedure :: subtraction
+			procedure :: multiplication
+			procedure :: division
+			procedure :: exponentiation
+			
+			procedure :: additionFC
+			procedure :: subtractionFC
+			procedure :: multiplicationFC
+			procedure :: divisionFC
+			procedure :: exponentiationFC
+			
+			generic :: operator(+) => addition, additionFC
+			generic :: operator(-) => subtraction, subtractionFC
+			generic :: operator(*) => multiplication, multiplicationFC
+			generic :: operator(/) => division, divisionFC
+			generic :: operator(**) => exponentiation, exponentiationFC
+			
+			procedure :: str
+			procedure :: show
+			procedure :: save
+			procedure :: toFStream
+			procedure :: setUnits
+			
+			procedure :: set
+			procedure :: first
+			procedure :: last
+			procedure :: at
+			
+			__ADD_METHODS__
+	end type NFunction
+	
+	interface
+		function prototypeFunction( x ) result( output )
+			real(8), intent(in) :: x
+			__TYPE_VALUE__ :: output
+		end function prototypeFunction
+	end interface
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGrid( this, xGrid )
+		class(NFunction) :: this 
+		type(Grid), intent(in) :: xGrid
+		
+		this.nPoints = xGrid.nPoints
+		this.xGrid = xGrid
+		
+		if( allocated(this.yArray) ) deallocate(this.yArray)
+		allocate( this.yArray(xGrid.nPoints) )
+		this.yArray = 0.0_8
+	end subroutine fromGrid
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGridData( this, min, max, size, stepSize )
+		class(NFunction) :: this
+		real(8) :: min
+		real(8) :: max
+		integer, optional :: size
+		real(8), optional :: stepSize
+		
+		
+		call this.xGrid.init( min, max, size, stepSize )
+		this.nPoints = this.xGrid.nPoints
+		
+		if( allocated(this.yArray) ) deallocate(this.yArray)
+		allocate( this.yArray( this.nPoints ) )
+		
+		this.yArray = 0.0_8
+	end subroutine fromGridData
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromArrays( this, xArray, yArray, units )
+		class(NFunction) :: this
+		real(8), intent(in) :: xArray(:)
+		__TYPE_VALUE__, intent(in) :: yArray(:)
+		real(8), optional, intent(in) :: units(2)
+		
+		integer :: i
+		real(8) :: effUnits(2)
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) then
+			effUnits = units
+		end if
+		
+		if( size(xArray) /= size(yArray) ) then
+			write(*,*) "### ERROR ### NFunction.fromArrays: The xArray's size should be equal to yArray's size (", size(xArray),"/=", size(yArray), ")"
+			stop
+		end if
+		
+		this.nPoints = size(xArray)
+		call this.xGrid.init( xArray )
+		call this.xGrid.setUnits( effUnits(1) )
+		
+		if( allocated(this.yArray) ) deallocate(this.yArray)
+		allocate( this.yArray( size(xArray) ) )
+		
+		this.yArray = yArray*effUnits(2)
+	end subroutine fromArrays
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGridArray( this, xGrid, yArray, units )
+		class(NFunction) :: this 
+		type(Grid), intent(in) :: xGrid
+		__TYPE_VALUE__, intent(in) :: yArray(:)
+		real(8), optional, intent(in) :: units(2)
+		
+		integer :: i
+		real(8) :: effUnits(2)
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) then
+			effUnits = units
+		end if
+		
+		this.nPoints = xGrid.nPoints
+		this.xGrid = xGrid
+		call this.xGrid.setUnits( effUnits(1) )
+		
+		if( allocated(this.yArray) ) deallocate(this.yArray)
+		
+		if( xGrid.nPoints /= size(yArray) ) then
+			write(*,*) "### ERROR ### NFunction.fromGridArray: The xArray's size should be equal to yArray's size (", xGrid.nPoints,"/=", size(yArray), ")"
+			stop
+		end if
+		
+		allocate( this.yArray(xGrid.nPoints) )
+		this.yArray = yArray*effUnits(2)
+	end subroutine fromGridArray
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromFunction( this, xGrid, func, units )
+		class(NFunction) :: this 
+		type(Grid), intent(in) :: xGrid
+		procedure(prototypeFunction) :: func
+		real(8), optional, intent(in) :: units(2)
+		
+		integer :: i
+		real(8) :: effUnits(2)
+		
+		if( present(units) ) then
+			effUnits = units
+		else
+			effUnits = [1.0_8, 1.0_8]
+		end if
+		
+		this.nPoints = xGrid.nPoints
+		this.xGrid = xGrid
+		call this.xGrid.setUnits( effUnits(1) )
+		
+		if( allocated(this.yArray) ) deallocate(this.yArray)
+		allocate( this.yArray(this.nPoints) )
+		
+		do i=1,this.nPoints
+			this.yArray(i) = func( xGrid.data(i) )*effUnits(2)
+		end do
+	end subroutine fromFunction
+	
+	!>
+	!! @brief Constructor
+	!! @todo No esta implementado la selección de la columna
+	!!
+	subroutine fromFile( this, ifileName, columns, cComments, units )
+		class(NFunction) :: this 
+		character(*), intent(in) :: ifileName
+		integer, allocatable, optional, intent(in) :: columns(:)
+		character(*), optional, intent(in) :: cComments
+		real(8), optional, intent(in) :: units(2)
+		
+		type(IFStream) :: ifile
+		real(8) :: effUnits(2)
+		
+		if( present(units) ) then
+			effUnits = units
+		else
+			effUnits = [1.0_8, 1.0_8]
+		end if
+		
+		call ifile.init( ifileName )
+		call this.fromFStream( ifile, columns, cComments, units )
+		call ifile.destroy()
+	end subroutine fromFile
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromFStream( this, stream, columns, cComments, units )
+		class(NFunction) :: this 
+		type(IFStream), intent(in) :: stream
+		integer, optional, intent(in) :: columns(:)
+		character(*), optional, intent(in) :: cComments
+		real(8), optional, intent(in) :: units(2)
+		
+		integer :: nData
+		integer, allocatable :: columnsEff(:)
+		character(:), allocatable :: cCommentsEff
+		character(:), allocatable :: line
+		type(String) :: buffer
+		character(20), allocatable :: tokens(:)
+		real(8), allocatable :: x(:)
+		__TYPE_VALUE__, allocatable :: y(:)
+		real(8) :: effUnits(2)
+		integer :: i
+		real(8) :: rBuffer
+		
+		if( present(cComments) ) then
+			cCommentsEff = cComments
+		else
+			cCommentsEff = "#"
+		end if
+		
+		if( present(columns) ) then
+			allocate( columnsEff(size(columns)) )
+			columnsEff = columns
+		else
+#if __ID_TYPE__ == 1
+			allocate( columnsEff(3) )
+			columnsEff = [1,2,3]
+#else
+			allocate( columnsEff(2) )
+			columnsEff = [1,2]
+#endif
+		end if
+		
+		if( present(units) ) then
+			effUnits = units
+		else
+			effUnits = [1.0_8, 1.0_8]
+		end if
+		
+		! El peor de los casos es que todas las lineas sean datos
+		allocate( x(stream.numberOfLines) )
+		allocate( y(stream.numberOfLines) )
+		
+		nData = 1
+		do while( .not. stream.eof() )
+			line = stream.readLine( cCommentsEff )
+			
+			if( len(line) /= 0 ) then
+				call buffer.fromFString( line )
+				call buffer.split( tokens, " " )
+				
+				if( nData == 1 .and. .not. ( size(tokens) >= size(columnsEff) ) ) then
+					write(*,*) "### ERROR ### NFunction.fromFStream(): Number of columns in file ("&
+									//trim(FString_fromInteger(size(tokens)))&
+									//") are not in agree with the parameter columns ("&
+									//trim(FString_fromInteger(size(columnsEff)))//"). nFile >= nCols"
+					stop
+				end if
+				
+#if __ID_TYPE__ == 1
+				if( size(columnsEff) == 3 ) then
+					if( columnsEff(1) <= size(tokens) .and. columnsEff(2) <= size(tokens) .and. columnsEff(3) <= size(tokens) ) then
+						if( len_trim(tokens(columnsEff(1))) /= 0 .and. len_trim(tokens(columnsEff(2))) /= 0 .and. len_trim(tokens(columnsEff(3))) /= 0 ) then
+							read( tokens(columnsEff(1)),* ) x(nData)
+							
+							buffer = "("//trim(tokens(columnsEff(2)))//", "//trim(tokens(columnsEff(3)))//")"
+							read( buffer.fstr,* ) y(nData)
+							nData = nData + 1
+						end if
+					end if
+				else if( size(columnsEff) == 2 ) then
+					if( columnsEff(1) <= size(tokens) .and. columnsEff(2) <= size(tokens) ) then
+						if( len_trim(tokens(columnsEff(1))) /= 0 .and. len_trim(tokens(columnsEff(2))) /= 0 ) then
+							read( tokens(columnsEff(1)),* ) x(nData)
+							read( tokens(columnsEff(2)),* ) rBuffer
+							
+							y(nData) = cmplx( rBuffer, 0.0_8 )
+							
+							nData = nData + 1
+						end if
+					end if
+				else
+					write(*,*) "### ERROR ### NFunction.fromFStream(). Bad number of tokens while reading file"
+					stop
+				end if
+#else
+				if( columnsEff(1) <= size(tokens) .and. columnsEff(2) <= size(tokens) ) then
+					if( len_trim(tokens(columnsEff(1))) /= 0 .and. len_trim(tokens(columnsEff(2))) /= 0 ) then
+						read( tokens(columnsEff(1)),* ) x(nData)
+						read( tokens(columnsEff(2)),* ) y(nData)
+						nData = nData + 1
+					end if
+				end if
+#endif
+			end if
+		end do
+		
+		this.nPoints = nData-1
+		call this.xGrid.fromArray( x(1:this.nPoints) )
+		if( allocated(this.yArray) ) deallocate(this.yArray)
+		allocate( this.yArray(this.nPoints) )
+		this.yArray = y(1:this.nPoints)
+		call this.setUnits( effUnits )
+		
+		deallocate(x)
+		deallocate(y)
+		deallocate(columnsEff)
+	end subroutine fromFStream
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	subroutine copy( this, other )
+		class(NFunction), intent(inout) :: this
+		type(NFunction), intent(in) :: other
+		
+		this.nPoints = other.nPoints
+		call this.xGrid.copy( other.xGrid )
+		
+		if( allocated(this.yArray) ) deallocate( this.yArray )
+		allocate( this.yArray(this.nPoints) )
+		
+		this.yArray = other.yArray
+	end subroutine copy
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyNFunction( this )
+		type(NFunction) :: this
+		
+		this.nPoints = -1
+! 		call this.xGrid.destroy()
+		
+		if( allocated(this.yArray) ) deallocate( this.yArray )
+	end subroutine destroyNFunction
+	
+	!>
+	!! @brief
+	!!
+	function addition( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		class(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints /= other.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.yArray = this.yArray + other.yArray
+	end function addition
+	
+	!>
+	!! @brief
+	!!
+	function additionFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.yArray = this.yArray+constant
+	end function additionFC
+	
+	!>
+	!! @brief
+	!!
+	function subtraction( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints /= other.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.yArray = this.yArray - other.yArray
+	end function subtraction
+	
+	!>
+	!! @brief
+	!!
+	function subtractionFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.yArray = this.yArray-constant
+	end function subtractionFC
+	
+	!>
+	!! @brief
+	!!
+	function multiplication( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints /= other.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.yArray = this.yArray*other.yArray
+	end function multiplication
+	
+	!>
+	!! @brief
+	!!
+	function multiplicationFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.yArray = this.yArray*constant
+	end function multiplicationFC
+	
+	!>
+	!! @brief
+	!!
+	function division( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints /= other.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.yArray = this.yArray/other.yArray
+	end function division
+	
+	!>
+	!! @brief
+	!!
+	function divisionFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.yArray = this.yArray/constant
+	end function divisionFC
+	
+	!>
+	!! @brief
+	!!
+	function exponentiation( this, other ) result( output )
+		class(NFunction), intent(in) :: this
+		type(NFunction), intent(in) :: other
+		type(NFunction) :: output
+		
+		if( this.nPoints /= other.nPoints ) then
+			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
+			stop
+		end if
+		
+		call output.copy( this )
+		output.yArray = this.yArray**other.yArray
+	end function exponentiation
+	
+	!>
+	!! @brief
+	!!
+	function exponentiationFC( this, constant ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction) :: output
+		
+		call output.copy( this )
+		output.yArray = this.yArray**constant
+	end function exponentiationFC
+	
+	!>
+	!! Write the string representation of the object
+	!! in a selected unit
+	!!
+	subroutine show( this, unit )
+		class(NFunction) :: this
+		integer, optional, intent(in) :: unit
+		
+		integer :: effUnit
+		
+		if( present(unit) ) then
+			effUnit = unit
+		else
+			effUnit = 6
+		end if
+		
+		write(effUnit,"(a)") trim(str(this))
+	end subroutine show
+	
+	!>
+	!! Save the data in two column format in a
+	!! selected unit
+	!!
+	subroutine save( this, oFileName, units, append, lastStep )
+		class(NFunction) :: this
+		character(*), optional, intent(in) :: oFileName
+		real(8), optional, intent(in) :: units(2)
+		logical, optional, intent(in) :: append
+		integer, optional, intent(in) :: lastStep
+		
+		logical :: effAppend
+		
+		type(OFStream) :: ofile
+		
+        effAppend = .false.
+        if( present(append) ) effAppend = append
+		
+		if( present(units) .and. present(oFileName) ) then
+			call ofile.init( oFileName, append=effAppend )
+			call this.toFStream( ofile, units, lastStep=lastStep )
+			call ofile.close()
+		else if( present(oFileName) ) then
+			call ofile.init( oFileName, append=effAppend )
+			call this.toFStream( ofile, lastStep=lastStep )
+			call ofile.close()
+		else
+			call this.toFStream( lastStep=lastStep )
+		end if
+		
+	end subroutine save
+	
+	
+	!>
+	!! Save the data in two column format in a
+	!! selected unit
+	!!
+	subroutine toFStream( this, ofile, units, lastStep )
+		class(NFunction) :: this
+		type(OFStream), optional, intent(in) :: ofile
+		real(8), optional, intent(in) :: units(2)
+		integer, optional, intent(in) :: lastStep
+		
+		integer :: effUnit
+		real(8) :: effUnits(2)
+		integer :: effLastStep
+		integer :: i
+		character(255) :: date
+		
+		effUnit = STDOUT
+		if( present(ofile) ) effUnit = ofile.unit
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) effUnits = units
+		
+		effLastStep = this.nPoints
+		if( present(lastStep) ) effLastStep = lastStep
+		
+		call fdate(date)
+		
+#if __ID_TYPE__ == 0
+		write(effUnit,"(A)") "# Real Numerical Function"
+#elif __ID_TYPE__ == 1
+		write(effUnit,"(A)") "# Complex Numerical Function"
+#endif
+		write(effUnit,"(A)") "# "//trim(date)
+		
+		do i=1,effLastStep
+			if( abs(this.yArray( i )) > 1d-98 ) then
+#if __ID_TYPE__ == 1
+				write(effUnit,"(e15.7,2e15.7)") this.xGrid.data(i)/effUnits(1), &
+					real(this.yArray( i ))/effUnits(2), &
+					aimag(this.yArray( i ))/effUnits(2)
+#else
+				write(effUnit,"(e15.7,e15.7)") this.xGrid.data(i)/effUnits(1), &
+					this.yArray( i )/effUnits(2)
+#endif
+			else
+				write(effUnit,"(e15.7,2e15.7)") this.xGrid.data(i)/effUnits(1), 0.0_8, 0.0_8
+			end if
+		end do
+		
+		write(effUnit,"(a)") ""
+		write(effUnit,"(a)") ""
+	end subroutine toFStream
+	
+	!>
+	!! @brief
+	!!
+	subroutine setUnits( this, units )
+		class(NFunction) :: this
+		real(8), intent(in) :: units(2)
+		
+		call this.xGrid.setUnits( units(1) )
+		this.yArray = this.yArray*units(2)
+	end subroutine setUnits
+	
+	!>
+	!! @brief
+	!!
+	subroutine set( this, n, yValue )
+		class(NFunction) :: this
+		integer, intent(in) :: n
+		__TYPE_VALUE__, intent(in) :: yValue
+		
+		if( n <= this.nPoints ) then
+			this.yArray(n) = yValue
+		else
+			call GOptions_error( &
+				"Accessing an array outside its bounds", &
+				"NFunction.set()", &
+				"("//trim(FString_fromInteger(n))//">"//trim(FString_fromInteger(this.nPoints))//")" &
+			)
+		end if
+	end subroutine set
+	
+	!>
+	!! @brief
+	!!
+	pure function first( this ) result( output )
+		class(NFunction), intent(in) :: this
+		__TYPE_VALUE__ :: output
+		
+		output = this.yArray(1)
+	end function first
+	
+	!>
+	!! @brief
+	!!
+	pure function last( this ) result( output )
+		class(NFunction), intent(in) :: this
+		__TYPE_VALUE__ :: output
+		
+		output = this.yArray( this.nPoints )
+	end function last
+	
+	!>
+	!! @brief
+	!!
+	pure function at( this, pos ) result( output )
+		class(NFunction), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_VALUE__ :: output
+		
+		output = this.yArray( pos )
+	end function at
+	
+#endif

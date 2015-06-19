@@ -1,0 +1,4 @@
+load ""
+background [255,255,255]
+wireframe 0.15; spacefill 23%
+moveto 0 1 0 0 -100

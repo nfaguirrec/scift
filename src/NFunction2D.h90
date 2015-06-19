@@ -1,0 +1,1538 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!!  This file is part of scift (Scientific Fortran Tools).
+!!  Copyright (C) by authors (2013-2015)
+!!  
+!!  Authors (alphabetic order):
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2015-2015)
+!!  
+!!  Contributors (alphabetic order):
+!!  
+!!  Redistribution and use in source and binary forms, with or
+!!  without modification, are permitted provided that the
+!!  following conditions are met:
+!!  
+!!   * Redistributions of binary or source code must retain
+!!     the above copyright notice and this list of conditions
+!!     and/or other materials provided with the distribution.
+!!   * All advertising materials mentioning features or use of
+!!     this software must display the following acknowledgement:
+!!     
+!!     This product includes software from scift
+!!     (Scientific Fortran Tools) project and its contributors.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#ifndef NFUNCTION2D_H90
+#define NFUNCTION2D_H90 1
+	
+	type, public :: NFunction2D
+		type(Grid2D) :: xyGrid
+		__TYPE_VALUE__ , allocatable :: fArray(:,:)
+		
+		contains
+			generic :: init => fromGrid2D, fromArrays, fromGrid2DArray, fromFunction, fromFile!, fromFStream
+			procedure :: fromGrid2D
+			procedure :: fromArrays
+			procedure :: fromGrid2DArray
+			procedure :: fromFunction
+			procedure :: fromFile
+! 			procedure :: fromFStream
+			generic :: assignment(=) => copyNFunction2D
+			generic :: copy => copyNFunction2D
+			procedure :: copyNFunction2D
+			procedure :: copyFArray
+			final :: destroyNFunction2D
+			
+			procedure :: addition
+			procedure :: subtraction
+			procedure :: multiplication
+			procedure :: division
+			procedure :: exponentiation
+			
+			procedure :: additionFC
+			procedure :: subtractionFC
+			procedure :: multiplicationFC
+			procedure :: divisionFC
+			procedure :: exponentiationFC
+			
+			generic :: operator(+) => addition, additionFC
+			generic :: operator(-) => subtraction, subtractionFC
+			generic :: operator(*) => multiplication, multiplicationFC
+			generic :: operator(/) => division, divisionFC
+			generic :: operator(**) => exponentiation, exponentiationFC
+! 			
+			procedure :: str
+			procedure :: show
+			procedure :: save
+			procedure :: saveN2DF
+			procedure :: saveBLKS
+			procedure :: saveProjection1D
+			procedure :: load => fromFile
+			procedure :: checkTypeN2DF
+			procedure :: loadN2DF
+			procedure :: loadBLKS
+! 			procedure :: toFStream
+! 			procedure :: setUnits
+
+			procedure :: set
+			procedure :: at
+			
+			procedure :: x
+			procedure :: y
+			generic :: min => minInCoord, minVec
+			procedure :: minInCoord
+			procedure :: minVec
+			generic :: max => maxInCoord, maxVec
+			procedure :: maxInCoord
+			procedure :: maxVec
+			generic :: stepSize => stepSizeInCoord, stepSizeVec
+			procedure :: stepSizeInCoord
+			procedure :: stepSizeVec
+			procedure :: isEquallyspaced
+			procedure :: checkEquallyspaced
+			
+			generic :: nPoints => nPointsInCoord, nPointsVec
+			procedure :: nPointsInCoord
+			procedure :: nPointsVec
+			procedure :: normalize
+			procedure :: norm
+			
+			generic :: expectationValue => expectationValueFromNFunction, expectationValueFromRArray, expectationValueFromCArray
+			procedure :: expectationValueFromNFunction
+			procedure :: expectationValueFromRArray
+			procedure :: expectationValueFromCArray
+			
+! 			procedure :: interpolate
+			generic :: evaluate => evaluateXY, evaluateCoord
+			procedure :: evaluateXY
+			procedure :: evaluateCoord
+			
+			procedure :: resize
+			
+			procedure :: checkBox
+			generic :: innerProduct => innerProductWithNFunction2D, innerProductWithRArray, innerProductWithCArray
+			procedure :: innerProductWithNFunction2D
+			procedure :: innerProductWithRArray
+			procedure :: innerProductWithCArray
+			procedure :: conjugate
+			procedure :: absoluteSquare
+			procedure :: reducedFunction
+			
+			__ADD_METHODS__
+	end type NFunction2D
+
+	interface
+		function prototypeFunction2D( x, y ) result( output )
+			real(8), intent(in) :: x, y
+			__TYPE_VALUE__ :: output
+		end function prototypeFunction2D
+	end interface
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGrid2D( this, xyGrid )
+		class(NFunction2D) :: this 
+		type(Grid2D), intent(in) :: xyGrid
+		
+		integer :: i
+		integer :: err
+		
+		this.xyGrid = xyGrid
+		
+		if( allocated(this.fArray) ) deallocate(this.fArray)
+		allocate( this.fArray(xyGrid.nPoints(1),xyGrid.nPoints(2)), stat=err )
+		
+		if( err /= 0 ) then
+			call GOptions_error( &
+				"Not enought memory to allocate this function", &
+				"NFunction2D.fromGrid2D()" &
+			)
+		end if
+		
+		this.fArray = 0.0_8
+	end subroutine fromGrid2D
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromArrays( this, xArray, yArray, fArray, units, cutoff, fillWithZeros )
+		class(NFunction2D) :: this 
+		real(8), intent(in) :: xArray(:)
+		real(8), intent(in) :: yArray(:)
+		__TYPE_VALUE__, intent(in) :: fArray(:,:)
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		logical, optional :: fillWithZeros
+		
+		integer :: i, j
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		logical :: effFillWithZeros
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) effUnits = units
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		effFillWithZeros = .false.
+		if( present(fillWithZeros) ) effFillWithZeros = fillWithZeros
+		
+		if( .not. effFillWithZeros ) then
+			if( size(xArray) /= size(fArray,dim=1) ) then
+				call GOptions_error( "The xArray's size should be equal to fArray's size", "NFunction2D.fromArrays()" )
+			end if
+			
+			if( size(yArray) /= size(fArray,dim=2) ) then
+				call GOptions_error( "The yArray's size should be equal to fArray's size", "NFunction2D.fromArrays()" )
+			end if
+		end if
+		
+		call this.xyGrid.fromArray( xArray, yArray )
+		call this.xyGrid.setUnits( effUnits(1) )
+		
+		if( allocated(this.fArray) ) deallocate(this.fArray)
+		allocate( this.fArray( size(xArray), size(yArray) ) )
+		
+		do j=1,size(fArray,dim=2); do i=1,size(fArray,dim=1)
+#if __ID_TYPE__ == 0
+			this.fArray(i,j) = min( max( fArray(i,j)*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this.fArray(i,j) = fArray(i,j)*effUnits(2)
+#endif
+		end do; end do
+
+		if( effFillWithZeros ) then
+			do j=size(fArray,dim=2)+1,size(yArray); do i=size(fArray,dim=1)+1,size(xArray)
+				this.fArray(i,j) = 0.0_8
+			end do; end do
+		end if
+
+	end subroutine fromArrays
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGrid2DArray( this, xyGrid, fArray, units, cutoff, fillWithZeros )
+		class(NFunction2D) :: this 
+		type(Grid2D), intent(in) :: xyGrid
+		__TYPE_VALUE__, intent(in) :: fArray(:,:)
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		logical, optional :: fillWithZeros
+		
+		integer :: i, j
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		logical :: effFillWithZeros
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) effUnits = units
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		effFillWithZeros = .false.
+		if( present(fillWithZeros) ) effFillWithZeros = fillWithZeros
+		
+		this.xyGrid = xyGrid
+		call this.xyGrid.setUnits( effUnits(1) )
+		
+		if( .not. effFillWithZeros ) then
+			if( xyGrid.nPoints(1) /= size(fArray,dim=1) ) then
+				call GOptions_error( "The xArray's size should be equal to fArray's size", "NFunction2D.fromGrid2DArray()" )
+			end if
+			
+			if( xyGrid.nPoints(2) /= size(fArray,dim=2) ) then
+				call GOptions_error( "The yArray's size should be equal to fArray's size", "NFunction2D.fromGrid2DArray()" )
+			end if
+		end if
+		
+		if( allocated(this.fArray) ) deallocate(this.fArray)
+		allocate( this.fArray(xyGrid.nPoints(1),xyGrid.nPoints(2)) )
+		
+		do j=1,xyGrid.nPoints(2); do i=1,xyGrid.nPoints(1)
+#if __ID_TYPE__ == 0
+			this.fArray(i,j) = min( max( fArray(i,j)*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this.fArray(i,j) = fArray(i,j)*effUnits(2)
+#endif
+		end do; end do
+
+		if( effFillWithZeros ) then
+			do j=xyGrid.nPoints(2)+1,size(fArray,dim=2); do i=xyGrid.nPoints(1)+1,size(fArray,dim=1)
+				this.fArray(i,j) = 0.0_8
+			end do; end do
+		end if
+		
+	end subroutine fromGrid2DArray
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromFunction( this, xyGrid, func, units, cutoff )
+		class(NFunction2D), target :: this 
+		type(Grid2D), target, intent(in) :: xyGrid
+		procedure(prototypeFunction2D) :: func
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		
+		integer :: i, j
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		integer :: nx, ny
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) effUnits = units
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		this.xyGrid = xyGrid
+		
+		call this.xyGrid.setUnits( effUnits(1) )
+		
+		nx = this.xyGrid.nPoints(1)
+		ny = this.xyGrid.nPoints(2)
+		
+		if( allocated(this.fArray) ) deallocate(this.fArray)
+		allocate( this.fArray(nx,ny) )
+		
+		do j=1,ny; do i=1,nx
+#if __ID_TYPE__ == 0
+			this.fArray(i,j) = min( max( func( xyGrid.x(i), xyGrid.y(j) )*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this.fArray(i,j) = func( xyGrid.x(i), xyGrid.y(j) )*effUnits(2)
+#endif
+		end do; end do
+	end subroutine fromFunction
+	
+	!>
+	!! @brief Reads from a file
+	!!
+	subroutine fromFile( this, fileName, format, cutoff )
+		class(NFunction2D) :: this
+		character(*), optional, intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		real(8), optional, intent(in) :: cutoff
+		
+		integer :: effFormat
+		
+		character(100), allocatable :: tokens(:)
+		character(100) :: extension
+		
+		if( present(cutoff) ) call GOptions_error( "Cutoff option is not implemented yet", "NFunction2D.fromFile()" )
+		
+		effFormat = AUTO_FORMAT
+		if( present(format) ) effFormat = format
+		
+		select case ( effFormat )
+			case( AUTO_FORMAT )
+				call FString_split( fileName, tokens, "." )
+				extension = ""
+				if( size( tokens ) > 1 ) extension = trim(tokens(size(tokens)))
+				deallocate( tokens )
+				
+				if( trim(extension) == "n2df" ) then
+					call this.loadN2DF( fileName )
+				else if( trim(extension) == "blks" ) then
+					call this.loadBLKS( fileName )
+				else
+					call GOptions_error( &
+						"Unknown format file (AUTO_FORMAT). fileName = "//trim(fileName), &
+						"NFunction2D.fromFile(extension="//trim(extension)//")" &
+					)
+				end if
+			case( N2DF_FORMAT )
+				call this.loadN2DF( fileName )
+			case( BLKS_FORMAT )
+				call this.loadBLKS( fileName )
+			case default
+				call GOptions_error( "The format is not supported ("//trim(FString_fromInteger(effFormat))//")", "NFunction2D.fromFile()" )
+		end select
+	end subroutine fromFile
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	subroutine copyNFunction2D( this, other )
+		class(NFunction2D), intent(inout) :: this
+		class(NFunction2D), intent(in) :: other
+		
+		integer :: i, j
+		
+		this.xyGrid = other.xyGrid
+		
+		if( allocated(this.fArray) ) deallocate( this.fArray )
+		allocate( this.fArray(other.nPoints(1),other.nPoints(2)) )
+		
+		do j=1,other.nPoints(2); do i=1,other.nPoints(1)
+			this.fArray(i,j) = other.fArray(i,j)
+		end do; end do
+	end subroutine copyNFunction2D
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	pure subroutine copyFArray( this, other )
+		class(NFunction2D), intent(inout) :: this
+		class(NFunction2D), intent(in) :: other
+		
+		integer :: i, j
+		
+		do j=1,other.nPoints(2); do i=1,other.nPoints(1)
+			this.fArray(i,j) = other.fArray(i,j)
+		end do; end do
+	end subroutine copyFArray
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyNFunction2D( this )
+		type(NFunction2D) :: this
+		
+		if( allocated(this.fArray) ) deallocate( this.fArray )
+	end subroutine destroyNFunction2D
+	
+	!>
+	!! @brief
+	!!
+	function addition( this, other ) result( output )
+		class(NFunction2D), intent(in) :: this
+		class(NFunction2D), intent(in) :: other
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		if( this.nPoints(1) /= other.nPoints(1) .or. &
+		    this.nPoints(2) /= other.nPoints(2) ) then
+			call GOptions_error( "Grids have not the same size", "NFunction2D.addition()" )
+		end if
+		
+		output = this
+
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j) + other.fArray(i,j)
+		end do; end do
+	end function addition
+	
+	!>
+	!! @brief
+	!!
+	function additionFC( this, constant ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		output = this
+
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j) + constant
+		end do; end do
+	end function additionFC
+	
+	!>
+	!! @brief
+	!!
+	function subtraction( this, other ) result( output )
+		class(NFunction2D), intent(in) :: this
+		type(NFunction2D), intent(in) :: other
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		if( this.nPoints(1) /= other.nPoints(1) .or. &
+		    this.nPoints(2) /= other.nPoints(2) ) then
+			call GOptions_error( "Grids have not the same size", "NFunction2D.subtraction()" )
+		end if
+		
+		output = this
+
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j) - other.fArray(i,j)
+		end do; end do
+	end function subtraction
+	
+	!>
+	!! @brief
+	!!
+	function subtractionFC( this, constant ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		output = this
+
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j) - constant
+		end do; end do
+	end function subtractionFC
+	
+	!>
+	!! @brief
+	!!
+	function multiplication( this, other ) result( output )
+		class(NFunction2D), intent(in) :: this
+		type(NFunction2D), intent(in) :: other
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		if( this.nPoints(1) /= other.nPoints(1) .or. &
+		    this.nPoints(2) /= other.nPoints(2) ) then
+			call GOptions_error( "Grids have not the same size", "NFunction2D.multiplication()" )
+			stop
+		end if
+		
+		output = this
+		
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j)*other.fArray(i,j)
+		end do; end do
+	end function multiplication
+	
+	!>
+	!! @brief
+	!!
+	function multiplicationFC( this, constant ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		output = this
+
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j)*constant
+		end do; end do
+	end function multiplicationFC
+	
+	!>
+	!! @brief
+	!!
+	function division( this, other ) result( output )
+		class(NFunction2D), intent(in) :: this
+		type(NFunction2D), intent(in) :: other
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		if( this.nPoints(1) /= other.nPoints(1) .or. &
+		    this.nPoints(2) /= other.nPoints(2) ) then
+			call GOptions_error( "Grids have not the same size", "NFunction2D.division()" )
+		end if
+		
+		output = this
+
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j)/other.fArray(i,j)
+		end do; end do
+	end function division
+	
+	!>
+	!! @brief
+	!!
+	function divisionFC( this, constant ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		output = this
+
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j)/constant
+		end do; end do
+	end function divisionFC
+	
+	!>
+	!! @brief
+	!!
+	function exponentiation( this, other ) result( output )
+		class(NFunction2D), intent(in) :: this
+		type(NFunction2D), intent(in) :: other
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		if( this.nPoints(1) /= other.nPoints(1) .or. &
+		    this.nPoints(2) /= other.nPoints(2) ) then
+			call GOptions_error( "Grids have not the same size", "NFunction2D.exponentiation()" )
+		end if
+		
+		output = this
+
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j)**other.fArray(i,j)
+		end do; end do
+	end function exponentiation
+	
+	!>
+	!! @brief
+	!!
+	function exponentiationFC( this, constant ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		output = this
+
+		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j)**constant
+		end do; end do
+	end function exponentiationFC	
+	
+	!>
+	!! @brief Save the funtion in a file
+	!!
+	subroutine save( this, fileName, format )
+		class(NFunction2D) :: this
+		character(*), optional, intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		
+		integer :: effFormat
+		
+		character(100), allocatable :: tokens(:)
+		character(100) :: extension
+		
+		effFormat = AUTO_FORMAT
+		if( present(format) ) effFormat = format
+		
+		select case ( effFormat )
+			case( AUTO_FORMAT )
+				call FString_split( fileName, tokens, "." )
+				extension = ""
+				if( size( tokens ) > 1 ) extension = trim(tokens(size(tokens)))
+				deallocate( tokens )
+				
+				if( trim(extension) == "n2df" ) then
+					call this.saveN2DF( fileName )
+				else if( trim(extension) == "blks" ) then
+					call this.saveBLKS( fileName )
+				else
+					call GOptions_error( &
+						"Unknown format file (AUTO_FORMAT). FileName = "//trim(fileName), &
+						"NFunction2D.save(extension="//trim(extension)//")" &
+					)
+				end if
+			case( N2DF_FORMAT )
+				call this.saveN2DF( fileName )
+			case( BLKS_FORMAT )
+				call this.saveBLKS( fileName )
+			case default
+				call GOptions_error( "Format "//FString_fromInteger(effFormat)//" not supported", "NFunction2D.save()" )
+		end select
+	end subroutine save
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveN2DF( this, fileName )
+		class(NFunction2D) :: this
+		character(*) :: fileName
+		
+		integer :: idType
+		
+		if( .not. this.xyGrid.isEquallyspaced() ) then
+			call GOptions_error( &
+				"This subroutine is not available for functions wich are not equally spaced", &
+				"NFunction2D.saveN2DF()" &
+			)
+		end if
+		
+		idType = __ID_TYPE__
+		
+		open( unit=1, file=trim(fileName), action='write', form="unformatted" )
+		
+		! 0 = REAL, 1 COMPLEX
+		write(1) idType
+		
+		! origin of the grid
+		write(1) this.xyGrid.min(1), this.xyGrid.min(2)
+		
+		! Number of points for each coordinate
+		write(1) this.xyGrid.nPoints(1), this.xyGrid.nPoints(2)
+		
+		! Increment for each coordinate
+		write(1) this.xyGrid.stepSize(1), this.xyGrid.stepSize(2)
+		
+		!!!!!!!!!!!!!!!!!!!!!!!
+		! Volumetric data
+		write(1) this.fArray
+		
+		close(1)
+	end subroutine saveN2DF
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveBLKS( this, fileName )
+		class(NFunction2D), intent(in) :: this
+		character(*), intent(in) :: fileName
+		
+		integer :: ix, iy
+		character(255) :: date
+		
+		call fdate(date)
+		
+		open( unit=1, file=trim(fileName), status="unknown" )
+		
+		! The first and second line are simply comments
+#if __ID_TYPE__ == 0
+		write(1,"(A)") "# Real Numerical Function"
+#elif __ID_TYPE__ == 1
+		write(1,"(A)") "# Complex Numerical Function"
+#endif
+		write(1,"(A)") "# XY"
+		write(1,"(A)") "# "//trim(date)
+		
+		do ix=1,this.xyGrid.nPoints(1)
+			do iy=1,this.xyGrid.nPoints(2)
+				
+#if __ID_TYPE__ == 0
+				write(1,"(4E13.5)") this.xyGrid.at(ix,iy), this.fArray(ix,iy)
+#elif __ID_TYPE__ == 1
+				write(1,"(5E13.5)") this.xyGrid.at(ix,iy), this.fArray(ix,iy)
+#endif
+			end do
+				
+			write(1,*) ""
+		end do
+		
+		close(1)
+	end subroutine saveBLKS
+	
+	!>
+	!! @brief
+	!! @todo Solo está implementado el caso en que dir sea en dirección paralela a una coordenanda y origen 0.0,0.0,0.0
+	!!
+	subroutine saveProjection1D( this, fileName, origin, dir, resolution, append, beforeLine )
+		class(NFunction2D), intent(in) :: this
+		character(*), intent(in) :: fileName
+		real(8) :: origin(2)
+		integer, intent(in) :: dir(2)
+		real(8), optional, intent(in) :: resolution
+		logical, optional, intent(in) :: append
+		character(*), optional, intent(in) :: beforeLine
+		
+		logical :: effAppend
+		character(100) :: effBeforeLine
+		integer :: invResolution
+		
+		real(8) :: minDir
+		real(8) :: maxDir
+		real(8) :: stepSizeDir
+		real(8) :: valDir
+		__TYPE_VALUE__ :: value
+		
+		real(8) :: ssum
+		integer :: codeDir
+		
+		effAppend = .false.
+		if( present(append) ) effAppend = append
+		
+		effBeforeLine = ""
+		if( present(beforeLine) ) effBeforeLine = beforeLine
+		
+		invResolution = 1
+		if( present(resolution) ) invResolution = ceiling( 1.0_8/resolution )
+		
+		if( effAppend ) then
+			open( unit=1, file=trim(fileName), status="unknown", access="append" )
+		else
+			open( unit=1, file=trim(fileName), status="unknown" )
+		end if
+		
+		if( .not. this.isEquallyspaced() ) then
+			call GOptions_error( &
+				"This subroutine is not available yet for functions wich are not equally spaced", &
+				"NFunction2D.saveProjection1D()" &
+			)
+		end if
+		
+		codeDir = 2
+		if( all(dir == [1,0]) ) then
+			codeDir = 1
+		else if( all(dir == [0,1]) ) then
+			codeDir = 2
+		else
+			call GOptions_error( &
+				"Direction "//FString_fromIntegerArray(dir)//" is not implemented yet. Try [1,0] or [0,1]", &
+				"NFunction2D.saveProjection1D()" &
+			)
+		end if
+		
+		minDir = this.xyGrid.min(codeDir)
+		maxDir = this.xyGrid.max(codeDir)
+		stepSizeDir = this.xyGrid.stepSize(codeDir)*invResolution
+		
+		if( minDir > maxDir ) then
+			call GOptions_error( &
+				"minDir > maxDir ("//FString_fromReal(minDir)//" > "//FString_fromReal(maxDir)//")", &
+				"NFunction2D.saveProjection1D()" &
+			)
+		end if
+		
+		valDir = minDir
+		ssum = 0.0_8
+		do while( valDir <= maxDir )
+			value = this.evaluateXY( origin(1), valDir )  !< Busca el punto más cercano, no interpola
+			
+#if __ID_TYPE__ == 1
+			if( abs(value) > 1d-98 ) then
+				write(1,"(A,3E13.5)") trim(effBeforeLine), valDir, real(value), aimag(value)
+			else
+				write(1,"(A,3E13.5)") trim(effBeforeLine), valDir, 0.0_8, 0.0_8
+			end if
+#elif __ID_TYPE__ == 0
+			if( abs(value) > 1d-98 ) then
+				write(1,"(A,2E13.5)") trim(effBeforeLine), valDir, value
+			else
+				write(1,"(A,2E13.5)") trim(effBeforeLine), valDir, 0.0_8
+			end if
+#endif
+			ssum = ssum  + abs(value)**2
+			
+			valDir = valDir + stepSizeDir
+		end do
+		
+		write(1,*) "# norm = ", sqrt(1.0_8/(stepSizeDir*ssum))
+		write(1,*) ""
+		write(1,*) ""
+		
+		close(1)
+	end subroutine saveProjection1D
+	
+	!>
+	!! @brief
+	!!
+	subroutine loadBLKS( this, fileName, debug )
+		class(NFunction2D) :: this
+		character(*) :: fileName
+		logical, optional, intent(in) :: debug
+		
+		logical :: effDebug
+		
+		effDebug = .false.
+		if( present(debug) ) effDebug = debug
+		
+		call GOptions_error( &
+			"This subroutine is not implemented yet", &
+			"NFunction2D.loadBLKS()" &
+		)
+		
+		open( unit=1, file=trim(fileName), status='old' )
+		
+		
+		
+		close(1)
+	end subroutine loadBLKS
+	
+	!>
+	!! @brief Return 1 if fileName contains real numbers,
+	!!        0 if fileName contains real numbers and
+	!!        -1 elsewhere
+	!!
+	function checkTypeN2DF( this, fileName ) result( output )
+		class(NFunction2D) :: this
+		character(*) :: fileName
+		integer :: idType
+		integer :: output
+		
+		open( unit=1, file=trim(fileName), action='read', form="unformatted" )
+		
+		! 0 = REAL, 1 COMPLEX
+		read(1) idType
+		
+		close(1)
+		
+		if( idType /= 0 .and. idType /= 1 ) then
+			output = -1
+		else
+			output = idType
+		end if
+	end function checkTypeN2DF
+	
+	!>
+	!! @brief
+	!!
+	subroutine loadN2DF( this, fileName )
+		class(NFunction2D) :: this
+		character(*) :: fileName
+		
+		real(8) :: xMin, yMin
+		real(8) :: xMax, yMax
+		real(8) :: hx, hy
+		integer :: nx, ny
+		integer :: idType
+		__TYPE_VALUE__, allocatable :: fArray(:,:)
+		
+		type(Grid2D) :: xyGrid
+		
+		open( unit=1, file=trim(fileName), action='read', form="unformatted" )
+		
+		! 0 = REAL, 1 COMPLEX
+		read(1) idType
+		
+		if( idType /= __ID_TYPE__ ) then
+			call GOptions_error( "Inconsistent type in file", "NFunction2D.loadN2DF()" )
+		end if
+		
+		! origin of the grid
+		read(1) xMin, yMin
+		
+		! Number of points for each coordinate
+		read(1) nx, ny
+		
+		! Increment for each coordinate
+		read(1) hx, hy
+		
+		xMax = xMin + (nx-1)*hx
+		yMax = yMin + (ny-1)*hy
+		
+		allocate( fArray(nx,ny) )
+		
+		!!!!!!!!!!!!!!!!!!!!!!!
+		! Volumetric data
+		read(1) fArray
+		
+		call xyGrid.init( min=[xMin,yMin], max=[xMax,yMax], size=[nx,ny] )
+		call this.fromGrid2DArray( xyGrid, fArray )
+		
+		deallocate( fArray )
+		
+		close(1)
+	end subroutine loadN2DF
+
+	!>
+	!! @brief 
+	!!
+	subroutine normalize( this, constant )
+		class(NFunction2D) :: this
+		real(8), optional, intent(out) :: constant
+		
+		integer :: i, j
+		real(8) :: nConstant
+		
+		nConstant = 1.0_8/this.norm()
+		
+		do j=1,this.xyGrid.nPoints(2)
+			do i=1,this.xyGrid.nPoints(1)
+				this.fArray(i,j) = nConstant*this.fArray(i,j)
+			end do
+		end do
+		
+		if( present(constant) ) then
+			constant = nConstant
+		end if
+	end subroutine normalize
+	
+	!>
+	!! @brief 
+	!!
+	pure function norm( this ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8) :: output
+		
+#if __ID_TYPE__ == 1
+		output = sqrt( sum( conjg(this.fArray)*this.fArray )*this.xyGrid.dV() )
+#else
+		output = sqrt( sum( this.fArray*this.fArray )*this.xyGrid.dV() )
+#endif
+	end function norm
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromNFunction( this, oper, checkBox ) result( output )
+		class(NFunction2D), intent(in) :: this
+		class(NFunction2D), intent(in) :: oper
+		logical, optional, intent(in) :: checkBox
+		__TYPE_VALUE__ :: output
+		
+		logical :: effCheckBox
+		
+		effCheckBox = .true.
+		if( present(checkBox) ) effCheckBox = checkBox
+		
+		if( effCheckBox ) then
+			if( .not. this.checkBox( oper ) ) then
+				call GOptions_error( "Inconsistent boxes", "NFunction2D.expectationValueFromNFunction()" )
+			end if
+		end if
+		
+#if __ID_TYPE__ == 1
+		output = sum( conjg(this.fArray)*oper.fArray*this.fArray )*this.xyGrid.dV()
+#else
+		output = sum( this.fArray*oper.fArray*this.fArray )*this.xyGrid.dV()
+#endif
+	end function expectationValueFromNFunction
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromRArray( this, oper, checkBox, factor ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8), intent(in) :: oper(:,:)
+		logical, optional, intent(in) :: checkBox
+		real(8), optional, intent(in) :: factor
+		__TYPE_VALUE__ :: output
+		
+		logical :: effCheckBox
+		real(8) :: effFactor
+		
+		effCheckBox = .true.
+		if( present(checkBox) ) effCheckBox = checkBox
+		
+		effFactor = 1.0_8
+		if( present(factor) ) effFactor = factor
+		
+		if( effCheckBox ) then
+			if( this.nPoints(1) /= size(oper,dim=1) &
+				  .or. this.nPoints(2) /= size(oper,dim=2) ) then
+				call GOptions_error( &
+					"Inconsistent boxes", &
+					"NFunction2D.expectationValueFromRArray()", &
+					"("//trim(FString_fromInteger(this.nPoints(1)))//"," &
+					   //trim(FString_fromInteger(this.nPoints(2)))//") /= (" &
+					   //trim(FString_fromInteger(size(oper,dim=1)))//"," &
+					   //trim(FString_fromInteger(size(oper,dim=2)))//")" &
+					)
+			end if
+		end if
+		
+#if __ID_TYPE__ == 1
+		output = effFactor*sum( conjg(this.fArray)*oper*this.fArray )*this.xyGrid.dV()
+#else
+		output = effFactor*sum( this.fArray*oper*this.fArray )*this.xyGrid.dV()
+#endif
+	end function expectationValueFromRArray
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromCArray( this, oper, checkBox ) result( output )
+		class(NFunction2D), intent(in) :: this
+		complex(8), intent(in) :: oper(:,:)
+		logical, optional, intent(in) :: checkBox
+		__TYPE_VALUE__ :: output
+		
+		logical :: effCheckBox
+		
+		integer :: i, j
+		integer :: nx, ny
+		
+		nx = this.xyGrid.nPoints(1)
+		ny = this.xyGrid.nPoints(2)
+		
+		effCheckBox = .true.
+		if( present(checkBox) ) effCheckBox = checkBox
+		
+		if( effCheckBox ) then
+			if( this.xyGrid.nPoints(1) /= size(oper,dim=1) &
+				  .or. this.xyGrid.nPoints(2) /= size(oper,dim=2) ) then
+				call GOptions_error( &
+					"Inconsistent boxes", &
+					"NFunction2D.expectationValueFromCArray()", &
+					"("//trim(FString_fromInteger(this.xyGrid.nPoints(1)))//"," &
+					   //trim(FString_fromInteger(this.xyGrid.nPoints(2)))//") /= (" &
+					   //trim(FString_fromInteger(size(oper,dim=1)))//"," &
+					   //trim(FString_fromInteger(size(oper,dim=2)))//")" &
+					)
+			end if
+		end if
+		
+#if __ID_TYPE__ == 1
+		output = 0.0_8
+		do j=1,ny; do i=1,nx
+			output = output + conjg(this.fArray(i,j))*oper(i,j)*this.fArray(i,j)
+		end do; end do
+		output = output*this.xyGrid.dV()
+#else
+		output = sum( this.fArray*oper*this.fArray )*this.xyGrid.dV()
+#endif
+	end function expectationValueFromCArray
+	
+	!>
+	!! @brief
+	!!
+	subroutine set( this, i, j, value )
+		class(NFunction2D) :: this
+		integer, intent(in) :: i, j
+		__TYPE_VALUE__, intent(in) :: value
+		
+		this.fArray( i, j ) = value
+	end subroutine set
+	
+	!>
+	!! @brief
+	!!
+	pure function at( this, i, j ) result( output )
+		class(NFunction2D), intent(in) :: this
+		integer, intent(in) :: i, j
+		__TYPE_VALUE__ :: output
+		
+		output = this.fArray( i, j )
+	end function at
+	
+	!>
+	!! @brief
+	!!
+	pure function x( this, pos ) result( output )
+		class(NFunction2D), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_VALUE__ :: output
+		
+		output = this.xyGrid.component(1).at( pos )
+	end function x
+	
+	!>
+	!! @brief
+	!!
+	pure function y( this, pos ) result( output )
+		class(NFunction2D), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_VALUE__ :: output
+		
+		output = this.xyGrid.component(2).at( pos )
+	end function y
+	
+	!>
+	!! @brief
+	!!
+	pure function minInCoord( this, pos ) result( output )
+		class(NFunction2D), intent(in) :: this
+		integer, intent(in) :: pos
+		real(8) :: output
+		
+		output = this.xyGrid.min( pos )
+	end function minInCoord
+	
+	!>
+	!! @brief
+	!!
+	pure function minVec( this ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8) :: output(2)
+		
+		output = this.xyGrid.min()
+	end function minVec
+	
+	!>
+	!! @brief
+	!!
+	pure function maxInCoord( this, pos ) result( output )
+		class(NFunction2D), intent(in) :: this
+		integer, intent(in) :: pos
+		real(8) :: output
+		
+		output = this.xyGrid.max( pos )
+	end function maxInCoord
+	
+	!>
+	!! @brief
+	!!
+	pure function maxVec( this ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8) :: output(2)
+		
+		output = this.xyGrid.max()
+	end function maxVec
+	
+	!>
+	!! @brief
+	!!
+	pure function stepSizeInCoord( this, pos ) result( output )
+		class(NFunction2D), intent(in) :: this
+		integer, intent(in) :: pos
+		real(8) :: output
+		
+		output = this.xyGrid.stepSize( pos )
+	end function stepSizeInCoord
+	
+	!>
+	!! @brief
+	!!
+	pure function stepSizeVec( this ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8) :: output(2)
+		
+		output = this.xyGrid.stepSize()
+	end function stepSizeVec
+	
+	!>
+	!! @brief
+	!!
+	pure function isEquallyspaced( this ) result( output )
+		class(NFunction2D), intent(in) :: this
+		logical :: output
+		
+		output = this.xyGrid.isEquallyspaced()
+	end function isEquallyspaced
+	
+	!>
+	!! @brief
+	!!
+	subroutine checkEquallyspaced( this )
+		class(NFunction2D) :: this
+		
+		call this.xyGrid.checkEquallyspaced()
+	end subroutine checkEquallyspaced
+	
+	!>
+	!! @brief Returns the number of points of the direction i-th (X,Y)
+	!!
+	function nPointsInCoord( this, i ) result( output )
+		class(NFunction2D), intent(in) :: this
+		integer, intent(in) :: i
+		integer :: output
+		
+! 		if( present(i) ) then
+			output = this.xyGrid.nPoints(i)
+! 		else
+! 			output = this.xyGrid.nPoints(1)*this.xyGrid.nPoints(2)*this.xyGrid.nPoints(3)
+! 		end if
+	end function nPointsInCoord
+	
+	!>
+	!! @brief Returns the number of points of the direction i-th (X,Y)
+	!!
+	function nPointsVec( this ) result( output )
+		class(NFunction2D), intent(in) :: this
+		integer :: output(2)
+		
+		output = [ this.xyGrid.nPoints(1), this.xyGrid.nPoints(2) ]
+	end function nPointsVec
+	
+	!>
+	!! @brief
+	!!
+	function evaluateXY( this, x, y ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8), intent(in) :: x
+		real(8), intent(in) :: y
+		__TYPE_VALUE__ :: output
+		
+		integer :: ix, iy
+		
+		! Map x,y to a point dx,dy in the cube [1,n1] x [1,n2]
+		ix = floor( 1.0000001*(x-this.xyGrid.min(1))/this.xyGrid.stepSize(1)+1.0 )
+		iy = floor( 1.0000001*(y-this.xyGrid.min(2))/this.xyGrid.stepSize(2)+1.0 )
+		
+		if( &
+			ix < 1 .or. ix > this.xyGrid.nPoints(1) .or. &
+			iy < 1 .or. iy > this.xyGrid.nPoints(2) &
+		) then
+			output = 0.0_8
+		else
+			output = this.fArray(ix,iy)
+		end if
+	end function evaluateXY
+
+	!>
+	!! @brief
+	!!
+	function evaluateCoord( this, val, coord ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8), intent(in) :: val
+		integer, intent(in) :: coord
+		__TYPE_VALUE__ :: output
+		
+		integer :: ival
+		
+		ival = floor( 1.0000001*(val-this.xyGrid.min(coord))/this.xyGrid.stepSize(coord)+1.0 )
+		
+		if( ival < 1 .or. ival > this.xyGrid.nPoints(coord) ) then
+			output = 0.0_8
+		else
+			select case( coord )
+				case( 1 )
+					output = sum(this.fArray(ival,:))
+				case( 2 )
+					output = sum(this.fArray(:,ival:))
+				case default
+					call GOptions_error( "coord > 2", "NFunction2D.evaluateCoord()" )
+			end select
+		end if
+	end function evaluateCoord
+	
+	!>
+	!! @brief Resizes the function by making a larger grid with the same
+	!!        step size by adding zeros at the end of each coordinate.
+	!! @param nx Number of points to add in X coordinate
+	!! @param ny Number of points to add in Y coordinate
+	!!
+	subroutine resize( this, dnx, dny, dirx, diry )
+		class(NFunction2D) :: this
+		integer, intent(in) :: dnx, dny
+		integer, optional, intent(in) :: dirx, diry
+		
+		integer :: effDirX, effDirY
+		
+		type(Grid2D) :: xyGrid
+		__TYPE_VALUE__, allocatable :: fArray(:,:)
+		integer :: oldN(2)
+		integer :: newN(2)
+		integer :: i, j
+		integer :: ii, jj
+		
+		GOptions_printLevel = 2
+		
+		effDirX = 1
+		if( present(dirx) ) effDirX = dirx
+		
+		effDirY = 1
+		if( present(diry) ) effDirY = diry
+		
+		xyGrid = this.xyGrid
+		call xyGrid.resize( dnx, dny, dirx, diry )
+		
+		call GOptions_warning( "This method has not been tested yet", "NFunction2D.resize()" )
+		
+		oldN = this.xyGrid.nPoints()
+		
+		if( effDirX == 1 .and. effDirY == 1 ) then
+		
+			newN = xyGrid.nPoints()
+			allocate( fArray(newN(1),newN(2)) )
+			fArray = 0.0_8
+			
+			do j=1,oldN(2); do i=1,oldN(1)
+				fArray(i,j) = this.fArray(i,j)
+			end do; end do
+
+		else if( effDirX == -1 .and. effDirY == -1 ) then
+		
+			newN = xyGrid.nPoints()
+			allocate( fArray(newN(1),newN(2)) )
+			fArray = 0.0_8
+			
+			do j=dny+1,newN(2); do i=dnx+1,newN(1)
+				fArray(i,j) = this.fArray(i-dnx,j-dny)
+			end do; end do
+			
+		else if( effDirX == 0 .and. effDirY == 0 ) then
+			
+			newN = xyGrid.nPoints()
+			allocate( fArray(newN(1),newN(2)) )
+			fArray = 0.0_8
+			
+			jj=1
+			do j=dny+1,dny+oldN(2)
+				ii=1
+				do i=dnx+1,dnx+oldN(1)
+					fArray(i,j) = this.fArray(ii,jj)
+					ii=ii+1
+				end do
+				jj = jj+1
+			end do
+			
+		else
+			call GOptions_error( &
+				"Bad value for dir. (+1|0|-1)", &
+				"NFunction2D.resize()" &
+			)
+		end if
+		
+		call this.init( xyGrid, fArray )
+		
+		deallocate( fArray )
+	end subroutine resize
+	
+	!>
+	!! @brief
+	!!
+	pure function checkBox( this, other ) result( output )
+		class(NFunction2D), intent(in) :: this
+		class(NFunction2D), intent(in) :: other
+		logical :: output
+		
+		output = this.xyGrid.isEqualTo( other.xyGrid )
+	end function checkBox
+	
+	!>
+	!! @brief
+	!!
+	function innerProductWithNFunction2D( this, other, hermitian ) result( output )
+		class(NFunction2D), intent(in) :: this
+		class(NFunction2D), intent(in) :: other
+		logical, optional, intent(in) :: hermitian
+		__TYPE_VALUE__ :: output
+		
+		logical :: effHermitian
+		
+		effHermitian = .true.
+		if( present(hermitian) ) effHermitian = hermitian
+		
+! 		if( .not. this.xyGrid.isEquallyspaced() ) then
+! 			call GOptions_error( "The grid is not equally spaced", "NFunction2D.innerProductWithNFunction2D()" )
+! 		end if
+		
+#if __ID_TYPE__ == 1
+		if( effHermitian ) then
+			output = sum( conjg(this.fArray)*other.fArray )*this.xyGrid.dV()
+		else
+			output = sum( this.fArray*other.fArray )*this.xyGrid.dV()
+		end if
+#else
+		output = sum( this.fArray*other.fArray )*this.xyGrid.dV()
+#endif
+	end function innerProductWithNFunction2D
+	
+	!>
+	!! @brief
+	!!
+	function innerProductWithRArray( this, other, hermitian ) result( output )
+		class(NFunction2D), intent(in) :: this
+		real(8), intent(in) :: other(:,:)
+		logical, optional, intent(in) :: hermitian
+		__TYPE_VALUE__ :: output
+		
+		logical :: effHermitian
+		
+		effHermitian = .true.
+		if( present(hermitian) ) effHermitian = hermitian
+		
+! 		if( .not. this.xyGrid.isEquallyspaced() ) then
+! 			call GOptions_error( "The grid is not equally spaced", "NFunction2D.innerProductWithRArray()" )
+! 		end if
+		
+#if __ID_TYPE__ == 1
+		if( effHermitian ) then
+			output = sum( conjg(this.fArray)*other )*this.xyGrid.dV()
+		else
+			output = sum( this.fArray*other )*this.xyGrid.dV()
+		end if
+#else
+		output = sum( this.fArray*other )*this.xyGrid.dV()
+#endif
+	end function innerProductWithRArray
+	
+	!>
+	!! @brief
+	!!
+	function innerProductWithCArray( this, other, hermitian ) result( output )
+		class(NFunction2D), intent(in) :: this
+		complex(8), intent(in) :: other(:,:)
+		logical, optional, intent(in) :: hermitian
+		__TYPE_VALUE__ :: output
+		
+		logical :: effHermitian
+		
+		effHermitian = .true.
+		if( present(hermitian) ) effHermitian = hermitian
+		
+! 		if( .not. this.xyGrid.isEquallyspaced() ) then
+! 			call GOptions_error( "The grid is not equally spaced", "NFunction2D.innerProductWithCArray()" )
+! 		end if
+		
+#if __ID_TYPE__ == 1
+		if( effHermitian ) then
+			output = sum( conjg(this.fArray)*other )*this.xyGrid.dV()
+		else
+			output = sum( this.fArray*other )*this.xyGrid.dV()
+		end if
+#else
+		output = sum( this.fArray*other )*this.xyGrid.dV()
+#endif
+	end function innerProductWithCArray
+	
+	!>
+	!! @brief
+	!!
+	function conjugate( this ) result( output )
+		class(NFunction2D), intent(in) :: this
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		output = this
+		
+#if __ID_TYPE__ == 1
+		do j=1,this.xyGrid.nPoints(2); do i=1,this.xyGrid.nPoints(1)
+			output.fArray(i,j) = conjg(this.fArray(i,j))
+		end do; end do
+#endif
+	end function conjugate
+	
+	!>
+	!! @brief
+	!!
+	function absoluteSquare( this ) result( output )
+		class(NFunction2D), intent(in) :: this
+		type(NFunction2D) :: output
+		
+		integer :: i, j
+		
+		output = this
+		
+#if __ID_TYPE__ == 1
+		do j=1,this.xyGrid.nPoints(2); do i=1,this.xyGrid.nPoints(1)
+			output.fArray(i,j) = abs(this.fArray(i,j))**2
+		end do; end do
+#else
+		do j=1,this.xyGrid.nPoints(2); do i=1,this.xyGrid.nPoints(1)
+			output.fArray(i,j) = this.fArray(i,j)**2
+		end do; end do
+#endif
+	end function absoluteSquare
+	
+	!>
+	!! @brief Returns the integration over all coordinates except "coord"
+	!! @todo Esta función debería retornar una CNFunction o RNFunction
+	!!       dependiendo de __TYPE_VALUE__, sin embargo, dado que solo
+	!!       está implementada RNFunction ( actualmente NFunction ),
+	!!       se tomará esta.
+	!!
+	function reducedFunction( this, coord ) result( output )
+		class(NFunction2D), intent(in) :: this
+		integer, optional, intent(in) :: coord
+		type(RNFunction) :: output
+		
+		integer :: i
+		real(8) :: dS
+		real(8), allocatable :: cValues(:)
+		integer :: id(2,1)
+		
+		if( .not. this.xyGrid.isEquallyspaced() ) then
+			call GOptions_error( "The grid is not equally spaced", "NFunction2D.reducedFunction()" )
+		end if
+		
+		id(1,:) = [ 2 ]
+		id(2,:) = [ 1 ]
+		
+		dS = this.xyGrid.stepSize( id(coord,1) )
+		
+		allocate( cValues(this.xyGrid.nPoints(coord)) )
+		
+		do i=1,this.xyGrid.nPoints(coord)
+			select case( coord )
+				case( 1 )
+					cValues(i) = sum(this.fArray(i,:))
+				case( 2 )
+					cValues(i) = sum(this.fArray(:,i))
+				
+				case default
+					call GOptions_error( "coord > 3", "NFunction2D.reducedFunction()" )
+			end select
+		end do
+		
+		call output.init( this.xyGrid.component(coord), cValues*dS )
+		
+		deallocate( cValues )
+		
+	end function reducedFunction
+	
+#endif

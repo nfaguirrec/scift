@@ -1,0 +1,565 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!!  This file is part of scift (Scientific Fortran Tools).
+!!  Copyright (C) by authors (2013-2013)
+!!  
+!!  Authors (alphabetic order):
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2013-2013)
+!!  
+!!  Contributors (alphabetic order):
+!!  
+!!  Redistribution and use in source and binary forms, with or
+!!  without modification, are permitted provided that the
+!!  following conditions are met:
+!!  
+!!   * Redistributions of binary or source code must retain
+!!     the above copyright notice and this list of conditions
+!!     and/or other materials provided with the distribution.
+!!   * All advertising materials mentioning features or use of
+!!     this software must display the following acknowledgement:
+!!     
+!!     This product includes software from scift
+!!     (Scientific Fortran Tools) project and its contributors.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!>
+!! @brief
+!!
+module FFT3D_
+#ifdef _OPENMP
+	use omp_lib
+#endif
+	use GOptions_
+	use Math_
+	use Grid_
+	use FFT_
+	use Grid3D_
+	use RandomUtils_
+	use CNFunction3D_
+	implicit none
+	include 'fftw/fftw3.f'
+	private
+	
+	public :: &
+		FFT3D_kBox, &
+		FFT3D_test
+	
+	type, public :: FFT3D
+		type(CNFunction3D), pointer, private :: func
+		type(Grid3D) :: box
+		type(Grid3D) :: kbox
+		integer, private, allocatable :: idX(:)
+		integer, private, allocatable :: idY(:)
+		integer, private, allocatable :: idZ(:)
+		
+		contains
+			generic :: init => initFFT3D
+			procedure :: initFFT3D
+			final :: destroyFFT3D
+			procedure :: str
+			procedure :: show
+			
+			procedure :: execute
+			procedure :: derivate
+	end type FFT3D
+	
+	contains
+	
+	!>
+	!! @brief Organiza los datos para el espectro con frecuencias positivas y negativas
+	!!
+	subroutine makeIndicesAndFreqs( id, freqs, n )
+		integer, intent(out) :: id(:)
+		real(8), intent(out) :: freqs(:)
+		integer, intent(in) :: n
+		
+		integer :: i, j
+		
+		j=1
+		do i=n/2+1,n
+			id(i) = j
+			freqs(i) = real(i-1-n/2,8)/n
+			j = j+1
+		end do
+		
+		if( Math_isOdd(n) ) then
+			j=1
+			do i=1,n/2
+				id(i) = n/2+1+i
+				freqs(i) = real(j-1-n/2,8)/n
+				j = j+1
+			end do
+		else
+			j=1
+			do i=1,n/2
+				id(i) = n/2+i
+				freqs(i) = real(j-1-n/2,8)/n
+				j = j+1
+			end do
+		end if
+	end subroutine makeIndicesAndFreqs
+
+	!>
+	!! @brief Auxiliar function
+	!!
+	subroutine makeGridK( kArray, n, h )
+		real(8), intent(inout) :: kArray(:)
+		integer :: n
+		real(8) :: h
+		
+		integer :: i, j
+
+		!-------------------------------
+		! Código de Sergio		
+! 		do i=1,n/2+1
+! 			kArray(i) = 2.0_8*MATH_PI*real(i-1,8)/h/n
+! 		end do
+! 		
+! 		do i=n/2+2,n
+! 			kArray(i) = -kArray(n+2-i)
+! 		end do
+		!-------------------------------
+		
+		do i=n/2+1,n
+			kArray(i) = 2.0_8*MATH_PI*real(i-1-n/2,8)/h/n
+		end do
+		
+		if( Math_isOdd(n) ) then
+			j=1
+			do i=1,n/2
+				kArray(i) = 2.0_8*MATH_PI*real(j-1-n/2,8)/h/n
+				j = j+1
+			end do
+		else
+			j=1
+			do i=1,n/2
+				kArray(i) = 2.0_8*MATH_PI*real(j-1-n/2,8)/h/n
+				j = j+1
+			end do
+		end if
+	end subroutine makeGridK
+	
+	!>
+	!! @brief Constructor
+	!! @todo El grid3D esta bien, pero no tiene correspondencia con el fArray en ofunc
+	!!
+	subroutine initFFT3D( this, func, nThreads )
+		class(FFT3D) :: this
+		class(CNFunction3D), target, intent(inout) :: func
+		integer, optional :: nThreads
+		
+		integer :: i, j, k
+		integer :: iret, nx, ny, nz
+		integer :: effNThreads
+		
+		real(8), allocatable :: kx(:), ky(:), kz(:)
+		complex(8), allocatable :: fArray(:,:,:)
+		
+		effNThreads = 4
+		if( present(nThreads) ) effNThreads = nThreads
+		
+		nx = func.xyzGrid.size(1)
+		ny = func.xyzGrid.size(2)
+		nz = func.xyzGrid.size(3)
+		
+		this.box = func.xyzGrid
+		this.func => func
+		
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		! Make Reciprocal simulation box
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		allocate( kx(nx) )
+		allocate( ky(ny) )
+		allocate( kz(nz) )
+		
+		if( allocated(this.idX) ) deallocate(this.idX)
+		allocate( this.idX(nx) )
+		if( allocated(this.idY) ) deallocate(this.idY)
+		allocate( this.idY(ny) )
+		if( allocated(this.idZ) ) deallocate(this.idZ)
+		allocate( this.idZ(nz) )
+		
+			! Codigo de Sergio
+			do i=1,nx/2+1
+				kx(i) = 2.0_8*MATH_PI*real(i-1,8)/func.xyzGrid.stepSize(1)/real(nx,8)
+! 				kx(i) = real(i-1,8)/func.xyzGrid.stepSize(1)/real(nx,8)
+			end do
+			do i=nx/2+2,nx
+				kx(i)=-kx(nx+2-i)
+			end do
+
+			do i=1,ny/2+1
+				ky(i) = 2.0_8*MATH_PI*real(i-1,8)/func.xyzGrid.stepSize(2)/real(ny,8)
+! 				ky(i) = real(i-1,8)/func.xyzGrid.stepSize(2)/real(ny,8)
+			end do
+			do i=ny/2+2,ny
+				ky(i) = -ky(ny+2-i)
+			end do
+
+			do i=1,nz/2+1
+				kz(i) = 2.0_8*MATH_PI*real(i-1,8)/func.xyzGrid.stepSize(3)/real(nz,8)
+! 				kz(i) = real(i-1,8)/func.xyzGrid.stepSize(3)/real(nz,8)
+			end do
+			do i=nz/2+2,nz
+				kz(i) = -kz(nz+2-i)
+			end do
+		
+! 		call makeIndicesAndFreqs( this.idX, kx, nx )
+! 		call makeIndicesAndFreqs( this.idY, ky, ny )
+! 		call makeIndicesAndFreqs( this.idZ, kz, nz )
+! 			
+! ! 		call makeGridK( kx, nx, func.xyzGrid.stepSize(1) )
+! ! 		call makeGridK( ky, ny, func.xyzGrid.stepSize(2) )
+! ! 		call makeGridK( kz, nz, func.xyzGrid.stepSize(3) )
+		
+		this.box = func.xyzGrid
+		call this.kbox.init( kx, ky, kz )
+		
+		deallocate( kx )
+		deallocate( ky )
+		deallocate( kz )
+		
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		! FFT Initialization
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! 		call dfftw_init_threads(iret)
+! 		
+! 		if( iret == 0 ) then
+! 			write(*,*) "### ERROR ### FFT3D.initFFT3D(): Error during thread initialization"
+! 			stop
+! 		end if
+! 		
+! 		call dfftw_plan_with_nthreads( effNThreads )
+		
+	end subroutine initFFT3D
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyFFT3D( this )
+		type(FFT3D) :: this
+		
+		if( allocated(this.idX) ) deallocate(this.idX)
+		if( allocated(this.idY) ) deallocate(this.idY)
+		if( allocated(this.idZ) ) deallocate(this.idZ)
+
+		nullify( this.func )
+	end subroutine destroyFFT3D
+	
+	!>
+	!! @brief Convert to string
+	!!
+	function str( this, formatted, prefix ) result( output )
+		class(FFT3D) :: this 
+		character(:), allocatable :: output
+		logical, optional :: formatted
+		character(*), optional :: prefix
+		
+		logical :: effFormatted
+		character(:), allocatable :: effPrefix
+		
+		integer :: fmt
+		character(200) :: fstr
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effPrefix = ""
+		if( present(prefix) ) effPrefix = prefix
+		
+		output = ""
+		
+		if( .not. effFormatted ) then
+#define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
+#define ITEMI(l,v) output = trim(output)//l; write(fstr, "(i20)") v; output = trim(output)//trim(adjustl(fstr))
+#define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(adjustl(fstr))
+		
+			output = trim(output)//"<FFT3D:"
+! 			ITEMI( "min=", this.min )
+! 			ITEMR( ",size=", this.size )
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+			output = trim(output)//">"
+		else
+#define LINE(l) output = trim(output)//effPrefix//l//new_line('')
+#define ITEMS(l,v) output = trim(output)//effPrefix//l; write(fstr, "(x,a)") trim(v); output = trim(output)//trim(fstr)//new_line('')
+#define ITEMI(l,v) output = trim(output)//effPrefix//l; write(fstr, "(i20)") v; output = trim(output)//trim(fstr)//new_line('')
+#define ITEMR(l,v) output = trim(output)//effPrefix//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(fstr)//new_line('')
+
+			LINE("FFT3D")
+			LINE("---------")
+! 			ITEMI( "min=", this.min )
+! 			ITEMR( ",size=", this.size )
+			LINE("")
+#undef LINE
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+		end if
+	end function str
+	
+	!>
+	!! @brief Show 
+	!!
+	subroutine show( this, unit, formatted )
+		class(FFT3D) :: this
+		integer, optional, intent(in) :: unit
+		logical, optional :: formatted
+		
+		integer :: effunit
+		logical :: effFormatted
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effunit = 6
+		if( present(unit) ) effunit = unit
+		
+		write(effunit,"(a)") trim(str(this,effFormatted))
+	end subroutine show
+	
+	!>
+	!! @brief Show 
+	!!
+	subroutine execute( this, type, gridSync )
+		class(FFT3D) :: this
+		integer, intent(in) :: type
+		logical, optional, intent(in) :: gridSync
+		
+		integer(8) :: plan
+		
+		integer :: nx, ny, nz
+		
+#ifdef _OPENMP
+		integer :: iret
+		
+		call dfftw_init_threads(iret)
+		
+		if( iret == 0 ) then
+			write(*,*) "### ERROR ### FFT3D.initFFT3D(): Error during thread initialization"
+			stop
+		end if
+		
+		call dfftw_plan_with_nthreads( omp_get_max_threads() )
+#endif
+		
+		nx = this.func.xyzGrid.size(1)
+		ny = this.func.xyzGrid.size(2)
+		nz = this.func.xyzGrid.size(3)
+		
+		if( present(gridSync) ) then
+			if( gridSync ) then
+				if( type== FFT_FORWARD ) then
+					this.func.xyzGrid = FFT3D_kBox( this.func.xyzGrid )
+				else if( type== FFT_BACKWARD ) then
+					call GOptions_error( "This option is not implemented yet", "FFT3D.execute(type=FFT_FORWARD,gridSync=.true.)" )
+				end if
+			end if
+		end if
+		
+		if( type == FFT_FORWARD ) then
+! 			call dfftw_plan_dft_3d( plan, nx, ny, nz, this.func.fArray, this.func.fArray, FFTW_FORWARD, FFTW_MEASURE )
+			call dfftw_plan_dft_3d( plan, nx, ny, nz, this.func.fArray, this.func.fArray, FFTW_FORWARD, FFTW_ESTIMATE )
+			call dfftw_execute( plan )
+			call dfftw_destroy_plan( plan )
+			
+			this.func.fArray = this.func.fArray/real(nx*ny*nz,8)
+		else if( type == FFT_BACKWARD ) then
+! 			call dfftw_plan_dft_3d( plan, nx, ny, nz, this.func.fArray, this.func.fArray, FFTW_BACKWARD, FFTW_MEASURE )
+			call dfftw_plan_dft_3d( plan, nx, ny, nz, this.func.fArray, this.func.fArray, FFTW_BACKWARD, FFTW_ESTIMATE )
+			call dfftw_execute( plan )
+			call dfftw_destroy_plan( plan )
+		else
+			write(*,*) "### ERROR ### FFT3D.execute(): type unknown"
+			stop
+		end if
+		
+	end subroutine execute
+	
+	!>
+	!! @brief
+	!!
+	subroutine derivate( this, coord, order )
+		class(FFT3D) :: this
+		integer(8), intent(in) :: coord
+		integer(8), intent(in) :: order
+		
+		integer(8) :: plan
+		integer :: i, j, k
+		integer :: nx, ny, nz
+		type(Grid3D) :: kBox
+		
+#ifdef _OPENMP
+		integer :: iret
+		
+		call dfftw_init_threads(iret)
+		
+		if( iret == 0 ) then
+			write(*,*) "### ERROR ### FFT3D.initFFT3D(): Error during thread initialization"
+			stop
+		end if
+		
+		call dfftw_plan_with_nthreads( omp_get_max_threads() )
+#endif
+		
+		nx = this.func.xyzGrid.size(1)
+		ny = this.func.xyzGrid.size(2)
+		nz = this.func.xyzGrid.size(3)
+		
+		kBox = FFT3D_kBox( this.func.xyzGrid )
+		
+		call dfftw_plan_dft_3d( plan, nx, ny, nz, this.func.fArray, this.func.fArray, FFTW_FORWARD, FFTW_ESTIMATE )
+		call dfftw_execute( plan )
+		call dfftw_destroy_plan( plan )
+		this.func.fArray = this.func.fArray/real(nx*ny*nz,8)
+		
+		select case( coord )
+			case(1)
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+				do k=1,nz; do j=1,ny; do i=1,nx
+					this.func.fArray( i, j, k ) = (Math_I*kBox.component(coord).data(i))**order*this.func.fArray( i, j, k )
+				end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+			case(2)
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+				do k=1,nz; do j=1,ny; do i=1,nx
+					this.func.fArray( i, j, k ) = (Math_I*kBox.component(coord).data(j))**order*this.func.fArray( i, j, k )
+				end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+			case(3)
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+				do k=1,nz; do j=1,ny; do i=1,nx
+					this.func.fArray( i, j, k ) = (Math_I*kBox.component(coord).data(k))**order*this.func.fArray( i, j, k )
+				end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+		end select
+			
+		call dfftw_plan_dft_3d( plan, nx, ny, nz, this.func.fArray, this.func.fArray, FFTW_BACKWARD, FFTW_ESTIMATE )
+		call dfftw_execute( plan )
+		call dfftw_destroy_plan( plan )
+	end subroutine derivate
+	
+	!>
+	!! This is neccesary only for FFT3D_test()
+	!!
+	function funcTest( x, y, z ) result( output )
+		real(8), intent(in) :: x, y, z
+		complex(8) :: output
+		
+		real(8) :: center, desv
+		
+		center = -1.0_8
+		desv = 2.0_8
+		
+		output = exp(-(z-center)**2/(2.0_8*desv**2))
+! 		output = cmplx( (x**2+2.25_8*y**2+z**2-1.0_8)**3-x**2*z**3-0.1125_8*y**2*z**3, 0.0_8 )
+! 		output = (x**2+2.25_8*y**2+z**2-1.0_8)**3-x**2*z**3-0.1125_8*y**2*z**3
+
+! 		output = 1.0_8*sin(2.0_8*Math_PI*1.0_8*x) &  !  1 Hz component
+! 			+0.6_8*sin(2.0_8*Math_PI*3.0_8*y) &  !  3 Hz component
+! 			+0.4_8*sin(2.0_8*Math_PI*5.0_8*z) &  !  5 Hz component
+! 			+0.2_8*sin(2.0_8*Math_PI*RandomUtils_uniform([0.0_8,10.0_8])*x*y*z)  !  uniform noise
+	end function funcTest
+	
+	!>
+	!! @brief
+	!!
+	function FFT3D_kBox( spaceBox ) result( kBox )
+		type(Grid3D), intent(in) :: spaceBox
+		type(Grid3D) :: kBox
+		
+		integer :: i, j, k
+		integer :: nx, ny, nz
+		real(8) :: hx, hy, hz
+		
+		type(Grid) :: kx, ky, kz
+		
+		!-------------------------------------
+		! Codigo de Sergio
+		! @todo probablemente no se cumpla
+		!       para numero impar de puntos
+		!-------------------------------------
+! 		do i=1,nx/2+1
+! 			kx(i) = 2.0_8*MATH_PI*real(i-1,8)/hx/real(nx,8)
+! 		end do
+! 		do i=nx/2+2,nx
+! 			kx(i)=-kx(nx+2-i)
+! 		end do
+! 
+! 		do i=1,ny/2+1
+! 			ky(i) = 2.0_8*MATH_PI*real(i-1,8)/hy/real(ny,8)
+! 		end do
+! 		do i=ny/2+2,ny
+! 			ky(i) = -ky(ny+2-i)
+! 		end do
+! 
+! 		do i=1,nz/2+1
+! 			kz(i) = 2.0_8*MATH_PI*real(i-1,8)/hz/real(nz,8)
+! 		end do
+! 		do i=nz/2+2,nz
+! 			kz(i) = -kz(nz+2-i)
+! 		end do
+		
+		kx = FFT_kGrid( spaceBox.component(1) )
+		ky = FFT_kGrid( spaceBox.component(2) )
+		kz = FFT_kGrid( spaceBox.component(3) )
+		
+		call kBox.init( kx, ky, kz )
+	end function FFT3D_kBox
+	
+	!>
+	!! @brief Test method
+	!!
+	subroutine FFT3D_test()
+		type(Grid3D) :: box, kbox
+		type(CNFunction3D) :: psi
+		type(FFT3D) :: fft
+		
+		integer :: i
+		
+! 		call box.init( min=[-3.5975_8,-3.5975_8,-165.0_8], max=[3.5975_8,3.5975_8,185.7285_8], size=[64,64,3072] )
+		call box.init( min=[-3.5975_8,-3.5975_8,-10.0_8], max=[3.5975_8,3.5975_8,10.0_8], size=[2*64,2*64,2*64] )
+		
+		call psi.init( box, funcTest )
+! 		call psi.normalize()
+! 		call psi.show()
+		
+		call fft.init( psi )
+! 		call fft.execute( FFT_FORWARD, gridSync=.false. )
+! 		psi = psi*T
+! 		call fft.execute( FFT_BACKWARD, gridSync=.false. )
+! 		psi = psi*V
+! 		call fft.show()
+
+		call fft.derivate( 3, 1 )
+		
+! 		call psi.show()
+! 		call fft.kbox.show()
+! 		psi = psi/( 2.0_8*MATH_PI )
+! 		do i=1,3
+! 			kbox.component(i) = kbox.component(i)/2.0_8*MATH_PI/box.stepSize(i)
+! 		end do
+! 		call fft.kbox.show()
+		
+		do i=1,2*64
+! 			write(*,*) fft.kbox.x(i), real( psi.evaluate( fft.kbox.x(i), 1 ) ), aimag( psi.evaluate( fft.kbox.x(i), 1 ) )
+! 			write(*,*) fft.box.x(i), real( psi.evaluate( fft.box.x(i), 1 ) ), aimag( psi.evaluate( fft.box.x(i), 1 ) )
+! 			write(*,*) fft.box.z(i), real( psi.evaluate( 0.0_8, 0.0_8, fft.box.z(i) ) )/64.0_8**3, aimag( psi.evaluate( 0.0_8, 0.0_8, fft.box.z(i) ) )
+			write(*,*) box.z(i), real( psi.evaluate( 0.0_8, 0.0_8, box.z(i) ) ), aimag( psi.evaluate( 0.0_8, 0.0_8, box.z(i) ) )
+		end do
+		
+! 		write(*,*) psi.fArray
+! 		call psi.save("psi.cube",format=CUBE_FORMAT)
+! 		call Fpsi.save("Fpsi.cube",format=CUBE_FORMAT)
+! 		write(*,*) funcTest( 3.0_8, 3.0_8, 2.5_8 )
+	end subroutine FFT3D_test
+	
+end module FFT3D_

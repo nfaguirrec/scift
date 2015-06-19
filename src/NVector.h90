@@ -1,0 +1,477 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!!  This file is part of scift (Scientific Fortran Tools).
+!!  Copyright (C) by authors (2010-2014)
+!!  
+!!  Authors (alphabetic order):
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2010-2014)
+!!  
+!!  Contributors (alphabetic order):
+!!  
+!!  Redistribution and use in source and binary forms, with or
+!!  without modification, are permitted provided that the
+!!  following conditions are met:
+!!  
+!!   * Redistributions of binary or source code must retain
+!!     the above copyright notice and this list of conditions
+!!     and/or other materials provided with the distribution.
+!!   * All advertising materials mentioning features or use of
+!!     this software must display the following acknowledgement:
+!!     
+!!     This product includes software from scift
+!!     (Scientific Fortran Tools) project and its contributors.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#ifndef NVECTOR_H90
+#define NVECTOR_H90 1
+	
+	enum, BIND(c)
+		enumerator :: ROW_VECTOR
+		enumerator :: COLUMN_VECTOR
+	end enum
+	
+	type, public :: NVector
+		integer :: nElems
+		__TYPE_VALUE__, allocatable :: data(:)
+		integer :: type
+		
+		contains
+			generic :: init => initDefault
+			generic :: assignment(=) => copyNVector
+			
+			procedure :: initDefault
+			procedure :: identity
+			procedure :: random
+			procedure :: copyNVector
+			final :: destroyNVector
+			procedure :: str
+			procedure :: show
+			procedure :: set
+			procedure :: get
+			
+			procedure :: addition
+			procedure :: subtraction
+			procedure :: multiplication
+			procedure :: exponentiation
+			
+			procedure :: additionMC
+			procedure :: subtractionMC
+			procedure :: multiplicationMC
+			procedure :: divisionMC
+			procedure :: exponentiationMC
+			
+			generic :: operator(+) => addition, additionMC
+			generic :: operator(-) => subtraction, subtractionMC
+			generic :: operator(*) => multiplication, multiplicationMC
+			generic :: operator(/) => divisionMC
+			generic :: operator(**) => exponentiation, exponentiationMC
+			
+			procedure :: norm
+	end type NVector
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine initDefault( this, nElems, val, type )
+		class(NVector) :: this
+		integer, intent(in) :: nElems
+		__TYPE_VALUE__, optional, intent(in) :: val
+		integer, optional, intent(in) :: type
+		
+		this.type = ROW_VECTOR
+		if( present(type) ) this.type = type
+		
+		this.nElems = nElems
+		
+		if( allocated(this.data) ) deallocate(this.data)
+		allocate( this.data(nElems) )
+		
+# if __ID_TYPE__ == 1
+		this.data = 0
+# elif __ID_TYPE__ == 2
+		this.data = 0.0_8
+# endif
+		
+		if( present(val) ) this.data = val
+	end subroutine initDefault
+	
+	subroutine identity( this, nElems, type )
+		class(NVector) :: this
+		integer, intent(in) :: nElems
+		integer, optional, intent(in) :: type
+		
+# if __ID_TYPE__ == 1
+		call this.initDefault( nElems, 1, type )
+# elif __ID_TYPE__ == 2
+		call this.initDefault( nElems, 1.0_8, type )
+# endif
+	end subroutine identity
+	
+	subroutine random( this, nElems, type )
+		class(NVector) :: this
+		integer, intent(in) :: nElems
+		integer, optional, intent(in) :: type
+		
+		integer :: i, n, clock
+		integer, dimension(:), allocatable :: seed
+		real(8) :: rnd
+		
+		this.type = ROW_VECTOR
+		if( present(type) ) this.type = type
+		
+		this.nElems = nElems
+		
+		if( allocated(this.data) ) deallocate(this.data)
+		allocate( this.data(nElems) )
+		
+		!---------------------------------------------
+		call random_seed(size = n)
+		allocate(seed(n))
+		call system_clock(count=clock)
+		seed = clock + 37 * (/ (i - 1, i = 1, n) /)
+		call random_seed(put = seed)
+		deallocate(seed)
+		
+		! @todo Hay que utilizar la función rand para el caso de los enteros
+		do i=1,nElems
+			call random_number( rnd )
+			
+# if __ID_TYPE__ == 1
+		this.data(i) = int(rnd)
+# elif __ID_TYPE__ == 2
+		this.data(i) = rnd
+# endif
+		end do
+	end subroutine random
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	subroutine copyNVector( this, other )
+		class(NVector), intent(out) :: this
+		class(NVector), intent(in) :: other
+		
+		this.nElems = other.nElems
+		
+		if( allocated(this.data) ) deallocate(this.data)
+		allocate( this.data(other.nElems) )
+		
+		this.data = other.data
+		this.type = other.type
+	end subroutine copyNVector
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyNVector( this )
+		type(NVector) :: this
+		
+		this.nElems = 0
+		if( allocated(this.data) ) deallocate(this.data)
+	end subroutine destroyNVector
+	
+	!>
+	!! @brief Convert to string
+	!!
+	function str( this, formatted, prefix ) result( output )
+		class(NVector) :: this 
+		character(:), allocatable :: output
+		logical, optional :: formatted
+		character(*), optional :: prefix
+		
+		integer :: ncolEff = 10
+		
+		logical :: effFormatted
+		character(:), allocatable :: effPrefix
+		
+		integer :: fmt
+		character(20000) :: fstr
+		integer :: i, k, l, u, columns
+		
+		integer :: maxIPart
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effPrefix = ""
+		if( present(prefix) ) effPrefix = prefix
+		
+		output = ""
+		
+		if( .not. effFormatted ) then
+#define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
+#define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
+#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+		
+			output = trim(output)//"<NVector:"
+! 			ITEMI( "min=", this.min )
+! 			ITEMR( ",size=", this.size )
+#undef RFMT
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+			output = trim(output)//">"
+		else
+#define LINE(l) output = trim(output)//effPrefix//l//new_line('')
+#define ITEMS(l,v) output = trim(output)//effPrefix//l; write(fstr, "(x,a)") trim(v); output = trim(output)//trim(fstr)//new_line('')
+#define ITEMI(l,v) output = trim(output)//effPrefix//l; write(fstr, "(i10)") v; output = trim(output)//trim(fstr)//new_line('')
+#define ITEMR(l,v) output = trim(output)//effPrefix//l; write(fstr, "(f10.5)") v; output = trim(output)//trim(fstr)//new_line('')
+
+#define RFMT(v) int(log10(max(1.0*abs(v),1.0)))+merge(1,2,v>=0)
+			maxIPart = RFMT( maxval( this.data ) )
+#undef RFMT
+! 			LINE("NVector")
+! 			LINE("---------")
+! 			LINE("")
+			
+			if( this.type == ROW_VECTOR ) then
+				columns = this.nElems
+				do k=1, ceiling( real(this.nElems,8)/real(ncolEff,8) )
+					
+					l = ncolEff * ( k - 1 ) + 1
+					u = ncolEff * ( k )
+					
+					if( u > this.nElems ) then
+						columns = l + ncolEff*( 1 - k ) +  this.nElems - 1
+						u = columns
+					end if
+					
+	! 				if( ( tmpFlags - HORIZONTAL ) == WITH_KEYS ) then
+	! 				
+	! 					if( present( keys ) ) then
+	! 						write (6,"(<columns>A18)") ( trim(keys(i)), i = l, u )
+	! 					else
+# if __ID_TYPE__ == 1
+							write(fstr,"(5X,<columns>I<maxIPart+5+6>)") ( i, i = l, u )
+# elif __ID_TYPE__ == 2
+							write(fstr,"(5X,<columns>I<maxIPart+5+6>)") ( i, i = l, u )
+# endif
+							output = trim(output)//trim(fstr)//new_line('')
+	! 					end if
+	! 					
+	! 				end if
+					
+# if __ID_TYPE__ == 1
+					write(fstr,"(5X,<columns>I<maxIPart+5+6>)") ( this.data(i), i = l, u )
+# elif __ID_TYPE__ == 2
+					write(fstr,"(5X,<columns>F<maxIPart+5+6>.6)") ( this.data(i), i = l, u )
+# endif
+					output = trim(output)//trim(fstr)//new_line('')//new_line('')
+				end do
+			else if( this.type == COLUMN_VECTOR ) then
+
+!                        if( ( tmpFlags - VERTICAL ) == WITH_KEYS ) then
+!                                 
+!                                 if( present( keys ) ) then
+!                                         do i=1, ssize
+!                                         
+!                                                 write (6,"(A18,F15.6)") trim(keys(i)), this.values(i)
+!                                         end do
+!                                 else
+                                        do i=1,this.nElems
+                                        
+# if __ID_TYPE__ == 1
+					write (fstr,"(I5,I<maxIPart+5+6>)") i, this.data(i)
+# elif __ID_TYPE__ == 2
+					write (fstr,"(I5,F<maxIPart+5+6>.6)") i, this.data(i)
+# endif
+						output = trim(output)//trim(fstr)//new_line('')
+					end do
+!                                 end if
+!                                 
+!                         else
+                        
+!                                 do i=1,this.nElems
+!                                         write (fstr,"(F15.6)") this.data(i)
+!                                         output = trim(output)//trim(fstr)//new_line('')
+!                                 end do
+                                
+!                         end if
+			end if
+#undef LINE
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+		end if
+	end function str
+	
+	!>
+	!! @brief Show 
+	!!
+	subroutine show( this, unit, formatted )
+		class(NVector) :: this
+		integer, optional, intent(in) :: unit
+		logical, optional :: formatted
+		
+		integer :: effunit
+		logical :: effFormatted
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effunit = 6
+		if( present(unit) ) effunit = unit
+		
+		write(effunit,"(a)") trim(str(this,effFormatted))
+	end subroutine show
+	
+	!>
+	!! @brief
+	!!
+	subroutine set( this, i, value )
+		class(NVector) :: this
+		integer, intent(in) :: i
+		__TYPE_VALUE__, intent(in) :: value
+		
+		this.data(i) = value
+	end subroutine set
+	
+	!>
+	!! @brief
+	!!
+	function get( this, i ) result( output )
+		class(NVector) :: this
+		integer, intent(in) :: i
+		__TYPE_VALUE__ :: output
+		
+		output = this.data(i)
+	end function get
+	
+	!>
+	!! @brief
+	!!
+	function addition( this, other ) result( output )
+		class(NVector), intent(in) :: this
+		class(NVector), intent(in) :: other
+		type(NVector) :: output
+		
+		if( this.nElems /= other.nElems ) then
+			write(*,*) "## ERROR ## NVector.addition: The vectors have not the same size"
+			stop
+		end if
+		
+		call output.copyNVector( this )
+		output.data = this.data + other.data
+	end function addition
+	
+	!>
+	!! @brief
+	!!
+	function additionMC( this, constant ) result( output )
+		class(NVector), intent(in) :: this
+		__TYPE_VALUE__, intent(in) :: constant
+		type(NVector) :: output
+		
+		call output.copyNVector( this )
+		output.data = this.data + constant
+	end function additionMC
+	
+	!>
+	!! @brief
+	!!
+	function subtraction( this, other ) result( output )
+		class(NVector), intent(in) :: this
+		class(NVector), intent(in) :: other
+		type(NVector) :: output
+		
+		if( this.nElems /= other.nElems ) then
+			write(*,*) "## ERROR ## NVector.subtraction: The vectors have not the same size"
+			stop
+		end if
+		
+		call output.copyNVector( this )
+		output.data = this.data - other.data
+	end function subtraction
+	
+	!>
+	!! @brief
+	!!
+	function subtractionMC( this, constant ) result( output )
+		class(NVector), intent(in) :: this
+		__TYPE_VALUE__, intent(in) :: constant
+		type(NVector) :: output
+		
+		call output.copyNVector( this )
+		output.data = this.data - constant
+	end function subtractionMC
+	
+	!>
+	!! @brief
+	!!
+	function multiplication( this, other ) result( output )
+		class(NVector), intent(in) :: this
+		class(NVector), intent(in) :: other
+		type(NVector) :: output
+		
+		if( this.nElems /= other.nElems ) then
+			write(*,*) "## ERROR ## NVector.multiplication: The vectors have not the same size"
+			stop
+		end if
+		
+		call output.copyNVector( this )
+		output.data = this.data*other.data
+	end function multiplication
+	
+	!>
+	!! @brief
+	!!
+	function multiplicationMC( this, constant ) result( output )
+		class(NVector), intent(in) :: this
+		__TYPE_VALUE__, intent(in) :: constant
+		type(NVector) :: output
+		
+		call output.copyNVector( this )
+		output.data = this.data*constant
+	end function multiplicationMC
+	
+	!>
+	!! @brief
+	!!
+	function divisionMC( this, constant ) result( output )
+		class(NVector), intent(in) :: this
+		__TYPE_VALUE__, intent(in) :: constant
+		type(NVector) :: output
+		
+		call output.copyNVector( this )
+		output.data = this.data/constant
+	end function divisionMC
+	
+	!>
+	!! @brief
+	!!
+	function exponentiation( this, other ) result( output )
+		class(NVector), intent(in) :: this
+		class(NVector), intent(in) :: other
+		type(NVector) :: output
+		
+		write(*,*) "## ERROR ## NVector.exponentiation is not implemented"
+		stop
+	end function exponentiation
+	
+	!>
+	!! @brief
+	!!
+	function exponentiationMC( this, constant ) result( output )
+		class(NVector), intent(in) :: this
+		__TYPE_VALUE__, intent(in) :: constant
+		type(NVector) :: output
+		
+		write(*,*) "## ERROR ## NVector.exponentiation is not implemented"
+		stop
+	end function exponentiationMC
+	
+	!>
+	!! @brief
+	!!
+	function norm( this ) result( output )
+		class(NVector), intent(in) :: this
+		real(8) :: output
+		
+		output = sqrt(1.0*sum(this.data**2))
+	end function norm
+	
+#endif

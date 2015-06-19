@@ -1,0 +1,105 @@
+!>
+!! @brief Test program
+!!
+!! E0=0.05; omega=0.20279; t0=500.0; w=800.0; dw=100.0; tMax=1000.0
+!! echo "n=2**11; x0=0.0; h=$tMax/(n-1); do for [i=1:n] { x=x0+(i-1)*h; print sprintf( '%10.5f%10.5f', x, $E0*cos($omega*x)*erfhat(x,$t0,$w,$dw) ); }" | gnuplot 2> signalErfHat.dat
+!! ./fft1D -i signalErfHat.dat > fftErfHat.dat
+!! plot "signalErfHat.dat" w lp pt 7 ps 0.5 lw 2
+!! plot [0:0.4] "fftErfHat.dat" w lp pt 7 ps 0.5 lw 2
+!!
+!! echo "n=2**11; x0=0.0; h=$tMax/(n-1); do for [i=1:n] { x=x0+(i-1)*h; print sprintf( '%10.5f%10.5f', x, $E0*cos($omega*x)*coshat(x,$t0,$w,$dw) ); }" | gnuplot 2> signalCosHat.dat
+!! ./fft1D -i signalCosHat.dat > fftCosHat.dat
+!! plot "signalCosHat.dat" w lp pt 7 ps 0.5 lw 2
+!! plot [0:0.4] "fftCosHat.dat" w lp pt 7 ps 0.5 lw 2
+!!
+!! plot "signalErfHat.dat" w l lw 2, "signalCosHat.dat" w l lw 2 lt 3
+!! set size square
+!! plot [0:0.4] "fftErfHat.dat" w lp pt 7 ps 0.5 lw 2, "fftCosHat.dat" w lp pt 7 ps 0.5 lw 2 lt 3
+!!
+program main
+	use GOptions_
+	use IOStream_
+	use String_
+	use CommandLineParser_
+	use RNFunction2D_
+	use CNFunction2D_
+	use FourierTransform2D_
+	implicit none
+	
+	type(String) :: fileName
+	type(IFStream) :: ifile
+	type(CNFunction2D) :: nFunc, FnFunc, nFunc2
+	type(String) :: strBuffer
+	type(CommandLineParser) :: parser
+	integer :: fftSgn
+	
+	character(5), allocatable :: tokens(:)
+	integer, allocatable :: columns(:)
+	integer :: nPoints
+	integer :: smoothFactor
+	integer :: i
+	
+	type(String) :: typeOfSpectrum
+	integer :: idTypeOfSpectrum
+	
+	fileName = parser.getString( "-i" )
+	
+	strBuffer = parser.getString( "-s", def="FORWARD" )
+	if( trim(strBuffer.fstr) == "FORWARD" ) then
+		fftSgn = FourierTransform_FORWARD
+	else if( trim(strBuffer.fstr) == "BACKWARD" ) then
+		fftSgn = FourierTransform_BACKWARD
+	else
+		write(*,*) "### ERROR ### Bad value for parameter -s (FORWARD|BACKWARD)"
+		stop
+	end if
+	
+	strBuffer = parser.getString( "-c", def="1,2,3" )
+	call strBuffer.split( tokens, "," )
+	
+	if( size(tokens) == 3 ) then
+		allocate( columns(3) )
+		columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)), FString_toInteger(tokens(3)) ]
+	else if( size(tokens) == 2 ) then
+		allocate( columns(2) )
+		columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
+	else
+		write(*,*) "### ERROR ### Bad value for parameter -c"
+		stop
+	end if
+	
+	nPoints = parser.getInteger( "-n", def=-1 )
+	
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	! Type of spectrum
+	!-----------------------------------------------------------------
+	typeOfSpectrum = parser.getString( "-t", def="NORM" )
+
+	select case( trim(typeOfSpectrum.fstr) )
+		case( "NORM" )
+			idTypeOfSpectrum = FourierTransform2D_NORM_SPECTRUM
+		case( "REALPART" )
+			idTypeOfSpectrum = FourierTransform2D_REALPART_SPECTRUM
+		case( "IMAGPART" )
+			idTypeOfSpectrum = FourierTransform2D_IMAGPART_SPECTRUM
+		case( "PHASE" )
+			idTypeOfSpectrum = FourierTransform2D_PHASE_SPECTRUM
+		case( "POWER" )
+			idTypeOfSpectrum = FourierTransform2D_POWER_SPECTRUM
+	end select
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	
+	call ifile.init( fileName.fstr )
+	call nFunc.fromFStream( ifile, columns=columns )
+	call ifile.destroy()
+	
+	if( nPoints == -1 ) nPoints = nFunc.nPoints()
+	
+	spectrum = FourierTransform_spectrum( nFunc, sgn=fftSgn, type=idTypeOfSpectrum, method=idTypeOfMethod, &
+						window=FourierTransform_Window( idTypeWindow, paramWindow, centeredWindow, trim(oFileWindow) ) )
+	
+	call spectrum.save()
+
+	deallocate( columns )
+	
+end program main

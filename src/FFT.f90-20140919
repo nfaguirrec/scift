@@ -1,0 +1,644 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!!  This file is part of scift (Scientific Fortran Tools).
+!!  Copyright (C) by authors (2013-2014)
+!!  
+!!  Authors (alphabetic order):
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2013-2014)
+!!  
+!!  Contributors (alphabetic order):
+!!  
+!!  Redistribution and use in source and binary forms, with or
+!!  without modification, are permitted provided that the
+!!  following conditions are met:
+!!  
+!!   * Redistributions of binary or source code must retain
+!!     the above copyright notice and this list of conditions
+!!     and/or other materials provided with the distribution.
+!!   * All advertising materials mentioning features or use of
+!!     this software must display the following acknowledgement:
+!!     
+!!     This product includes software from scift
+!!     (Scientific Fortran Tools) project and its contributors.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+module FFT_
+	use GOptions_
+	use Math_
+	use Grid_
+	use CNFunction_
+	use RNFunction_
+	use RandomUtils_
+	implicit none
+	include 'fftw/fftw3.f'
+	private
+	
+	public :: &
+		FFT_kGrid, &
+		FFT_test
+		
+	type, public :: FFT
+		class(CNFunction), pointer, private :: func
+		
+		contains
+			procedure :: init
+			final :: destroy
+			procedure :: str
+			procedure :: show
+			procedure :: spectrum
+			procedure :: filter
+			procedure :: derivative
+	end type FFT
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine init( this, func )
+		class(FFT) :: this 
+		class(CNFunction), target, intent(in) :: func
+		
+		if( associated(this.func) ) nullify(this.func)
+		
+		this.func => func
+	end subroutine init
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroy( this )
+		type(FFT) :: this
+		
+		nullify(this.func)
+	end subroutine destroy
+	
+	!>
+	!! @brief
+	!!
+	function str( this ) result( output )
+		class(FFT) :: this 
+		character(len=200) :: output
+		
+		integer :: fmt
+		character(len=200) :: strBuffer
+		
+		output = ""
+		
+		output = trim(output)//"<FFT:"
+		
+! 		output = trim(output)//"min="
+! 		fmt = int(log10(this.min+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+! 		output = trim(output)//trim(strBuffer)
+! 		
+! 		output = trim(output)//",max="
+! 		fmt = int(log10(this.max+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this.max
+! 		output = trim(output)//trim(strBuffer)
+! 		
+! 		output = trim(output)//",h="
+! 		fmt = int(log10(this.h+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this.h
+! 		output = trim(output)//trim(strBuffer)
+! 		
+! 		output = trim(output)//",size="
+! 		fmt = int(log10(float(this.size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this.size
+! 		output = trim(output)//trim(strBuffer)
+		
+		output = trim(output)//">"
+	end function str
+	
+	!>
+	!! @brief
+	!!
+	subroutine show( this, unit )
+		class(FFT) :: this
+		integer, optional, intent(in) :: unit
+		
+		integer :: effunit
+		
+		if( present(unit) ) then
+			effunit = unit
+		else
+			effunit = 6
+		end if
+		
+		write(effunit,"(a)") trim(this.str())
+	end subroutine show
+	
+	!>
+	!! @brief Organiza los datos para el espectro con frecuencias positivas y negativas
+	!!        Rearranges the fft output, moving the zero frequency to the center of the spectrum
+	!!        http://www.dsplog.com/2008/08/08/negative-frequency/
+	!!
+	subroutine makeIndicesAndFreqs( id, freqs, n )
+		integer, intent(out) :: id(:)
+		real(8), intent(out) :: freqs(:)
+		integer, intent(in) :: n
+		
+		integer :: i, j
+		
+		j=1
+		do i=n/2+1,n
+			id(i) = j
+			freqs(i) = 2.0_8*MATH_PI*real(i-1-n/2,8)/n
+			j = j+1
+		end do
+		
+		if( Math_isOdd(n) ) then
+			j=1
+			do i=1,n/2
+				id(i) = n/2+1+i
+				freqs(i) = 2.0_8*MATH_PI*real(j-1-n/2,8)/n
+				j = j+1
+			end do
+		else
+			j=1
+			do i=1,n/2
+				id(i) = n/2+i
+				freqs(i) = 2.0_8*MATH_PI*real(j-1-n/2,8)/n
+				j = j+1
+			end do
+		end if
+	end subroutine makeIndicesAndFreqs
+	
+	!>
+	!! @brief Gets the Fourier spectrum for the funtion
+	!!
+	function spectrum( this, type, kindOfFilter, cutoff, lastStep ) result( output )
+		class(FFT), intent(in) :: this
+		integer, intent(in), optional :: type
+		integer, intent(in), optional :: kindOfFilter
+		real(8), intent(in), optional :: cutoff
+		integer, intent(in), optional :: lastStep
+		type(RNFunction) :: output
+		
+		integer :: effType
+		integer :: effKindOfFilter
+		real(8) :: effCutoff
+		
+		real(8) :: normConst
+		integer :: nPoints, i
+		integer(8) :: plan
+		
+		real(8), allocatable :: xVec(:)       ! Frecuencias organizadas para el espectro
+		complex(8), allocatable :: yVec(:)
+		real(8), allocatable :: yVecNorm(:)   ! Amplitudes organizadas para el espectro
+		real(8) :: stepSize
+		integer, allocatable :: id(:)
+		
+		effType = FFT_FORWARD
+		if( present(type) ) effType = type
+		
+		effKindOfFilter = FFT_FILTER_NONE
+		if( present(kindOfFilter) ) effKindOfFilter = kindOfFilter
+		
+		effCutoff = 0.0_8
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		nPoints = this.func.nPoints
+		if( present(lastStep) ) nPoints = lastStep
+		
+		allocate( id(nPoints) )
+		allocate( xVec(nPoints) )
+		allocate( yVec(nPoints) )
+		allocate( yVecNorm(nPoints) )
+		
+		call makeIndicesAndFreqs( id, xVec, nPoints )
+		xVec = xVec/this.func.xGrid.stepSize
+		
+		yVec = this.func.yArray
+		
+		if( effType == FFT_FORWARD ) then
+			call dfftw_plan_dft_1d( plan, nPoints, yVec, yVec, FFTW_FORWARD, FFTW_ESTIMATE )
+		else if( effType == FFT_BACKWARD ) then
+			call dfftw_plan_dft_1d( plan, nPoints, yVec, yVec, FFTW_BACKWARD, FFTW_ESTIMATE )
+		end if
+		call dfftw_execute( plan )
+		call dfftw_destroy_plan( plan )
+		
+		!--------------------------------------------------------------
+		! La convencion de normalizacion de acuerdo con wikipedia es:
+		! Fourier transform non-unitary, angular frequency
+		!--------------------------------------------------------------
+		if( effType == FFT_FORWARD ) then
+			normConst = (this.func.xGrid.max-this.func.xGrid.min)/nPoints
+			do i=1,nPoints
+				yVecNorm(i) = abs(yVec( id(i) ))*normConst
+			end do
+		else if( effType == FFT_BACKWARD ) then
+			normConst = (this.func.xGrid.max-this.func.xGrid.min)/nPoints/(2.0*Math_PI)
+			do i=1,nPoints
+				yVecNorm(i) = abs(yVec( id(i) ))*normConst
+			end do
+		end if
+		
+		if( effKindOfFilter /= FFT_FILTER_NONE ) then
+		
+			select case( effKindOfFilter )
+				case( FFT_FILTER_AMPLITUDE )
+				
+					do i=1,nPoints
+						if( abs(yVecNorm(i)) < effCutoff ) then
+							yVecNorm(i) = 0.0_8
+						end if
+					end do
+					
+				case( FFT_FILTER_AMPLITUDE_FRACTION )
+				
+					do i=1,nPoints
+						if( abs(yVecNorm(i)) < cutoff*maxval(abs(yVecNorm)) ) then
+							yVecNorm(i) = 0.0_8
+						end if
+					end do
+					
+				case( FFT_FILTER_FREQUENCY )
+				
+					do i=1,nPoints
+						if( abs(xVec(i)) > effCutoff ) then
+							yVecNorm(i) = 0.0_8
+						end if
+					end do
+					
+			end select
+			
+		end if
+		
+		call output.fromArrays( xVec, yVecNorm )
+		
+		deallocate( id )
+		deallocate( xVec )
+		deallocate( yVec )
+		deallocate( yVecNorm )
+	end function spectrum
+	
+	!>
+	!! @brief Gets the Fourier transform for the function
+	!!
+	function filter( this, kindOfFilter, cutoff ) result( output )
+		class(FFT), intent(in) :: this
+		integer, intent(in), optional :: kindOfFilter
+		real(8), intent(in), optional :: cutoff
+		type(CNFunction) :: output
+		
+		integer :: effKindOfFilter
+		real(8) :: effCutoff
+		
+		integer :: nPoints, plan, i
+		
+		real(8), allocatable :: xVec(:)
+		complex(8), allocatable :: yVec(:)
+		real(8), allocatable :: yVecNorm(:)
+		real(8) :: stepSize
+		integer, allocatable :: id(:)
+		
+		effKindOfFilter = FFT_FILTER_NONE
+		if( present(kindOfFilter) ) effKindOfFilter = kindOfFilter
+		
+		effCutoff = 0.0_8
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		nPoints = this.func.nPoints
+		
+		allocate( id(nPoints) )
+		allocate( xVec(nPoints) )
+		allocate( yVec(nPoints) )
+		allocate( yVecNorm(nPoints) )
+		
+		!-----------------------------------------------
+		! Se construye el grid en el espacio recíproco
+		! @todo Puede que dependa del número de puntos
+		!-----------------------------------------------
+		do i=1,nPoints/2+1
+			xVec(i) = 2.0_8*MATH_PI*real(i-1,8)/this.func.xGrid.stepSize/real(nPoints,8)
+		end do
+		do i=nPoints/2+2,nPoints
+			xVec(i)=-xVec(nPoints+2-i)
+		end do
+		
+		yVec = this.func.yArray
+		
+		call dfftw_plan_dft_1d( plan, nPoints, yVec, yVec, FFTW_FORWARD, FFTW_ESTIMATE )
+		call dfftw_execute( plan )
+		call dfftw_destroy_plan( plan )
+		
+		if( effKindOfFilter /= FFT_FILTER_NONE ) then
+		
+			select case( effKindOfFilter )
+				case( FFT_FILTER_AMPLITUDE )
+				
+					do i=1,nPoints
+						if( abs(yVec(i)) < effCutoff ) then
+							yVec(i) = 0.0_8
+						end if
+					end do
+					
+				case( FFT_FILTER_AMPLITUDE_FRACTION )
+				
+					do i=1,nPoints
+						if( abs(yVec(i)) < effCutoff*maxval(abs(yVec)) ) then
+							yVec(i) = 0.0_8
+						end if
+					end do
+					
+				case( FFT_FILTER_FREQUENCY )
+				
+					do i=1,nPoints
+						if( abs(xVec(i)) > effCutoff ) then
+							yVec(i) = 0.0_8
+						end if
+					end do
+					
+			end select
+			
+		end if
+		
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		! Gets the inverse Fourier transform
+		call dfftw_plan_dft_1d( plan, nPoints, yVec, yVec, FFTW_BACKWARD, FFTW_ESTIMATE )
+		call dfftw_execute( plan )
+		call dfftw_destroy_plan( plan )
+		
+		call output.init( this.func.xGrid, yVec/nPoints )
+		
+		deallocate( id )
+		deallocate( xVec )
+		deallocate( yVec )
+		deallocate( yVecNorm )
+	end function filter
+	
+	!>
+	!! @brief Gets the derivative by using FFT
+	!!
+	function derivative( this, order, kindOfFilter, cutoff ) result( output )
+		class(FFT), intent(in) :: this
+		integer, intent(in) :: order
+		integer, intent(in), optional :: kindOfFilter
+		real(8), intent(in), optional :: cutoff
+		type(CNFunction) :: output
+		
+		integer :: effKindOfFilter
+		real(8) :: effCutoff
+		
+		integer :: nPoints, plan, i
+		
+		real(8), allocatable :: xVec(:)
+		complex(8), allocatable :: yVec(:)
+		real(8), allocatable :: yVecNorm(:)
+		real(8) :: stepSize
+		integer, allocatable :: id(:)
+		
+		effKindOfFilter = FFT_FILTER_NONE
+		if( present(kindOfFilter) ) effKindOfFilter = kindOfFilter
+		
+		effCutoff = 0.0_8
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		nPoints = this.func.nPoints
+		
+		allocate( id(nPoints) )
+		allocate( xVec(nPoints) )
+		allocate( yVec(nPoints) )
+		allocate( yVecNorm(nPoints) )
+		
+		!-----------------------------------------------
+		! Se construye el grid en el espacio recíproco
+		! @todo Puede que dependa del número de puntos
+		!-----------------------------------------------
+		do i=1,nPoints/2+1
+			xVec(i) = 2.0_8*MATH_PI*real(i-1,8)/this.func.xGrid.stepSize/real(nPoints,8)
+		end do
+		do i=nPoints/2+2,nPoints
+			xVec(i)=-xVec(nPoints+2-i)
+		end do
+		
+		yVec = this.func.yArray
+		
+		call dfftw_plan_dft_1d( plan, nPoints, yVec, yVec, FFTW_FORWARD, FFTW_ESTIMATE )
+		call dfftw_execute( plan )
+		call dfftw_destroy_plan( plan )
+		
+		if( effKindOfFilter /= FFT_FILTER_NONE ) then
+		
+			select case( effKindOfFilter )
+				case( FFT_FILTER_AMPLITUDE )
+				
+					do i=1,nPoints
+						if( abs(yVec(i)) < effCutoff ) then
+							yVec(i) = 0.0_8
+						end if
+					end do
+					
+				case( FFT_FILTER_AMPLITUDE_FRACTION )
+				
+					do i=1,nPoints
+						if( abs(yVec(i)) < effCutoff*maxval(abs(yVec)) ) then
+							yVec(i) = 0.0_8
+						end if
+					end do
+					
+				case( FFT_FILTER_FREQUENCY )
+				
+					do i=1,nPoints
+						if( abs(xVec(i)) > effCutoff ) then
+							yVec(i) = 0.0_8
+						end if
+					end do
+					
+			end select
+			
+		end if
+		
+! 		yVec = (2.0_8*Math_PI*Math_I*xVec)**order*yVec  ! Esto es si X no lleva el 2pi
+		yVec = (Math_I*xVec)**order*yVec
+		
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		! Gets the inverse Fourier transform
+		call dfftw_plan_dft_1d( plan, nPoints, yVec, yVec, FFTW_BACKWARD, FFTW_ESTIMATE )
+		call dfftw_execute( plan )
+		call dfftw_destroy_plan( plan )
+		
+		call output.init( this.func.xGrid, yVec/nPoints )
+		
+		deallocate( id )
+		deallocate( xVec )
+		deallocate( yVec )
+		deallocate( yVecNorm )
+	end function derivative
+	
+	!>
+	!! @brief
+	!!
+	function FFT_kGrid( xGrid ) result( kGrid )
+		type(Grid), intent(in) :: xGrid
+		type(Grid) :: kGrid
+		
+		integer :: i, j, k
+		integer :: n
+		real(8) :: h
+		
+		real(8), allocatable :: kArray(:)
+		
+		n = xGrid.nPoints
+		h = xGrid.stepSize
+		
+		allocate( kArray(n) )
+		
+		!-------------------------------------
+		! Codigo de Sergio
+		! @todo probablemente no se cumpla
+		!       para numero impar de puntos
+		!-------------------------------------
+! 		do i=1,nx/2+1
+! 			kx(i) = 2.0_8*MATH_PI*real(i-1,8)/hx/real(nx,8)
+! 		end do
+! 		do i=nx/2+2,nx
+! 			kx(i)=-kx(nx+2-i)
+! 		end do
+
+		do i=1,n/2+1
+			kArray(i) = 2.0_8*MATH_PI*real(i-1,8)/h/real(n,8)
+		end do
+		do i=n/2+2,n
+			kArray(i)=-kArray(n+2-i)
+		end do
+
+		call kGrid.init( kArray )
+		
+		deallocate( kArray )
+	end function FFT_kGrid
+	
+	!>
+	!! This is neccesary only for FFT_test()
+	!!       f = exp(-0.44*x)*sin(x)**2
+	!!   df/dx = exp(-0.44*x)*(2.0*sin(x)*cos(x)-0.44*sin(x)**2)
+	!! d2f/dx2 = exp(-0.44*x)*(2.0*cos(x)**2 - 1.76*cos(x)*sin(x) - 2.0*sin(x)**2 + 0.1936*sin(x)**2)
+	!!
+	function funcTest( x ) result( output )
+		real(8), intent(in) :: x
+		complex(8) :: output
+		
+! 		output = 1.0_8*sin(1.0_8*x) &  !  1 rad/sec component
+! 				+0.6_8*sin(3.0_8*x) &  !  3 rad/sec component
+! 				+0.4_8*sin(5.0_8*x) &  !  5 rad/sec component
+! 				+0.2_8*sin(RandomUtils_uniform([7.0_8,10.0_8])*x)  !  uniform noise
+
+! 		output = exp(-0.44*x)*sin(x)**2.0 + 0.001*sin(30.0*x)  ! noise 30 rad/sec
+		
+		output = 0.5_8*cos(5.0_8*x) - 0.5_8*Math_I*sin(5.0_8*x) + 2.0_8*sin(2.5_8*x);
+	end function funcTest
+	
+	!>
+	!! This is neccesary only for FFT_test()
+	!!       f = exp(-0.44*x)*sin(x)**2
+	!!   df/dx = exp(-0.44*x)*(2.0*sin(x)*cos(x)-0.44*sin(x)**2)
+	!! d2f/dx2 = exp(-0.44*x)*(2.0*cos(x)**2 - 1.76*cos(x)*sin(x) - 2.0*sin(x)**2 + 0.1936*sin(x)**2)
+	!!
+	function funcTestReal( x ) result( output )
+		real(8), intent(in) :: x
+		real(8) :: output
+		
+! 		output = 1.0_8*sin(1.0_8*x) &  !  1 rad/sec component
+! 				+0.6_8*sin(3.0_8*x) &  !  3 rad/sec component
+! 				+0.4_8*sin(5.0_8*x) &  !  5 rad/sec component
+! 				+0.2_8*sin(RandomUtils_uniform([7.0_8,10.0_8])*x)  !  uniform noise
+
+! 		output = exp(-0.44*x)*sin(x)**2.0 + 0.001*sin(30.0*x)  ! noise 30 rad/sec
+		
+		output = 0.5_8*cos(5.0_8*x) - 0.5_8*sin(5.0_8*x) + 2.0_8*sin(2.5_8*x);
+	end function funcTestReal
+	
+	!>
+	!! This is neccesary only for FFT_test()
+	!!       f = exp(-0.44*x)*sin(x)**2
+	!!   df/dx = exp(-0.44*x)*(2.0*sin(x)*cos(x)-0.44*sin(x)**2)
+	!! d2f/dx2 = exp(-0.44*x)*(2.0*cos(x)**2 - 1.76*cos(x)*sin(x) - 2.0*sin(x)**2 + 0.1936*sin(x)**2)
+	!!
+	function dfuncTest( x ) result( output )
+		real(8), intent(in) :: x
+		complex(8) :: output
+		
+		output = exp(-0.44*x)*(2.0*sin(x)*cos(x)-0.44*sin(x)**2) + 2.0*Math_PI*30.0*0.001*cos(30.0*x)   ! noise 30 rad/sec Hz
+	end function dfuncTest
+	
+	!>
+	!! This is neccesary only for FFT_test()
+	!!       f = exp(-0.44*x)*sin(x)**2
+	!!   df/dx = exp(-0.44*x)*(2.0*sin(x)*cos(x)-0.44*sin(x)**2)
+	!! d2f/dx2 = exp(-0.44*x)*(2.0*cos(x)**2 - 1.76*cos(x)*sin(x) - 2.0*sin(x)**2 + 0.1936*sin(x)**2)
+	!!
+	function d2funcTest( x ) result( output )
+		real(8), intent(in) :: x
+		complex(8) :: output
+		
+		output = exp(-0.44*x)*(2.0*cos(x)**2 - 1.76*cos(x)*sin(x) - 2.0*sin(x)**2 + 0.1936*sin(x)**2)
+	end function d2funcTest
+	
+	!>
+	!! @bief test
+	!!
+	subroutine FFT_test()
+		type(Grid) :: xGrid
+		type(CNFunction) :: func, dFunc
+		type(CNFunction) :: fftFunc, fftDFunc
+		type(RNFunction) :: spectrum
+		type(FFT) :: fft
+		real(8) :: exactValue
+		real(8) :: value
+		integer :: i, j
+		
+! 		call xGrid.init( 0.0_8, 6.0_8*Math_PI, 1000 )
+		call xGrid.init( 0.0_8, 20.0_8*Math_PI, 1000 )
+		call func.fromFunction( xGrid, funcTest )
+		call dFunc.fromFunction( xGrid, dfuncTest )
+		call fft.init( func )
+		
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		! Para verificar:
+		!   $ make && ./test > salida
+		!   gnuplot> plot "salida" i 0 w l lw 2, "" i 1 w l, "" i 2 w l, "" i 3 w l lw 2
+		! verde y azul deben dar igual
+		!   gnuplot> plot [-70:70] "salida" i 4 w l
+		! debe dar picos a 
+! 		fftFunc = fft.filter( kindOfFilter=FFT_FILTER_AMPLITUDE_FRACTION, cutoff=0.01_8 )
+		fftFunc = fft.filter( kindOfFilter=FFT_FILTER_FREQUENCY, cutoff=27.0_8 )
+		spectrum = fft.spectrum()
+! 		fftDFunc = fft.derivative( 1, kindOfFilter=FFT_FILTER_AMPLITUDE_FRACTION, cutoff=0.01_8 )
+		fftDFunc = fft.derivative( 1, kindOfFilter=FFT_FILTER_FREQUENCY, cutoff=27.0_8 )
+		
+		write(*,*) "#-----------------------"
+		write(*,*) "# Function"
+		write(*,*) "#-----------------------"
+		call func.save()
+		write(*,*)
+		write(*,*)
+		write(*,*) "#-----------------------"
+		write(*,*) "# FFT Function"
+		write(*,*) "#-----------------------"
+		call fftFunc.save()
+		write(*,*)
+		write(*,*)
+		write(*,*) "#-----------------------"
+		write(*,*) "# der Function"
+		write(*,*) "#-----------------------"
+		call dFunc.save()
+		write(*,*)
+		write(*,*)
+		write(*,*) "#-----------------------"
+		write(*,*) "# FFT der Function"
+		write(*,*) "#-----------------------"
+		call fftDFunc.save()
+		write(*,*)
+		write(*,*)
+		write(*,*) "#-----------------------"
+		write(*,*) "# Spectrum"
+		write(*,*) "#-----------------------"
+		call spectrum.save()
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		
+	end subroutine FFT_test
+	
+end module FFT_

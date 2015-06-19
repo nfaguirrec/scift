@@ -1,0 +1,2098 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!!  This file is part of scift (Scientific Fortran Tools).
+!!  Copyright (C) by authors (2013-2015)
+!!  
+!!  Authors (alphabetic order):
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2013-2015)
+!!  
+!!  Contributors (alphabetic order):
+!!  
+!!  Redistribution and use in source and binary forms, with or
+!!  without modification, are permitted provided that the
+!!  following conditions are met:
+!!  
+!!   * Redistributions of binary or source code must retain
+!!     the above copyright notice and this list of conditions
+!!     and/or other materials provided with the distribution.
+!!   * All advertising materials mentioning features or use of
+!!     this software must display the following acknowledgement:
+!!     
+!!     This product includes software from scift
+!!     (Scientific Fortran Tools) project and its contributors.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+module FourierTransform_
+	use FFTW3_
+	use GOptions_
+	use Math_
+	use Grid_
+	use CNFunction_
+	use RNFunction_
+	use RandomUtils_
+	implicit none
+	private
+	
+	public :: &
+		FourierTransform_omegaGrid, &
+		FourierTransform_xGrid, &
+		FourierTransform_phase, &
+		FourierTransform_iphase, &
+		FourierTransform_shift, &
+		FourierTransform_ishift, &
+		FourierTransform_plan, &
+		FourierTransform_execute, &
+		FourierTransform_destroyPlan, &
+		FourierTransform_dft, &
+		FourierTransform_idft, &
+		FourierTransform_fft, &
+		FourierTransform_ifft, &
+		FourierTransform_powerSpectrum, &
+		FourierTransform_ispectrum, &
+		FourierTransform_phaseSpectrum, &
+		FourierTransform_nft, &
+		FourierTransform_inft, &
+		FourierTransform_filterByAmplitude, &
+		FourierTransform_filterByFrequency, &
+		FourierTransform_test
+		
+	type, public :: FFT
+		class(CNFunction), pointer, private :: iFunc
+		integer(8), private :: planF, planB
+		
+		integer :: nPoints
+		real(8), allocatable :: x(:)
+		real(8), allocatable :: omega(:)
+		
+		contains
+			procedure :: init
+			final :: destroy
+			procedure :: str
+			procedure :: show
+			procedure :: execute
+! 			procedure :: filter
+
+			! Esto hay que probarlo para la siguiente versión del compilador
+			! ya que en ifort es necesario tener un objeto instanciado para poder
+			! acceder a estas funciones, sin embergo en otros compiladores ya está arreglado
+! 			generic :: FourierTransform_omegaGrid => FourierTransform_omegaGridFromData, FourierTransform_omegaGridFromXGrid
+! 			procedure, NOPASS :: FourierTransform_omegaGridFromData
+! 			procedure, NOPASS :: FourierTransform_omegaGridFromXGrid
+! 
+! 			generic :: FourierTransform_shift => FourierTransform_shift_realArray, FourierTransform_shift_complexArray, FourierTransform_shift_Grid, 
+! FourierTransform_shift_CNFunction
+! 			procedure, NOPASS :: FourierTransform_shift_realArray
+! 			procedure, NOPASS :: FourierTransform_shift_complexArray
+! 			procedure, NOPASS :: FourierTransform_shift_Grid
+! 			procedure, NOPASS :: FourierTransform_shift_CNFunction
+! 
+! 			generic :: FourierTransform_ishift => FourierTransform_ishift_realArray, FourierTransform_ishift_complexArray, FourierTransform_ishift_Grid, 
+! FourierTransform_ishift_CNFunction
+! 			procedure, NOPASS :: FourierTransform_ishift_realArray
+! 			procedure, NOPASS :: FourierTransform_ishift_complexArray
+! 			procedure, NOPASS :: FourierTransform_ishift_Grid
+! 			procedure, NOPASS :: FourierTransform_ishift_CNFunction
+! 
+! 			generic :: FourierTransform_plan => FourierTransform_plan_Array, FourierTransform_plan_CNFunction
+! 			procedure, NOPASS :: FourierTransform_plan_Array
+! 			procedure, NOPASS :: FourierTransform_plan_CNFunction
+! 
+! 			generic :: FourierTransform_fft => FourierTransform_dft_CArray, FourierTransform_fft_CNFunction
+! 			procedure, NOPASS :: FourierTransform_dft_CArray
+! 			procedure, NOPASS :: FourierTransform_fft_CNFunction
+! 
+! 			generic :: FourierTransform_ifft => FourierTransform_idft_Array, FourierTransform_ifft_CNFunction
+! 			procedure, NOPASS :: FourierTransform_idft_Array
+! 			procedure, NOPASS :: FourierTransform_ifft_CNFunction
+	end type FFT
+	
+    interface FourierTransform_omegaGrid
+		module procedure FourierTransform_omegaGridFromData
+		module procedure FourierTransform_omegaGridFromXGrid
+    end interface FourierTransform_omegaGrid
+
+    interface FourierTransform_xGrid
+		module procedure FourierTransform_xGridFromData
+		module procedure FourierTransform_xGridFromOmegaGrid
+    end interface FourierTransform_xGrid
+
+    interface FourierTransform_phase
+        module procedure FourierTransform_phase_realArray
+        module procedure FourierTransform_phase_complexArray
+        module procedure FourierTransform_phase_RNFunction
+        module procedure FourierTransform_phase_CNFunction
+    end interface FourierTransform_phase
+    
+    interface FourierTransform_iphase
+        module procedure FourierTransform_iphase_realArray
+        module procedure FourierTransform_iphase_complexArray
+        module procedure FourierTransform_iphase_CNFunction
+    end interface FourierTransform_iphase
+	
+    interface FourierTransform_shift
+        module procedure FourierTransform_shift_realArray
+        module procedure FourierTransform_shift_complexArray
+        module procedure FourierTransform_shift_Grid
+        module procedure FourierTransform_shift_RNFunction
+        module procedure FourierTransform_shift_CNFunction
+    end interface FourierTransform_shift
+
+    interface FourierTransform_ishift
+        module procedure FourierTransform_ishift_realArray
+        module procedure FourierTransform_ishift_complexArray
+        module procedure FourierTransform_ishift_Grid
+        module procedure FourierTransform_ishift_CNFunction
+    end interface FourierTransform_ishift
+
+    interface FourierTransform_plan
+        module procedure FourierTransform_plan_Array
+        module procedure FourierTransform_plan_CNFunction
+    end interface FourierTransform_plan
+    
+    interface FourierTransform_dft
+        module procedure FourierTransform_dft_CArray
+    end interface FourierTransform_dft
+    
+    interface FourierTransform_idft
+        module procedure FourierTransform_idft_Array
+    end interface FourierTransform_idft
+
+    interface FourierTransform_fft
+        module procedure FourierTransform_fft_CNFunction
+    end interface FourierTransform_fft
+
+    interface FourierTransform_ifft
+        module procedure FourierTransform_ifft_CNFunction
+    end interface FourierTransform_ifft
+
+    interface FourierTransform_powerSpectrum
+        module procedure FourierTransform_powerSpectrumC
+        module procedure FourierTransform_powerSpectrumR
+    end interface FourierTransform_powerSpectrum
+
+    interface FourierTransform_ispectrum
+        module procedure FourierTransform_ispectrumC
+        module procedure FourierTransform_ispectrumR
+    end interface FourierTransform_ispectrum
+    
+    interface FourierTransform_phaseSpectrum
+        module procedure FourierTransform_phaseSpectrumC
+        module procedure FourierTransform_phaseSpectrumR
+    end interface FourierTransform_phaseSpectrum
+
+    interface FourierTransform_nft
+        module procedure FourierTransform_nft_CNFunction
+    end interface FourierTransform_nft
+
+    interface FourierTransform_inft
+        module procedure FourierTransform_inft_CNFunction
+    end interface FourierTransform_inft
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!! @todo En algunas ocasiones es importante hacer la transfomrda de no todos los puntos
+	!!
+	subroutine init( this, iFunc, domain, oFunc )
+		class(FFT) :: this 
+		class(CNFunction), target, intent(in) :: iFunc
+		integer(8), intent(in), optional :: domain
+		class(CNFunction), target, optional, intent(in) :: oFunc
+		
+		integer(8) :: effDomain
+		
+		if( associated(this.iFunc) ) nullify(this.iFunc)
+		this.iFunc => iFunc
+		this.nPoints = iFunc.nPoints() ! << Hay que cambiar para hacer la transformada de algunos puntos
+		
+		effDomain = FourierTransform_SPATIAL_DOMAIN
+		if( present(domain) ) effDomain = domain
+		
+		if( present(oFunc) ) call GOptions_error( "oFunc parameter is not implamented yet", "FFT.init()" )
+		
+		call dfftw_plan_dft_1d( this.planF, this.nPoints, this.iFunc.yArray, this.iFunc.yArray, FFTW_FORWARD, FFTW_ESTIMATE )
+		call dfftw_plan_dft_1d( this.planB, this.nPoints, this.iFunc.yArray, this.iFunc.yArray, FFTW_BACKWARD, FFTW_ESTIMATE )
+			
+		if( allocated(this.x) ) deallocate(this.x)
+		allocate( this.x(this.nPoints) )
+		
+		if( allocated(this.omega) ) deallocate(this.omega)
+		allocate( this.omega(this.nPoints) )
+
+		if( effDomain == FourierTransform_SPATIAL_DOMAIN ) then
+			
+			this.x = this.iFunc.xGrid.data(1:this.nPoints)
+			call FourierTransform_omegaArray( this.omega, this.nPoints, this.iFunc.stepSize() )
+			
+		else if( effDomain == FourierTransform_FREQUENCY_DOMAIN ) then
+			
+			call GOptions_warning( "FourierTransform_FREQUENCY_DOMAIN have not been tested yet", "FFT.init()" )
+			this.omega = this.iFunc.xGrid.data(1:this.nPoints)
+			call FourierTransform_xArray( this.x, this.nPoints, this.iFunc.stepSize() )
+			
+		end if
+	end subroutine init
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroy( this )
+		type(FFT) :: this
+		
+		! Si los activo el programa produce:
+		! 	forrtl: error (76): Abort trap signal
+! 		call dfftw_destroy_plan( this.planF )
+! 		call dfftw_destroy_plan( this.planB )
+		
+		nullify(this.iFunc)
+		
+		this.nPoints = -1
+		if( allocated(this.x) ) deallocate( this.x )
+		if( allocated(this.omega) ) deallocate( this.omega )
+	end subroutine destroy
+	
+	!>
+	!! @brief
+	!!
+	function str( this ) result( output )
+		class(FFT) :: this 
+		character(len=200) :: output
+		
+		integer :: fmt
+		character(len=200) :: strBuffer
+		
+		output = ""
+		
+		output = trim(output)//"<FFT:"
+		
+! 		output = trim(output)//"min="
+! 		fmt = int(log10(this.min+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+! 		output = trim(output)//trim(strBuffer)
+! 		
+! 		output = trim(output)//",max="
+! 		fmt = int(log10(this.max+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this.max
+! 		output = trim(output)//trim(strBuffer)
+! 		
+! 		output = trim(output)//",h="
+! 		fmt = int(log10(this.h+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this.h
+! 		output = trim(output)//trim(strBuffer)
+! 		
+! 		output = trim(output)//",size="
+! 		fmt = int(log10(float(this.size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this.size
+! 		output = trim(output)//trim(strBuffer)
+		
+		output = trim(output)//">"
+	end function str
+	
+	!>
+	!! @brief
+	!!
+	subroutine show( this, unit )
+		class(FFT) :: this
+		integer, optional, intent(in) :: unit
+		
+		integer :: effunit
+		
+		if( present(unit) ) then
+			effunit = unit
+		else
+			effunit = 6
+		end if
+		
+		write(effunit,"(a)") trim(this.str())
+	end subroutine show
+	
+	!>
+	!! @brief
+	!!
+	subroutine execute( this, sgn, sync, shift )
+		class(FFT) :: this
+		integer, intent(in) :: sgn
+		logical, optional, intent(in) :: sync
+		logical, optional, intent(in) :: shift
+		
+		logical :: effSync
+		logical :: effShift
+		
+		effSync = .false.
+		if( present(sync) ) effSync = sync
+		
+		effShift = .false.
+		if( present(shift) ) effShift = shift
+		
+		if( sgn == FourierTransform_FORWARD ) then
+		
+			call dfftw_execute( this.planF )
+			
+			if( effSync ) then
+				call this.iFunc.xGrid.init( this.omega )
+				
+				if( effShift ) then
+					call FourierTransform_phase( this.iFunc )
+					call FourierTransform_shift( this.iFunc )
+				end if
+			end if
+			
+		else if ( sgn == FourierTransform_BACKWARD ) then
+		
+			if( effSync ) then
+				if( effShift ) then
+					call FourierTransform_ishift( this.iFunc )
+					call FourierTransform_phase( this.iFunc )
+				end if
+			end if
+			
+			call dfftw_execute( this.planB )
+			
+			if( effSync ) then
+				call this.iFunc.xGrid.init( this.x )
+			end if
+			
+			this.iFunc = this.iFunc/real(this.nPoints,8)
+			
+		else
+			call GOptions_error( "Bad value for sgn", "FFT.execute()" )
+		end if
+	end subroutine execute
+	
+	!>
+	!! @brief Return the Discrete Fourier Transform sample frequencies. ( see: numpy.fft.fftfreq )
+	!! 
+	!! The returned float array f contains the frequency bin centers in cycles per unit of the sample spacing (with zero at the start).
+	!! For instance, if the sample spacing is in seconds, then the frequency unit is cycles/second.
+	!! 
+	!! Given a window length n and a sample spacing d:
+	!! 
+	!! f = [0, 1, ..., ceil(n/2),  -ceil(n/2)+1, ..., -1] / (d*n)   if n is even
+	!! f = [0, 1, ..., ceil(n/2),    -ceil(n/2), ..., -1] / (d*n)   if n is odd
+	!!
+	!! @param n : int. Window length.
+	!! @param h : scalar, optional. Sample spacing (inverse of the sampling rate). Defaults to 1.
+	!! @returns:	f : ndarray. Array of length n containing the sample frequencies.
+	!!
+	subroutine FourierTransform_omegaArray( array, n, h, order )
+		real(8) :: array(:)
+		integer, intent(in) :: n
+		real(8), optional, intent(in) :: h
+		integer, optional, intent(in) :: order
+		
+		real(8) :: effH
+		integer :: effOrder
+		
+		integer :: i
+		real(8) :: dp
+		
+		effH = 1.0_8
+		if( present(h) ) effH = h
+		
+		effOrder = FourierTransform_SORDER
+		if( present(order) ) effOrder = order
+		
+		if( n /= size( array ) ) &
+			call GOptions_error( "size(array) /= n", "FourierTransform_omegaArray" )
+			
+		dp = 2.0_8*MATH_PI/effH/real(n,8)
+		
+		do i=1,floor(n/2.0_8)+1
+			array(i) = real(i-1,8)*dp
+		end do
+		
+		do i=floor(n/2.0_8)+2,n
+			array(i) = -real(n-i+1,8)*dp
+		end do
+		
+		if( effOrder == FourierTransform_NORDER ) then
+			call FourierTransform_shift_realArray( array )
+		end if
+	end subroutine FourierTransform_omegaArray
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_omegaGridFromData( n, h, order ) result( output )
+		integer, intent(in) :: n
+		real(8), optional, intent(in) :: h
+		integer, optional, intent(in) :: order
+		type(Grid) :: output
+		
+		real(8), allocatable :: array(:)
+		
+		allocate( array( n ) )
+		
+		call FourierTransform_omegaArray( array, n, h, order=order )
+		call output.init( array )
+		
+		deallocate( array )
+	end function FourierTransform_omegaGridFromData
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_omegaGridFromXGrid( xGrid, order ) result( output )
+		type(Grid), intent(in) :: xGrid
+		integer, optional, intent(in) :: order
+		type(Grid) :: output
+		
+		output = FourierTransform_omegaGridFromData( xGrid.nPoints, xGrid.stepSize, order=order )
+	end function FourierTransform_omegaGridFromXGrid
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_xArray( array, n, h, order )
+		real(8) :: array(:)
+		integer, intent(in) :: n
+		real(8), optional, intent(in) :: h
+		integer, optional, intent(in) :: order
+		
+		real(8) :: effH
+		integer :: effOrder
+		
+		integer :: i
+		real(8) :: dx
+		
+		effH = 1.0_8
+		if( present(h) ) effH = h
+		
+		effOrder = FourierTransform_SORDER
+		if( present(order) ) effOrder = order
+		
+		if( n /= size( array ) ) &
+			call GOptions_error( "size(array) /= n", "FourierTransform_xArray" )
+			
+		dx = h
+		
+		do i=1,floor(n/2.0_8)+1
+			array(i) = real(i-1,8)*dx
+		end do
+		
+		do i=floor(n/2.0_8)+2,n
+			array(i) = -real(n-i+1,8)*dx
+		end do
+		
+		if( effOrder == FourierTransform_NORDER ) then
+			call FourierTransform_shift_realArray( array )
+		end if
+	end subroutine FourierTransform_xArray
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_xGridFromData( n, h, order ) result( output )
+		integer, intent(in) :: n
+		real(8), intent(in) :: h
+		integer, optional, intent(in) :: order
+		type(Grid) :: output
+		
+		real(8), allocatable :: array(:)
+		
+		allocate( array( n ) )
+		
+		call FourierTransform_xArray( array, n, h, order=order )
+		call output.init( array )
+		
+		deallocate( array )
+	end function FourierTransform_xGridFromData
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_xGridFromOmegaGrid( omegaGrid, order ) result( output )
+		type(Grid), intent(in) :: omegaGrid
+		integer, optional, intent(in) :: order
+		type(Grid) :: output
+		
+		real(8) :: dx
+		
+		! dx = 2*pi/n/dp
+		dx = 2.0_8*MATH_PI/real(omegaGrid.nPoints,8)/omegaGrid.stepSize
+		
+		output = FourierTransform_xGridFromData( omegaGrid.nPoints, dx, order=order )
+	end function FourierTransform_xGridFromOmegaGrid
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_phase_realArray( iArray, oArray )
+		real(8) :: iArray(:)
+		real(8), optional :: oArray(:)
+		
+		integer :: i, j, n, p0
+		
+		n = size( iArray )
+		p0 = floor( n/2.0_8 )+2
+		
+		i = 1
+		do j=p0,n
+			if( present(oArray) ) then
+				oArray(i) = iArray(i)*(-1.0_8)**j
+			else
+				iArray(i) = iArray(i)*(-1.0_8)**j
+			end if
+			
+			i = i+1
+		end do
+		
+		do j=1,p0-1
+			if( present(oArray) ) then
+				oArray(i) = iArray(i)*(-1.0_8)**j
+			else
+				iArray(i) = iArray(i)*(-1.0_8)**j
+			end if
+			
+			i = i+1
+		end do
+	end subroutine FourierTransform_phase_realArray
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_phase_complexArray( iArray, oArray )
+		complex(8) :: iArray(:)
+		complex(8), optional :: oArray(:)
+		
+		integer :: i, j, n, p0
+		
+		n = size( iArray )
+		p0 = floor( n/2.0_8 )+2
+		
+		i = 1
+		do j=p0,n
+			if( present(oArray) ) then
+				oArray(i) = iArray(i)*(-1.0_8)**j
+			else
+				iArray(i) = iArray(i)*(-1.0_8)**j
+			end if
+			
+			i = i+1
+		end do
+		
+		do j=1,p0-1
+			if( present(oArray) ) then
+				oArray(i) = iArray(i)*(-1.0_8)**j
+			else
+				iArray(i) = iArray(i)*(-1.0_8)**j
+			end if
+			
+			i = i+1
+		end do
+	end subroutine FourierTransform_phase_complexArray
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_iphase_realArray( iArray, oArray )
+		real(8) :: iArray(:)
+		real(8), optional :: oArray(:)
+		
+		integer :: i, j, n, p2
+		
+		n = size( iArray )
+		p2 = n-floor(n/2.0_8)
+		
+		i = 1
+		do j=p2,n
+			if( present(oArray) ) then
+				oArray(i) = iArray(i)*(-1.0_8)**(j-1)
+			else
+				iArray(i) = iArray(i)*(-1.0_8)**(j-1)
+			end if
+			
+			i = i+1
+		end do
+		
+		do j=1,p2-1
+			if( present(oArray) ) then
+				oArray(i) = iArray(i)*(-1.0_8)**(j-1)
+			else
+				iArray(i) = iArray(i)*(-1.0_8)**(j-1)
+			end if
+			
+			i = i+1
+		end do
+	end subroutine FourierTransform_iphase_realArray
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_iphase_complexArray( iArray, oArray )
+		complex(8) :: iArray(:)
+		complex(8), optional :: oArray(:)
+		
+		integer :: i, j, n, p2
+		
+		n = size( iArray )
+		p2 = n-floor(n/2.0_8)
+		
+		i = 1
+		do j=p2,n
+			if( present(oArray) ) then
+				oArray(i) = iArray(i)*(-1.0_8)**(j-1)
+			else
+				iArray(i) = iArray(i)*(-1.0_8)**(j-1)
+			end if
+			
+			i = i+1
+		end do
+		
+		do j=1,p2-1
+			if( present(oArray) ) then
+				oArray(i) = iArray(i)*(-1.0_8)**(j-1)
+			else
+				iArray(i) = iArray(i)*(-1.0_8)**(j-1)
+			end if
+			
+			i = i+1
+		end do
+	end subroutine FourierTransform_iphase_complexArray
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_phase_RNFunction( iFunc, oFunc )
+		class(RNFunction) :: iFunc
+		class(RNFunction), optional :: oFunc
+		
+		if( iFunc.isEquallyspaced() ) then
+			call GOptions_warning( &
+				"Grid should not be equally spaced", &
+				"FourierTransform_shift_Grid()" &
+			)
+		end if
+		
+		if( present(oFunc) ) then
+			oFunc = iFunc
+			
+			call FourierTransform_phase_realArray( oFunc.yArray )
+		else
+			call FourierTransform_phase_realArray( iFunc.yArray )
+		end if
+	end subroutine FourierTransform_phase_RNFunction
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_phase_CNFunction( iFunc, oFunc )
+		class(CNFunction) :: iFunc
+		class(CNFunction), optional :: oFunc
+		
+		if( iFunc.isEquallyspaced() ) then
+			call GOptions_warning( &
+				"Grid should not be equally spaced", &
+				"FourierTransform_shift_Grid()" &
+			)
+		end if
+		
+		if( present(oFunc) ) then
+			oFunc = iFunc
+			
+			call FourierTransform_phase_complexArray( oFunc.yArray )
+		else
+			call FourierTransform_phase_complexArray( iFunc.yArray )
+		end if		
+	end subroutine FourierTransform_phase_CNFunction
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_iphase_CNFunction( iFunc, oFunc )
+		class(CNFunction) :: iFunc
+		class(CNFunction), optional :: oFunc
+		
+		if( .not. iFunc.isEquallyspaced() ) then
+			call GOptions_warning( &
+				"Grid should be equally spaced", &
+				"FourierTransform_ishift_Grid()" &
+			)
+		end if
+		
+		if( present(oFunc) ) then
+			oFunc = iFunc
+			
+			call FourierTransform_iphase_complexArray( oFunc.yArray )
+		else
+			call FourierTransform_iphase_complexArray( iFunc.yArray )
+		end if
+	end subroutine FourierTransform_iphase_CNFunction
+
+	!>
+	!! @brief Shift the zero-frequency component to the center of the spectrum
+	!! @see http://docs.scipy.org/doc/numpy/reference/generated/numpy.fft.fftshift.html#numpy.fft.fftshift
+	!! 
+	!! This function swaps half-spaces for all axes listed (defaults to all). Note that y[0] is the Nyquist component only if len(x) is even.
+	!! 
+	!! iArray : array_like. Input array.
+	!! oArray : array_like. Output array (optional). The shifted array.
+	!!
+	subroutine FourierTransform_shift_realArray( iArray, oArray )
+		real(8) :: iArray(:)
+		real(8), optional :: oArray(:)
+		
+		real(8), allocatable :: tmpArray(:)
+		integer :: i, j, n, p0
+		integer, allocatable :: pos(:)
+		
+		n = size( iArray )
+		p0 = floor( n/2.0_8 )+2
+		
+		allocate( pos(n) )
+		
+		i = 1
+		do j=p0,n
+			pos(i) = j
+			i = i+1
+		end do
+		
+		do j=1,p0-1
+			pos(i) = j
+			i = i+1
+		end do
+		
+		if( present(oArray) ) then
+			oArray = iArray
+			
+			do i=1,n
+				oArray( i ) = iArray( pos(i) )
+			end do
+		else
+			allocate( tmpArray(n) )
+			tmpArray = iArray
+			
+			do i=1,n
+				iArray( i ) = tmpArray( pos(i) )
+			end do
+			
+			deallocate( tmpArray )
+		end if
+		
+		deallocate( pos )
+	end subroutine FourierTransform_shift_realArray
+	
+	!>
+	!! @brief Exactly the same that FourierTransform_shift_realArray, but for complex numbers
+	!!
+	subroutine FourierTransform_shift_complexArray( iArray, oArray )
+		complex(8) :: iArray(:)
+		complex(8), optional :: oArray(:)
+		
+		complex(8), allocatable :: tmpArray(:)
+		integer :: i, j, n, p0
+		integer, allocatable :: pos(:)
+		
+		n = size( iArray )
+		p0 = floor( n/2.0_8 )+2
+		
+		allocate( pos(n) )
+		
+		i = 1
+		do j=p0,n
+			pos(i) = j
+			i = i+1
+		end do
+		
+		do j=1,p0-1
+			pos(i) = j
+			i = i+1
+		end do
+		
+		if( present(oArray) ) then
+			oArray = iArray
+			
+			do i=1,n
+				oArray( i ) = iArray( pos(i) )
+			end do
+		else
+			allocate( tmpArray(n) )
+			tmpArray = iArray
+			
+			do i=1,n
+				iArray( i ) = tmpArray( pos(i) )
+			end do
+			
+			deallocate( tmpArray )
+		end if
+		
+		deallocate( pos )
+	end subroutine FourierTransform_shift_complexArray
+	
+	!>
+	!! @brief The inverse of FourierTransform_shift. Although identical for even-length x, the functions differ by one sample for odd-length x.
+	!! 
+	!! @parameter iArray : array_like. Input array.
+	!! @parameter oArray : array_like. Output array (optional). The shifted array.
+	!!
+	subroutine FourierTransform_ishift_realArray( iArray, oArray )
+		real(8) :: iArray(:)
+		real(8), optional :: oArray(:)
+		
+		real(8), allocatable :: tmpArray(:)
+		integer :: i, j, n, p2
+		integer, allocatable :: pos(:)
+		
+		n = size( iArray )
+		p2 = n-floor(n/2.0_8)
+		
+		allocate( pos(n) )
+		
+		i = 1
+		do j=p2,n
+			pos(i) = j
+			i = i+1
+		end do
+		
+		do j=1,p2-1
+			pos(i) = j
+			i = i+1
+		end do
+		
+		if( present(oArray) ) then
+			oArray = iArray
+			
+			do i=1,n
+				oArray( i ) = iArray( pos(i) )
+			end do
+		else
+			allocate( tmpArray(n) )
+			tmpArray = iArray
+			
+			do i=1,n
+				iArray( i ) = tmpArray( pos(i) )
+			end do
+			
+			deallocate( tmpArray )
+		end if
+		
+		deallocate( pos )
+	end subroutine FourierTransform_ishift_realArray
+	
+	!>
+	!! @brief The inverse of FourierTransform_shift. Although identical for even-length x, the functions differ by one sample for odd-length x.
+	!! 
+	!! @parameter iArray : array_like. Input array.
+	!! @parameter oArray : array_like. Output array (optional). The shifted array.
+	!!
+	subroutine FourierTransform_ishift_complexArray( iArray, oArray )
+		complex(8) :: iArray(:)
+		complex(8), optional :: oArray(:)
+		
+		complex(8), allocatable :: tmpArray(:)
+		integer :: i, j, n, p2
+		integer, allocatable :: pos(:)
+		
+		n = size( iArray )
+		p2 = n-floor(n/2.0_8)
+		
+		allocate( pos(n) )
+		
+		i = 1
+		do j=p2,n
+			pos(i) = j
+			i = i+1
+		end do
+		
+		do j=1,p2-1
+			pos(i) = j
+			i = i+1
+		end do
+		
+		if( present(oArray) ) then
+			oArray = iArray
+			
+			do i=1,n
+				oArray( i ) = iArray( pos(i) )
+			end do
+		else
+			allocate( tmpArray(n) )
+			tmpArray = iArray
+			
+			do i=1,n
+				iArray( i ) = tmpArray( pos(i) )
+			end do
+			
+			deallocate( tmpArray )
+		end if
+		
+		deallocate( pos )
+	end subroutine FourierTransform_ishift_complexArray
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_shift_Grid( iGrid, oGrid )
+		class(Grid) :: iGrid
+		class(Grid), optional :: oGrid
+		
+		if( iGrid.isEquallyspaced ) then
+			call GOptions_warning( &
+				"Grid should not be equally spaced", &
+				"FourierTransform_shift_Grid()" &
+			)
+		end if
+		
+		if( present(oGrid) ) then
+			oGrid = iGrid
+			
+			call FourierTransform_shift_realArray( oGrid.data )
+			call oGrid.checkEquallyspaced()
+		else
+			call FourierTransform_shift_realArray( iGrid.data )
+			call iGrid.checkEquallyspaced()
+		end if
+		
+	end subroutine FourierTransform_shift_Grid
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_ishift_Grid( iGrid, oGrid )
+		class(Grid) :: iGrid
+		class(Grid), optional :: oGrid
+		
+		if( .not. iGrid.isEquallyspaced ) then
+			call GOptions_warning( &
+				"Grid should be equally spaced", &
+				"FourierTransform_ishift_Grid()" &
+			)
+		end if
+		
+		if( present(oGrid) ) then
+			oGrid = iGrid
+			
+			call FourierTransform_ishift_realArray( oGrid.data )
+			call oGrid.checkEquallyspaced()
+		else
+			call FourierTransform_ishift_realArray( iGrid.data )
+			call iGrid.checkEquallyspaced()
+		end if
+		
+	end subroutine FourierTransform_ishift_Grid
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_shift_RNFunction( iFunc, oFunc )
+		class(RNFunction) :: iFunc
+		class(RNFunction), optional :: oFunc
+		
+		if( iFunc.isEquallyspaced() ) then
+			call GOptions_warning( &
+				"Grid should not be equally spaced", &
+				"FourierTransform_shift_Grid()" &
+			)
+		end if
+		
+		if( present(oFunc) ) then
+			oFunc = iFunc
+			
+			call FourierTransform_shift_realArray( oFunc.yArray )
+			call FourierTransform_shift_realArray( oFunc.xGrid.data )
+			call oFunc.xGrid.checkEquallyspaced()
+		else
+			call FourierTransform_shift_realArray( iFunc.yArray )
+			call FourierTransform_shift_realArray( iFunc.xGrid.data )
+			call iFunc.xGrid.checkEquallyspaced()
+		end if
+		
+	end subroutine FourierTransform_shift_RNFunction
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_shift_CNFunction( iFunc, oFunc )
+		class(CNFunction) :: iFunc
+		class(CNFunction), optional :: oFunc
+		
+		if( iFunc.isEquallyspaced() ) then
+			call GOptions_warning( &
+				"Grid should not be equally spaced", &
+				"FourierTransform_shift_Grid()" &
+			)
+		end if
+		
+		if( present(oFunc) ) then
+			oFunc = iFunc
+			
+			call FourierTransform_shift_complexArray( oFunc.yArray )
+			call FourierTransform_shift_realArray( oFunc.xGrid.data )
+			call oFunc.xGrid.checkEquallyspaced()
+		else
+			call FourierTransform_shift_complexArray( iFunc.yArray )
+			call FourierTransform_shift_realArray( iFunc.xGrid.data )
+			call iFunc.xGrid.checkEquallyspaced()
+		end if
+		
+	end subroutine FourierTransform_shift_CNFunction
+	
+	!>
+	!! @brief
+	!!
+	subroutine FourierTransform_ishift_CNFunction( iFunc, oFunc )
+		class(CNFunction) :: iFunc
+		class(CNFunction), optional :: oFunc
+		
+		if( .not. iFunc.isEquallyspaced() ) then
+			call GOptions_warning( &
+				"Grid should be equally spaced", &
+				"FourierTransform_ishift_Grid()" &
+			)
+		end if
+		
+		if( present(oFunc) ) then
+			oFunc = iFunc
+			
+			call FourierTransform_ishift_complexArray( oFunc.yArray )
+			call FourierTransform_ishift_realArray( oFunc.xGrid.data )
+			call oFunc.xGrid.checkEquallyspaced()
+		else
+			call FourierTransform_ishift_complexArray( iFunc.yArray )
+			call FourierTransform_ishift_realArray( iFunc.xGrid.data )
+			call iFunc.xGrid.checkEquallyspaced()
+		end if
+	end subroutine FourierTransform_ishift_CNFunction
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_plan_Array( iArray, sgn, oArray ) result( plan )
+		complex(8) :: iArray(:)
+		integer, intent(in) :: sgn
+		complex(8), optional :: oArray(:)
+		integer(8) :: plan
+		
+		if( present(oArray) ) then
+			call dfftw_plan_dft_1d( plan, size(iArray), iArray, oArray, sgn, FFTW_ESTIMATE )
+		else
+			call dfftw_plan_dft_1d( plan, size(iArray), iArray, iArray, sgn, FFTW_ESTIMATE )
+		end if
+	end function FourierTransform_plan_Array
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_plan_CNFunction( iFunc, sgn, oFunc ) result( plan )
+		type(CNFunction) :: iFunc
+		integer, intent(in) :: sgn
+		type(CNFunction), optional :: oFunc
+		integer(8) :: plan
+		
+		if( present(oFunc) ) then
+			call dfftw_plan_dft_1d( plan, iFunc.nPoints(), iFunc.yArray, oFunc.yArray, sgn, FFTW_ESTIMATE )
+		else
+			call dfftw_plan_dft_1d( plan, iFunc.nPoints(), iFunc.yArray, iFunc.yArray, sgn, FFTW_ESTIMATE )
+		end if
+	end function FourierTransform_plan_CNFunction
+	
+	!>
+	!! 
+	!!
+	subroutine FourierTransform_execute( plan )
+		integer(8), intent(in) :: plan
+		
+		call dfftw_execute( plan )
+	end subroutine FourierTransform_execute
+	
+	!>
+	!! 
+	!!
+	subroutine FourierTransform_destroyPlan( plan )
+		integer(8), intent(in) :: plan
+		
+		call dfftw_destroy_plan( plan )
+	end subroutine FourierTransform_destroyPlan
+	
+	!>
+	!! 
+	!!
+	subroutine FourierTransform_dft_CArray( iArray, oArray, sgn )
+		complex(8) :: iArray(:)
+		complex(8), optional :: oArray(:)
+		integer, optional :: sgn
+		
+		integer :: effSgn
+		
+		integer(8) :: plan
+		
+		effSgn = FourierTransform_FORWARD
+		if( present(sgn) ) effSgn = sgn
+		
+		if( present(oArray) ) then
+			if( size(iArray) /= size(oArray) ) &
+				call GOptions_error( "iArray and oArray have not the same size", "FourierTransform_dft_CArray" )
+			
+			call dfftw_plan_dft_1d( plan, size(iArray), iArray, oArray, effSgn, FFTW_ESTIMATE )
+			call dfftw_execute( plan )
+		else
+			call dfftw_plan_dft_1d( plan, size(iArray), iArray, iArray, effSgn, FFTW_ESTIMATE )
+			call dfftw_execute( plan )
+		end if
+		
+		call dfftw_destroy_plan( plan )
+	end subroutine FourierTransform_dft_CArray
+	
+	!>
+	!! 
+	!!
+	subroutine FourierTransform_idft_Array( iArray, oArray, sgn )
+		complex(8) :: iArray(:)
+		complex(8), optional :: oArray(:)
+		integer, optional :: sgn
+		
+		integer :: effSgn
+		
+		integer(8) :: plan
+		
+		effSgn = FourierTransform_BACKWARD
+		if( present(sgn) ) effSgn = sgn
+		
+		if( present(oArray) ) then
+			if( size(iArray) /= size(oArray) ) &
+				call GOptions_error( "iArray and oArray have not the same size", "FourierTransform_idft_Array" )
+			
+			call dfftw_plan_dft_1d( plan, size(iArray), iArray, oArray, effSgn, FFTW_ESTIMATE )
+			call dfftw_execute( plan )
+			
+			oArray = oArray/real( size(iArray), 8 )
+		else
+			call dfftw_plan_dft_1d( plan, size(iArray), iArray, iArray, effSgn, FFTW_ESTIMATE )
+			call dfftw_execute( plan )
+			
+			iArray = iArray/real( size(iArray), 8 )
+		end if
+		
+		call dfftw_destroy_plan( plan )
+	end subroutine FourierTransform_idft_Array
+	
+	!>
+	!! 
+	!!
+	function FourierTransform_fft_CNFunction( iFunc, sgn ) result( oFunc )
+		type(CNFunction) :: iFunc
+		integer, optional :: sgn
+		type(CNFunction) :: oFunc
+		
+		integer :: n
+		real(8) :: dx, dp
+		type(Grid) :: xGrid
+		
+		! @todo Check for checkEquallyspaced
+		n = iFunc.nPoints()
+		dx = iFunc.xGrid.stepSize
+		dp = 2.0_8*Math_PI/dx/real(n,8)
+		
+		oFunc = iFunc
+		call FourierTransform_dft( iFunc.yArray, oFunc.yArray, sgn=FourierTransform_FORWARD )
+		oFunc.xGrid = FourierTransform_omegaGrid( n, dx, order=FourierTransform_SORDER )
+		
+		call FourierTransform_phase( oFunc )
+		call FourierTransform_shift( oFunc )
+		
+		oFunc = oFunc*dx/sqrt(2.0_8*Math_PI)
+	end function FourierTransform_fft_CNFunction
+	
+	!>
+	!! 
+	!!
+	function FourierTransform_ifft_CNFunction( iFunc, sgn ) result( oFunc )
+		type(CNFunction) :: iFunc
+		integer, optional :: sgn
+		type(CNFunction) :: oFunc
+		
+		integer :: n
+		real(8) :: dx, dp
+		type(Grid) :: xGrid
+		
+		integer :: i
+		
+		! @todo Check for checkEquallyspaced
+		n = iFunc.nPoints()
+		dp = iFunc.xGrid.stepSize
+		dx = 2.0_8*Math_PI/dp/real(n,8)
+		
+		oFunc = iFunc
+		
+		call FourierTransform_ishift( oFunc )
+		call FourierTransform_phase( oFunc )
+		
+		call FourierTransform_dft( oFunc.yArray, sgn=FourierTransform_BACKWARD )
+		oFunc.xGrid = FourierTransform_xGrid( n, dx, order=FourierTransform_NORDER )
+		
+		oFunc = oFunc*dp/sqrt(2.0_8*Math_PI)
+	end function FourierTransform_ifft_CNFunction
+	
+	!>
+	!! @todo Esta funcion debe ser modificada, para utilizar la FFT para arrays de tipo real(8)
+	!!
+	function FourierTransform_powerSpectrumR( iFunc, sgn ) result( output )
+		type(RNFunction), intent(in) :: iFunc
+		integer, optional :: sgn
+		type(RNFunction) :: output
+		
+		type(CNFunction) :: tmpFunc
+		complex(8), allocatable :: array(:)
+		
+		allocate( array(iFunc.nPoints()) )
+		array = iFunc.yArray
+		call tmpFunc.init( iFunc.xGrid, array )
+		deallocate( array )
+		
+		tmpFunc = FourierTransform_fft( tmpFunc, sgn=sgn )
+		
+		call output.init( tmpFunc.xGrid, abs(tmpFunc.yArray) )
+	end function FourierTransform_powerSpectrumR
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_powerSpectrumC( iFunc, sgn ) result( oFunc )
+		type(CNFunction), intent(in) :: iFunc
+		integer, optional :: sgn
+		type(RNFunction) :: oFunc
+		
+		type(CNFunction) :: tmpFunc
+		
+		tmpFunc = FourierTransform_fft( iFunc, sgn=sgn )
+		
+		call oFunc.init( tmpFunc.xGrid, abs(tmpFunc.yArray) )
+	end function FourierTransform_powerSpectrumC
+	
+	!>
+	!! @todo Esta funcion debe ser modificada, para utilizar la FFT para arrays de tipo real(8)
+	!!
+	function FourierTransform_ispectrumR( iFunc, x1, sgn ) result( oFunc )
+		type(RNFunction), intent(in) :: iFunc
+		real(8), intent(in), optional :: x1
+		integer, optional :: sgn
+		type(RNFunction) :: oFunc
+		
+		type(CNFunction) :: tmpFunc
+		complex(8), allocatable :: array(:)
+		
+! 		allocate( array(iFunc.nPoints()) )
+! 		array = iFunc.yArray
+! 		call tmpFunc.init( iFunc.xGrid, array )
+! 		deallocate( array )
+		
+		call GOptions_error( "This function is not implemented yet", "FourierTransform_ispectrumC()" )
+! 		tmpFunc = FourierTransform_ifft( tmpFunc, x1=x1, sgn=sgn )
+		
+! 		call oFunc.init( tmpFunc.xGrid, real(tmpFunc.yArray)**2 + aimag(tmpFunc.yArray)**2 )
+	end function FourierTransform_ispectrumR
+	
+	!>
+	!! 
+	!!
+	function FourierTransform_ispectrumC( iFunc, x1, sgn ) result( oFunc )
+		type(CNFunction), intent(in) :: iFunc
+		real(8), intent(in), optional :: x1
+		integer, optional :: sgn
+		type(RNFunction) :: oFunc
+		
+		type(CNFunction) :: tmpFunc
+		
+! 		tmpFunc = FourierTransform_ifft( iFunc, x1=x1, sgn=sgn )
+		call GOptions_error( "This function is not implemented yet", "FourierTransform_ispectrumC()" )
+		
+! 		call oFunc.init( tmpFunc.xGrid, real(tmpFunc.yArray)**2 + aimag(tmpFunc.yArray)**2 )
+	end function FourierTransform_ispectrumC
+	
+	!>
+	!! @todo Esta funcion debe ser modificada, para utilizar la FFT para arrays de tipo real(8)
+	!!
+	function FourierTransform_phaseSpectrumR( iFunc, sgn ) result( output )
+		type(RNFunction), intent(in) :: iFunc
+		integer, optional :: sgn
+		type(RNFunction) :: output
+		
+		type(CNFunction) :: tmpFunc
+		complex(8), allocatable :: array(:)
+		
+		call GOptions_error( "This function is not implemented yet", "FourierTransform_phaseSpectrumR()" )
+! 		allocate( array(iFunc.nPoints()) )
+! 		array = iFunc.yArray
+! 		call tmpFunc.init( iFunc.xGrid, array )
+! 		deallocate( array )
+! 		
+! 		tmpFunc = FourierTransform_fft( tmpFunc, sgn=sgn )
+! 		
+! 		call oFunc.init( tmpFunc.xGrid, atan2( aimag(tmpFunc.yArray), real(tmpFunc.yArray) ) )
+	end function FourierTransform_phaseSpectrumR
+
+	!>
+	!! @brief
+	!!
+	function FourierTransform_phaseSpectrumC( iFunc, sgn ) result( oFunc )
+		type(CNFunction), intent(in) :: iFunc
+		integer, optional :: sgn
+		type(RNFunction) :: oFunc
+		
+		type(CNFunction) :: tmpFunc
+		
+		tmpFunc = FourierTransform_fft( iFunc, sgn=sgn )
+		
+		call oFunc.init( tmpFunc.xGrid, atan2( aimag(tmpFunc.yArray), real(tmpFunc.yArray) ) )
+	end function FourierTransform_phaseSpectrumC
+
+	!>
+	!! 
+	!!
+	function FourierTransform_applyWindow( iFunc, centered, type, param, oFile ) result( oFunc )
+		type(CNFunction), intent(in) :: iFunc
+		logical, optional, intent(in) :: centered
+		integer, optional, intent(in) :: type
+		real(8), optional, intent(in) :: param
+		character(*), optional, intent(in) :: oFile  !< @todo Por alguna razon no funciona si pongo character(100) por ejemplo
+		type(CNFunction) :: oFunc
+		
+		integer :: nPoints
+		logical :: effCentered
+		integer :: effType
+		real(8) :: effParam
+		
+		integer :: i
+		real(8) :: t0, w, dw, range, window
+		
+		oFunc = iFunc
+		
+		nPoints = iFunc.nPoints()
+		
+		effCentered = .false.
+		if( present(centered) ) effCentered = centered
+		
+		effType = FourierTransform_WINDOW_NONE
+		if( present(type) ) effType = type
+		
+		select case( effType )
+			case( FourierTransform_WINDOW_COS )
+				effParam = 2.0_8
+			case( FourierTransform_WINDOW_GAUSS )
+				effParam = 4.0_8
+			case( FourierTransform_WINDOW_ERF_TOPHAT )
+				effParam = 0.2_8
+			case ( FourierTransform_WINDOW_NONE )
+				effParam = -1.0_8
+		end select
+		if( present(param) ) effParam = param
+		
+		if( present(oFile) ) open( unit=32, file=trim(oFile), status="unknown" )
+		
+		if( effCentered ) then
+			range = abs( iFunc.xGrid.at(nPoints)-iFunc.xGrid.at(1) )/2.0_8
+			t0 = iFunc.xGrid.at(1) + range
+		else
+			range = abs( iFunc.xGrid.at(nPoints)-iFunc.xGrid.at(1) )
+			t0 = iFunc.xGrid.at(1)
+		end if
+		
+		select case( effType )
+			case( FourierTransform_WINDOW_COS )
+				
+				do i=1,nPoints
+					window = cos( Math_PI*( iFunc.xGrid.at(i) - t0 )/2.0_8/range )**param
+					call oFunc.set( i, oFunc.at(i)*window )
+					
+					if( present(oFile) ) write(32,*) oFunc.xGrid.at(i), window
+				end do
+				
+			case( FourierTransform_WINDOW_GAUSS )
+				
+				do i=1,nPoints
+! 					window = param*exp(-0.5_8*param**2*(iFunc.xGrid.at(i)-t0)**2/range**2)/range/sqrt(2.0*Math_PI)
+					window = exp(-0.5_8*param**2*(iFunc.xGrid.at(i)-t0)**2/range**2)
+					call oFunc.set( i, oFunc.at(i)*window )
+					
+					if( present(oFile) ) write(32,*) iFunc.xGrid.at(i), window
+				end do
+				
+			case( FourierTransform_WINDOW_ERF_TOPHAT )
+				
+				if( effCentered ) then
+					w = 2.0_8*(1.0_8-2.0_8*param)*range
+				else
+					w = 2.0_8*(1.0_8-param)*range
+				end if
+
+				dw = param*range
+				
+				do i=1,nPoints
+					window = Math_erfTophat( iFunc.xGrid.at(i), t0, w, dw )
+					call oFunc.set( i, oFunc.at(i)*window )
+					
+					if( present(oFile) ) write(32,*) iFunc.xGrid.at(i), window
+				end do
+				
+		end select
+		
+		if( present(oFile) ) close(32)
+		
+	end function FourierTransform_applyWindow
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_nft_CNFunction( iFunc, sgn ) result( oFunc )
+		type(CNFunction), intent(in) :: iFunc
+		integer, optional, intent(in) :: sgn
+		type(CNFunction) :: oFunc
+		
+		integer :: effSgn
+		
+		integer :: i, j, n
+		real(8) :: dx, dp
+		type(Grid) :: xGrid
+		
+		effSgn = FourierTransform_FORWARD
+		if( present(sgn) ) effSgn = sgn
+		
+		! @todo Check for checkEquallyspaced
+		n = iFunc.nPoints()
+		dx = iFunc.xGrid.stepSize
+		dp = 2.0_8*Math_PI/dx/real(n,8)
+		
+		oFunc = iFunc
+		oFunc.xGrid = FourierTransform_omegaGrid( n, dx, order=FourierTransform_NORDER )
+		
+		do i=1,n
+			oFunc.yArray(i) = 0.0_8
+			do j=1,n
+				oFunc.yArray(i) = oFunc.yArray(i) + iFunc.yArray(j)*exp( real(effSgn,8)*Math_I*iFunc.xGrid.at(j)*oFunc.xGrid.at(i) )
+			end do
+		end do
+		
+		oFunc = oFunc*dx/sqrt(2.0_8*Math_PI)
+	end function FourierTransform_nft_CNFunction
+
+	!>
+	!! @brief
+	!!
+	function FourierTransform_inft_CNFunction( iFunc, sgn ) result( oFunc )
+		type(CNFunction), intent(in) :: iFunc
+		integer, optional, intent(in) :: sgn
+		type(CNFunction) :: oFunc
+		
+		integer :: effSgn
+		
+		integer :: i, j, n
+		real(8) :: dx, dp
+		type(Grid) :: xGrid
+		
+		effSgn = FourierTransform_BACKWARD
+		if( present(sgn) ) effSgn = sgn
+		
+		! @todo Check for checkEquallyspaced
+		n = iFunc.nPoints()
+		dp = iFunc.xGrid.stepSize
+		dx = 2.0_8*Math_PI/dp/real(n,8)
+		
+		oFunc = iFunc
+		oFunc.xGrid = FourierTransform_xGrid( n, dx, order=FourierTransform_NORDER )
+		
+		do i=1,n
+			oFunc.yArray(i) = 0.0_8
+			do j=1,n
+				oFunc.yArray(i) = oFunc.yArray(i) + iFunc.yArray(j)*exp( real(effSgn,8)*Math_I*iFunc.xGrid.at(j)*oFunc.xGrid.at(i) )
+			end do
+		end do
+		
+		oFunc = oFunc*dp/sqrt(2.0_8*Math_PI)
+	end function FourierTransform_inft_CNFunction
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_filterByAmplitude( this, cutoff ) result( oFunc )
+		class(FFT), intent(in) :: this
+		real(8), intent(in), optional :: cutoff
+		type(CNFunction) :: oFunc
+		
+	end function FourierTransform_filterByAmplitude
+	
+	!>
+	!! @brief
+	!!
+	function FourierTransform_filterByFrequency( this, cutoff ) result( oFunc )
+		class(FFT), intent(in) :: this
+		real(8), intent(in), optional :: cutoff
+		type(CNFunction) :: oFunc
+		
+	end function FourierTransform_filterByFrequency
+	
+	!>
+	!! This is neccesary only for FourierTransform_test()
+	!! Maxima:
+	!!   f(x) := exp(-0.1*x**2)*(   0.5*cos(9.0*x) -  0.5*Math_I*sin(5.0*x) +  2.0*sin(2.5*x) );
+	!!
+	!!   fortran( diff( f(x), x, 1 ) );
+	!!   fortran( diff( f(x), x, 2 ) );
+	!!
+	function funcTest( x ) result( output )
+		real(8), intent(in) :: x
+		complex(8) :: output
+		
+! 		output = exp(-0.1_8*x**2)*( 0.5_8*cos(9.0_8*x) - 0.5_8*Math_I*sin(5.0_8*x) + 2.0_8*sin(2.5_8*x) )
+
+! 		http://www.ee.nmt.edu/~wedeward/EE341/FA97/example9.html
+		output = exp(-2.0_8*x)*Math_ustep(x)
+	end function funcTest
+	
+	!>
+	!! This is neccesary only for FourierTransform_test()
+	!! Maxima:
+	!!   f(x) := exp(-0.1*x**2)*(   0.5*cos(9.0*x) -  0.5*Math_I*sin(5.0*x) +  2.0*sin(2.5*x) );
+	!!
+	!!   fortran( diff( f(x), x, 1 ) );
+	!!   fortran( diff( f(x), x, 2 ) );
+	!!
+	function funcTestWithNoise( x ) result( output )
+		real(8), intent(in) :: x
+		complex(8) :: output
+		
+		output = exp(-0.1_8*x**2)*( 0.5_8*cos(9.0_8*x) - 0.5_8*Math_I*sin(5.0_8*x) + 2.0_8*sin(2.5_8*x) ) &
+					+ 0.3_8*sin(RandomUtils_uniform([7.0_8,10.0_8])*x)  !  uniform noise
+	end function funcTestWithNoise
+	
+	!>
+	!! This is neccesary only for FourierTransform_test()
+	!! Maxima:
+	!!   f(x) := exp(-0.1*x**2)*(   0.5*cos(9.0*x) -  0.5*Math_I*sin(5.0*x) +  2.0*sin(2.5*x) );
+	!!
+	!!   fortran( diff( f(x), x, 1 ) );
+	!!   fortran( diff( f(x), x, 2 ) );
+	!!
+	function dfuncTest( x ) result( output )
+		real(8), intent(in) :: x
+		complex(8) :: output
+		
+		output = exp(-1.0E-1*x**2)*(-4.5E+0*sin(9.0E+0*x)-2.5E+0*Math_I*cos(5.0E+0*x) &
+					+5.0E+0*cos(2.5E+0*x))-2.0E-1*x*exp(-1.0E-1*x**2)*(5.0E-1*cos(9.0E+0*x) &
+						-5.0E-1*Math_I*sin(5.0E+0*x)+2.0E+0*sin(2.5E+0*x))
+	end function dfuncTest
+	
+	!>
+	!! This is neccesary only for FourierTransform_test()
+	!! Maxima:
+	!!   f(x) := exp(-0.1*x**2)*(   0.5*cos(9.0*x) -  0.5*Math_I*sin(5.0*x) +  2.0*sin(2.5*x) );
+	!!
+	!!   fortran( diff( f(x), x, 1 ) );
+	!!   fortran( diff( f(x), x, 2 ) );
+	!!
+	function d2funcTest( x ) result( output )
+		real(8), intent(in) :: x
+		complex(8) :: output
+		
+		output = -4.0E-1*x*exp(-1.0E-1*x**2)*(-4.5E+0*sin(9.0E+0*x)-2.5E+0*Math_I*cos(5.0E+0*x) &
+					+5.0E+0*cos(2.5E+0*x))+4.000000000000001E-2*x**2*exp(-1.0E-1*x**2)*(5.0E-1*cos(9.0E+0*x) &
+						-5.0E-1*Math_I*sin(5.0E+0*x)+2.0E+0*sin(2.5E+0*x))-2.0E-1*exp(-1.0E-1*x**2)*(5.0E-1*cos(9.0E+0*x) &
+							-5.0E-1*Math_I*sin(5.0E+0*x)+2.0E+0*sin(2.5E+0*x))+exp(-1.0E-1*x**2)*(-4.05E+1*cos(9.0E+0*x) &
+								+1.25E+1*Math_I*sin(5.0E+0*x)-1.25E+1*sin(2.5E+0*x))
+	end function d2funcTest
+	
+	!>
+	!! This is neccesary only for FourierTransform_test()
+	!! Maxima:
+	!!   f(x) := exp(-0.5*x**2);
+	!!
+	function funcGaussian( x ) result( output )
+		real(8), intent(in) :: x
+		complex(8) :: output
+		
+		real(8) :: alpha
+		
+		alpha = 0.5_8
+		output = exp(-alpha*x**2)
+	end function funcGaussian
+	
+	!>
+	!! This is neccesary only for FourierTransform_test()
+	!! Maxima:
+	!!   f(x) := exp(-0.5*x**2);
+	!!
+	!! La convencion de normalizacion de acuerdo con wikipedia es:
+    !!   Fourier transform unitary, angular frequency
+	!!
+	function funcFGaussian( x ) result( output )
+		real(8), intent(in) :: x
+		complex(8) :: output
+		
+		real(8) :: alpha
+		
+		alpha = 0.5_8
+! 		output = exp(-x**2/4.0_8/alpha)/sqrt(2.0_8*alpha)
+		output = exp(-(x-5.0_8)**2/4.0_8/alpha)/sqrt(2.0_8*alpha) + 0.4_8*exp(-(x+2.0_8)**2/10.0_8/alpha)/sqrt(2.0_8*alpha)*sin(2.0*x) &
+			+ 0.4_8*Math_I*exp(-(x-2.0_8)**2/10.0_8/alpha)/sqrt(2.0_8*alpha)*cos(2.0*x)
+	end function funcFGaussian
+	
+	!>
+	!! @bief test
+	!!
+	subroutine FourierTransform_test()
+		type(Grid) :: xGrid, omegaGrid
+		type(CNFunction) :: funcA, dFuncA, fftFuncA, fftDFuncA
+		type(CNFunction) :: funcB, dFuncB, fftFuncB, fftDFuncB
+		type(CNFunction) :: funcAB, dFuncAB, fftFuncAB, fftDFuncAB
+		type(RNFunction) :: aSpectrum, pSpectrum
+		type(FFT) :: fft
+		real(8) :: exactValue
+		real(8) :: value
+		integer :: i, j
+		real(8), allocatable :: array(:)
+		complex(8), allocatable :: cArray(:)
+		integer(8) :: planF, planB
+		character :: cBuffer
+		
+		write(*,*) "------------------------------------"
+		write(*,*) " Verifing Array constructors (even) "
+		write(*,*) "------------------------------------"
+		allocate( array(10) )
+		
+		call FourierTransform_xArray( array, size(array), 0.1_8 )
+		write(*,"(A30,<size(array)>F10.5)") "        x array = ", array
+		call FourierTransform_shift( array )
+		write(*,"(A30,<size(array)>F10.5)") "  shift x array = ", array
+		call FourierTransform_ishift( array )
+		write(*,"(A30,<size(array)>F10.5)") " ishift x array = ", array
+		call FourierTransform_omegaArray( array, size(array), 0.1_8 )
+		write(*,"(A30,<size(array)>F10.5)") "        p array = ", array
+		call FourierTransform_shift( array )
+		write(*,"(A30,<size(array)>F10.5)") "  shift p array = ", array
+		call FourierTransform_ishift( array )
+		write(*,"(A30,<size(array)>F10.5)") " ishift p array = ", array
+		
+		deallocate( array )
+		
+		write(*,*) "-----------------------------------"
+		write(*,*) " Verifing Array constructors (odd) "
+		write(*,*) "-----------------------------------"
+		allocate( array(11) )
+		
+		call FourierTransform_xArray( array, size(array), 0.1_8 )
+		write(*,"(A30,<size(array)>F10.5)") "        x array = ", array
+		call FourierTransform_shift( array )
+		write(*,"(A30,<size(array)>F10.5)") "  shift x array = ", array
+		call FourierTransform_ishift( array )
+		write(*,"(A30,<size(array)>F10.5)") " ishift x array = ", array
+		call FourierTransform_omegaArray( array, size(array), 0.1_8 )
+		write(*,"(A30,<size(array)>F10.5)") "        p array = ", array
+		call FourierTransform_shift( array )
+		write(*,"(A30,<size(array)>F10.5)") "  shift p array = ", array
+		call FourierTransform_ishift( array )
+		write(*,"(A30,<size(array)>F10.5)") " ishift p array = ", array
+		
+		deallocate( array )
+
+		write(*,*) "---------------------------"
+		write(*,*) " Verifing shift Grid (odd)"
+		write(*,*) "---------------------------"
+		allocate( array(11) )
+		
+		call xGrid.init( array )
+		write(*,"(A30,<xGrid.nPoints>F10.5)") "freq array = ", xGrid.data
+		call FourierTransform_shift( xGrid )
+		write(*,"(A30,<xGrid.nPoints>F10.5)") "shifted freq array = ", xGrid.data
+		call FourierTransform_ishift( xGrid )
+		write(*,"(A30,<xGrid.nPoints>F10.5)") "inverse shifted freq array = ", xGrid.data
+		
+		deallocate( array )
+! 		call GOptions_doYouWantToContinue()
+		
+		write(*,*) "---------------------------------------"
+		write(*,*) " Verifing DFT Array @internal use only"
+		write(*,*) "---------------------------------------"
+		
+		allocate( cArray(9) )
+		
+		do i=-size(cArray)/2,size(cArray)/2
+			cArray(i+size(cArray)/2+1) = exp(-0.1_8*real(i,8)**2)
+		end do
+		
+		write(*,*) "REAL PART"
+		write(*,"(A10,<size(cArray)>F10.5)") " input = ", real(cArray)
+		call FourierTransform_dft( cArray )
+		write(*,"(A10,<size(cArray)>F10.5)") "FFT = ", real(cArray)
+		call FourierTransform_idft( cArray )
+		write(*,"(A10,<size(cArray)>F10.5)") "IFFT = ", real(cArray)
+		
+		write(*,*) ""
+		write(*,*) "IMAGINARY PART"
+		write(*,"(A10,<2*size(cArray)>F10.5)") " input = ", aimag(cArray)
+		call FourierTransform_dft( cArray )
+		write(*,"(A10,<2*size(cArray)>F10.5)") "FFT = ", aimag(cArray)
+		call FourierTransform_idft( cArray )
+		write(*,"(A10,<2*size(cArray)>F10.5)") "IFFT = ", aimag(cArray)
+		
+		deallocate( cArray )
+! 		call GOptions_doYouWantToContinue()
+		
+		write(*,*) "----------------------------"
+		write(*,*) " FFT of a gaussian function"
+		write(*,*) "----------------------------"
+		
+! 		call xGrid.init( -10.0_8, 10.0_8, 100 )
+! 		call funcA.init( xGrid, funcGaussian )
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call funcA.init( xGrid, funcTestWithNoise )
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		write(*,"(A)") "FFT (.Ffunc) = "
+		funcB = FourierTransform_fft( funcA )
+		call funcB.show()
+		call funcB.save(".Ffunc")
+		
+		funcB = FourierTransform_nft( funcA )
+		write(*,"(A)") "exact (.Fexact) = "
+		call funcB.show()
+		call funcB.save(".Fexact")
+		
+! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 2, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2 w l lw 2, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".Fexact\"//achar(34)//" u 1:2 w l lw 2, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .func .Ffunc .Fexact" )
+		
+		write(*,*) "-----------------------------"
+		write(*,*) " iFFT of a gaussian function"
+		write(*,*) "-----------------------------"
+		
+! 		call omegaGrid.init( -15.239866_8, 15.239866_8, 100 )
+! 		call funcA.init( omegaGrid, funcFGaussian )
+		funcA = funcB
+		write(*,"(A)") "input (.Ffunc) = "
+		call funcA.show()
+		call funcA.save(".Ffunc")
+		
+		write(*,"(A)") "iFFT (.func) = "
+		funcB = funcA
+		funcB = FourierTransform_ifft( funcB )
+		
+		call funcB.show()
+		call funcB.save(".func")
+		
+		funcB = FourierTransform_inft( funcA )
+		write(*,"(A)") "exact (.exact) = "
+		call funcB.show()
+		call funcB.save(".exact")
+		
+! 		call system( "echo plot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2 w l lw 2, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot [] [-3:3] \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 2, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot [] [-3:3] \"//achar(34)//".exact\"//achar(34)//" u 1:2 w l lw 2, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .Ffunc .func .exact" )
+		
+		write(*,*) "-------------------------------"
+		write(*,*) " iFFT( FFT(func) ). CNFunction "
+		write(*,*) "-------------------------------"
+		
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call funcA.init( xGrid, funcTestWithNoise )
+
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		write(*,"(A)") "FFT (.Ffunc) = "
+		funcB = FourierTransform_fft( funcA )
+		call funcB.show()
+		call funcB.save(".Ffunc")
+		
+		write(*,"(A)") "iFFT (.iFFfunc) = "
+		funcA = FourierTransform_ifft( funcB )
+		call funcA.show()
+		call funcA.save(".iFFfunc")
+		
+! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".iFFfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .func .Ffunc .iFFfunc" )
+		
+		write(*,*) "--------------------------------"
+		write(*,*) " FFT( iFFT(Ffunc) ). CNFunction "
+		write(*,*) "--------------------------------"
+		
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call funcA.init( xGrid, funcTestWithNoise )
+		funcA = FourierTransform_fft( funcA )
+
+		write(*,"(A)") "input (.Ffunc) = "
+		call funcA.show()
+		call funcA.save(".Ffunc")
+		
+		write(*,"(A)") "iFFT (.iFfunc) = "
+		funcA = FourierTransform_ifft( funcA )
+		call funcA.show()
+		call funcA.save(".iFfunc")
+		
+		write(*,"(A)") "FFT (.FiFfunc) = "
+		funcA = FourierTransform_fft( funcA )
+		call funcA.show()
+		call funcA.save(".FiFfunc")
+		
+! 		call system( "echo plot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".iFfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".FiFfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .Ffunc .iFfunc .FiFfunc" )
+		
+		write(*,*) "------------------------------------"
+		write(*,*) " Verifing FFT CNFunction with plans"
+		write(*,*) "------------------------------------"
+		
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call funcA.init( xGrid, funcTestWithNoise )
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		planF = FourierTransform_plan( funcA, FourierTransform_FORWARD )
+		planB = FourierTransform_plan( funcA, FourierTransform_BACKWARD )
+		
+		write(*,"(A)") "FFT (.Ffunc) = "
+		call FourierTransform_execute( planF )
+		funcA.xGrid = FourierTransform_omegaGrid( funcA.xGrid, order=FourierTransform_SORDER )
+		call FourierTransform_phase( funcA )
+		call FourierTransform_shift( funcA )
+		call funcA.show()
+		call funcA.save(".Ffunc")
+		
+		write(*,"(A)") "iFFT (.iFFfunc) = "
+		call FourierTransform_ishift( funcA )
+		call FourierTransform_phase( funcA )
+		call FourierTransform_execute( planB )
+		funcA.xGrid = FourierTransform_xGrid( funcA.xGrid, order=FourierTransform_NORDER )
+		funcA = funcA/real( funcA.nPoints(), 8 )
+		call funcA.show()
+		call funcA.save(".iFFfunc")
+		
+! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".iFFfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .func .Ffunc .iFFfunc" )
+
+		call FourierTransform_destroyPlan( planF )
+		call FourierTransform_destroyPlan( planB )
+		
+		write(*,*) "------------------------------------------"
+		write(*,*) " iFFT( FFT(func) ). CNFunction with plans"
+		write(*,*) "------------------------------------------"
+		
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call funcA.init( xGrid, funcTestWithNoise )
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		planF = FourierTransform_plan( funcA, FourierTransform_FORWARD )
+		planB = FourierTransform_plan( funcA, FourierTransform_BACKWARD )
+		
+		call FourierTransform_execute( planF )
+		call FourierTransform_execute( planB )
+		funcA = funcA/real( funcA.nPoints(), 8 )
+		
+		call funcA.show()
+		call funcA.save(".iFFfunc")
+		
+! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".iFFfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .func .iFFfunc" )
+
+		call FourierTransform_destroyPlan( planF )
+		call FourierTransform_destroyPlan( planB )
+		
+		write(*,*) "-----------------------------------------"
+		write(*,*) " Verifing FFT CNFunction oriented object"
+		write(*,*) "-----------------------------------------"
+		
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call funcA.init( xGrid, funcTestWithNoise )
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		call fft.init( funcA, FourierTransform_SPATIAL_DOMAIN )
+		
+		call fft.execute( FourierTransform_FORWARD, sync=.true., shift=.true. )
+		write(*,"(A)") "FFT (.Ffunc) = "
+		call funcA.show()
+		call funcA.save(".Ffunc")
+		
+		call fft.execute( FourierTransform_BACKWARD, sync=.true., shift=.true. )
+		write(*,"(A)") "iFFT (.iFFfunc) = "
+		call funcA.show()
+		call funcA.save(".iFFfunc")
+		
+! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".iFFfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .func .Ffunc .iFFfunc" )
+		
+		write(*,*) "--------------------------------------"
+		write(*,*) " Second derivative via FFT with plans"
+		write(*,*) "--------------------------------------"
+		
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		omegaGrid = FourierTransform_omegaGrid( xGrid )
+		call funcA.init( xGrid, funcTest )
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		planF = FourierTransform_plan( funcA, FourierTransform_FORWARD )
+		planB = FourierTransform_plan( funcA, FourierTransform_BACKWARD )
+		
+		call FourierTransform_execute( planF )
+		
+		funcA.yArray = ( Math_I*fft.omega )**2*funcA.yArray
+		
+		write(*,"(A)") "iFFT (.dfunc) = "
+		call FourierTransform_execute( planB )
+		funcA = funcA/real( funcA.nPoints(), 8 )
+		call funcA.show()
+		call funcA.save(".dfunc")
+		
+		call funcB.init( xGrid, d2funcTest )
+		write(*,"(A)") "exact (.exact) = "
+		call funcB.show()
+		call funcB.save(".exact")
+		
+! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".dfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".exact\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .func .dfunc .exact" )
+
+		call FourierTransform_destroyPlan( planF )
+		call FourierTransform_destroyPlan( planB )
+
+		write(*,*) "------------------------------------------------------"
+		write(*,*) " Second derivative via FFT CNFunction oriented object"
+		write(*,*) "------------------------------------------------------"
+		
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call funcA.init( xGrid, funcTest )
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		call fft.init( funcA, FourierTransform_SPATIAL_DOMAIN )
+		
+		call fft.execute( FourierTransform_FORWARD )
+		
+		funcA.yArray = ( Math_I*fft.omega )**2*funcA.yArray
+		
+		call fft.execute( FourierTransform_BACKWARD )
+		
+		write(*,"(A)") "iFFT (.dfunc) = "
+		call funcA.show()
+		call funcA.save(".dfunc")
+		
+		call funcB.init( xGrid, d2funcTest )
+		write(*,"(A)") "exact (.exact) = "
+		call funcB.show()
+		call funcB.save(".exact")
+		
+! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".dfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".exact\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .func .dfunc .exact" )
+		
+		write(*,*) "----------"
+		write(*,*) " Spectrum "
+		write(*,*) "----------"
+		
+! 		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call xGrid.init( -15.0_8, 15.0_8, 1001 )
+		call funcA.init( xGrid, funcTest )
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		aSpectrum = FourierTransform_powerSpectrum( funcA )
+		
+		write(*,"(A)") "aspec (.asfunc) = "
+		call aSpectrum.show()
+		call aSpectrum.save(".asfunc")
+		
+		pSpectrum = FourierTransform_phaseSpectrum( funcA )
+		
+		write(*,"(A)") "pspec (.psfunc) = "
+		call pSpectrum.show()
+		call pSpectrum.save(".psfunc")
+		
+		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+		call system( "echo plot \"//achar(34)//".asfunc\"//achar(34)//" u 1:2 w l lw 1.5 | gnuplot -p" )
+		call system( "echo plot \"//achar(34)//".psfunc\"//achar(34)//" u 1:2 w l lw 1.5 | gnuplot -p" )
+		call GOptions_doYouWantToContinue()
+		call system( "rm .func .asfunc .psfunc" )
+		
+		write(*,*) "--------------------------------------------------------"
+		write(*,*) " Filtering by amplitude. FFT CNFunction oriented object"
+		write(*,*) "--------------------------------------------------------"
+		
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call funcA.init( xGrid, funcTestWithNoise )
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		call fft.init( funcA, FourierTransform_SPATIAL_DOMAIN )
+		
+		call fft.execute( FourierTransform_FORWARD )
+		
+		where( abs( funcA.yArray ) <= 20.0_8 ) funcA.yArray = 0.0_8
+		
+		call fft.execute( FourierTransform_BACKWARD )
+		
+		write(*,"(A)") "iFFT (.ffunc) = "
+		call funcA.show()
+		call funcA.save(".ffunc")
+		
+! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".ffunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .func .ffunc" )
+		
+		write(*,*) "--------------------------------------------------------"
+		write(*,*) " Filtering by frequency. FFT CNFunction oriented object"
+		write(*,*) "--------------------------------------------------------"
+		
+		call xGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+		call funcA.init( xGrid, funcTestWithNoise )
+		write(*,"(A)") "input (.func) = "
+		call funcA.show()
+		call funcA.save(".func")
+		
+		call fft.init( funcA, FourierTransform_SPATIAL_DOMAIN )
+		
+		call fft.execute( FourierTransform_FORWARD )
+		
+		do i=1,funcA.nPoints()
+			if( abs( fft.omega(i) ) > 10.0_8 ) then
+				funcA.yArray(i) = 0.0_8
+			end if
+		end do
+		
+		call fft.execute( FourierTransform_BACKWARD )
+		
+		write(*,"(A)") "iFFT (.ffunc) = "
+		call funcA.show()
+		call funcA.save(".ffunc")
+		
+! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call system( "echo plot \"//achar(34)//".ffunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
+! 		call GOptions_doYouWantToContinue()
+		call system( "rm .func .ffunc" )
+		
+	end subroutine FourierTransform_test
+	
+end module FourierTransform_

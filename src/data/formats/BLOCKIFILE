@@ -1,0 +1,32 @@
+# input   file for metropolis program
+
+BEGIN ICONS
+	icon2    = 500000   # Number of events that shall be recorded
+	icon7    = 1        # Threshold for definition in ebmv model
+	betin    = -500.0   # Default binding energy of compound cluster ( < 0. e.v)
+	amel     = 12.011   # Atomic mass of the element 
+	strstp   = 1        # First index for calculating excitation energy
+	maxstep  = 120      # Last index for calculating excitation energy 
+	rsys     = 20.0     # Radius of the system ( an )
+	icoul    = 1        # Controls inclusion of coulomb energy(icoul<0 , do not include)
+	rarray    = 123.1,345.5,0.8734
+	iarray    = 34,67,12,456
+END
+
+# control which analysis routines are called in step2, 0 to skip call
+BEGIN STEP2ROUTINES
+	sebm    =  1
+	sebm1   =  1
+	smoz    =  1
+	file = /home/pepito/hola/hola.dat
+END
+
+BEGIN TABLE
+	# cabecera como comentario
+	prueba de tabla 1
+	prueba de tabla 2
+	prueba de tabla 3
+	prueba de tabla 4
+	prueba de tabla 5
+	prueba de tabla 6
+END TABLE

@@ -1,0 +1,451 @@
+#ifndef MAP_H90
+#define MAP_H90 1
+
+! #undef __CLASS_ITEMLIST__
+! #undef __TYPE_MAPLIST__
+! #undef __CLASS_MAPVALUE__
+! #undef __TYPE_MAPPAIR__
+
+	type, public :: Map
+		__TYPE_MAPLIST__ :: list
+		__CLASS_MAPITERATOR__, pointer :: begin => null()
+		__CLASS_MAPITERATOR__, pointer :: end => null()
+		
+		contains
+			generic :: init => initDefault
+			generic :: assignment(=) => copyList
+			
+			procedure :: initDefault
+			procedure :: copyList
+			final :: destroyMap
+			procedure :: str
+			procedure :: show
+			procedure :: save
+			procedure :: toFStream
+			procedure :: size
+			procedure :: isEmpty
+			procedure, private :: privateFind
+			procedure :: find
+			procedure :: insert
+			generic :: set => setFromPtr, insert
+			procedure :: setFromPtr
+			generic :: erase => eraseFromPtr, eraseFromKey
+			procedure :: eraseFromPtr
+			procedure :: eraseFromKey
+			procedure :: clear
+			generic :: at => atFromPtr, atFromKey, atFromPos
+			procedure :: atFromPtr
+			procedure :: atFromKey
+			procedure :: atFromPos
+			generic :: key => keyFromPtr, keyFromValue, keyFromPos
+			procedure :: keyFromPtr
+			procedure :: keyFromValue
+			procedure :: keyFromPos
+			generic :: pair => pairFromPtr, pairFromKey, pairFromPos
+			procedure :: pairFromPtr
+			procedure :: pairFromKey
+			procedure :: pairFromPos
+			
+			__ADD_METHODS__
+	end type Map
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine initDefault( this )
+		class(Map) :: this
+		
+		call this.list.init()
+	end subroutine initDefault
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	subroutine copyList( this, other )
+		class(Map), intent(out) :: this
+		class(Map), intent(in) :: other
+		
+		this.list = other.list
+		this.begin => this.list.begin
+		this.end => this.list.end
+	end subroutine copyList
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyMap( this )
+		type(Map), intent(inout) :: this
+		
+		call this.clear()
+	end subroutine destroyMap
+	
+	!>
+	!! @brief Show 
+	!!
+	subroutine show( this, unit, formatted )
+		class(Map) :: this
+		integer, optional, intent(in) :: unit
+		logical, optional :: formatted
+		
+		integer :: effunit
+		logical :: effFormatted
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effunit = 6
+		if( present(unit) ) effunit = unit
+		
+		write(effunit,"(a)") trim(str(this,effFormatted))
+	end subroutine show
+	
+	!>
+	!! Save the data in two column format in a
+	!! selected unit
+	!!
+	subroutine save( this, ofileName )
+		class(Map), intent(in) :: this
+		character(*), optional, intent(in) :: ofileName
+		
+		type(OFStream) :: ofile
+		
+		if( present(ofileName) ) then
+			call ofile.init( ofileName )
+			call this.toFStream( ofile )
+			call ofile.destroy()
+		else
+			call this.toFStream()
+		end if
+	end subroutine save
+	
+	!>
+	!! @brief
+	!!
+	function size( this ) result( output )
+		class(Map), intent(in) :: this
+		integer :: output
+		
+		output = this.list.size()
+	end function size
+	
+	!>
+	!! @brief
+	!!
+	function isEmpty( this ) result( output )
+		class(Map), intent(in) :: this
+		logical :: output
+		
+		output = ( this.list.size() == 0 )
+	end function isEmpty
+	
+	!>
+	!! @brief
+	!!
+	function privateFind( this, key, ptr ) result( output )
+		class(Map), intent(in) :: this
+		type(String), intent(in) :: key
+		__CLASS_MAPITERATOR__, intent(inout), pointer :: ptr
+		integer :: output
+		
+		__TYPE_MAPPAIR__ :: pair, pairPrev
+		__CLASS_MAPITERATOR__, pointer :: iter
+		
+		iter => this.list.begin
+		pair = iter.data
+		
+		! Si solo hay un elemento en la lista
+		if( this.list.size() == 1 ) then
+			if( pair.first == key ) then
+				output = 0
+			else if( pair.first < key ) then
+				output = 1
+			else if( key < pair.first ) then
+				output = -1
+			end if
+
+			ptr => iter
+			return
+		end if
+		
+		! Si el elemento esta antes de la cabeza
+		if( key < pair.first ) then
+			output = -1
+			ptr => iter
+			return
+		end if
+		
+		do while( associated(iter) )
+			pair = iter.data
+! 			write(*,*) "Buscando => ", pair.first.fstr, pair.second, key.fstr
+			if( key < pair.first ) then
+				
+				pairPrev = iter.prev.data
+				
+				if( pairPrev.first == key ) then
+					output = 0
+				else
+					output = 1
+				end if
+				
+				ptr => iter.prev
+				
+				return
+			end if
+			
+			iter => iter.next
+		end do
+		
+		iter => this.list.end
+		pair = iter.data
+		
+		ptr => this.list.end
+		if( key == pair.first ) then
+			output = 0
+		else if( pair.first < key ) then
+			output = 1
+		end if
+	end function privateFind
+	
+	!>
+	!! @brief
+	!!
+	function find( this, key, ptr ) result( output )
+		class(Map), intent(in) :: this
+		type(String), intent(in) :: key
+		__CLASS_MAPITERATOR__, intent(inout), pointer :: ptr
+		logical :: output
+		
+		integer :: loc
+		
+		if( this.size() == 0 ) then
+			output = .false.
+			ptr => null()
+			return
+		end if
+		
+		loc = this.privateFind( key, ptr )
+		if( abs(loc) == 1 ) then
+			output = .false.
+			ptr => null()
+		else
+			output = .true.
+		end if
+	end function find
+	
+	!>
+	!! @brief
+	!!
+	subroutine insert( this, key, value )
+		class(Map), intent(inout) :: this 
+		type(String), intent(in) :: key
+		__CLASS_MAPVALUE__, intent(in) :: value
+		
+		__CLASS_MAPITERATOR__, pointer :: ptr
+		__TYPE_MAPPAIR__ :: pair
+		
+		call pair.init( key, value )
+		
+		if( this.list.isEmpty() ) then
+			call this.list.append( pair )
+			
+			this.begin => this.list.begin
+			this.end => this.list.end
+
+			return
+		end if
+		
+		select case( this.privateFind( key, ptr ) )
+			case(-1)
+				call this.list.prepend( pair )
+			case(0)
+				call this.list.replace( ptr, pair )
+			case(1)
+				call this.list.insert( ptr, pair )
+		end select
+		
+		this.begin => this.list.begin
+		this.end => this.list.end
+	end subroutine insert
+	
+	!>
+	!! @brief
+	!!
+	subroutine setFromPtr( this, ptr, value )
+		class(Map) :: this
+		__CLASS_MAPITERATOR__, intent(inout), pointer :: ptr
+		__CLASS_MAPVALUE__, intent(in) :: value
+		
+		__TYPE_MAPPAIR__ :: pair
+		
+		call pair.init( ptr.data.first, value )
+		
+		call this.list.replace( ptr, pair )
+	end subroutine setFromPtr
+	
+	!>
+	!! @brief
+	!!
+	subroutine eraseFromPtr( this, ptr )
+		class(Map) :: this
+		__CLASS_MAPITERATOR__, intent(in), pointer :: ptr
+		
+		call this.list.erase( ptr )
+		
+		this.begin => this.list.begin
+		this.end => this.list.end
+	end subroutine eraseFromPtr
+	
+	!>
+	!! @brief
+	!!
+	subroutine eraseFromKey( this, key )
+		class(Map) :: this
+		class(String), intent(in) :: key
+		
+		__CLASS_MAPITERATOR__, pointer :: ptr
+		
+		if( this.find( key, ptr ) ) then
+			call this.list.erase( ptr )
+			
+			this.begin => this.list.begin
+			this.end => this.list.end
+		end if
+	end subroutine eraseFromKey
+	
+	!>
+	!! @brief
+	!!
+	subroutine clear( this )
+		class(Map), intent(inout) :: this
+		
+		call this.list.clear()
+		this.begin => this.list.begin
+		this.end => this.list.end
+	end subroutine clear
+	
+	!>
+	!! @brief
+	!!
+	function atFromPtr( this, ptr ) result( output )
+		class(Map), intent(in) :: this
+		__CLASS_MAPITERATOR__, intent(in), pointer :: ptr
+		__TYPE_MAPVALUE__ :: output
+		
+		output = ptr.data.second
+	end function atFromPtr
+	
+	!>
+	!! @brief
+	!!
+	function atFromKey( this, key, defaultValue ) result( output )
+		class(Map) :: this
+		type(String), intent(in) :: key
+		__CLASS_MAPVALUE__, optional, intent(in) :: defaultValue
+		__TYPE_MAPVALUE__ :: output
+		
+		__CLASS_MAPITERATOR__, pointer :: ptr
+		
+		if( this.find( key, ptr ) ) then
+			output = ptr.data.second
+		else if( present(defaultValue) ) then
+			call this.insert( key, defaultValue )
+			output = defaultValue
+		else
+			write(6,"(A)") "### Error ### Map.atFromKey: There isn't value associated to key "//trim(key.fstr)
+			write(6,"(A)") "                                You can use the defaultValue option"
+			stop
+		end if
+	end function atFromKey
+	
+	!>
+	!! @brief
+	!!
+	function atFromPos( this, pos ) result( output )
+		class(Map), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_MAPVALUE__ :: output
+		
+		__TYPE_MAPPAIR__ :: pair
+		
+		pair = this.list.at( pos )
+		
+		output = pair.second
+	end function atFromPos
+	
+	!>
+	!! @brief
+	!!
+	function keyFromPtr( this, ptr ) result( output )
+		class(Map), intent(in) :: this
+		__CLASS_MAPITERATOR__, intent(in), pointer :: ptr
+		type(String) :: output
+		
+		output = ptr.data.first
+	end function keyFromPtr
+	
+	!>
+	!! @brief
+	!!
+	function keyFromValue( this, value ) result( output )
+		class(Map), intent(in) :: this
+		integer, intent(in) :: value
+		type(String) :: output
+		
+		write(6,*) "### Error ### Map.keyFromValue: This function is not implemented"
+		stop
+	end function keyFromValue
+	
+	!>
+	!! @brief
+	!!
+	function keyFromPos( this, pos ) result( output )
+		class(Map), intent(in) :: this
+		integer, intent(in) :: pos
+		type(String) :: output
+		
+		__TYPE_MAPPAIR__ :: pair
+		
+		pair = this.list.at( pos )
+		
+		output = pair.first
+	end function keyFromPos
+	
+	!>
+	!! @brief
+	!!
+	function pairFromPtr( this, ptr ) result( output )
+		class(Map), intent(in) :: this
+		__CLASS_MAPITERATOR__, intent(in), pointer :: ptr
+		__TYPE_MAPPAIR__ :: output
+		
+		output = ptr.data
+	end function pairFromPtr
+	
+	!>
+	!! @brief
+	!!
+	function pairFromKey( this, key ) result( output )
+		class(Map), intent(in) :: this
+		type(String), intent(in) :: key
+		__TYPE_MAPPAIR__ :: output
+		
+		__CLASS_MAPITERATOR__, pointer :: ptr
+		
+		if( this.find( key, ptr ) ) then
+			output = ptr.data
+		end if
+	end function pairFromKey
+	
+	!>
+	!! @brief
+	!!
+	function pairFromPos( this, pos ) result( output )
+		class(Map), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_MAPPAIR__ :: output
+		
+		output = this.list.at( pos )
+	end function pairFromPos
+#endif

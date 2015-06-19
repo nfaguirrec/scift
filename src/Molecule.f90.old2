@@ -1,0 +1,851 @@
+#define MOL_RADIUS     this.propBufferR(1)
+#define MOL_GEOMCENTER this.propBufferR(2:4)
+#define MOL_MASSCENTER this.propBufferR(5:7)
+#define MOL_MINERTIA   this.propBufferR(8:10)  !< Warning in momentOfInertia() if the range 8:10 is changed
+#define MOL_MASS this.propBufferR(11)
+#define MOL_FORMULA    this.propStrBuffer
+#define MOL_MASSNUMBER this.propBufferI(1)
+#define MOL_TEST_RADIUS      this.testPropBufferR(1)
+#define MOL_TEST_GEOMCENTER  this.testPropBufferR(2)
+#define MOL_TEST_MASSCENTER  this.testPropBufferR(5)
+#define MOL_TEST_MINERTIA    this.testPropBufferR(8)
+#define MOL_TEST_MASS        this.testPropBufferR(11)
+#define MOL_TEST_FORMULA     this.testPropStrBuffer
+#define MOL_TEST_MASSNUMBER  this.testPropBufferI(1)
+
+!>
+!! @brief
+!!
+module Molecule_
+	use IOStream_
+	use String_
+	use UnitsConverter_
+	use Matrix_
+	use Atom_
+	use AtomicElementsDB_
+	implicit none
+	private
+	
+	!>
+	!! @brief Public parameters
+	!!
+	integer, public, parameter :: XYZ  = 1
+	
+	public :: &
+		Molecule_test
+	
+	type, public :: Molecule
+		character(:), allocatable :: name
+		type(Atom), allocatable :: atoms(:)
+		
+		! [ radius, geomCenter(3), massCenter(3), momentsOfInertia(3), mass ]
+		real(8), private :: propBufferR(11) = 0.0_8
+		logical, private :: testPropBufferR(11) = .false.
+		
+		character(:), allocatable, private :: propStrBuffer
+		logical, private :: testPropStrBuffer = .false.
+		
+		! [ massNumber ]
+		integer, private :: propBufferI(1) = 0
+		logical, private :: testPropBufferI(1) = .false.
+		
+		contains
+			generic :: init => initBase, fromFile
+			generic :: assignment(=) => copyMolecule
+			procedure :: initBase
+			procedure :: fromFile
+			procedure :: copyMolecule
+			final :: destroyMolecule
+			procedure :: str
+			procedure :: show
+			procedure :: load => fromFile
+			procedure, private :: loadXYZ
+			procedure :: save
+			procedure, private :: saveXYZ
+			procedure :: set
+			procedure :: radius
+			procedure :: nAtoms
+			procedure, private :: updateMassNumber
+			procedure :: massNumber
+			procedure, private :: updateMass
+			procedure :: mass
+			procedure :: chemicalFormula
+			procedure :: center
+			procedure :: centerOfMass
+			procedure :: setCenter
+			procedure :: momentOfInertia
+			procedure :: momentsOfInertia
+			procedure, private :: updateGeomCenter
+			procedure, private :: updateMassCenter
+			procedure, private :: updateMomentsOfInertia
+			procedure, private :: updateChemicalFormula
+	end type Molecule
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine initBase( this, nAtoms, name )
+		class(Molecule) :: this 
+		integer, intent(in) :: nAtoms
+		character(*), optional, intent(in) :: name
+		
+		character(:), allocatable :: effName
+		integer :: i
+		
+		if( present(name) ) then
+			this.name = name
+		else
+			this.name = "unknown"
+		end if
+		
+		if( allocated(this.atoms) ) deallocate(this.atoms)
+		allocate( this.atoms(nAtoms) )
+		
+		do i=1,size(this.atoms)
+			call this.atoms(i).init()
+		end do
+	end subroutine initBase
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromFile( this, fileName, format )
+		class(Molecule) :: this 
+		character(*), intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		
+		integer :: i
+		integer :: effFormat
+		
+		if( present(format) ) then
+			effFormat = format
+		else
+			effFormat = XYZ
+		end if
+		
+		write(*,*) "Reading molecule from file "//trim(fileName)
+		
+		select case ( effFormat )
+			case( XYZ )
+				call this.loadXYZ( fileName )
+			case default
+				write(*,*) "This format file is not implemented"
+				stop
+		end select
+		
+		call this.updateGeomCenter()
+		MOL_GEOMCENTER = .true.
+	end subroutine fromFile
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	subroutine copyMolecule( this, other )
+		class(Molecule), intent(out) :: this
+		class(Molecule), intent(in) :: other
+		
+		integer :: i
+		
+		if( allocated(this.atoms) ) deallocate(this.atoms)
+		
+		this.name = other.name
+		
+		allocate( this.atoms( size(other.atoms) ) )
+		
+		this.name = other.name
+		
+		do i=1,size(other.atoms)
+			this.atoms(i) = other.atoms(i)
+		end do
+		
+		this.propBufferR = other.propBufferR
+		this.testPropBufferR = other.testPropBufferR
+		
+		this.propStrBuffer = other.propStrBuffer
+		this.testPropStrBuffer = other.testPropStrBuffer
+		
+		this.propBufferI = other.propBufferI
+		this.testPropBufferI = other.testPropBufferI
+	end subroutine copyMolecule
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyMolecule( this )
+		type(Molecule) :: this
+		
+		if( allocated(this.atoms) ) deallocate( this.atoms )
+	end subroutine destroyMolecule
+	
+	!>
+	!! @brief Convert to string
+	!!
+	function str( this, formatted, prefix ) result( output )
+		class(Molecule) :: this 
+		character(:), allocatable :: output
+		logical, optional :: formatted
+		character(*), optional :: prefix
+		
+		logical :: effFormatted
+		character(:), allocatable :: effPrefix
+		
+		integer :: fmt
+		character(200) :: fstr
+		integer :: i
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effPrefix = ""
+		if( present(prefix) ) effPrefix = prefix
+		
+		output = ""
+		
+		if( .not. effFormatted ) then
+			output = trim(output)//"<Molecule:"
+		
+#define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
+#define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
+#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+			
+			do i=1,size(this.atoms)
+				if( i == 0 ) then
+					ITEMS( "", this.atoms(i).str() )
+				else
+					ITEMS( ",", this.atoms(i).str() )
+				end if
+			end do
+			
+			output = trim(output)//",gCenter="; write(fstr, "(3f10.6)") this.center()
+			output = trim(output)//trim(fstr)
+			output = trim(output)//",mCenter="; write(fstr, "(3f10.6)") this.centerOfMass()
+			output = trim(output)//trim(fstr)
+			output = trim(output)//",testCenter="; write(fstr, "(L1)") MOL_TEST_GEOMCENTER
+			output = trim(output)//trim(fstr)
+#undef RFMT
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+		
+			output = trim(output)//">"
+		else
+		
+#define LINE(l) output = trim(output)//effPrefix//l//new_line('')
+#define ITEMS(l,v) output = trim(output)//effPrefix//l; write(fstr, "(x,a)") trim(v); output = trim(output)//trim(fstr)//new_line('')
+#define ITEMI(l,v) output = trim(output)//effPrefix//l; write(fstr, "(i10)") v; output = trim(output)//trim(fstr)//new_line('')
+#define ITEMR(l,v) output = trim(output)//effPrefix//l; write(fstr, "(f10.5)") v; output = trim(output)//trim(fstr)//new_line('')
+
+			ITEMS("name =", this.name)
+			LINE("")
+			
+			do i=1,size(this.atoms)
+				write(fstr, "(A10,3f10.5)") this.atoms(i).symbol, this.atoms(i).r
+				output = trim(output)//trim(fstr)//new_line('')
+			end do
+#undef LINE
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+		end if
+		
+	end function str
+	
+	!>
+	!! @brief Show 
+	!!
+	subroutine show( this, unit, formatted )
+		class(Molecule) :: this
+		integer, optional, intent(in) :: unit
+		logical, optional :: formatted
+		
+		integer :: effunit
+		logical :: effFormatted
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effunit = 6
+		if( present(unit) ) effunit = unit
+		
+		write(effunit,"(a)") trim(str(this,effFormatted))
+	end subroutine show
+	
+	!>
+	!! @brief Load the molecule from XYZ file in angstrom
+	!!
+	subroutine loadXYZ( this, fileName )
+		class(Molecule) :: this
+		character(*), intent(in) :: fileName
+		
+		type(IFStream) :: ifile
+		type(String) :: buffer
+		character(1000), allocatable :: tokens(:)
+		integer :: i, nLine
+		type(Atom) :: currentAtom
+		
+		if( allocated(this.atoms) ) deallocate(this.atoms)
+		
+		call ifile.init( trim(fileName) )
+		
+		nLine = 1
+		do while( .not. ifile.eof() )
+			buffer = ifile.readLine( "#" )
+			
+			call buffer.split( tokens, " " )
+			
+			if( nLine == 1 ) then
+				allocate( this.atoms( FString_toInteger(tokens(1)) ) )
+			else if( nLine == 2 ) then
+				if( len_trim(buffer.fstr) /= 0 ) then
+					this.name = trim(buffer.fstr)
+				else
+					this.name = trim(fileName)
+				end if
+			else
+				if( buffer.length() == 0 ) cycle
+				
+				call this.atoms(nLine-2).init( &
+					trim(tokens(1)), &
+					FString_toReal(tokens(2))*angs, &
+					FString_toReal(tokens(3))*angs, &
+					FString_toReal(tokens(4))*angs &
+					)
+			end if
+			
+			nLine = nLine + 1
+		end do
+		
+		call ifile.close()
+	end subroutine loadXYZ
+	
+	!>
+	!! @brief Save the molecule to file
+	!!
+	subroutine save( this, fileName, format, units )
+		class(Molecule) :: this
+		character(*), optional, intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		real(8), optional, intent(in) :: units
+		
+		integer :: effFormat
+		real(8) :: effUnits
+		
+		effFormat = XYZ
+		if( present(format) ) effFormat = format
+		
+		effUnits = angs
+		if( present(units) ) effUnits = units
+		
+		select case ( effFormat )
+			case( XYZ )
+				call this.saveXYZ( fileName, effUnits )
+		end select
+	end subroutine save
+	
+	!>
+	!! @brief Save the molecule to file
+	!!
+	subroutine saveXYZ( this, fileName, units )
+		class(Molecule) :: this
+		character(*), intent(in) :: fileName
+		real(8), intent(in) :: units
+		
+		type(OFStream) :: ofile
+		integer :: i
+		
+		call ofile.init( fileName )
+		
+		write(ofile.unit,*) size(this.atoms)
+		write(ofile.unit,*) trim(this.name)
+		
+		do i=1,size(this.atoms)
+			write(ofile.unit,"(A5,3F20.8)") this.atoms(i).symbol, this.atoms(i).x/units, this.atoms(i).y/units, this.atoms(i).z/units
+		end do
+		
+		call ofile.close()
+	end subroutine saveXYZ
+	
+	!>
+	!! @todo Hay que activar los flags correspondientes para que actualice los buffers
+	!! @brief
+	!!
+	subroutine set( this, pos, atm )
+		class(Molecule) :: this
+		integer :: pos
+		type(Atom), intent(in) :: atm
+		
+		this.atoms(pos) = atm
+		
+! 		MOL_TEST_GEOMCENTER = .true.
+	end subroutine set
+	
+	!>
+	!! @brief Return the radius of the system in atomic units
+	!!        defined as half the largest distance between
+	!!        two molecule atoms
+	!!
+	function radius( this ) result ( output )
+		class(Molecule) :: this
+		real(8) :: output
+		
+		real(8) :: rij
+		integer :: i, j
+		
+		if( .not. MOL_TEST_RADIUS ) then
+			MOL_RADIUS = 0.0_8
+			
+			if( this.nAtoms() /= 1 ) then
+				
+				do i=1,size(this.atoms)-1
+					do j=i+1,size(this.atoms)
+						rij = norm2( this.atoms(j).r-this.atoms(i).r )
+						
+						if( rij > MOL_RADIUS ) then
+							MOL_RADIUS = rij
+						end if
+					end do
+				end do
+				
+				MOL_RADIUS = MOL_RADIUS/2.0_8
+			else
+				! @todo Hay que implementar en AtomicElementsDB_ una sección para los radios atómicos
+				MOL_RADIUS = 0.76720_8*angs
+			end if
+			
+			MOL_TEST_RADIUS = .true.
+		end if
+		
+		output = MOL_RADIUS
+	end function radius
+	
+	!>
+	!! @brief
+	!!
+	pure function nAtoms( this ) result ( output )
+		class(Molecule), intent(in) :: this
+		integer :: output
+		
+		output = size(this.atoms)
+	end function nAtoms
+	
+	!>
+	!! @brief
+	!!
+	subroutine updateMassNumber( this )
+		class(Molecule) :: this
+		
+		integer :: i
+		
+		MOL_MASSNUMBER = 0
+		do i=1,size(this.atoms)
+			MOL_MASSNUMBER = MOL_MASSNUMBER + AtomicElementsDB_instance.atomicMassNumber( this.atoms(i).symbol )
+		end do
+	end subroutine updateMassNumber
+	
+	!>
+	!! @brief
+	!!
+	function massNumber( this ) result( output )
+		class(Molecule) :: this 
+		integer :: output
+		
+		if( .not. MOL_TEST_MASSNUMBER ) then
+			call this.updateMassNumber()
+			MOL_TEST_MASSNUMBER = .true.
+		end if
+		
+		output = MOL_MASSNUMBER
+	end function massNumber
+	
+	!>
+	!! @brief
+	!!
+	subroutine updateMass( this )
+		class(Molecule) :: this
+		
+		integer :: i
+		
+		MOL_MASS = 0.0_8
+		do i=1,size(this.atoms)
+			MOL_MASS = MOL_MASS + AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )
+		end do
+	end subroutine updateMass
+	
+	!>
+	!! @brief Return the mass of the system in atomic units
+	!!
+	function mass( this ) result( output )
+		class(Molecule) :: this 
+		integer :: output
+		
+		if( .not. MOL_TEST_MASS ) then
+			call this.updateMass()
+			MOL_TEST_MASS = .true.
+		end if
+		
+		output = MOL_MASS
+	end function mass
+	
+	!>
+	!! @brief
+	!!
+	function chemicalFormula( this ) result ( output )
+		class(Molecule) :: this
+		character(:), allocatable :: output
+		
+		if( .not. MOL_TEST_FORMULA ) then
+			call this.updateChemicalFormula()
+			MOL_TEST_FORMULA = .true.
+		end if
+		
+		output = trim(adjustl(MOL_FORMULA))
+	end function chemicalFormula
+	
+	!>
+	!! @brief
+	!!
+	subroutine updateChemicalFormula( this )
+		class(Molecule) :: this
+		
+		integer :: key, i
+		integer, allocatable :: keys(:)
+		character(10), allocatable :: symb(:)
+		character(10) :: buffer
+		integer, allocatable :: counts(:)
+		
+		allocate( keys(size(this.atoms)) ) ! En el peor de los casos cada atomo es diferente
+		
+		do i=1,size(this.atoms)
+			keys(i) = FString_hashKey( this.atoms(i).symbol )
+		end do
+		
+		allocate( counts(minval( keys ):maxval( keys )) )
+		allocate( symb(minval( keys ):maxval( keys )) )
+		
+		counts = 0
+		do i=1,size(this.atoms)
+			key = FString_hashKey( this.atoms(i).symbol )
+			counts( key ) = counts( key ) + 1
+			symb( key ) = this.atoms(i).symbol
+		end do
+		
+		MOL_FORMULA = ""
+		do i=maxval(keys),minval(keys),-1
+			if( counts(i) /= 0 ) then
+				write(buffer,"(I5)") counts( i )
+				MOL_FORMULA = trim(MOL_FORMULA)//trim(symb( i ))//"_"//trim(adjustl(buffer))
+			end if
+		end do
+	end subroutine updateChemicalFormula
+	
+	!>
+	!! @brief
+	!!
+	function center( this ) result( output )
+		class(Molecule) :: this
+		real(8) :: output(3)
+		
+		if( .not. MOL_TEST_GEOMCENTER ) then
+			call this.updateGeomCenter()
+			MOL_TEST_GEOMCENTER = .true.
+		end if
+
+		output = MOL_GEOMCENTER
+	end function center
+	
+	!>
+	!! @brief
+	!!
+	function centerOfMass( this ) result( output )
+		class(Molecule) :: this
+		real(8) :: output(3)
+		
+		if( .not. MOL_TEST_MASSCENTER ) then
+			call this.updateMassCenter()
+			MOL_TEST_MASSCENTER = .true.
+		end if
+
+		output = MOL_MASSCENTER
+	end function centerOfMass
+	
+	!>
+	!! @brief
+	!!
+	subroutine setCenter( this, center )
+		class(Molecule) :: this
+		real(8), intent(in) :: center(3)
+		
+		real(8) :: dr(3)
+		integer :: i
+		
+		dr = center-this.center()
+		
+		do i=1,size(this.atoms)
+			this.atoms(i).r = this.atoms(i).r + dr
+		end do
+		
+		MOL_GEOMCENTER = center
+		MOL_TEST_GEOMCENTER = .true.
+		MOL_TEST_MASSCENTER = .false.
+	end subroutine setCenter
+	
+	!>
+	!! @brief Returns the specified moment of inertia in atomic units
+	!!	 component=1,2,3 ==> xx,yy,zz
+	!!
+	function momentOfInertia( this, component ) result( output )
+		class(Molecule) :: this
+		integer, intent(in) :: component
+		real(8) :: output
+		
+		if( .not. MOL_TEST_MINERTIA ) then
+			call this.updateMomentsOfInertia()
+			MOL_TEST_MINERTIA = .true.
+		end if
+	
+		output = this.propBufferR(8+component-1)
+	end function momentOfInertia
+	
+	!>
+	!! @brief Returns the principal moments of inertia in atomic units
+	!!
+	function momentsOfInertia( this ) result( output )
+		class(Molecule) :: this
+		real(8) :: output(3)
+		
+		if( .not. MOL_TEST_MINERTIA ) then
+			call this.updateMomentsOfInertia()
+			MOL_TEST_MINERTIA = .true.
+		end if
+
+		output = MOL_MINERTIA
+	end function momentsOfInertia
+	
+	!>
+	!! @brief
+	!!
+	subroutine updateGeomCenter( this )
+		class(Molecule) :: this
+		
+		integer :: i
+		
+		MOL_GEOMCENTER = 0.0_8
+		
+		do i=1,size(this.atoms)
+			MOL_GEOMCENTER = MOL_GEOMCENTER + this.atoms(i).r
+		end do
+		
+		MOL_GEOMCENTER = MOL_GEOMCENTER/real( size(this.atoms), 8 )
+	end subroutine updateGeomCenter
+	
+	!>
+	!! @brief
+	!!
+	subroutine updateMassCenter( this )
+		class(Molecule) :: this
+		
+		integer :: i
+		
+		MOL_MASSCENTER = 0.0_8
+		
+		do i=1,size(this.atoms)
+			MOL_MASSCENTER = MOL_MASSCENTER + &
+				AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )*this.atoms(i).r
+		end do
+		
+		MOL_MASSCENTER = MOL_MASSCENTER/this.mass()
+	end subroutine updateMassCenter
+	
+	!>
+	!! @brief
+	!!
+	!! Test
+	!!	-----------------------------------
+	!!	GEOM ----->> OK
+	!!	H  0.0000  0.0000   0.3561 angs
+	!!	H  0.0000  0.0000  -0.3561 angs
+	!!	INERTIA MOMENTS
+	!!	Ia   0.00000
+	!!	Ib   0.25562
+	!!	Ic   0.25562
+	!!	-----------------------------------
+	!!	GEOM ----->> OK
+	!!	O  0.0000   0.0000   0.1271
+	!!	H  0.0000   0.7580  -0.5085
+	!!	H  0.0000  -0.7580  -0.5085
+	!!	INERTIA MOMENTS
+	!!	Ia   0.72314
+	!!	Ib   1.15809
+	!!	Ic   1.88123
+	!!	-----------------------------------
+	!!	GEOM
+	!!	C    -1.2309         0.2355        0.0000
+	!!	N    -2.2088        -0.3443        0.0000
+	!!	C     0.0000         0.9865        0.0000
+	!!	H    -0.1101         2.0548        0.0000
+	!!	C     1.1962         0.4181        0.0000
+	!!	H     2.0488         1.0774        0.0000
+	!!	C     1.4944        -1.0496        0.0000
+	!!	H     0.5943        -1.6497        0.0000
+	!!	H     2.0852        -1.3080        0.8741
+	!!	H     2.0852        -1.3080       -0.8741
+	!!	INERTIA MOMENTS
+	!!	Ia   41.5109  --esperado-->   41.48300
+	!!	Ib  145.7676  --esperado-->  145.68883
+	!!	Ic  184.1979  --esperado-->  184.09165
+	!!	 @todo Los momentos de inercia no dan exactamente iguales y difieren mas conforme sube la masa
+	!!
+	subroutine updateMomentsOfInertia( this )
+		class(Molecule) :: this
+		
+		integer :: i
+		real(8) :: centerOfMass(3)
+		real(8), allocatable :: X(:), Y(:), Z(:), m(:)
+		type(Matrix) :: inertiaTensor, diagInertiaTensor
+		real(8) :: eVals(3)
+		
+		allocate( X(this.nAtoms()) )
+		allocate( Y(this.nAtoms()) )
+		allocate( Z(this.nAtoms()) )
+		allocate( m(this.nAtoms()) )
+		
+		centerOfMass = this.centerOfMass()
+		
+		do i=1,this.nAtoms()
+			X(i) = this.atoms(i).x - centerOfMass(1)
+			Y(i) = this.atoms(i).y - centerOfMass(2)
+			Z(i) = this.atoms(i).z - centerOfMass(3)
+			m(i) = AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )
+! 			write(6,*) i, m(i)
+		end do
+		
+		call inertiaTensor.init(3,3)
+		
+		call inertiaTensor.set( 1, 1,  sum( m*(Y**2+Z**2) ) )
+		call inertiaTensor.set( 1, 2, -sum( m*X*Y ) )
+		call inertiaTensor.set( 1, 3, -sum( m*X*Z ) )
+		call inertiaTensor.set( 2, 1, -sum( m*Y*X ) )
+		call inertiaTensor.set( 2, 2,  sum( m*(X**2+Z**2) ) )
+		call inertiaTensor.set( 2, 3, -sum( m*Y*Z ) )
+		call inertiaTensor.set( 3, 1, -sum( m*Z*X ) )
+		call inertiaTensor.set( 3, 2, -sum( m*Z*Y ) )
+		call inertiaTensor.set( 3, 3,  sum( m*(X**2+Y**2) ) )
+		
+! 		call inertiaTensor.show(6, formatted=.true.)
+		call inertiaTensor.eigen( eVecs=diagInertiaTensor, eVals=eVals )
+		
+		MOL_MINERTIA = eVals
+		
+! 		write(6,"(A)") "Moments of inertia "
+! 		write(6,"(A)") "-------------------"
+! 		write(6,"(A)") "name = "//trim(this.name)
+! 		write(6,*)
+! 		call diagInertiaTensor.show( formatted=.true. )
+! 		write(6,"(A,F10.5)") "Ixx = ", eVals(1)
+! 		write(6,"(A,F10.5)") "Iyy = ", eVals(2)
+! 		write(6,"(A,F10.5)") "Izz = ", eVals(3)
+	end subroutine updateMomentsOfInertia
+	
+	!>
+	!! @brief Test method
+	!!
+	subroutine Molecule_test()
+		type(Molecule) :: mol1, mol2
+		type(Atom) :: atom, atom1, atom2
+		real(8) :: rBufferArr3(3)
+		integer :: i, j
+		
+		call mol1.init( 2 )
+		call atom.init( " H", 0.0_8, 0.0_8, 0.3561_8 )
+		mol1.atoms(1) = atom
+		call atom.init( " H", 0.0_8, 0.0_8,-0.3561_8 )
+		mol1.atoms(2) = atom
+		call mol1.show()
+		
+		call mol1.setCenter( [1.0_8, 1.0_8, 1.0_8] )
+		call mol1.show()
+		
+		call mol1.init( 5 )
+		
+		call atom1.init( " He", 0.15_8, 2.15_8, 1.15_8 )
+		call atom1.init( " He", 0.0_8, 0.0_8, 0.0_8 )
+		call atom1.show()
+		mol1.atoms(1) = atom
+		call atom2.init( " He", 1.64_8, 2.35_8, 1.28_8 )
+		call atom2.show()
+		mol1.atoms(2) = atom
+		call atom.init( "  He", 1.75_8, 3.15_8, 0.85_8 )
+		mol1.atoms(3) = atom
+		call atom.init( "He  ", 1.62_8, 3.45_8, 0.70_8 )
+		mol1.atoms(4) = atom
+		call atom.init( "  He", 3.42_8, 2.04_8, 0.98_8 )
+		mol1.atoms(5) = atom
+		
+		call mol1.show()
+		write(*,*) "mol1ecule radius = ", mol1.radius()
+! 		call mol1.save( "salida.xyz", format=XYZ )
+		
+		call mol1.init( "data/formats/XYZ" )
+		call mol1.show()
+		call mol1.show( formatted=.true. )
+! 		call mol1.save( "prueba.xyz", format=XYZ )
+		
+		write(*,*) "Testing copy constructor"
+		write(*,*) "========================"
+		mol2 = mol1
+		call mol1.show()
+		call mol2.show()
+		write(*,*) ""
+		
+		write(*,*) "Testing properties"
+		write(*,*) "=================="
+		write(*,*) "mol2.massNumber() = ", mol2.massNumber()
+		write(*,*) "mol2.chemicalFormula() = ", mol2.chemicalFormula()
+		call mol2.updateMomentsOfInertia()
+		write(*,*) ""
+		
+		write(*,*) "Testing center of molecule"
+		write(*,*) "=========================="
+		call mol2.show(formatted=.true.)
+		write(*,"(A,3F10.5)") "mol2.center = ", mol2.center()
+		call mol2.setCenter( [-2.0_8, 1.0_8, 2.0_8] )
+		write(*,"(A,3F10.5)") "mol2.geomCenter = ", mol2.center()
+! 		call mol2.setCenter( [ 2.0_8,-1.0_8,-2.0_8] )
+		call mol2.setCenter( atom.r )
+		write(*,"(A,3F10.5)") "mol2.geomCenter = ", mol2.center()
+! 		call mol2.show(formatted=.true.)
+		
+		call mol1.init( 2 )
+		mol1.atoms(1) = atom1
+		mol1.atoms(2) = atom2
+! 		call mol1.fromFile( "prueba.xyz" )
+		call mol1.show()
+		write(*,"(A,3F10.5)") "mol2.geomCenterA = ", mol1.center()
+		call mol1.show()
+		call mol1.setCenter( [-2.0_8, 1.0_8, 2.0_8] )
+		call mol1.show()
+		write(*,"(A,3F10.5)") "mol2.geomCenter = ", mol1.center()
+		call mol1.show(10)
+		call mol1.show()
+		
+		write(*,*) "Testing rotation of molecule"
+		write(*,*) "============================"
+		call mol1.init( "data/formats/XYZ" )
+		call mol1.show( formatted=.true. )
+		call mol1.save( "prueba.xyz", format=XYZ )
+
+	end subroutine Molecule_test
+	
+end module Molecule_
+
+#undef MOL_RADIUS
+#undef MOL_GEOMCENTER
+#undef MOL_MASSCENTER
+#undef MOL_MINERTIA
+#undef MOL_TEST_RADIUS
+#undef MOL_TEST_GEOMCENTER
+#undef MOL_TEST_MASSCENTER
+#undef MOL_TEST_MINERTIA

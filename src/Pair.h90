@@ -1,0 +1,71 @@
+#ifndef PAIR_H90
+#define PAIR_H90 1
+	
+	type, public :: Pair
+		__TYPE_ITEMFIRST__ :: first
+		__TYPE_ITEMSECOND__ :: second
+		
+		contains
+			generic :: init => initDefault
+			generic :: assignment(=) => copyPair
+			
+			procedure :: initDefault
+			procedure :: copyPair
+			final :: destroyPair
+			procedure :: str
+			procedure :: show
+	end type Pair
+	
+	contains
+	
+	!*
+	! @brief Constructor
+	!*
+	subroutine initDefault( this, first, second )
+		class(Pair) :: this
+		__TYPE_ITEMFIRST__ :: first
+		__TYPE_ITEMSECOND__ :: second
+		
+		this.first = first
+		this.second = second
+	end subroutine initDefault
+	
+	!*
+	! @brief Copy constructor
+	!*
+	subroutine copyPair( this, other )
+		class(Pair), intent(out) :: this
+		class(Pair), intent(in) :: other
+		
+		this.first = other.first
+		this.second = other.second
+	end subroutine copyPair
+	
+	!*
+	! @brief Destructor
+	!*
+	subroutine destroyPair( this )
+		type(Pair), intent(inout) :: this
+		
+	end subroutine destroyPair
+	
+	!*
+	! @brief Show 
+	!*
+	subroutine show( this, unit, formatted )
+		class(Pair) :: this
+		integer, optional, intent(in) :: unit
+		logical, optional :: formatted
+		
+		integer :: effunit
+		logical :: effFormatted
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effunit = 6
+		if( present(unit) ) effunit = unit
+		
+		write(effunit,"(a)") trim(str(this,effFormatted))
+	end subroutine show
+#endif
