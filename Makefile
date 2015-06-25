@@ -12,6 +12,9 @@ install: src/libscift.a
 	mkdir -p ${HOME}/Software/scift/finclude/
 	cp src/*.mod ${HOME}/Software/scift/finclude/
 	cp src/lib*.a ${HOME}/Software/scift/
+	cp src/*.mod ${HOME}/Software/scift/finclude/
+	mkdir -p ${HOME}/Software/scift/bin
+	find examples/ -executable -type f -exec cp {} ${HOME}/Software/scift/bin/ \;
 	echo 'OK'
 
 uninstall: ${HOME}/Software/scift/libscift.a
