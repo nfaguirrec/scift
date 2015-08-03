@@ -54,6 +54,13 @@ program main
 	logical :: centeredWindow
 	character(100) :: oFileWindow
 	
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	! General parameters
+	! -i
+	! -o
+	! -c
+	! -n
+	!-----------------------------------------------------------------
 	iFileName = parser.getString( "-i" )
 	oFileName = parser.getString( "-o" )
 	
@@ -82,9 +89,11 @@ program main
 	end if
 	
 	nPoints = parser.getInteger( "-n", def=-1 )
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	! Type of spectrum
+	! -t
 	!-----------------------------------------------------------------
 	typeOfSpectrum = parser.getString( "-t", def="NORM" )
 
@@ -104,6 +113,7 @@ program main
 	
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	! Type of method
+	! -m
 	!-----------------------------------------------------------------
 	typeOfMethod = parser.getString( "-m", def="FFT" )
 

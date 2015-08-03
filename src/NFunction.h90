@@ -433,13 +433,26 @@
 		class(NFunction), intent(in) :: other
 		type(NFunction) :: output
 		
+		logical :: interpolate
+		
+		interpolate = .false.
 		if( this.nPoints() /= other.nPoints() ) then
-			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
-			stop
+			write(*,"(A)") "@@ WARNING @@ NFunction.addition (NFunction.h90): Numerical Functions have not the same size. They will be interpolated"
+			interpolate = .true.
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray + other.fArray
+		if( .not. interpolate ) then
+			call output.copy( this )
+			output.fArray = this.fArray + other.fArray
+		else
+			if( this.nPoints() > other.nPoints() ) then
+				output = other.interpolate( xGrid=this.xGrid )
+				output.fArray = this.fArray + output.fArray
+			else
+				output = this.interpolate( xGrid=other.xGrid )
+				output.fArray = output.fArray + other.fArray
+			end if
+		end if
 	end function addition
 	
 	!>
@@ -476,16 +489,30 @@
 	!!
 	function subtraction( this, other ) result( output )
 		class(NFunction), intent(in) :: this
-		type(NFunction), intent(in) :: other
+		class(NFunction), intent(in) :: other
 		type(NFunction) :: output
 		
+		logical :: interpolate
+		
+		interpolate = .false.
 		if( this.nPoints() /= other.nPoints() ) then
-			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
-			stop
+			write(*,"(A)") "@@ WARNING @@ NFunction.subtraction (NFunction.h90): Numerical Functions have not the same size. They will be interpolated"
+			interpolate = .true.
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray - other.fArray
+		if( .not. interpolate ) then
+			call output.copy( this )
+			output.fArray = this.fArray - other.fArray
+		else
+			if( this.nPoints() > other.nPoints() ) then
+				output = other.interpolate( xGrid=this.xGrid )
+				output.fArray = this.fArray - output.fArray
+			else
+				output = this.interpolate( xGrid=other.xGrid )
+				output.fArray = output.fArray - other.fArray
+			end if
+		end if
+		
 	end function subtraction
 	
 	!>
@@ -522,16 +549,29 @@
 	!!
 	function multiplication( this, other ) result( output )
 		class(NFunction), intent(in) :: this
-		type(NFunction), intent(in) :: other
+		class(NFunction), intent(in) :: other
 		type(NFunction) :: output
 		
+		logical :: interpolate
+		
+		interpolate = .false.
 		if( this.nPoints() /= other.nPoints() ) then
-			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
-			stop
+			write(*,"(A)") "@@ WARNING @@ NFunction.multiplication (NFunction.h90): Numerical Functions have not the same size. They will be interpolated"
+			interpolate = .true.
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray*other.fArray
+		if( .not. interpolate ) then
+			call output.copy( this )
+			output.fArray = this.fArray*other.fArray
+		else
+			if( this.nPoints() > other.nPoints() ) then
+				output = other.interpolate( xGrid=this.xGrid )
+				output.fArray = this.fArray*output.fArray
+			else
+				output = this.interpolate( xGrid=other.xGrid )
+				output.fArray = output.fArray*other.fArray
+			end if
+		end if
 	end function multiplication
 	
 	!>
@@ -568,16 +608,29 @@
 	!!
 	function division( this, other ) result( output )
 		class(NFunction), intent(in) :: this
-		type(NFunction), intent(in) :: other
+		class(NFunction), intent(in) :: other
 		type(NFunction) :: output
 		
+		logical :: interpolate
+		
+		interpolate = .false.
 		if( this.nPoints() /= other.nPoints() ) then
-			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
-			stop
+			write(*,"(A)") "@@ WARNING @@ NFunction.division (NFunction.h90): Numerical Functions have not the same size. They will be interpolated"
+			interpolate = .true.
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray/other.fArray
+		if( .not. interpolate ) then
+			call output.copy( this )
+			output.fArray = this.fArray / other.fArray
+		else
+			if( this.nPoints() > other.nPoints() ) then
+				output = other.interpolate( xGrid=this.xGrid )
+				output.fArray = this.fArray/output.fArray
+			else
+				output = this.interpolate( xGrid=other.xGrid )
+				output.fArray = output.fArray/other.fArray
+			end if
+		end if
 	end function division
 	
 	!>

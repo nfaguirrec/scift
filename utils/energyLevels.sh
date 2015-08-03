@@ -8,18 +8,28 @@ viewEnergyLevels()
 	
 	col1=`echo $cols | gawk 'BEGIN{FS=","}{print $1}'`
 	col2=`echo $cols | gawk 'BEGIN{FS=","}{print $2}'`
-
+	
 	awk '
+	BEGIN{
+		min=10000000000000.0
+		max=-10000000000000.0
+	}
 	( $1 !~ /^#/ ){
 		map[$'$col2'] = $'$col1'
+		
+		if( $'$col2' < min ) min = $'$col2'
+		if( $'$col2' > max ) max = $'$col2'
 	}
 	END{
 		n = asorti(map,smap,"@val_num_asc")
 		
-		print "# max = ", smap[n]
-		print "# min = ", smap[1]
-		
-		range = smap[1]-smap[n]
+# 		print "# max = ", smap[n]
+# 		print "# min = ", smap[1]
+# 		range = smap[1]-smap[n]
+
+		print "# max = ", max
+		print "# min = ", min
+		range = max-min
 		
 		for( i=1; i<=n; i++ ){
 			print "# i = ", i
@@ -120,8 +130,6 @@ plot \
 "-" u 2:(\$3-min) axis x1y2 w l lw 0, \
 "-" u (\$2+0.2):3:1 with labels left notitle
 `cat .data-$$`
-
-
 
 # "-" u 2:3:1 with labels center offset 0,1 notitle
 

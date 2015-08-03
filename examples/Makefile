@@ -4,7 +4,7 @@ FCFLAGS = -traceback -w -I. -fpp -I../src -mkl -g
 LDFLAGS = -L../src -lscift
 TLIB = 
 
-all:  $(TLIB) boundStates molecule.compare molecule.fv molecule.inertia molecule.mass molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.fourier n1df.func n1df.gabor n1df.innerProduct n1df.norm n1df.peakFinder n1df.resize n3df.convert n3df.eval n3df.func n3df.oper 
+all:  $(TLIB) boundStates molecule.compare molecule.fv molecule.inertia molecule.mass molecule.orient molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.fourier n1df.func n1df.gabor n1df.innerProduct n1df.norm n1df.oper n1df.peakFinder n1df.resize n3df.convert n3df.eval n3df.func n3df.oper 
 
 boundStates: boundStates.f90  
 	fmake
@@ -30,6 +30,11 @@ molecule.mass: molecule.mass.f90
 	fmake
 	echo -n 'Building molecule.mass.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) molecule.mass.f90  -o molecule.mass $(LDFLAGS)
+
+molecule.orient: molecule.orient.f90  
+	fmake
+	echo -n 'Building molecule.orient.f90 '
+	time -f "(%E)" $(FC) $(FCFLAGS) molecule.orient.f90  -o molecule.orient $(LDFLAGS)
 
 molecule.radius: molecule.radius.f90  
 	fmake
@@ -91,6 +96,11 @@ n1df.norm: n1df.norm.f90
 	echo -n 'Building n1df.norm.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) n1df.norm.f90  -o n1df.norm $(LDFLAGS)
 
+n1df.oper: n1df.oper.f90  
+	fmake
+	echo -n 'Building n1df.oper.f90 '
+	time -f "(%E)" $(FC) $(FCFLAGS) n1df.oper.f90  -o n1df.oper $(LDFLAGS)
+
 n1df.peakFinder: n1df.peakFinder.f90  
 	fmake
 	echo -n 'Building n1df.peakFinder.f90 '
@@ -122,10 +132,10 @@ n3df.oper: n3df.oper.f90
 	time -f "(%E)" $(FC) $(FCFLAGS) n3df.oper.f90  -o n3df.oper $(LDFLAGS)
 
 clean:
-	rm -f *.o *.mod *~ .deps boundStates molecule.compare molecule.fv molecule.inertia molecule.mass molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.fourier n1df.func n1df.gabor n1df.innerProduct n1df.norm n1df.peakFinder n1df.resize n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
+	rm -f *.o *.mod *~ .deps boundStates molecule.compare molecule.fv molecule.inertia molecule.mass molecule.orient molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.fourier n1df.func n1df.gabor n1df.innerProduct n1df.norm n1df.oper n1df.peakFinder n1df.resize n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
 
 distclean:
-	rm -f *.o *.mod *~ .deps Makefile boundStates molecule.compare molecule.fv molecule.inertia molecule.mass molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.fourier n1df.func n1df.gabor n1df.innerProduct n1df.norm n1df.peakFinder n1df.resize n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
+	rm -f *.o *.mod *~ .deps Makefile boundStates molecule.compare molecule.fv molecule.inertia molecule.mass molecule.orient molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.fourier n1df.func n1df.gabor n1df.innerProduct n1df.norm n1df.oper n1df.peakFinder n1df.resize n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
 
 Makefile: .deps
 	fmake
