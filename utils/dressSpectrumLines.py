@@ -62,8 +62,12 @@ class Spectrum:
 		i=0
 		for line in ifile:
 			tokens = line.split()
-			this.absorptionsList.append( Absorption( float(tokens[0]), float(tokens[column-1]) ) 
-)
+			
+			if( len(tokens) > 1 ):
+				this.absorptionsList.append( Absorption( float(tokens[0]), float(tokens[column-1]) ) )
+			else:
+				this.absorptionsList.append( Absorption( float(tokens[0]), 1.0 ) )
+			
 			i+=1
 			
 		ifile.close()
