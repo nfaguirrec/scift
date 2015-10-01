@@ -4,7 +4,7 @@ FCFLAGS = -static -static-intel -static-libgcc -mkl -traceback -w -I. -fpp -g
 LDFLAGS = -L. -lscift
 TLIB = libscift.a
 
-all: Atom.o AtomicElementsDB.o BlocksIFileParser.o CNFunction2D.o CNFunction3D.o CNFunction.o CommandLineParser.o ElementsDB.o FFTW3.o FourierTransform2D.o FourierTransform3D.o FourierTransform.o GaborTransform.o GOptions.o Grid2D.o Grid3D.o GridBase.o Grid.o GridND.o IntegerList.o IOStream.o IterativeAlgorithm.o IVector.o Math.o MathFormula.o MathParser.o Matrix.o MoldenParser.o Molecule.o Morse.o NDerivator.o NIntegrator.o NPeakFinder.o NPotentialEnergyCurve.o RandomSampler.o RandomUtils.o RealHistogram.o RealList.o RNFunction2D.o RNFunction3D.o RNFunction.o RVector.o SpecialMatrix.o Spline.o String.o StringHistogram.o StringIntegerMap.o StringIntegerPair.o StringIntegerPairList.o StringList.o StringRealHistogramMap.o StringRealHistogramPair.o StringRealHistogramPairList.o StringRealMap.o StringRealPair.o StringRealPairList.o Table.o ThrularNumerovMethod.o Timer.o UnitsConverter.o  $(TLIB) test 
+all: Atom.o AtomicElementsDB.o BlocksIFileParser.o CNFunction2D.o CNFunction3D.o CNFunction.o CommandLineParser.o ElementsDB.o FFTW3.o FourierTransform2D.o FourierTransform3D.o FourierTransform.o GaborTransform.o GOptions.o Grid2D.o Grid3D.o GridBase.o Grid.o GridND.o IntegerList.o IOStream.o IterativeAlgorithm.o IVector.o Math.o MathFormula.o MathParser.o Matrix.o MDIntegrator.o MoldenParser.o Molecule.o Morse.o NDerivator.o NIntegrator.o NPeakFinder.o NPotentialEnergyCurve.o RandomSampler.o RandomUtils.o RealHistogram.o RealList.o RNFunction2D.o RNFunction3D.o RNFunction.o RVector.o SpecialMatrix.o Spline.o String.o StringHistogram.o StringIntegerMap.o StringIntegerPair.o StringIntegerPairList.o StringList.o StringRealHistogramMap.o StringRealHistogramPair.o StringRealHistogramPairList.o StringRealMap.o StringRealPair.o StringRealPairList.o Table.o ThrularNumerovMethod.o Timer.o UnitsConverter.o  $(TLIB) test 
 
 Atom.o atom_.mod: Atom.f90 atomicelementsdb_.mod unitsconverter_.mod string_.mod
 	fmake
@@ -140,6 +140,11 @@ Matrix.o matrix_.mod: Matrix.f90 math_.mod randomutils_.mod
 	fmake
 	echo -n 'Building Matrix.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c Matrix.f90
+
+MDIntegrator.o mdintegrator_.mod: MDIntegrator.f90 
+	fmake
+	echo -n 'Building MDIntegrator.f90 '
+	time -f "(%E)" $(FC) $(FCFLAGS) -c MDIntegrator.f90
 
 MoldenParser.o moldenparser_.mod: MoldenParser.f90 unitsconverter_.mod string_.mod iostream_.mod
 	fmake
@@ -291,10 +296,10 @@ Table.o table_.mod: Table.f90 string_.mod iostream_.mod
 	echo -n 'Building Table.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c Table.f90
 
-test: test.f90 Math.o RNFunction.o GOptions.o CNFunction.o FFTW3.o Timer.o FourierTransform.o UnitsConverter.o Grid.o IOStream.o String.o RandomUtils.o math_.mod rnfunction_.mod goptions_.mod cnfunction_.mod fftw3_.mod timer_.mod fouriertransform_.mod unitsconverter_.mod grid_.mod iostream_.mod string_.mod randomutils_.mod
+test: test.f90 MDIntegrator.o mdintegrator_.mod
 	fmake
 	echo -n 'Building test.f90 '
-	time -f "(%E)" $(FC) $(FCFLAGS) test.f90 Math.o RNFunction.o GOptions.o CNFunction.o FFTW3.o Timer.o FourierTransform.o UnitsConverter.o Grid.o IOStream.o String.o RandomUtils.o -o test $(LDFLAGS)
+	time -f "(%E)" $(FC) $(FCFLAGS) test.f90 MDIntegrator.o -o test $(LDFLAGS)
 
 ThrularNumerovMethod.o thrularnumerovmethod_.mod: ThrularNumerovMethod.f90 math_.mod rnfunction_.mod goptions_.mod timer_.mod unitsconverter_.mod grid_.mod string_.mod iostream_.mod
 	fmake
@@ -311,9 +316,9 @@ UnitsConverter.o unitsconverter_.mod: UnitsConverter.f90 string_.mod
 	echo -n 'Building UnitsConverter.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c UnitsConverter.f90
 
-$(TLIB): Atom.o AtomicElementsDB.o BlocksIFileParser.o CNFunction2D.o CNFunction3D.o CNFunction.o CommandLineParser.o ElementsDB.o FFTW3.o FourierTransform2D.o FourierTransform3D.o FourierTransform.o GaborTransform.o GOptions.o Grid2D.o Grid3D.o GridBase.o Grid.o GridND.o IntegerList.o IOStream.o IterativeAlgorithm.o IVector.o Math.o MathFormula.o MathParser.o Matrix.o MoldenParser.o Molecule.o Morse.o NDerivator.o NIntegrator.o NPeakFinder.o NPotentialEnergyCurve.o RandomSampler.o RandomUtils.o RealHistogram.o RealList.o RNFunction2D.o RNFunction3D.o RNFunction.o RVector.o SpecialMatrix.o Spline.o String.o StringHistogram.o StringIntegerMap.o StringIntegerPair.o StringIntegerPairList.o StringList.o StringRealHistogramMap.o StringRealHistogramPair.o StringRealHistogramPairList.o StringRealMap.o StringRealPair.o StringRealPairList.o Table.o ThrularNumerovMethod.o Timer.o UnitsConverter.o 
+$(TLIB): Atom.o AtomicElementsDB.o BlocksIFileParser.o CNFunction2D.o CNFunction3D.o CNFunction.o CommandLineParser.o ElementsDB.o FFTW3.o FourierTransform2D.o FourierTransform3D.o FourierTransform.o GaborTransform.o GOptions.o Grid2D.o Grid3D.o GridBase.o Grid.o GridND.o IntegerList.o IOStream.o IterativeAlgorithm.o IVector.o Math.o MathFormula.o MathParser.o Matrix.o MDIntegrator.o MoldenParser.o Molecule.o Morse.o NDerivator.o NIntegrator.o NPeakFinder.o NPotentialEnergyCurve.o RandomSampler.o RandomUtils.o RealHistogram.o RealList.o RNFunction2D.o RNFunction3D.o RNFunction.o RVector.o SpecialMatrix.o Spline.o String.o StringHistogram.o StringIntegerMap.o StringIntegerPair.o StringIntegerPairList.o StringList.o StringRealHistogramMap.o StringRealHistogramPair.o StringRealHistogramPairList.o StringRealMap.o StringRealPair.o StringRealPairList.o Table.o ThrularNumerovMethod.o Timer.o UnitsConverter.o 
 	echo 'Building library $(TLIB)'
-	ar rvs $(TLIB) Atom.o AtomicElementsDB.o BlocksIFileParser.o CNFunction2D.o CNFunction3D.o CNFunction.o CommandLineParser.o ElementsDB.o FFTW3.o FourierTransform2D.o FourierTransform3D.o FourierTransform.o GaborTransform.o GOptions.o Grid2D.o Grid3D.o GridBase.o Grid.o GridND.o IntegerList.o IOStream.o IterativeAlgorithm.o IVector.o Math.o MathFormula.o MathParser.o Matrix.o MoldenParser.o Molecule.o Morse.o NDerivator.o NIntegrator.o NPeakFinder.o NPotentialEnergyCurve.o RandomSampler.o RandomUtils.o RealHistogram.o RealList.o RNFunction2D.o RNFunction3D.o RNFunction.o RVector.o SpecialMatrix.o Spline.o String.o StringHistogram.o StringIntegerMap.o StringIntegerPair.o StringIntegerPairList.o StringList.o StringRealHistogramMap.o StringRealHistogramPair.o StringRealHistogramPairList.o StringRealMap.o StringRealPair.o StringRealPairList.o Table.o ThrularNumerovMethod.o Timer.o UnitsConverter.o  > /dev/null 2> /dev/null
+	ar rvs $(TLIB) Atom.o AtomicElementsDB.o BlocksIFileParser.o CNFunction2D.o CNFunction3D.o CNFunction.o CommandLineParser.o ElementsDB.o FFTW3.o FourierTransform2D.o FourierTransform3D.o FourierTransform.o GaborTransform.o GOptions.o Grid2D.o Grid3D.o GridBase.o Grid.o GridND.o IntegerList.o IOStream.o IterativeAlgorithm.o IVector.o Math.o MathFormula.o MathParser.o Matrix.o MDIntegrator.o MoldenParser.o Molecule.o Morse.o NDerivator.o NIntegrator.o NPeakFinder.o NPotentialEnergyCurve.o RandomSampler.o RandomUtils.o RealHistogram.o RealList.o RNFunction2D.o RNFunction3D.o RNFunction.o RVector.o SpecialMatrix.o Spline.o String.o StringHistogram.o StringIntegerMap.o StringIntegerPair.o StringIntegerPairList.o StringList.o StringRealHistogramMap.o StringRealHistogramPair.o StringRealHistogramPairList.o StringRealMap.o StringRealPair.o StringRealPairList.o Table.o ThrularNumerovMethod.o Timer.o UnitsConverter.o  > /dev/null 2> /dev/null
 
 clean:
 	rm -f *.o *.mod *~ .deps test  2> /dev/null

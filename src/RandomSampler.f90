@@ -23,10 +23,10 @@
 !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!*
-! http://docs.python.org/2/library/random.html
-! @brief
-!*
+!>
+!! http://docs.python.org/2/library/random.html
+!! @brief
+!!
 module RandomSampler_
 	use UnitsConverter_
 	use Math_
@@ -67,9 +67,9 @@ module RandomSampler_
 	
 	contains
 	
-	!*
-	! @brief Constructor
-	!*
+	!>
+	!! @brief Constructor
+	!!
 	subroutine init( this, nDim )
 		class(RandomSampler) :: this 
 		integer :: nDim
@@ -93,18 +93,18 @@ module RandomSampler_
 		call RandomUtils_init()
 	end subroutine init
 	
-	!*
-	! @brief Copy constructor
-	!*
+	!>
+	!! @brief Copy constructor
+	!!
 	subroutine copy( this, other )
 		class(RandomSampler) :: this
 		type(RandomSampler), intent(in) :: other
 
 	end subroutine copy
 	
-	!*
-	! @brief Destructor
-	!*
+	!>
+	!! @brief Destructor
+	!!
 	subroutine destroy( this )
 		type(RandomSampler) :: this
 		
@@ -112,9 +112,9 @@ module RandomSampler_
 		if( allocated(extraParamsDist) ) deallocate( extraParamsDist )
 	end subroutine destroy
 	
-	!*
-	! @brief Convert to string
-	!*
+	!>
+	!! @brief Convert to string
+	!!
 	function str( this ) result( output )
 		class(RandomSampler) :: this 
 		character(len=200) :: output
@@ -139,9 +139,9 @@ module RandomSampler_
 		output = trim(output)//">"
 	end function str
 	
-	!*
-	! @brief Show 
-	!*
+	!>
+	!! @brief Show 
+	!!
 	subroutine show( this, unit )
 		class(RandomSampler) :: this
 		integer, optional, intent(in) :: unit
@@ -157,9 +157,9 @@ module RandomSampler_
 		write(effunit,"(a)") trim(str(this))
 	end subroutine show
 
-	!*
-	! @brief Selects the range
-	!*
+	!>
+	!! @brief Selects the range
+	!!
 	subroutine setRange( this, dim, range )
 		class(RandomSampler) :: this
 		integer :: dim

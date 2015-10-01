@@ -36,7 +36,7 @@ program test
 ! 	use Molecule_
 ! 	use RNFunction_
 !  	use CNFunction_
-	use FourierTransform_
+! 	use FourierTransform_
 ! 	use NIntegrator_
 ! 	use NDerivator_
 ! 	use NPotentialEnergyCurve_
@@ -78,6 +78,7 @@ program test
 ! 	use NPeakFinder_
 ! 	use Grid2D_
 ! 	use MathFormula_
+	use MDIntegrator_
 	implicit none
 	
 ! 	call IOStream_test()
@@ -128,8 +129,9 @@ program test
 ! 	call Grid2D_test()
 ! 	call RNFunction2D_test()
 ! 	call CNFunction2D_test()
-	call FourierTransform_test()
+! 	call FourierTransform_test()
 ! 	call FourierTransform2D_test()
 ! 	call FourierTransform3D_test()
 ! 	call MathFormula_test()
+	call MDIntegrator_test()
 end program test
