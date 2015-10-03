@@ -17,6 +17,9 @@ molecule.inertia.f90: use Molecule
 molecule.mass.f90: use String
 molecule.mass.f90: use Matrix
 molecule.mass.f90: use Molecule
+molecule.orient.f90: use String
+molecule.orient.f90: use CommandLineParser
+molecule.orient.f90: use Molecule
 molecule.radius.f90: use UnitsConverter
 molecule.radius.f90: use String
 molecule.radius.f90: use Molecule
@@ -66,6 +69,7 @@ n1df.gabor.f90: use Math
 n1df.gabor.f90: use IOStream
 n1df.gabor.f90: use String
 n1df.gabor.f90: use CommandLineParser
+n1df.gabor.f90: use Spline
 n1df.gabor.f90: use RNFunction
 n1df.gabor.f90: use CNFunction
 n1df.gabor.f90: use FourierTransform
@@ -74,6 +78,9 @@ n1df.innerProduct.f90: use RNFunction
 n1df.innerProduct.f90: use CNFunction
 n1df.norm.f90: use RNFunction
 n1df.norm.f90: use CNFunction
+n1df.oper.f90: use MathParser
+n1df.oper.f90: use RNFunction
+n1df.oper.f90: use CNFunction
 n1df.peakFinder.f90: use GOptions
 n1df.peakFinder.f90: use IOStream
 n1df.peakFinder.f90: use String

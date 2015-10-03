@@ -92,6 +92,7 @@ module Grid_
 			procedure :: last
 			procedure :: x => at
 			procedure :: dV
+			procedure :: lenght
 			
 			procedure :: set
 	end type Grid
@@ -787,6 +788,16 @@ module Grid_
 		
 		output = this.stepSize
 	end function dV
+	
+	!>
+	!! @brief
+	!!
+	pure function lenght( this ) result( output )
+		class(Grid), intent(in) :: this
+		real(8) :: output
+		
+		output = real(this.nPoints-1,8)*this.stepSize
+	end function lenght
 	
 	!>
 	!! @brief

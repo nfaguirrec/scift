@@ -29,7 +29,6 @@ module ThrularNumerovMethod_
 	!! @brief Contructor
 	!!
 	subroutine init( this, potential, nStates, rMass )
-		implicit none
 		class(ThrularNumerovMethod) :: this
 		class(RNFunction), intent(in) :: potential
 		integer, optional, intent(in) :: nStates
@@ -57,7 +56,6 @@ module ThrularNumerovMethod_
 	!! @brief Destructor
 	!!
 	subroutine destroy( this )
-		implicit none
 		class(ThrularNumerovMethod) :: this
 		
 		this.rMass = 1.0_8
@@ -71,7 +69,6 @@ module ThrularNumerovMethod_
 	!! @brief String representation of the object
 	!!
 	function str( this ) result( output )
-		implicit none
 		class(ThrularNumerovMethod) :: this 
 		character(len=200) :: output
 		
@@ -120,7 +117,6 @@ module ThrularNumerovMethod_
 	!! @brief start the numerical method
 	!!
 	subroutine run( this )
-		implicit none
 		class(ThrularNumerovMethod) :: this
 		
 		integer :: i
@@ -146,7 +142,6 @@ module ThrularNumerovMethod_
 	! Internal function, neccesary to link with numerov method writed in f77
 	!!
 	subroutine thrularnumerov(xmu, rmin, rmax, ngridr, V, nbound, ifun, Ebound, fbound, nboundEnd)
-		implicit none
 		integer, intent(in) :: ngridr, nbound, ifun
 		double precision, intent(in)  :: xmu, rmin, rmax, V(ngridr)
 		double precision, intent(out) :: Ebound(nbound), fbound(nbound,ngridr)
@@ -194,7 +189,6 @@ module ThrularNumerovMethod_
 	end subroutine thrularnumerov
 
 	SUBROUTINE GIVHOA(A,NPUN,E,NEV)
-		implicit none
 	!     A IS THE NPUN X NPUN INPUT MATRIX.  THE NEV ALGEBRAICALLY LARGEST
 	!     EIGENVALUES WILL BE COMPUTED AND STORED IN E.
 		integer :: i, ii,  m,  k, n, npun, nev, ip1, nm1, nm2, ip2, ag
@@ -288,7 +282,6 @@ module ThrularNumerovMethod_
 		! y facilita el estado ligado P(ngridr).
 		!
 		! Datos que debe leer: rmin, rmax, ngridr, dr, V(ngridr)
-		implicit none
 		integer :: i, i1, it, j, m, msave, m1, n, nl, maxit, kv, itry, ngridr
 		double precision :: rmin,rmax,dr,V(ngridr)
 		double precision :: E0, E2, E, EOLD, DE, DOLD, F, DF, eps, TEST, GN, GI, APR, PM, YIN, YOUT, YM, SN, SCHROD, XIT
@@ -469,8 +462,6 @@ module ThrularNumerovMethod_
 	! Test method of this class
 	!!
 	subroutine ThrularNumerovMethod_test()
-		implicit none
-		
 		type(Grid) :: rGrid
 		type(RNFunction) :: potential
 		type(ThrularNumerovMethod) :: solver
