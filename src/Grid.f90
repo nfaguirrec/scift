@@ -790,7 +790,7 @@ module Grid_
 	end function dV
 	
 	!>
-	!! @brief Returns the length of the grid abs(max-min)
+	!! @brief
 	!!
 	pure function lenght( this ) result( output )
 		class(Grid), intent(in) :: this
