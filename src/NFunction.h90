@@ -939,7 +939,7 @@
 	end function stepSize
 	
 	!>
-	!! @brief
+	!! @brief Returns the lenght of the coordinate "coord"
 	!!
 	function lenght( this, coord ) result( output )
 		class(NFunction), intent(in) :: this

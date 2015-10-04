@@ -459,7 +459,7 @@ module ThrularNumerovMethod_
 	end function funcTest
 	
 	!>
-	! Test method of this class
+	! Test Test method
 	!!
 	subroutine ThrularNumerovMethod_test()
 		type(Grid) :: rGrid
