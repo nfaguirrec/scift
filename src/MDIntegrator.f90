@@ -50,7 +50,6 @@ module MDIntegrator_
 		real(8), pointer :: positions(:,:)
 		real(8), pointer :: velocities(:,:)
 		real(8), pointer :: accelerations(:,:)
-		real(8), pointer :: forces(:,:)
 		
 		integer :: step
 		
@@ -68,12 +67,11 @@ module MDIntegrator_
 	real(8), allocatable :: accelBufferTm1(:,:)
 	
 	interface
-		subroutine prototypeComputeForces( t, positions, velocities, accelerations, forces )
+		subroutine prototypeComputeForces( t, positions, velocities, accelerations )
 			real(8), intent(in) :: t
 			real(8), target, intent(in) :: positions(:,:)
 			real(8), target, intent(in) :: velocities(:,:)
 			real(8), target :: accelerations(:,:)
-			real(8), target, intent(in) :: forces(:,:)
 		end subroutine prototypeComputeForces
 	end interface
 	
@@ -82,19 +80,17 @@ module MDIntegrator_
 	!>
 	!! @brief Default constructor
 	!!
-	subroutine init( this, positions, velocities, accelerations, forces )
+	subroutine init( this, positions, velocities, accelerations )
 		class(MDIntegrator) :: this
 		real(8), target :: positions(:,:)
 		real(8), target :: velocities(:,:)
 		real(8), target :: accelerations(:,:)
-		real(8), target :: forces(:,:)
 		real(8) :: time0
 		real(8) :: timeStep
 		
 		this.positions => positions
 		this.velocities => velocities
 		this.accelerations => accelerations
-		this.forces => forces
 		
 		this.time = 0.0_8
 		this.timeStep = 1e-3
@@ -124,7 +120,6 @@ module MDIntegrator_
 		nullify( this.positions )
 		nullify( this.velocities )
 		nullify( this.accelerations )
-		nullify( this.forces )
 		
 		this.time = 0.0_8
 		this.timeStep = 0.0_8
@@ -178,7 +173,6 @@ module MDIntegrator_
 #define x this.positions
 #define v this.velocities
 #define a this.accelerations
-#define F this.forces
 #define a0 accelBufferT0
 #define am1 accelBufferTm1
 #define dt this.timeStep
@@ -187,13 +181,13 @@ module MDIntegrator_
 			case( VELOCITY_VERLET )
 				x = x + v*dt + 0.5_8*a*dt*dt
 				a0 = a
-				call computeForces( t, x, v, a, F ) ! a <--
+				call computeForces( t, x, v, a ) ! a <--
 				v = v + 0.5_8*(a0+a)*dt
 				
 			case( BEEMAN )
 				x = x + v*dt + (1.0_8/6.0_8)*( 4.0_8*a0 - am1 )*dt*dt
 				a0 = a
-				call computeForces( t, x, v, a, F ) ! a <--
+				call computeForces( t, x, v, a ) ! a <--
 				v = v + (1.0_8/6.0_8)*( 2.0_8*a + 5.0_8*a0 - am1 )*dt
 				am1 = a0
 				
@@ -201,7 +195,7 @@ module MDIntegrator_
 				x0 = x
 				x = x + v*dt + (1.0_8/6.0_8)*( 4.0_8*a0 - am1 )*dt*dt
 				a0 = a
-				call computeForces( t, x, v, a, F ) ! a <--
+				call computeForces( t, x, v, a ) ! a <--
 				x = x0 + v*dt + (1.0_8/6.0_8)*( a + 2.0_8*a0 )*dt*dt
 				v = ( x - x0 )/dt + (1.0_8/6.0_8)*( 2.0_8*a + a0 )*dt
 				am1 = a0
@@ -210,7 +204,7 @@ module MDIntegrator_
 				x0 = x
 				x = x + v*dt + (1.0_8/6.0_8)*( 4.0_8*a0 - am1 )*dt*dt
 				a0 = a
-				call computeForces( t, x, v, a, F ) ! a <--
+				call computeForces( t, x, v, a ) ! a <--
 				x = x0 + v*dt + (1.0_8/6.0_8)*( a + 2.0_8*a0 )*dt*dt
 				v = v + (1.0_8/12.0_8)*( 5.0_8*a + 8.0_8*a0 - am1 )*dt
 				am1 = a0
@@ -222,7 +216,6 @@ module MDIntegrator_
 #undef x
 #undef v
 #undef a
-#undef F
 #undef a0
 #undef am1
 #undef dt
@@ -261,21 +254,21 @@ module MDIntegrator_
 	!>
 	!! @brief
 	!!
-	subroutine computeForcesTest( t, r, v, a, F )
+	subroutine computeForcesTest( t, r, v, a )
 		real(8), intent(in) :: t
 		real(8), target, intent(in) :: r(:,:)
 		real(8), target, intent(in) :: v(:,:)
 		real(8), target :: a(:,:)
-		real(8), target, intent(in) :: F(:,:)
 		
-		real(8) :: E0 = 1.0_8
-		real(8) :: omega = 1.0_8
+		real(8) :: E0 = 0.3_8
+		real(8) :: omega = 0.057_8
 		
 ! 		F = F - dV( r )
 ! 		F = F + 1.0_8/r**2 - E0*cos(omega*t)
 ! 		a = F/1.0_8
-! 		a = 1.0_8/(r+1.0_8)**2 - E0*cos(omega*t)
-		a = - E0*cos(omega*t)
+! 		diff(-1/sqrt(2+r**2),r,1);
+		a = - r*(r**2+2.0_8)**((-3.0_8)/2.0_8) - E0*cos(omega*t)
+! 		a = - E0*cos(omega*t)
 		
 	end subroutine computeForcesTest
 	
@@ -288,7 +281,6 @@ module MDIntegrator_
 		real(8), allocatable :: positions(:,:)
 		real(8), allocatable :: velocities(:,:)
 		real(8), allocatable :: accelerations(:,:)
-		real(8), allocatable :: forces(:,:)
 		
 		type(MDIntegrator) :: solver
 		real(8) :: t0
@@ -296,30 +288,32 @@ module MDIntegrator_
 		integer :: step
 		
 		real(8) :: r0
+		real(8) :: omega, T
+		
+		omega = 0.057_8
+		T = 2.0_8*3.1415926_8/omega
 		
 		nParticles = 1
 		nDimensions = 1
 		allocate( positions(nDimensions,nParticles) )
 		allocate( velocities(nDimensions,nParticles) )
 		allocate( accelerations(nDimensions,nParticles) )
-		allocate( forces(nDimensions,nParticles) )
 		dt = 0.01_8
 		
 		t0 = 0.0_8
 		do while( .true. )
-			if( t0 > 3.1415926_8/2.0_8 ) exit
+			if( t0 > 0.2_8*T ) exit
 			
-			call solver.init( positions, velocities, accelerations, forces )
+			call solver.init( positions, velocities, accelerations )
 			
 			positions = 0.0_8
 			velocities = 0.0_8
 			accelerations = 0.0_8
-			forces = 0.0_8
 			solver.time = t0
 			solver.timeStep = 0.01_8
 			
 			do while( .true. )
-				if( solver.time > 10.0_8 ) exit
+				if( solver.time > T ) exit
 				write(*,"(2F20.5)") solver.time, positions
 				
 				call solver.iterate( computeForcesTest )
@@ -328,7 +322,7 @@ module MDIntegrator_
 			write(*,*) ""
 			write(*,*) ""
 			
-			t0 = t0 + 0.1_8
+			t0 = t0 + 0.02_8*T
 		end do
 		
 	end subroutine MDIntegrator_test
