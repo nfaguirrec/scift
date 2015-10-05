@@ -125,8 +125,11 @@ module FourierGridDiagonalization_
 	!>
 	!! @brief Starts the numerical method
 	!!
-	subroutine run( this )
+	subroutine run( this, abstol )
 		class(FourierGridDiagonalization) :: this
+		real(8), optional, intent(in) :: abstol
+		
+		real(8) :: effAbstol
 		
 		integer :: nPoints
 		
@@ -142,6 +145,9 @@ module FourierGridDiagonalization_
 		
 		integer :: i, j
 		real(8) :: dr, L, mass
+		
+		effAbstol = 1.0e-10
+		if( present(abstol) ) effAbstol = abstol
 		
 		nPoints = this.potential.nPoints()
 		
@@ -184,7 +190,7 @@ module FourierGridDiagonalization_
 		call dsyevx( 'V', 'I', 'U', nPoints, H, nPoints, &
 				0.0_8, 0.0_8, &
 				1, min(this.nStates,nPoints), &
-				1.0e-10, &
+				effAbstol, &
 				nEigenFound, eigenValues, eigenVectors, nPoints, &
 				work, size(work), iwork, ifail, info )
 
