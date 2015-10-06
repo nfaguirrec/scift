@@ -8,6 +8,9 @@ module FourierGridDiagonalization_
 	
 	public :: &
 		FourierGridDiagonalization_test
+		
+	integer, parameter, public :: FourierGridDiagonalization_EIGENVALUES = 0
+	integer, parameter, public :: FourierGridDiagonalization_EIGENFUNCTIONS = 1
 	
 	type, public :: FourierGridDiagonalization
 		real(8), private :: rMass
@@ -129,8 +132,9 @@ module FourierGridDiagonalization_
 	!>
 	!! @brief Starts the numerical method
 	!!
-	subroutine run( this, nStates, iRange, vRange, abstol )
+	subroutine run( this, task, nStates, iRange, vRange, abstol )
 		class(FourierGridDiagonalization) :: this
+		integer, optional, intent(in) :: task
 		integer, optional, intent(in) :: nStates
 		integer, optional, intent(in) :: iRange(2)
 		real(8), optional, intent(in) :: vRange(2)
@@ -147,6 +151,7 @@ module FourierGridDiagonalization_
 		real(8), allocatable :: eigenVectors(:,:)
 		real(8), allocatable :: H(:,:)
 		
+		character(1) :: charTask
 		character(1) :: charRange
 		real(8), allocatable :: work(:)
 		integer, allocatable :: iwork(:)
@@ -172,6 +177,15 @@ module FourierGridDiagonalization_
 			charRange = "V"
 			
 			effVRange = vRange
+		end if
+		
+		charTask = "N"
+		if( present(task) ) then
+			if( task == FourierGridDiagonalization_EIGENVALUES ) then
+				charTask = "N"
+			else if( task == FourierGridDiagonalization_EIGENFUNCTIONS ) then
+				charTask = "V"
+			end if
 		end if
 		
 		effAbstol = 1.0e-10
@@ -229,10 +243,7 @@ module FourierGridDiagonalization_
 	! 					nEigenFound, eigenValues, eigenVectors, nPoints, &
 	! 					work, size(work), iwork, ifail, info )
 	
-		write(*,*) "charRange = ", charRange
-		write(*,*) "effVRange = ", effVRange
-		write(*,*) "effIRange = ", effIRange
-		call dsyevx( 'V', charRange, 'U', nPoints, H, nPoints, &
+		call dsyevx( charTask, charRange, 'U', nPoints, H, nPoints, &
 				effVRange(1), effVRange(2), &
 				effIRange(1), effIRange(2), &
 				effAbstol, &
@@ -242,8 +253,6 @@ module FourierGridDiagonalization_
 		if( info /= 0 ) then
 			call GOptions_error( "Diagonalization failed", "FourierGridDiagonalization.run()" )
 		end if
-		
-		write(*,*) "nEigenFound = ", nEigenFound
 		
 		if( allocated(this.eigenValues) ) deallocate( this.eigenValues )
 		allocate( this.eigenValues( nEigenFound ) )
@@ -255,8 +264,6 @@ module FourierGridDiagonalization_
 		do i=1,nEigenFound
 			call this.eigenFunctions(i).fromGridArray( this.potential.xGrid, eigenVectors(:,i) )
 		end do
-		
-		write(*,*) "size = ", size(this.eigenValues)
 		
 		deallocate( work )
 		deallocate( iwork )
