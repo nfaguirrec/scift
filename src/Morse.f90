@@ -46,7 +46,7 @@ module Morse_
 			procedure :: fromExp
 			procedure :: destroy
 			procedure :: parent
-			procedure :: exactEigenValue
+			procedure :: exactEigenValues
 			procedure :: str
 			procedure :: show
 			procedure :: evaluate
@@ -201,7 +201,7 @@ module Morse_
 	!! @brief Returns the eigenvalue with the
 	!!        quantum number as nu
 	!!
-	function exactEigenValue( this, nu, rMass ) result( output )
+	function exactEigenValues( this, nu, rMass ) result( output )
 		class( Morse ), intent(in) :: this
 		integer, intent(in) :: nu
 		real(8), intent(in) :: rMass
@@ -214,7 +214,7 @@ module Morse_
 		wexe = 0.25_8*we**2.0_8/this.De
 		
 		output = we*(dble(nu)+0.5_8)-wexe*(dble(nu)+0.5_8)**2.0_8-this.De
-	end function exactEigenValue
+	end function exactEigenValues
 	
 	!>
 	!! @brief Write the string
@@ -253,12 +253,12 @@ module Morse_
 		
 		write(*,"(a5,a20,a20)") "\nu", "exact", "numeric"
 		do i=1,solver.nStates
-			if ( solver.eigenValue(i) < 0.0_8 ) then
-					write(*,"(i5,f20.10,f20.10)") i, morse.exactEigenValue(i-1, rMass), solver.eigenValue(i)
+			if ( solver.eigenValues(i) < 0.0_8 ) then
+					write(*,"(i5,f20.10,f20.10)") i, morse.exactEigenValues(i-1, rMass), solver.eigenValues(i)
 			end if
 		end do
 		
-		call solver.eigenFunction(7).save( "salida" )
+		call solver.eigenFunctions(7).save( "salida" )
 		
 		call morse.destroy()
 		call solver.destroy()

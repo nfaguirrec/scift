@@ -129,6 +129,7 @@ module Molecule_
 			procedure :: inertiaAxis
 			procedure :: inertiaAxes
 			procedure :: connectivity
+			procedure :: minSpinMultiplicity
 			
 			procedure :: orient
 			procedure :: rotate
@@ -1440,6 +1441,32 @@ module Molecule_
 		
 		deallocate( patter )
 	end subroutine connectivity
+	
+	!>
+	!! @brief Returns the minimum spin multiplicity (i.e. singlet(1) or triplet(3) )
+	!!
+	function minSpinMultiplicity( this, charge ) result( output )
+		class(Molecule), intent(in) :: this
+		integer, optional, intent(in) :: charge
+		integer :: output
+		
+		integer :: i, ssum
+		
+		ssum = 0
+		do i=1,this.nAtoms()
+			ssum = ssum + this.atoms(i).atomicNumber()
+		end do
+		
+		if( present(charge) ) then
+			ssum = ssum - charge
+		end if
+		
+		if( Math_isEven( ssum ) ) then
+			output = 1
+		else
+			output = 3
+		end if
+	end function minSpinMultiplicity
 	
 	!>
 	!! @brief builds the inertia moment with current geometry. If CM=.true.

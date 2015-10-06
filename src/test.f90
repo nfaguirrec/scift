@@ -78,7 +78,9 @@ program test
 ! 	use NPeakFinder_
 ! 	use Grid2D_
 ! 	use MathFormula_
-	use MDIntegrator_
+! 	use MDIntegrator_
+	use ThrularNumerovMethod_
+	use FourierGridDiagonalization_
 	implicit none
 	
 ! 	call IOStream_test()
@@ -133,5 +135,7 @@ program test
 ! 	call FourierTransform2D_test()
 ! 	call FourierTransform3D_test()
 ! 	call MathFormula_test()
-	call MDIntegrator_test()
+! 	call MDIntegrator_test()
+	call ThrularNumerovMethod_test()
+	call FourierGridDiagonalization_test()
 end program test
