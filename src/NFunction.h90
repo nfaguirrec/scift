@@ -92,6 +92,7 @@
 			generic :: max => maxInCoord
 			procedure :: maxInCoord
 			procedure :: stepSize
+			procedure :: lenght
 			
 			procedure :: loadDAT
 			procedure :: saveDAT => saveBLKS
@@ -936,6 +937,24 @@
 		
 		output = this.xGrid.stepSize
 	end function stepSize
+	
+	!>
+	!! @brief
+	!!
+	function lenght( this, coord ) result( output )
+		class(NFunction), intent(in) :: this
+		integer, intent(in) :: coord
+		real(8) :: output
+		
+		select case( coord )
+			case(1)
+				output = this.xGrid.lenght()
+			case(2)
+				output = this.xGrid.lenght()
+			case default
+				call GOptions_error( "Inconsistent value for coord", "NFunction.lenght( coord="//trim(FString_fromInteger(coord))//" )" )
+		end select
+	end function lenght
 	
 	!>
 	!! @brief Constructor
