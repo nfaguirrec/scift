@@ -86,10 +86,10 @@ program boundStates
 ! 	write(*,"(A5,A20,A20)") "#    ", "       cm-1"
 	write(*,"(A5,A20,A20)") "# ---", "-----------"
 	do i=1,solver.nStates
-			if ( solver.eigenValue(i) < 0.0_8 ) then
+			if ( solver.eigenValues(i) < 0.0_8 ) then
 ! 				write(*,"(I5,F20.10)") i, solver.eigenValue(i)/cm1
-				write(*,"(I5,F20.10)") i, solver.eigenValue(i)
-				call solver.eigenFunction(i).save("wf"//trim(FString_fromInteger(i))//".dat")
+				write(*,"(I5,F20.10)") i, solver.eigenValues(i)
+				call solver.eigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
 			end if
 	end do
 

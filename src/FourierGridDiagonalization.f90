@@ -1,14 +1,18 @@
 module FourierGridDiagonalization_
+	use GOptions_
 	use Math_
+	use Grid_
 	use RNFunction_
 	implicit none
 	private
+	
+	public :: &
+		FourierGridDiagonalization_test
 	
 	type, public :: FourierGridDiagonalization
 		real(8), private :: rMass
 		type(RNFunction), private :: potential
 		
-		integer :: nStates
 		real(8), allocatable :: eigenValues(:)
 		type(RNFunction), allocatable :: eigenFunctions(:)
 		
@@ -18,6 +22,7 @@ module FourierGridDiagonalization_
 			procedure :: clear
 			procedure :: str
 			procedure :: show
+			procedure :: nStates
 			procedure :: run
 	end type FourierGridDiagonalization
 		
@@ -26,26 +31,16 @@ module FourierGridDiagonalization_
 	!>
 	!! @brief Contructor
 	!!
-	subroutine init( this, potential, nStates, rMass )
+	subroutine init( this, potential, rMass )
 		implicit none
 		class(FourierGridDiagonalization) :: this
 		class(RNFunction), intent(in) :: potential
-		integer, optional, intent(in) :: nStates
 		real(8), optional, intent(in) :: rMass
 		
 		call this.clear()
 		
-		if( present(nStates) ) then
-			this.nStates = nStates
-		else
-			this.nStates = 10
-		end if
-		
-		if( present(rMass) ) then
-			this.rMass = rMass
-		else
-			this.rMass = 1.0_8
-		end if
+		this.rMass = 1.0_8
+		if( present(rMass) ) this.rMass = rMass
 		
 		this.potential = potential
 	end subroutine init
@@ -66,7 +61,6 @@ module FourierGridDiagonalization_
 		class(FourierGridDiagonalization) :: this
 		
 		this.rMass = 1.0_8
-		this.nStates = 10
 		
 ! 		call this.potential.clear()
 		if( allocated(this.eigenValues) ) deallocate( this.eigenValues )
@@ -95,11 +89,6 @@ module FourierGridDiagonalization_
 		write(strBuffer, "(f<fmt+7>.6)") this.rMass
 		output = trim(output)//trim(strBuffer)
 		
-		output = trim(output)//",nStates="
-		fmt = int(log10(float(this.nStates)+1.0))+1
-		write(strBuffer, "(i<fmt>)") this.nStates
-		output = trim(output)//trim(strBuffer)
-		
 		output = trim(output)//">"
 	end function str
 	
@@ -123,12 +112,32 @@ module FourierGridDiagonalization_
 	end subroutine show
 	
 	!>
+	!! @brief Returns the number of eigenvalues located after run()
+	!!
+	function nStates( this ) result( output )
+		class(FourierGridDiagonalization), intent(in) :: this
+		integer :: output
+		
+		if( allocated(this.eigenValues) ) then
+			output = size(this.eigenValues)
+		else
+			output = -1
+			call GOptions_warning( "The method run() has to be called before (returning -1)", "FourierGridDiagonalization.nStates()" )
+		end if
+	end function nStates
+	
+	!>
 	!! @brief Starts the numerical method
 	!!
-	subroutine run( this, abstol )
+	subroutine run( this, nStates, iRange, vRange, abstol )
 		class(FourierGridDiagonalization) :: this
+		integer, optional, intent(in) :: nStates
+		integer, optional, intent(in) :: iRange(2)
+		real(8), optional, intent(in) :: vRange(2)
 		real(8), optional, intent(in) :: abstol
 		
+		integer :: effIRange(2)
+		real(8) :: effVRange(2)
 		real(8) :: effAbstol
 		
 		integer :: nPoints
@@ -138,6 +147,7 @@ module FourierGridDiagonalization_
 		real(8), allocatable :: eigenVectors(:,:)
 		real(8), allocatable :: H(:,:)
 		
+		character(1) :: charRange
 		real(8), allocatable :: work(:)
 		integer, allocatable :: iwork(:)
 		integer, allocatable :: ifail(:)
@@ -145,6 +155,24 @@ module FourierGridDiagonalization_
 		
 		integer :: i, j
 		real(8) :: dr, L, mass
+		
+		! Default values: 10 states
+		charRange = "I"
+		effIRange = [ 1, 10 ]
+		effVRange = [ 0.0_8, 0.0_8 ]
+		if( present(nStates) ) then
+			charRange = "I"
+			
+			effIRange = [ 1, nStates ]
+		else if( present(iRange) ) then
+			charRange = "I"
+			
+			effIRange = iRange
+		else if( present(vRange) ) then
+			charRange = "V"
+			
+			effVRange = vRange
+		end if
 		
 		effAbstol = 1.0e-10
 		if( present(abstol) ) effAbstol = abstol
@@ -187,12 +215,12 @@ module FourierGridDiagonalization_
 ! 						nEigenFound, eigenValues, eigenVectors, nPoints, &
 ! 						work, size(work), iwork, ifail, info )
 			
-		call dsyevx( 'V', 'I', 'U', nPoints, H, nPoints, &
-				0.0_8, 0.0_8, &
-				1, min(this.nStates,nPoints), &
-				effAbstol, &
-				nEigenFound, eigenValues, eigenVectors, nPoints, &
-				work, size(work), iwork, ifail, info )
+! 		call dsyevx( 'V', 'I', 'U', nPoints, H, nPoints, &
+! 				0.0_8, 0.0_8, &
+! 				1, min(effNStates,nPoints), &
+! 				effAbstol, &
+! 				nEigenFound, eigenValues, eigenVectors, nPoints, &
+! 				work, size(work), iwork, ifail, info )
 
 	! 	call dsyevx( 'V', 'V', 'U', nPoints, H, nPoints, &
 	! 					-0.30_8, 0.30_8, &
@@ -200,11 +228,22 @@ module FourierGridDiagonalization_
 	! 					1.0e-10, &
 	! 					nEigenFound, eigenValues, eigenVectors, nPoints, &
 	! 					work, size(work), iwork, ifail, info )
+	
+		write(*,*) "charRange = ", charRange
+		write(*,*) "effVRange = ", effVRange
+		write(*,*) "effIRange = ", effIRange
+		call dsyevx( 'V', charRange, 'U', nPoints, H, nPoints, &
+				effVRange(1), effVRange(2), &
+				effIRange(1), effIRange(2), &
+				effAbstol, &
+				nEigenFound, eigenValues, eigenVectors, nPoints, &
+				work, size(work), iwork, ifail, info )
 		
 		if( info /= 0 ) then
-			write(*,*) "### ERROR ### Diagonalization failed"
-			stop
+			call GOptions_error( "Diagonalization failed", "FourierGridDiagonalization.run()" )
 		end if
+		
+		write(*,*) "nEigenFound = ", nEigenFound
 		
 		if( allocated(this.eigenValues) ) deallocate( this.eigenValues )
 		allocate( this.eigenValues( nEigenFound ) )
@@ -212,11 +251,12 @@ module FourierGridDiagonalization_
 		if( allocated(this.eigenFunctions) ) deallocate( this.eigenFunctions )
 		allocate( this.eigenFunctions( nEigenFound ) )
 		
-		this.nStates = nEigenFound
 		this.eigenValues(1:nEigenFound) = eigenValues(1:nEigenFound)
 		do i=1,nEigenFound
 			call this.eigenFunctions(i).fromGridArray( this.potential.xGrid, eigenVectors(:,i) )
 		end do
+		
+		write(*,*) "size = ", size(this.eigenValues)
 		
 		deallocate( work )
 		deallocate( iwork )
@@ -228,4 +268,41 @@ module FourierGridDiagonalization_
 
 	end subroutine run
 	
+	!>
+	! This is neccesary only for NFunction_test()
+	!!
+	function funcTest( x ) result( output )
+		real(8), intent(in) :: x
+		real(8) :: output
+		
+		output = 5.0_8*( exp(2.0_8*(2.0_8-x))-2.0_8*exp(2.0_8-x) )
+	end function funcTest
+	
+	!>
+	! Test
+	!!
+	subroutine FourierGridDiagonalization_test()
+		type(Grid) :: rGrid
+		type(RNFunction) :: potential
+		type(FourierGridDiagonalization) :: solver
+		integer :: i
+		
+		call rGrid.init( 1.0_8, 30.0_8, 1000 )
+		call rGrid.show()
+		
+		call potential.fromFunction( rGrid, funcTest )
+		call potential.show()
+! 		call potential.save( "morse.out" )
+		
+		call solver.init( potential, rMass=5.0_8 )
+		call solver.run( nStates=10 )
+		
+		write(*,*) "solver.nStates() = ", solver.nStates()
+		do i=1,solver.nStates()
+			write(*,"(I5,F20.10)") i, solver.eigenValues(i)
+		end do
+		
+! 		call solver.eigenfunction(7).save( "salida" )
+	end subroutine FourierGridDiagonalization_test
+
 end module FourierGridDiagonalization_

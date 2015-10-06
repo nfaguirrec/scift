@@ -8,12 +8,13 @@ module ThrularNumerovMethod_
 	public :: &
 		ThrularNumerovMethod_test
 	
+	! @todo Hay que homogenizar esta clase con FourierGridDiagonalization
 	type, public :: ThrularNumerovMethod
 		real(8) :: rMass
 		integer :: nStates
 		type(RNFunction) :: potential
-		real(8), allocatable :: eigenvalue(:)
-		type(RNFunction), allocatable :: eigenfunction(:)
+		real(8), allocatable :: eigenValues(:)
+		type(RNFunction), allocatable :: eigenFunctions(:)
 		
 		contains
 			procedure init
@@ -48,8 +49,8 @@ module ThrularNumerovMethod_
 			this.rMass = 1.0_8
 		end if
 		
-		allocate( this.eigenvalue(potential.xGrid.nPoints) )
-		allocate( this.eigenfunction(this.nStates) )
+		allocate( this.eigenValues(potential.xGrid.nPoints) )
+		allocate( this.eigenFunctions(this.nStates) )
 	end subroutine init
 	
 	!>
@@ -61,8 +62,8 @@ module ThrularNumerovMethod_
 		this.rMass = 1.0_8
 		this.nStates = 10
 		
-		deallocate( this.eigenvalue )
-		deallocate( this.eigenfunction )
+		deallocate( this.eigenValues )
+		deallocate( this.eigenFunctions )
 	end subroutine destroy
 	
 	!>
@@ -120,20 +121,20 @@ module ThrularNumerovMethod_
 		class(ThrularNumerovMethod) :: this
 		
 		integer :: i
-		real(8), allocatable :: eigenfunction(:,:)
+		real(8), allocatable :: eigenFunctions(:,:)
 		integer :: nBound
 		
-		allocate( eigenfunction(this.nStates,this.potential.xGrid.nPoints) )
+		allocate( eigenFunctions(this.nStates,this.potential.xGrid.nPoints) )
 		
 		call thrularnumerov( this.rMass, this.potential.xGrid.min, this.potential.xGrid.max, &
 							 this.potential.xGrid.nPoints, this.potential.fArray, this.nStates, 1, &
-							 this.eigenvalue, eigenfunction, nBound )
+							 this.eigenValues, eigenFunctions, nBound )
 		do i=1,this.nStates
-			call this.eigenfunction(i).fromGridArray( this.potential.xGrid, eigenfunction(i,:) )
-! 			this.eigenfunction(i).fArray(:) = eigenfunction(i,:)
+			call this.eigenFunctions(i).fromGridArray( this.potential.xGrid, eigenFunctions(i,:) )
+! 			this.eigenFunctions(i).fArray(:) = eigenFunctions(i,:)
 		end do
 		
-		deallocate( eigenfunction )
+		deallocate( eigenFunctions )
 
 		this.nStates = nBound
 	end subroutine run
@@ -472,16 +473,16 @@ module ThrularNumerovMethod_
 		
 		call potential.fromFunction( rGrid, funcTest )
 		call potential.show()
-		call potential.save( "morse.out" )
+! 		call potential.save( "morse.out" )
 		
 		call solver.init( potential, rMass=5.0_8 )
 		call solver.run()
 		
 		do i=1,solver.nStates
-			write(*,"(i5,f20.10)") i, solver.eigenvalue(i)
+			write(*,"(i5,f20.10)") i, solver.eigenValues(i)
 		end do
 		
-		call solver.eigenfunction(7).save( "salida" )
+! 		call solver.eigenFunctions(7).save( "salida" )
 	end subroutine ThrularNumerovMethod_test
 
 end module ThrularNumerovMethod_

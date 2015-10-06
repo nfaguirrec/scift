@@ -211,7 +211,7 @@ module NPotentialEnergyCurve_
 		call solver.run()
 		
 		do i=1,solver.nStates
-				write(*,"(i5,f20.10)") i, solver.eigenvalue(i)/cm1
+				write(*,"(i5,f20.10)") i, solver.eigenValues(i)/cm1
 		end do
 		
 ! 		call solver.eigenfunction(1).save( "solverWF1", units=[angs,1.0_8] )
