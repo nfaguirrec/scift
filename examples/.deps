@@ -17,6 +17,9 @@ molecule.inertia.f90: use Molecule
 molecule.mass.f90: use String
 molecule.mass.f90: use Matrix
 molecule.mass.f90: use Molecule
+molecule.minMult.f90: use String
+molecule.minMult.f90: use Matrix
+molecule.minMult.f90: use Molecule
 molecule.orient.f90: use String
 molecule.orient.f90: use CommandLineParser
 molecule.orient.f90: use Molecule

@@ -23,9 +23,9 @@ install: src/libscift.a
 	echo ' Append the next lines into ~/.bashrc file'
 	echo '-----------------------------------------------------------------'
 	echo ''
-	echo ' export PATH=$$PATH:$$HOME/Software/scift/bin'
-	echo ' export PATH=$$PATH:$$HOME/Software/scift/utils'
-	echo ' export LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$$HOME/Software/scift/'
+	echo ' export PATH=\$PATH:\$HOME/Software/scift/bin'
+	echo ' export PATH=\$PATH:\$HOME/Software/scift/utils'
+	echo ' export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$HOME/Software/scift/'
 	echo '-----------------------------------------------------------------'
 
 uninstall: ${HOME}/Software/scift/libscift.a
