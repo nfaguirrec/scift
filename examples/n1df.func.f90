@@ -101,11 +101,13 @@ program main
 	! Saving AB
 	!---------------------------------------------
 	if( fileTypeA == 0 ) then
+		call rFuncA.save( fileNameFuncA )
 ! 		call rFuncA.save( fileNameFuncA, format=AUTO )
-		call rFuncA.saveN1DF( fileNameFuncA )
+!		call rFuncA.saveN1DF( fileNameFuncA )
 	else if( fileTypeA == 1 ) then
+		call rFuncA.save( fileNameFuncA )
 ! 		call cFuncA.save( fileNameFuncA, format=AUTO )
-		call cFuncA.saveN1DF( fileNameFuncA )
+!		call cFuncA.saveN1DF( fileNameFuncA )
 	end if
 	
 	contains
