@@ -240,9 +240,9 @@ module IOStream_
 		class(IFStream) :: this
 		
 		integer :: iostat
-		character(999) :: buffer
+		character(1000) :: buffer
 		type(String) :: strBuffer
-		character(99), allocatable :: tokens(:)
+		character(100), allocatable :: tokens(:)
 		
 		open( unit=this.unit, file=this.name, status=this.status, iostat=iostat )
 		
@@ -282,7 +282,7 @@ module IOStream_
 		character(:), allocatable :: output
 		
 		logical :: effPeek
-		character(999) :: buffer
+		character(10000) :: buffer
 		integer :: posComment
 		
 		effPeek = .false.
@@ -328,7 +328,7 @@ module IOStream_
 		class(IFStream) :: this
 		
 		integer :: iostat
-		character(999) :: buffer
+		character(1000) :: buffer
 		
 		open( unit=this.unit, file=this.name, status=this.status, iostat=iostat )
 		
