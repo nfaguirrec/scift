@@ -75,14 +75,31 @@ class Spectrum:
 	def buildProfile( this ):
 		this.spectrumData = NFunction( this.energyRange, this.nPoints )
 		
-		for i in range( 0, len(this.spectrumData.x) ):
-			for abso in this.absorptionsList:
-				this.spectrumData.y[i] = this.spectrumData.y[i] \
-				+ this.gaussianPeak( this.spectrumData.x[i], abso.energy, abso.intensity, this.width )
+		if( this.profile == "GAUSSIAN" ):
+			for i in range( 0, len(this.spectrumData.x) ):
+				for abso in this.absorptionsList:
+					this.spectrumData.y[i] = this.spectrumData.y[i] \
+					+ this.GaussianPeak( this.spectrumData.x[i], abso.energy, abso.intensity, this.width )
+		elif( this.profile == "LORENTZIAN" ):
+			for i in range( 0, len(this.spectrumData.x) ):
+				for abso in this.absorptionsList:
+					this.spectrumData.y[i] = this.spectrumData.y[i] \
+					+ this.LorentzianPeak( this.spectrumData.x[i], abso.energy, abso.intensity, this.width )
+		else:
+			print "### ERROR ### profile = ", this.profile, " is not implemented. Possible values are GAUSSIAN or LORENTZIAN."
+			exit(-1)
 		
-	def gaussianPeak( this, E, energy, intensity, width ):
+	def GaussianPeak( this, E, energy, intensity, FWHM ):
 		
+		width = FWHM/2.35482
 		output = intensity*math.exp( -(E-energy)**2/2.0/width**2 )
+		
+		return output
+		
+	def LorentzianPeak( this, E, energy, intensity, FWHM ):
+		
+		width = 0.5*FWHM
+		output = intensity/( 1.0+((E-energy)/width)**2 )
 		
 		return output
 

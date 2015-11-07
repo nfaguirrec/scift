@@ -88,6 +88,7 @@ module Grid_
 			procedure :: setUnits
 			
 			procedure :: at
+			procedure :: pos
 			procedure :: first
 			procedure :: last
 			procedure :: x => at
@@ -758,6 +759,17 @@ module Grid_
 		
 		output = this.data(i)
 	end function at
+	
+	!>
+	!! @brief
+	!!
+	pure function pos( this, x ) result( output )
+		class(Grid), intent(in) :: this
+		real(8), intent(in) :: x
+		integer :: output
+		
+		output = (x-this.min)/this.stepSize+1
+	end function pos
 	
 	!>
 	!! @brief

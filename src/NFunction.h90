@@ -166,7 +166,7 @@
 		call this.xGrid.init( min, max, nPoints, stepSize )
 		
 		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray( nPoints ) )
+		allocate( this.fArray( this.xGrid.nPoints ) )
 		
 		this.fArray = 0.0_8
 	end subroutine fromGridData

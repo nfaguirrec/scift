@@ -143,27 +143,38 @@ module NIntegrator_
 	!>
 	!! @brief
 	!!
-	function evaluate( this ) result( output )
+	function evaluate( this, a, b ) result( output )
 		class(NIntegrator) :: this
+		real(8), optional, intent(in) :: a
+		real(8), optional, intent(in) :: b
 		real(8) :: output
+		
+		real(8) :: effA
+		real(8) :: effB
+		
+		effA = this.func.min()
+		if( present(a) ) effA = a
+		
+		effB = this.func.max()
+		if( present(b) ) effB = b
 		
 		select case( this.method )
 			case( SIMPSON )
-				output = simpsonRule( this )
+				output = simpsonRule( this, effA, effB )
 			case( EXTSIMPSON )
-				output = extendedSimpsonRule( this )
+				output = extendedSimpsonRule( this, effA, effB )
 			case( SIMPSON38 )
-				output = simpson38Rule( this )
+				output = simpson38Rule( this, effA, effB )
 			case( TRAPEZOIDAL )
-				output = trapezoidalRule( this )
+				output = trapezoidalRule( this, effA, effB )
 			case( FIXED_QUADRATURE )
-				output = fixedQuadratureRule( this )
+				output = fixedQuadratureRule( this, effA, effB )
 			case( QUADRATURE )
-				output = quadratureRule( this )
+				output = quadratureRule( this, effA, effB )
 			case( ADAPTIVE_QUADRATURE )
-				output = adaptiveQuadratureRule( this )
+				output = adaptiveQuadratureRule( this, effA, effB )
 			case( BOOLE )
-				output = booleRule( this )
+				output = booleRule( this, effA, effB )
 		end select
 	end function evaluate
 	
@@ -171,20 +182,26 @@ module NIntegrator_
 	!! @brief Simpson rule
 	!! \int_a^b f(x)dx = \frac{1}{3}\left[ f(x_0) + 2\sum_{i=1}^{n/2-1}f(x_{2i}) + 4\sum_{i=1}^{n/2-1}f(x_{2i-1}) + f(x_n)\right]
 	!!
-	function simpsonRule( this ) result( output )
+	function simpsonRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
+		real(8), intent(in) :: a
+		real(8), intent(in) :: b
 		real(8) :: output
 		
 		real(8) :: sum
 		integer :: size
 		integer :: i
 		
-		size = this.func.xGrid.nPoints
+		size = this.func.nPoints()
 		
 		sum = this.func.fArray(1)
 		
 		do i=1,size/2-1
-			sum = sum + 2.0_8*this.func.fArray(2*i) + 4.0_8*this.func.fArray(2*i+1)
+! 			if( this.func.x(i) >= a .and. this.func.x(i) <= b ) then
+				sum = sum + 2.0_8*this.func.fArray(2*i) + 4.0_8*this.func.fArray(2*i+1)
+! 			end if
+			
+! 			if( this.func.x(i) > b ) exit
 		end do
 		
 		sum = sum + this.func.fArray(size)
@@ -195,16 +212,19 @@ module NIntegrator_
 	!>
 	!! @brief Extended Simpson rule
 	!!
-	function extendedSimpsonRule( this ) result( output )
+	function extendedSimpsonRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
+		real(8), intent(in) :: a
+		real(8), intent(in) :: b
 		real(8) :: output
 		
 		real(8) :: sum
 		integer :: size
 		integer :: i
 		
-		size = this.func.xGrid.nPoints
+		size = this.func.nPoints()
 		
+		! @todo No está imprementado la opción del integral desde a a b
 		sum = 0.0
 		do i=5,size-4
 			sum = sum + this.func.fArray(i)
@@ -217,32 +237,42 @@ module NIntegrator_
 		output = sum*( this.func.xGrid.stepSize/48.0_8 )
 	end function extendedSimpsonRule
 	
-	function simpson38Rule( this ) result( output )
+	function simpson38Rule( this, a, b ) result( output )
 		class(NIntegrator) :: this
+		real(8), intent(in) :: a
+		real(8), intent(in) :: b
 		real(8) :: output
 		
 	end function simpson38Rule
 
-	function trapezoidalRule( this ) result( output )
+	function trapezoidalRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
+		real(8), intent(in) :: a
+		real(8), intent(in) :: b
 		real(8) :: output
 		
 	end function trapezoidalRule
 
-	function fixedQuadratureRule( this ) result( output )
+	function fixedQuadratureRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
+		real(8), intent(in) :: a
+		real(8), intent(in) :: b
 		real(8) :: output
 		
 	end function fixedQuadratureRule
 
-	function quadratureRule( this ) result( output )
+	function quadratureRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
+		real(8), intent(in) :: a
+		real(8), intent(in) :: b
 		real(8) :: output
 		
 	end function quadratureRule
 
-	function adaptiveQuadratureRule( this ) result( output )
+	function adaptiveQuadratureRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
+		real(8), intent(in) :: a
+		real(8), intent(in) :: b
 		real(8) :: output
 		
 	end function adaptiveQuadratureRule
@@ -250,21 +280,29 @@ module NIntegrator_
 	!>
 	!! @brief Boole rule
 	!!
-	function booleRule( this ) result( output )
+	function booleRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
+		real(8), intent(in) :: a
+		real(8), intent(in) :: b
 		real(8) :: output
 		
 		real(8) :: sum
 		integer :: size
 		integer :: i
 		
-		size = this.func.xGrid.nPoints
+		size = this.func.nPoints()
 		
 		sum = 0.0_8
 		
+		!@todo Puede ser que la integración en la región [a,b] esté mal
+		
 		do i=1,min(size,size-4),4
-			sum = sum + 14.0_8*this.func.fArray(i) + 64.0_8*this.func.fArray(i+1) &
-			        + 24.0_8*this.func.fArray(i+2) + 64.0_8*this.func.fArray(i+3) + 14.0_8*this.func.fArray(i+4)
+! 			if( this.func.x(i) >= a .and. this.func.x(i) <= b ) then
+				sum = sum + 14.0_8*this.func.fArray(i) + 64.0_8*this.func.fArray(i+1) &
+					+ 24.0_8*this.func.fArray(i+2) + 64.0_8*this.func.fArray(i+3) + 14.0_8*this.func.fArray(i+4)
+! 			end if
+! 			
+! 			if( this.func.x(i) > b ) exit
 		end do
 		
 ! 		sum = this.func.fArray(1)

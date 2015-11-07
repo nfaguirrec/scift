@@ -30,7 +30,7 @@ program main
 	type(String) :: iFileName
 	type(String) :: oFileName
 	type(IFStream) :: ifile
-	type(CNFunction) :: nFunc, FnFunc, nFunc2
+	type(CNFunction) :: nFunc, FnFunc
 	type(RNFunction) :: spectrum
 	type(String) :: strBuffer
 	type(CommandLineParser) :: parser
@@ -108,6 +108,8 @@ program main
 			idTypeOfSpectrum = FourierTransform_PHASE_SPECTRUM
 		case( "POWER" )
 			idTypeOfSpectrum = FourierTransform_POWER_SPECTRUM
+		case( "FT" )
+			idTypeOfSpectrum = -1
 	end select
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
@@ -154,13 +156,21 @@ program main
 	call nFunc.fromFStream( ifile, columns=columns )
 	call ifile.destroy()
 	
-	if( nPoints == -1 ) nPoints = nFunc.nPoints()
+	if( idTypeOfSpectrum /= -1 ) then
+		
+		if( nPoints == -1 ) nPoints = nFunc.nPoints()
+		
+		spectrum = FourierTransform_spectrum( nFunc, sgn=fftSgn, type=idTypeOfSpectrum, method=idTypeOfMethod, &
+							window=FourierTransform_Window( idTypeWindow, paramWindow, centeredWindow, trim(oFileWindow) ) )
+							
+		call spectrum.save( oFileName.fstr )
+	else
 	
-	spectrum = FourierTransform_spectrum( nFunc, sgn=fftSgn, type=idTypeOfSpectrum, method=idTypeOfMethod, &
-						window=FourierTransform_Window( idTypeWindow, paramWindow, centeredWindow, trim(oFileWindow) ) )
+		FnFunc = FourierTransform_fft( nFunc, sgn=fftSgn )
+		call FnFunc.save( oFileName.fstr )
+		
+	end if
 	
-	call spectrum.save( oFileName.fstr )
-
 	deallocate( columns )
 	
 end program main

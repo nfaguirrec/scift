@@ -356,7 +356,6 @@ module Matrix_
 		
 		if ( info /= 0 ) then
 			write(*,*) "### ERROR ### Matrix.eigen: values matrix failed"
-			stop
 		end if
 		
 		if( present(eValues) ) then
@@ -1054,9 +1053,9 @@ module Matrix_
 		effTol = 1d-16
 		if( present(tol) ) effTol = tol
 		
-		do i=2,this.nCols
-			do j=i+1,this.nRows
-				if( abs(this.data(i,j)-this.data(j,i)) > effTol ) then
+		do i=1,this.nRows
+			do j=i+1,this.nCols
+				if( abs(this.data(i,j)) > effTol .or. abs(this.data(j,i)) > effTol ) then
 					output = .false.
 					return
 				end if
