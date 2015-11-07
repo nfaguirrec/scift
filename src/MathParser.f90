@@ -88,10 +88,12 @@ module MathParser_
 	integer, parameter :: C_ACOS     = 20
 	integer, parameter :: C_ATAN     = 21
 	integer, parameter :: C_SGN      = 22
-	integer, parameter :: C_USTEP    = 23
-	integer, parameter :: C_UBOX     = 24
+	integer, parameter :: C_CEIL     = 23
+	integer, parameter :: C_FLOOR    = 24
+	integer, parameter :: C_USTEP    = 25
+	integer, parameter :: C_UBOX     = 26
 	
-	integer, parameter :: C_VARBEGIN = 25
+	integer, parameter :: C_VARBEGIN = 27
 	
 	character(1), parameter :: STR_OPERATORS(C_ADD:C_POW) &
 		= [ '+', '-', '*', '/', '^' ]
@@ -99,7 +101,7 @@ module MathParser_
 	character(6), parameter :: STR_FUNCTIONS(C_ABS:C_UBOX) &
 		= [ 'abs   ', 'exp   ', 'log10 ', 'log   ', 'sqrt  ', 'sinh  ', 'cosh  ', &
 		    'tanh  ', 'sin   ', 'cos   ', 'tan   ', 'asin  ', 'acos  ', 'atan  ', &
-		    'sgn   ', 'ustep ', 'ubox  ' ]
+		    'sgn   ', 'ceil  ', 'floor ', 'ustep ', 'ubox  ' ]
 		     
 	character(*), parameter :: ERROR_MESSAGE(4) &
 		 = [ 'Division by zero', 'Argument of SQRT negative', &
@@ -292,6 +294,10 @@ module MathParser_
 					this.stack(SP) = atan( this.stack(SP) )
 				case( C_SGN )
 					this.stack(SP) = sign( 1.0_8, this.stack(SP) )
+				case( C_CEIL )
+					this.stack(SP) = ceiling( this.stack(SP) )
+				case( C_FLOOR )
+					this.stack(SP) = floor( this.stack(SP) )
 #define ustep(x) 0.5_8*( 1.0_8 + tanh( 1.0d12*(x) ) )
 				case( C_USTEP )
 					this.stack(SP) = ustep( this.stack(SP) )
