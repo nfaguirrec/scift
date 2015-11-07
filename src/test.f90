@@ -37,7 +37,7 @@ program test
 ! 	use RNFunction_
 !  	use CNFunction_
 ! 	use FourierTransform_
-! 	use NIntegrator_
+	use NIntegrator_
 ! 	use NDerivator_
 ! 	use NPotentialEnergyCurve_
 ! 	use Math_
@@ -79,8 +79,8 @@ program test
 ! 	use Grid2D_
 ! 	use MathFormula_
 ! 	use MDIntegrator_
-	use ThrularNumerovMethod_
-	use FourierGridDiagonalization_
+! 	use ThrularNumerovMethod_
+! 	use FourierGridDiagonalization_
 	implicit none
 	
 ! 	call IOStream_test()
@@ -90,7 +90,7 @@ program test
 ! 	call Molecule_test()
 ! 	call RNFunction_test()
 !  	call CNFunction_test()
-! 	call NIntegrator_test()
+	call NIntegrator_test()
 ! 	call NDerivator_test()
 ! 	call NPotentialEnergyCurve_test()
 ! 	call Math_test()
@@ -136,6 +136,6 @@ program test
 ! 	call FourierTransform3D_test()
 ! 	call MathFormula_test()
 ! 	call MDIntegrator_test()
-	call ThrularNumerovMethod_test()
-	call FourierGridDiagonalization_test()
+! 	call ThrularNumerovMethod_test()
+! 	call FourierGridDiagonalization_test()
 end program test

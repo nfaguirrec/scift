@@ -24,22 +24,11 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 module NIntegrator_
+	use GOptions_
 	use Grid_
 	use RNFunction_
 	implicit none
 	private
-	
-	!>
-	!! @brief Public parameters
-	!!
-	integer, public, parameter :: SIMPSON  = 0
-	integer, public, parameter :: EXTSIMPSON  = 1
-	integer, public, parameter :: SIMPSON38  = 2
-	integer, public, parameter :: TRAPEZOIDAL = 3
-	integer, public, parameter :: FIXED_QUADRATURE = 4
-	integer, public, parameter :: QUADRATURE = 5
-	integer, public, parameter :: ADAPTIVE_QUADRATURE = 6
-	integer, public, parameter :: BOOLE = 7
 	
 	public :: &
 		NIntegrator_test
@@ -72,7 +61,7 @@ module NIntegrator_
 		if( present(method) ) then
 			this.method = method
 		else
-			this.method = SIMPSON
+			this.method = NIntegrator_SIMPSON
 		end if
 	end subroutine initDefault
 	
@@ -153,27 +142,39 @@ module NIntegrator_
 		real(8) :: effB
 		
 		effA = this.func.min()
-		if( present(a) ) effA = a
+		if( present(a) ) then
+			if( a >= this.func.min() .and. a <= this.func.max() ) then
+				effA = a
+			else
+				call GOptions_error( "The integration lower limit 'a' is outside of numerical grid.", "NIntegrator.evaluate(a,b)" )
+			end if
+		end if
 		
 		effB = this.func.max()
-		if( present(b) ) effB = b
+		if( present(b) ) then
+			if( b >= this.func.min() .and. b <= this.func.max() ) then
+				effB = b
+			else
+				call GOptions_error( "The integration upper limit 'b' is outside of numerical grid.", "NIntegrator.evaluate(a,b)" )
+			end if
+		end if
 		
 		select case( this.method )
-			case( SIMPSON )
+			case( NIntegrator_SIMPSON )
 				output = simpsonRule( this, effA, effB )
-			case( EXTSIMPSON )
+			case( NIntegrator_EXTSIMPSON )
 				output = extendedSimpsonRule( this, effA, effB )
-			case( SIMPSON38 )
+			case( NIntegrator_SIMPSON38 )
 				output = simpson38Rule( this, effA, effB )
-			case( TRAPEZOIDAL )
+			case( NIntegrator_TRAPEZOIDAL )
 				output = trapezoidalRule( this, effA, effB )
-			case( FIXED_QUADRATURE )
+			case( NIntegrator_FIXED_QUADRATURE )
 				output = fixedQuadratureRule( this, effA, effB )
-			case( QUADRATURE )
+			case( NIntegrator_QUADRATURE )
 				output = quadratureRule( this, effA, effB )
-			case( ADAPTIVE_QUADRATURE )
+			case( NIntegrator_ADAPTIVE_QUADRATURE )
 				output = adaptiveQuadratureRule( this, effA, effB )
-			case( BOOLE )
+			case( NIntegrator_BOOLE )
 				output = booleRule( this, effA, effB )
 		end select
 	end function evaluate
@@ -189,24 +190,20 @@ module NIntegrator_
 		real(8) :: output
 		
 		real(8) :: sum
-		integer :: size
-		integer :: i
+		integer :: i, ia, ib
 		
-		size = this.func.nPoints()
+		ia = this.func.xGrid.pos( a )
+		ib = this.func.xGrid.pos( b )
 		
-		sum = this.func.fArray(1)
+		sum = this.func.at(ia)
 		
-		do i=1,size/2-1
-! 			if( this.func.x(i) >= a .and. this.func.x(i) <= b ) then
-				sum = sum + 2.0_8*this.func.fArray(2*i) + 4.0_8*this.func.fArray(2*i+1)
-! 			end if
-			
-! 			if( this.func.x(i) > b ) exit
+		do i=1,ceiling((ib-ia)/2.0_8)
+			sum = sum + 2.0_8*this.func.fArray(ia+2*i-1) + 4.0_8*this.func.fArray(ia+2*i-1+1)
 		end do
 		
-		sum = sum + this.func.fArray(size)
+		sum = sum + this.func.at(ib)
 		
-		output = sum*( this.func.xGrid.stepSize/3.0_8 )
+		output = sum*this.func.xGrid.stepSize/3.0_8
 	end function simpsonRule
 	
 	!>
@@ -224,7 +221,8 @@ module NIntegrator_
 		
 		size = this.func.nPoints()
 		
-		! @todo No está imprementado la opción del integral desde a a b
+		call GOptions_warning( "This method has not implemented yet defined integration.", "NIntegrator.extendedSimpsonRule(a,b)" )
+		
 		sum = 0.0
 		do i=5,size-4
 			sum = sum + this.func.fArray(i)
@@ -243,6 +241,7 @@ module NIntegrator_
 		real(8), intent(in) :: b
 		real(8) :: output
 		
+		call GOptions_error( "This method is not implemented yet.", "NIntegrator.simpson38Rule(a,b)" )
 	end function simpson38Rule
 
 	function trapezoidalRule( this, a, b ) result( output )
@@ -251,6 +250,7 @@ module NIntegrator_
 		real(8), intent(in) :: b
 		real(8) :: output
 		
+		call GOptions_error( "This method is not implemented yet.", "NIntegrator.trapezoidalRule(a,b)" )
 	end function trapezoidalRule
 
 	function fixedQuadratureRule( this, a, b ) result( output )
@@ -259,6 +259,7 @@ module NIntegrator_
 		real(8), intent(in) :: b
 		real(8) :: output
 		
+		call GOptions_error( "This method is not implemented yet.", "NIntegrator.fixedQuadratureRule(a,b)" )
 	end function fixedQuadratureRule
 
 	function quadratureRule( this, a, b ) result( output )
@@ -267,6 +268,7 @@ module NIntegrator_
 		real(8), intent(in) :: b
 		real(8) :: output
 		
+		call GOptions_error( "This method is not implemented yet.", "NIntegrator.quadratureRule(a,b)" )
 	end function quadratureRule
 
 	function adaptiveQuadratureRule( this, a, b ) result( output )
@@ -275,6 +277,7 @@ module NIntegrator_
 		real(8), intent(in) :: b
 		real(8) :: output
 		
+		call GOptions_error( "This method is not implemented yet.", "NIntegrator.adaptiveQuadratureRule(a,b)" )
 	end function adaptiveQuadratureRule
 	
 	!>
@@ -287,73 +290,83 @@ module NIntegrator_
 		real(8) :: output
 		
 		real(8) :: sum
-		integer :: size
-		integer :: i
+		integer :: i, ia, ib
 		
-		size = this.func.nPoints()
+		ia = this.func.xGrid.pos( a )
+		ib = this.func.xGrid.pos( b )
 		
 		sum = 0.0_8
-		
-		!@todo Puede ser que la integración en la región [a,b] esté mal
-		
-		do i=1,min(size,size-4),4
-! 			if( this.func.x(i) >= a .and. this.func.x(i) <= b ) then
-				sum = sum + 14.0_8*this.func.fArray(i) + 64.0_8*this.func.fArray(i+1) &
-					+ 24.0_8*this.func.fArray(i+2) + 64.0_8*this.func.fArray(i+3) + 14.0_8*this.func.fArray(i+4)
-! 			end if
-! 			
-! 			if( this.func.x(i) > b ) exit
+		do i=1,ib-ia,4
+				sum = sum + 14.0_8*this.func.fArray(ia+i) + 64.0_8*this.func.fArray(ia+i+1) &
+					+ 24.0_8*this.func.fArray(ia+i+2) + 64.0_8*this.func.fArray(ia+i+3) + 14.0_8*this.func.fArray(ia+i+4)
 		end do
 		
-! 		sum = this.func.fArray(1)
-! 		do i=1,(size-2)/4
-! 			sum = sum + 14.0_8*this.func.fArray(4*i-2) + 64.0_8*this.func.fArray(4*i-1) &
-! 			        + 24.0_8*this.func.fArray(4*i) + 64.0_8*this.func.fArray(4*i+1) + 14.0_8*this.func.fArray(4*i+2)
-! 		end do
-		
-		output = sum*( this.func.xGrid.stepSize/45.0_8 )
+		output = sum*this.func.xGrid.stepSize/45.0_8
 	end function booleRule
 	
-	!**
-	! This is neccesary only for NFunction_test()
-	!**
+	!>
+	!! This is neccesary only for NFunction_test()
+	!!
 	function funcTest( x ) result( output )
 		real(8), intent(in) :: x
 		real(8) :: output
 		
-		output = exp(-0.44*x)*sin(x)**2.0_8
+		output = exp(-0.44*abs(x))*sin(x)**2.0_8
 	end function funcTest
 	
+	!>
+	!! This is neccesary only for NFunction_test()
+	!!
 	subroutine NIntegrator_test()
 		type(Grid) :: xGrid
 		type(RNFunction) :: nFunc
 		type(NIntegrator) :: integrator
 		real(8) :: exactValue
-		real(8) :: value
+		real(8) :: value, Math_PI
 		integer :: i
 		
-		call xGrid.init( 0.0_8, 50.0_8, 102 )
+		Math_PI = acos(-1.0_8)
+		
+		call xGrid.init( -30.0_8, 30.0_8, 1000 )
 		call xGrid.show()
 		
 		call nFunc.init( xGrid, funcTest )
 		call nFunc.show()
 		
-		exactValue = 1.083902743303941_8
+		exactValue = 2.16780136532979_8
 		
-		write(*,*) "SIMPSON"
+		write(*,*) "NIntegrator_SIMPSON"
 		write(*,*) "======="
-		call integrator.init( nFunc, SIMPSON )
+		call integrator.init( nFunc, NIntegrator_SIMPSON )
 		write(*,'(A,F30.8)') "Exact     = ", exactValue
 		write(*,'(A,F30.8)') "Numerical = ", integrator.evaluate()
 		write(*,'(A,F27.5,A3)') "Error(%)  = ", 100.0_8*( integrator.evaluate()-exactValue )/exactValue, "%"
 		write(*,*) ""
 		
-		write(*,*) "BOOLE"
+		write(*,*) "NIntegrator_BOOLE"
 		write(*,*) "====="
-		call integrator.init( nFunc, BOOLE )
+		call integrator.init( nFunc, NIntegrator_BOOLE )
 		write(*,'(A,F30.8)') "Exact     = ", exactValue
 		write(*,'(A,F30.8)') "Numerical = ", integrator.evaluate()
 		write(*,'(A,F27.5,A3)') "Error(%)  = ", 100.0_8*( integrator.evaluate()-exactValue )/exactValue, "%"
+		write(*,*) ""
+		
+		exactValue = 1.623685454371397_8
+		
+		write(*,*) "NIntegrator_SIMPSON"
+		write(*,*) "======="
+		call integrator.init( nFunc, NIntegrator_SIMPSON )
+		write(*,'(A,F30.8)') "Exact     = ", exactValue
+		write(*,'(A,F30.8)') "Numerical = ", integrator.evaluate( -Math_PI, Math_PI )
+		write(*,'(A,F27.5,A3)') "Error(%)  = ", 100.0_8*( integrator.evaluate( -Math_PI, Math_PI )-exactValue )/exactValue, "%"
+		write(*,*) ""
+		
+		write(*,*) "NIntegrator_BOOLE"
+		write(*,*) "====="
+		call integrator.init( nFunc, NIntegrator_BOOLE )
+		write(*,'(A,F30.8)') "Exact     = ", exactValue
+		write(*,'(A,F30.8)') "Numerical = ", integrator.evaluate( -Math_PI, Math_PI )
+		write(*,'(A,F27.5,A3)') "Error(%)  = ", 100.0_8*( integrator.evaluate( -Math_PI, Math_PI )-exactValue )/exactValue, "%"
 		write(*,*) ""
 		
 	end subroutine NIntegrator_test

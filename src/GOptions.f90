@@ -120,6 +120,20 @@ module GOptions_
 	end interface GOptions_valueReport
 	
 	!---------------------------------------------------------------------------
+	! NIntegrator constants
+	!---------------------------------------------------------------------------
+	enum, BIND(c)
+		enumerator :: NIntegrator_SIMPSON = 0
+		enumerator :: NIntegrator_EXTSIMPSON
+		enumerator :: NIntegrator_SIMPSON38
+		enumerator :: NIntegrator_TRAPEZOIDAL
+		enumerator :: NIntegrator_FIXED_QUADRATURE
+		enumerator :: NIntegrator_QUADRATURE
+		enumerator :: NIntegrator_ADAPTIVE_QUADRATURE
+		enumerator :: NIntegrator_BOOLE
+	end enum
+	
+	!---------------------------------------------------------------------------
 	! NPeakFinder constants
 	!---------------------------------------------------------------------------
 	enum, BIND(c)
