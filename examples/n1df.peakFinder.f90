@@ -11,8 +11,9 @@ program main
 	use NPeakFinder_
 	implicit none
 	
-	type(String) :: fileName
-	type(IFStream) :: ifile
+	type(String) :: iFileName
+	type(String) :: oFileName
+	type(IFStream) :: iFile
 	type(RNFunction) :: nFunc, peaks
 	type(NPeakFinder) :: pFinder
 	type(String) :: strBuffer
@@ -36,18 +37,19 @@ program main
 		nFunc = NPeakFinder_generateSignal( 0.0_8, 100.0_8, 0.1_8, 10, 0.1_8, 50.0_8, 0.1_8, 1.0_8 )
 		call nFunc.save()
 	else
-		fileName = parser.getString( "-i" )
+		iFileName = parser.getString( "-i" )
+		oFileName = parser.getString( "-o" )
 		
 		strBuffer = parser.getString( "-c", def="1,2" )
 		call strBuffer.split( tokens, "," )
 		columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 		
-		call ifile.init( fileName.fstr )
-		call nFunc.fromFStream( ifile, columns=columns )
-		call ifile.destroy()
+		call iFile.init( iFileName.fstr )
+		call nFunc.fromFStream( iFile, columns=columns )
+		call iFile.destroy()
 	end if
 	
 	call pFinder.init( nFunc, method, windowSize, tolerance, bandwidth )
 	peaks = pFinder.execute()
-	call peaks.save()
+	call peaks.save( trim(oFileName.fstr) )
 end program main
