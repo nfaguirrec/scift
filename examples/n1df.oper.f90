@@ -56,6 +56,9 @@ program main
 ! 		call cFuncA.fromGridArray( cFuncA.xGrid, fArray=rFuncA.fArray )
 		call cFuncA.init( rFuncA.xGrid )
 		cFuncA.fArray = rFuncA.fArray
+	else if( fileTypeB == 1 .and. fileTypeA == 1 ) then
+		call cFuncA.init( fileNameA )
+		call cFuncB.init( fileNameB )
 	else
 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameA)//" or "//trim(fileNameB)
 		stop
@@ -76,7 +79,9 @@ program main
 				rFuncAB = rFuncA / rFuncB
 		end select
 	
-	else if( ( fileTypeA == 1 .and. fileTypeB == 0 ) .or. ( fileTypeA == 0 .and. fileTypeB == 1 ) ) then
+	else if( ( fileTypeA == 1 .and. fileTypeB == 0 ) .or. &
+			 ( fileTypeA == 0 .and. fileTypeB == 1 ) .or. &
+			 ( fileTypeA == 1 .and. fileTypeB == 1 ) ) then
 		select case( trim(oper) )
 			case( '+' )
 				cFuncAB = cFuncA + cFuncB
@@ -93,9 +98,15 @@ program main
 	! Saving AB
 	!---------------------------------------------
 	if( fileTypeB == 0 .and. fileTypeA == 0 ) then
+		
 		call rFuncAB.save( fileNameFuncAB )
-	else if( ( fileTypeA == 1 .and. fileTypeB == 0 ) .or. ( fileTypeA == 0 .and. fileTypeB == 1 ) ) then
+		
+	else if( ( fileTypeA == 1 .and. fileTypeB == 0 ) .or. &
+			 ( fileTypeA == 0 .and. fileTypeB == 1 ) .or. &
+			 ( fileTypeA == 1 .and. fileTypeB == 1 ) ) then
+		
 		call cFuncAB.save( fileNameFuncAB )
+	
 	end if
 	
 end program main
