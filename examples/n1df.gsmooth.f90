@@ -2,6 +2,7 @@
 !! @brief Test program
 !!
 program main
+	use GOptions_
 	use Math_
 	use IOStream_
 	use String_
@@ -42,7 +43,7 @@ program main
 	
 	call nFuncWindow.init( nFunc.xGrid )
 	
-	call integrator.init( nFunc2, SIMPSON )
+	call integrator.init( nFunc2, NIntegrator_SIMPSON )
 ! 	call integrator.init( nFunc, SIMPSON )
 			
 	
