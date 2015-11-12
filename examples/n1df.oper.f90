@@ -10,6 +10,7 @@ program main
 	character(255) :: fileNameA, fileNameB
 	character(255) :: fileNameFuncAB
 	character(1) :: oper
+	real(8) :: prefactor
 	integer :: argc
 	character(255) :: buffer
 	
@@ -19,11 +20,11 @@ program main
 	
 	argc = command_argument_count()
 	
-	if( argc < 2 ) then
+	if( argc < 4 ) then
 		write(*,*) "usage:"
-		write(*,*) "   n1df.oper fileA "//achar(39)//"oper"//achar(39)//" fileB ofilefAB"
+		write(*,*) "   n1df.oper fileA "//achar(39)//"oper"//achar(39)//" fileB ofilefAB [prefactor]"
 		write(*,*) ""
-		write(*,*) "   fAB = A .oper. B"
+		write(*,*) "   fAB = A .oper. a*B"
 		stop
 	end if
 	
@@ -31,6 +32,13 @@ program main
 	call get_command_argument( 2, oper )
 	call get_command_argument( 3, fileNameB )
 	call get_command_argument( 4, fileNameFuncAB )
+	
+	prefactor = 1.0_8
+	select case( argc )
+		case( 5 )
+			call get_command_argument( 5, buffer )
+			read(buffer,*) prefactor
+	end select
 	
 	!---------------------------------------------
 	! Loading A and B
@@ -70,13 +78,13 @@ program main
 	if( fileTypeB == 0 .and. fileTypeA == 0 ) then
 		select case( trim(oper) )
 			case( '+' )
-				rFuncAB = rFuncA + rFuncB
+				rFuncAB = rFuncA + rFuncB*prefactor
 			case( '-' )
-				rFuncAB = rFuncA - rFuncB
+				rFuncAB = rFuncA - rFuncB*prefactor
 			case( '*' )
-				rFuncAB = rFuncA * rFuncB
+				rFuncAB = rFuncA * rFuncB*prefactor
 			case( '/' )
-				rFuncAB = rFuncA / rFuncB
+				rFuncAB = rFuncA / rFuncB*prefactor
 		end select
 	
 	else if( ( fileTypeA == 1 .and. fileTypeB == 0 ) .or. &
@@ -84,13 +92,13 @@ program main
 			 ( fileTypeA == 1 .and. fileTypeB == 1 ) ) then
 		select case( trim(oper) )
 			case( '+' )
-				cFuncAB = cFuncA + cFuncB
+				cFuncAB = cFuncA + cFuncB*prefactor
 			case( '-' )
-				cFuncAB = cFuncA - cFuncB
+				cFuncAB = cFuncA - cFuncB*prefactor
 			case( '*' )
-				cFuncAB = cFuncA * cFuncB
+				cFuncAB = cFuncA * cFuncB*prefactor
 			case( '/' )
-				cFuncAB = cFuncA / cFuncB
+				cFuncAB = cFuncA / cFuncB*prefactor
 		end select
 	end if
 	

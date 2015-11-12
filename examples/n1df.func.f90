@@ -22,7 +22,7 @@ program main
 	
 	argc = command_argument_count()
 	
-	if( argc < 2 ) then
+	if( argc < 4 ) then
 		write(*,*) "usage:"
 		write(*,*) "   n1df.func "//achar(39)//"f(x)"//achar(39)//" "//achar(39)//"oper"//achar(39)//" fileA fileFuncA [prefactor]"
 		write(*,*) ""
