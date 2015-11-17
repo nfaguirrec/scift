@@ -44,23 +44,17 @@ program main
 	call nFuncWindow.init( nFunc.xGrid )
 	
 	call integrator.init( nFunc2, NIntegrator_SIMPSON )
-! 	call integrator.init( nFunc, SIMPSON )
-			
 	
-	write(*,*) "### ERROR ### Esto no funciona"
 	call oFunc.init( nFunc.xGrid )
 	do i=1,nFunc.nPoints()
 		t = nFunc.x(i)
-		write(*,*) "t = ", t
 		
-		ta = max( t-4.0_8*sigma, nFunc.x( 0 ) )
+		ta = max( t-4.0_8*sigma, nFunc.x( 1 ) )
 		tb = min( t+4.0_8*sigma, nFunc.x( nFunc.nPoints() ) )
 		
 		call nFunc2.init( ta, tb, stepSize=nFunc.xGrid.stepSize )
 		call nFuncWindow.fromFunction( nFunc2.xGrid, window )
 		
-		write(*,*) ta, tb
-		write(*,*) nFunc.xGrid.pos(ta), nFunc.xGrid.pos(tb)
 		nFunc2.fArray = nFuncWindow.fArray*nFunc.fArray(nFunc.xGrid.pos(ta):nFunc.xGrid.pos(tb))
 		
 		call oFunc.set( i, integrator.evaluate( ta, tb ) )
