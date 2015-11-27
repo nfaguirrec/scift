@@ -11,6 +11,7 @@ program main
 	use NPeakFinder_
 	implicit none
 	
+	integer :: argc
 	type(String) :: iFileName
 	type(String) :: oFileName
 	type(IFStream) :: iFile
@@ -26,6 +27,15 @@ program main
 	
 	character(5), allocatable :: tokens(:)
 	integer :: columns(2)
+	
+	argc = command_argument_count()
+	
+	if( argc < 4 ) then
+			write(*,"(A)") "Usage:"
+			write(*,"(A)") "   n1df.peakFinder -i ifile -o ofile [-c columns -m method -w windowSize -t tolerance -bw bandwidth]"
+			write(*,"(A)") "                                             1,2         0            10          0.2             5 "
+			stop
+	end if
 	
 	method = parser.getInteger( "-m", def=0 )
 	windowSize = parser.getInteger( "-w", def=10 )

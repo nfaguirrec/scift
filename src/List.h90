@@ -156,6 +156,7 @@
 			procedure, private :: replaceFromPtr
 			procedure, private :: replaceFromPos
 			procedure :: ptr
+			procedure :: fArray
 			
 			! @todo Hay que implementar la interfaz publica de http://doc.qt.digia.com/qt/qlist.html#size_type-typedef
 	end type List
@@ -654,7 +655,6 @@
 		end do
 	end subroutine replaceFromPos
 	
-	
 	!>
 	!! @brief Returns the pointer associated to pos-th element
 	!!
@@ -678,5 +678,26 @@
 			i = i+1
 		end do
 	end function ptr
-
+	
+	!>
+	!! @brief
+	!!
+	function fArray( this ) result( output )
+		class(List), intent(in) :: this
+		__CLASS_ITEMLIST__, allocatable :: output(:)
+		
+		integer :: i
+		class(ListIterator), pointer :: iter
+		
+		allocate( output(this.size()) )
+		
+		i=1
+		iter => this.begin
+		do while ( associated(iter) )
+			output(i) = iter.data
+			
+			iter => iter.next
+			i = i+1
+		end do
+	end function fArray
 #endif

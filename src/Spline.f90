@@ -42,12 +42,12 @@ module Spline_
 	
 	type, public :: Spline
 		integer :: size
-		type(RNFunction) :: nFunc
+		type(RNFunction), pointer :: nFunc
 		real(8), allocatable :: b(:)
 		
 		contains
 			procedure :: init
-			procedure :: destroy
+			final :: destroy
 			procedure :: str
 			procedure :: show
 			procedure :: evaluate
@@ -62,7 +62,7 @@ module Spline_
 	!!
 	subroutine init( this, nFunc, tol )
 		class(Spline) :: this
-		class(RNFunction), intent(in) :: nFunc
+		class(RNFunction), target, intent(in) :: nFunc
 		real(8), optional :: tol
 		
 		real(8), allocatable :: a(:)
@@ -79,8 +79,11 @@ module Spline_
 			efftol = 1.0e-12
 		end if
 		
-		call this.nFunc.copy( nFunc )
+! 		call this.nFunc.copy( nFunc )
+		this.nFunc => nFunc
 		this.size = nFunc.nPoints()
+		
+		if( allocated(_B(_N)) ) deallocate( _B )
 		
 		allocate( _B(_N) )
 		allocate( a(_N) )
@@ -133,18 +136,17 @@ module Spline_
 	!! @brief
 	!!
 	subroutine destroy( this )
-		implicit none
-		class(Spline) :: this
+		type(Spline) :: this
 		
 		this.size = 0
-		deallocate( this.b )
+		this.nFunc => null()
+		if( allocated( this.b ) ) deallocate( this.b )
 	end subroutine destroy
 	
 	!>
 	!! @brief
 	!!
 	function str( this ) result( output )
-		implicit none
 		class(Spline) :: this 
 		character(len=200) :: output
 		
@@ -162,7 +164,6 @@ module Spline_
 	!! @brief
 	!!
 	subroutine show( this, unit )
-		implicit none
 		class(Spline) :: this
 		integer, optional, intent(in) :: unit
 		
@@ -181,7 +182,6 @@ module Spline_
 	!! @brief
 	!!
 	function evaluate( this, xValue ) result( output )
-		implicit none
 		class(Spline) :: this 
 		real(8), intent(in) :: xValue
 		real(8) :: output
@@ -218,7 +218,6 @@ module Spline_
 	!! @brief
 	!!
 	function smooth( this, factor ) result( output )
-		implicit none
 		class(Spline) :: this 
 		integer, intent(in) :: factor
 		type(RNFunction) :: output
@@ -248,7 +247,6 @@ module Spline_
 	!! selected unit
 	!!
 	subroutine save( this, ofile, nPoints )
-		implicit none
 		class(Spline) :: this
 		type(OFStream), optional, intent(in) :: ofile
 		integer, optional :: nPoints
@@ -295,8 +293,6 @@ module Spline_
 	!! @brief
 	!!
 	subroutine Spline_test()
-		implicit none
-		
 		type(IFStream) :: ifile
 		type(OFStream) :: ofile
 		type(RNFunction) :: nFunc
