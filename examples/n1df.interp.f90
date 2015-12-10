@@ -4,6 +4,7 @@
 program main
 	use CommandLineParser_
 	use String_
+	use Spline_
 	use RNFunction_
 	use CNFunction_
 
@@ -18,6 +19,7 @@ program main
 	integer :: fileType
 	type(RNFunction) :: riFunc, rbFunc, roFunc
 	type(CNFunction) :: ciFunc, cbFunc, coFunc
+	type(Spline) :: spl
 	
 	argc = command_argument_count()
 	
@@ -35,6 +37,13 @@ program main
 	
 	if( fileType == 0 ) then
 		call riFunc.init( iFileName.fstr )
+		
+		if( .not. riFunc.xGrid.isEquallyspaced ) then
+			!! Homogeniza el grid
+			call spl.init( riFunc )
+			riFunc = spl.smooth( 1 )
+		end if
+		
 		call rbFunc.init( bFileName.fstr )
 		roFunc = riFunc.interpolate( rbFunc.xGrid )
 		call roFunc.save( oFileName.fstr )
