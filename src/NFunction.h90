@@ -141,26 +141,38 @@
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromGrid( this, xGrid )
+	subroutine fromGrid( this, xGrid, value )
 		class(NFunction) :: this 
 		type(Grid), intent(in) :: xGrid
+		__TYPE_VALUE__, optional, intent(in) :: value
+		
+		__TYPE_VALUE__ :: effValue
+		
+		effValue = 0.0_8
+		if( present(value) ) effValue = value
 		
 		this.xGrid = xGrid
 		
 		if( allocated(this.fArray) ) deallocate(this.fArray)
 		allocate( this.fArray(xGrid.nPoints) )
-		this.fArray = 0.0_8
+		this.fArray = effValue
 	end subroutine fromGrid
 	
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromGridData( this, min, max, nPoints, stepSize )
+	subroutine fromGridData( this, min, max, nPoints, stepSize, value )
 		class(NFunction) :: this
 		real(8) :: min
 		real(8) :: max
 		integer, optional :: nPoints
 		real(8), optional :: stepSize
+		__TYPE_VALUE__, optional, intent(in) :: value
+		
+		__TYPE_VALUE__ :: effValue
+		
+		effValue = 0.0_8
+		if( present(value) ) effValue = value
 		
 		
 		call this.xGrid.init( min, max, nPoints, stepSize )
@@ -168,7 +180,7 @@
 		if( allocated(this.fArray) ) deallocate(this.fArray)
 		allocate( this.fArray( this.xGrid.nPoints ) )
 		
-		this.fArray = 0.0_8
+		this.fArray = effValue
 	end subroutine fromGridData
 	
 	!>
