@@ -99,7 +99,12 @@ module Grid3D_
 			procedure :: x
 			procedure :: y
 			procedure :: z
-			procedure :: at
+			generic :: at => atInCoord, atPoint
+			procedure :: atInCoord
+			procedure :: atPoint
+			generic :: pos => posInCoord, posPoint
+			procedure :: posInCoord
+			procedure :: posPoint
 			procedure :: dV
 			
 			procedure :: set
@@ -743,7 +748,19 @@ module Grid3D_
 	!>
 	!! @brief
 	!!
-	function at( this, i, j, k ) result( output )
+	function atInCoord( this, idCoord, posInCoord ) result( output )
+		class(Grid3D), intent(in) :: this
+		integer, intent(in) :: idCoord
+		integer, intent(in) :: posInCoord
+		real(8) :: output
+		
+		output = this.component(idCoord).data(posInCoord)
+	end function atInCoord
+	
+	!>
+	!! @brief
+	!!
+	function atPoint( this, i, j, k ) result( output )
 		class(Grid3D), intent(in) :: this 
 		integer, intent(in) :: i
 		integer, intent(in) :: j
@@ -751,7 +768,30 @@ module Grid3D_
 		real(8) :: output(3)
 		
 		output = [ this.component(1).data(i), this.component(2).data(j), this.component(3).data(k) ]
-	end function at
+	end function atPoint
+	
+	!>
+	!! @brief
+	!!
+	pure function posInCoord( this, idCoord, value ) result( output )
+			class(Grid3D), intent(in) :: this
+			integer, intent(in) :: idCoord
+			real(8), intent(in) :: value
+			integer :: output
+			
+			output = this.component(idCoord).pos(value)
+	end function posInCoord
+	
+	!>
+	!! @brief
+	!!
+	pure function posPoint( this, x, y, z ) result( output )
+			class(Grid3D), intent(in) :: this
+			real(8), intent(in) :: x, y, z
+			integer :: output(3)
+			
+			output = [ this.component(1).pos(x), this.component(2).pos(y), this.component(3).pos(z) ]
+	end function posPoint
 	
 	!>
 	!! @brief
