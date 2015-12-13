@@ -76,6 +76,11 @@ n1df.derivative: n1df.derivative.f90
 	echo -n 'Building n1df.derivative.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) n1df.derivative.f90  -o n1df.derivative $(LDFLAGS)
 
+n1df.filter: n1df.filter.f90  
+	fmake
+	echo -n 'Building n1df.filter.f90 '
+	time -f "(%E)" $(FC) $(FCFLAGS) n1df.filter.f90  -o n1df.filter $(LDFLAGS)
+
 n1df.fourier: n1df.fourier.f90  
 	fmake
 	echo -n 'Building n1df.fourier.f90 '
