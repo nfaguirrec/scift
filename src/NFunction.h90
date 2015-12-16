@@ -106,6 +106,11 @@
 			procedure :: checkBox
 			procedure :: resize
 			
+			generic :: transitionElement => transitionElementFromNFunction, transitionElementFromRArray, transitionElementFromCArray
+			procedure :: transitionElementFromNFunction
+			procedure :: transitionElementFromRArray
+			procedure :: transitionElementFromCArray
+			
 			generic :: expectationValue => expectationValueFromNFunction, expectationValueFromRArray, expectationValueFromCArray
 			procedure :: expectationValueFromNFunction
 			procedure :: expectationValueFromRArray
@@ -1604,9 +1609,10 @@
 	!>
 	!! @brief 
 	!!
-	function expectationValueFromNFunction( this, oper, checkBox ) result( output )
+	function transitionElementFromNFunction( this, oper, func2, checkBox ) result( output )
 		class(NFunction), intent(in) :: this
 		class(NFunction), intent(in) :: oper
+		class(NFunction), intent(in) :: func2
 		logical, optional, intent(in) :: checkBox
 		__TYPE_VALUE__ :: output
 		
@@ -1616,24 +1622,25 @@
 		if( present(checkBox) ) effCheckBox = checkBox
 		
 		if( effCheckBox ) then
-			if( .not. this.checkBox( oper ) ) then
-				call GOptions_error( "Inconsistent boxes", "NFunction.expectationValueFromNFunction()" )
+			if( .not. ( this.checkBox( oper ) .and. func2.checkBox( oper ) ) ) then
+				call GOptions_error( "Inconsistent boxes", "NFunction.transitionElementFromNFunction()" )
 			end if
 		end if
 		
 #if __ID_TYPE__ == 1
-		output = sum( conjg(this.fArray)*oper.fArray*this.fArray )*this.xGrid.dV()
+		output = sum( conjg(this.fArray)*oper.fArray*func2.fArray )*this.xGrid.dV()
 #else
-		output = sum( this.fArray*oper.fArray*this.fArray )*this.xGrid.dV()
+		output = sum( this.fArray*oper.fArray*func2.fArray )*this.xGrid.dV()
 #endif
-	end function expectationValueFromNFunction
+	end function transitionElementFromNFunction
 	
 	!>
 	!! @brief 
 	!!
-	function expectationValueFromRArray( this, oper, checkBox, factor ) result( output )
+	function transitionElementFromRArray( this, oper, func2, checkBox, factor ) result( output )
 		class(NFunction), intent(in) :: this
 		real(8), intent(in) :: oper(:)
+		class(NFunction), intent(in) :: func2
 		logical, optional, intent(in) :: checkBox
 		real(8), optional, intent(in) :: factor
 		__TYPE_VALUE__ :: output
@@ -1648,7 +1655,7 @@
 		if( present(factor) ) effFactor = factor
 		
 		if( effCheckBox ) then
-			if( this.nPoints() /= size(oper) ) then
+			if( this.nPoints() /= size(oper) .or. func2.nPoints() /= size(oper) ) then
 				call GOptions_error( &
 					"Inconsistent boxes", &
 					"NFunction.expectationValueFromRArray()", &
@@ -1658,18 +1665,19 @@
 		end if
 		
 #if __ID_TYPE__ == 1
-		output = effFactor*sum( conjg(this.fArray)*oper*this.fArray )*this.xGrid.dV()
+		output = effFactor*sum( conjg(this.fArray)*oper*func2.fArray )*this.xGrid.dV()
 #else
-		output = effFactor*sum( this.fArray*oper*this.fArray )*this.xGrid.dV()
+		output = effFactor*sum( this.fArray*oper*func2.fArray )*this.xGrid.dV()
 #endif
-	end function expectationValueFromRArray
+	end function transitionElementFromRArray
 	
 	!>
 	!! @brief 
 	!!
-	function expectationValueFromCArray( this, oper, checkBox ) result( output )
+	function transitionElementFromCArray( this, oper, func2, checkBox ) result( output )
 		class(NFunction), intent(in) :: this
 		complex(8), intent(in) :: oper(:)
+		class(NFunction), intent(in) :: func2
 		logical, optional, intent(in) :: checkBox
 		__TYPE_VALUE__ :: output
 		
@@ -1684,7 +1692,7 @@
 		if( present(checkBox) ) effCheckBox = checkBox
 		
 		if( effCheckBox ) then
-			if( this.xGrid.nPoints /= size(oper) ) then
+			if( this.xGrid.nPoints /= size(oper) .or. func2.xGrid.nPoints /= size(oper) ) then
 				call GOptions_error( &
 					"Inconsistent boxes", &
 					"NFunction.expectationValueFromCArray()", &
@@ -1694,10 +1702,47 @@
 		end if
 		
 #if __ID_TYPE__ == 1
-		output = sum( conjg(this.fArray)*oper*this.fArray )*this.xGrid.dV()
+		output = sum( conjg(this.fArray)*oper*func2.fArray )*this.xGrid.dV()
 #else
-		output = sum( this.fArray*oper*this.fArray )*this.xGrid.dV()
+		output = sum( this.fArray*oper*func2.fArray )*this.xGrid.dV()
 #endif
+	end function transitionElementFromCArray
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromNFunction( this, oper, checkBox ) result( output )
+		class(NFunction), intent(in) :: this
+		class(NFunction), intent(in) :: oper
+		logical, optional, intent(in) :: checkBox
+		__TYPE_VALUE__ :: output
+		
+		output = this.transitionElementFromNFunction( oper, this, checkBox )
+	end function expectationValueFromNFunction
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromRArray( this, oper, checkBox, factor ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: oper(:)
+		logical, optional, intent(in) :: checkBox
+		real(8), optional, intent(in) :: factor
+		__TYPE_VALUE__ :: output
+		
+		output = this.transitionElementFromRArray( oper, this, checkBox, factor )
+	end function expectationValueFromRArray
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromCArray( this, oper, checkBox ) result( output )
+		class(NFunction), intent(in) :: this
+		complex(8), intent(in) :: oper(:)
+		logical, optional, intent(in) :: checkBox
+		__TYPE_VALUE__ :: output
+		
+		output = this.transitionElementFromCArray( oper, this, checkBox )
 	end function expectationValueFromCArray
 	
 	!>
