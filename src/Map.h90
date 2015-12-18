@@ -114,7 +114,7 @@
 		if( present(ofileName) ) then
 			call ofile.init( ofileName )
 			call this.toFStream( ofile )
-			call ofile.destroy()
+			call ofile.close()
 		else
 			call this.toFStream()
 		end if

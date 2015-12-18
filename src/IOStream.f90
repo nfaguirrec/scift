@@ -59,7 +59,6 @@ module IOStream_
 			procedure :: open => FStream_init
 			procedure :: isOpen
 			procedure :: close
-			procedure :: destroy
 			procedure :: eof => FStream_eof
 			procedure :: show
 	end type FStream
@@ -170,16 +169,13 @@ module IOStream_
 		class(FStream) :: this
 		
 		close( this.unit )
-	end subroutine close
-	
-	!>
-	!! @brief Destructor
-	!!
-	subroutine destroy( this )
-		class(FStream) :: this
 		
-		close( this.unit )
-	end subroutine destroy
+		this.name = NULL_FILENAME
+		this.extension = ""
+		this.unit = 0
+		this.status = NULL_FILENAME
+		this.access = NULL_FILENAME
+	end subroutine close
 	
 	!>
 	!! @brief Checks the end of file bit
@@ -364,13 +360,11 @@ module IOStream_
 		call ifile.init( "data/formats/XYZ" )
 		call ifile.show()
 		call ifile.showContent()
-		call ifile.destroy()
 		
 ! 		call ofile.init( "output.dat" )
 ! 	! 	call ofile.write( "Hola amigos" )
 ! 		write( ofile.unit, * ) "Hola amigos"
 ! 		call ofile.show()
-! 		call ofile.destroy()
 	end subroutine IOStream_test
 	
 end module IOStream_

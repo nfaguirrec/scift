@@ -995,7 +995,7 @@
 		
 		call ifile.init( ifileName )
 		call this.fromFStream( ifile, columns, cComments, units )
-		call ifile.destroy()
+		call ifile.close()
 	end subroutine loadDAT
 	
 	!>

@@ -340,7 +340,7 @@ module CNFunction_
 		
 ! 		call ofile.init( "salida2" )
 ! 		call nFunc.toFStream( ofile )
-! 		call ofile.destroy()
+! 		call ofile.close()
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test from array
@@ -366,7 +366,7 @@ module CNFunction_
 		call ifile.init( "data/formats/TWO_COLUMNS" )
 		call nFunc.fromFStream( ifile, columns=[1,2] )
 		call nFunc.show()
-		call ifile.destroy()
+		call ifile.close()
 		call nFunc.save( "salidaF0", format=BLKS_FORMAT )
 		
 ! 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

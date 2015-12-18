@@ -305,20 +305,20 @@ module Spline_
 		call ifile.init( "morse.dat" )
 		call nFunc.fromFStream( ifile )
 		call nFunc.show()
-		call ifile.destroy()
+		call ifile.close()
 		
 		call nFuncSpline.init( nFunc )
 		call nFuncSpline.show()
 		
 		call ofile.init( "spline.out" )
 		call nFuncSpline.save( ofile )
-		call ofile.destroy()
+		call ofile.close()
 		
 		nFuncSmooth = nFuncSpline.smooth( 10 )
 		
 		call ofile.init( "smooth.out" )
 ! 		call nFuncSmooth.toFStream( ofile )
-		call ofile.destroy()
+		call ofile.close()
 		
 ! 		call solver.init( nFuncSmooth, rMass=0.5_8*34.9689_8*amu )
 ! 		call solver.run()

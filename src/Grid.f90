@@ -224,7 +224,7 @@ module Grid_
 		this.data = data(1:nData-1)
 		
 		deallocate( data )
-		call ifile.destroy()
+		call ifile.close()
 		
 		this.min = minval(this.data)
 		this.max = maxval(this.data)
@@ -706,11 +706,11 @@ module Grid_
 		if( present(units) .and. present(ofileName) ) then
 			call ofile.init( ofileName )
 			call toFStream( this, ofile, units )
-			call ofile.destroy()
+			call ofile.close()
 		else if( present(ofileName) ) then
 			call ofile.init( ofileName )
 			call toFStream( this, ofile )
-			call ofile.destroy()
+			call ofile.close()
 		else
 			call toFStream( this )
 		end if

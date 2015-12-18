@@ -537,11 +537,11 @@ module Grid3D_
 		if( present(units) .and. present(ofileName) ) then
 			call ofile.init( ofileName )
 			call toFStream( this, ofile, units )
-			call ofile.destroy()
+			call ofile.close()
 		else if( present(ofileName) ) then
 			call ofile.init( ofileName )
 			call toFStream( this, ofile )
-			call ofile.destroy()
+			call ofile.close()
 		else
 			call toFStream( this )
 		end if

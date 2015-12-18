@@ -120,7 +120,7 @@ module Table_
 		
 		deallocate( currentRow )
 		
-		call ifile.destroy()
+		call ifile.close()
 	end subroutine fromFile
 	
 	!*
