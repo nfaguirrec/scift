@@ -181,7 +181,7 @@ module NIntegrator_
 	
 	!!>
 	!! @brief Simpson rule
-	!! \int_a^b f(x)dx = \frac{1}{3}\left[ f(x_0) + 2\sum_{i=1}^{n/2-1}f(x_{2i}) + 4\sum_{i=1}^{n/2-1}f(x_{2i-1}) + f(x_n)\right]
+	!! \int_a^b f(x)dx = \frac{h}{3}\left[ f(x_0) + 2\sum_{i=1}^{n-1}f(x_{i}) + f(x_n)\right]
 	!!
 	function simpsonRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
@@ -189,21 +189,18 @@ module NIntegrator_
 		real(8), intent(in) :: b
 		real(8) :: output
 		
-		real(8) :: sum
+		real(8) :: ssum
 		integer :: i, ia, ib
 		
 		ia = this.func.xGrid.pos( a )
 		ib = this.func.xGrid.pos( b )
 		
-		sum = this.func.at(ia)
-		
-		do i=1,ceiling((ib-ia)/2.0_8)
-			sum = sum + 2.0_8*this.func.fArray(ia+2*i-1) + 4.0_8*this.func.fArray(ia+2*i-1+1)
+		ssum = 0.0_8
+		do i=ia+1,ib-1
+			ssum = ssum + this.func.fArray(i);
 		end do
 		
-		sum = sum + this.func.at(ib)
-		
-		output = sum*this.func.xGrid.stepSize/3.0_8
+		output = (this.func.xGrid.stepSize/2.0_8)*( this.func.fArray(ia) + 2.0_8*ssum + this.func.fArray(ib) )
 	end function simpsonRule
 	
 	!>
@@ -243,14 +240,28 @@ module NIntegrator_
 		
 		call GOptions_error( "This method is not implemented yet.", "NIntegrator.simpson38Rule(a,b)" )
 	end function simpson38Rule
-
+	
+	!!>
+	!! @brief Simpson rule
+	!! \int_a^b f(x)dx = h\left[ 2*f(x_0) + \sum_{i=1}^{n-1}f(x_{i}) + 2*f(x_n)\right]
 	function trapezoidalRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
 		real(8), intent(in) :: a
 		real(8), intent(in) :: b
 		real(8) :: output
 		
-		call GOptions_error( "This method is not implemented yet.", "NIntegrator.trapezoidalRule(a,b)" )
+		real(8) :: ssum
+		integer :: i, ia, ib
+		
+		ia = this.func.xGrid.pos( a )
+		ib = this.func.xGrid.pos( b )
+		
+		ssum = 0.0_8
+		do i=ia+1,ib-1
+			ssum = ssum + this.func.fArray(i);
+		end do
+		
+		output = this.func.xGrid.stepSize*( 2.0_8*this.func.fArray(ia) + ssum + 2.0_8*this.func.fArray(ib) )
 	end function trapezoidalRule
 
 	function fixedQuadratureRule( this, a, b ) result( output )
@@ -289,19 +300,19 @@ module NIntegrator_
 		real(8), intent(in) :: b
 		real(8) :: output
 		
-		real(8) :: sum
+		real(8) :: ssum
 		integer :: i, ia, ib
 		
 		ia = this.func.xGrid.pos( a )
 		ib = this.func.xGrid.pos( b )
 		
-		sum = 0.0_8
-		do i=1,ib-ia,4
-				sum = sum + 14.0_8*this.func.fArray(ia+i) + 64.0_8*this.func.fArray(ia+i+1) &
-					+ 24.0_8*this.func.fArray(ia+i+2) + 64.0_8*this.func.fArray(ia+i+3) + 14.0_8*this.func.fArray(ia+i+4)
+		ssum = 0.0_8
+		do i=ia,ib-4,4
+			ssum = ssum + 7.0_8*this.func.fArray(i) + 32.0_8*this.func.fArray(i+1) &
+					+ 12.0_8*this.func.fArray(i+2) + 32.0_8*this.func.fArray(i+3) + 7.0_8*this.func.fArray(i+4)
 		end do
 		
-		output = sum*this.func.xGrid.stepSize/45.0_8
+		output = ssum*2.0_8*this.func.xGrid.stepSize/45.0_8
 	end function booleRule
 	
 	!>

@@ -768,7 +768,7 @@ module Grid_
 		real(8), intent(in) :: x
 		integer :: output
 		
-		output = (x-this.min)/this.stepSize+1
+		output = nint((x-this.min)/this.stepSize)+1
 	end function pos
 	
 	!>

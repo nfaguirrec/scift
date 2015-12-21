@@ -21,12 +21,28 @@ program main
 	type(String) :: strBuffer
 	type(CommandLineParser) :: parser
 	
+	integer :: argc
 	character(5), allocatable :: tokens(:)
 	integer :: columns(2)
 	integer :: smoothFactor
 	integer :: i
 	real(8) :: a, b
 	integer :: idMethod
+	
+	argc = command_argument_count()
+	
+	if( argc < 2 ) then
+		write(*,"(X,A)") "Usage:"
+		write(*,"(X,A)") "   n1df.integrate -i ifile [-c columns] [-s smoothFactor] [-a lowerLimit] [-b upperLimit] [-m method]"
+		write(*,"(X,A)") "                                   1,2                 1          min(x)          max(x)       BOOLE"
+		write(*,"(X,A)") ""
+		write(*,"(X,A)") "                                                                                               SIMPSON"
+		write(*,"(X,A)") "                                                                                               SIMPSON38"
+		write(*,"(X,A)") "                                                                                               TRAPEZOIDAL"
+		write(*,"(X,A)") "                                                                                               FIXED_QUADRATURE"
+		write(*,"(X,A)") "                                                                                               ADAPTIVE_QUADRATURE"
+		stop
+	end if
 	
 	iFileName = parser.getString( "-i" )
 	
@@ -38,7 +54,7 @@ program main
 	
 	call ifile.init( iFileName.fstr )
 	call nFunc.fromFStream( ifile, columns=columns )
-	call ifile.destroy()
+	call ifile.close()
 	
 	a = parser.getReal( "-a", def=nFunc.min() )
 	b = parser.getReal( "-b", def=nFunc.max() )
