@@ -23,21 +23,32 @@ program main
 	real(8) :: rValue
 	integer :: fileType
 	logical :: describe
+	integer :: argc
+	
+	argc = command_argument_count()
+	
+	if( argc < 2 ) then
+		write(*,"(X,A)") "Usage:"
+		write(*,"(X,A)") "   n3df.eval -i ifile [-s true/false] [-xyz xval,yval,zval] [-line xval,zval,dir] [-smooth smoothFactor]"
+		write(*,"(X,A)") ""
+		stop
+	end if
 	
 	iFileName = parser.getString( "-i" )
 	
 ! 	write(0,"(A)",advance="no") "Reading file "//trim(iFileName.fstr)//" ... "
 	
-	fileType = cNFunc.checkTypeN3DF( iFileName.fstr )
+! 	fileType = cNFunc.checkTypeN3DF( iFileName.fstr )
+	fileType = 0
 	
-	if( fileType == 0 ) then
+! 	if( fileType == 0 ) then
 		call rNFunc.init( iFileName.fstr )
-	else if( fileType == 1 ) then
-		call cNFunc.init( iFileName.fstr )
-	else
-		write(0,*) "### ERROR ### unknown format for "//trim(iFileName.fstr)
-		stop
-	end if
+! 	else if( fileType == 1 ) then
+! 		call cNFunc.init( iFileName.fstr )
+! 	else
+! 		write(0,*) "### ERROR ### unknown format for "//trim(iFileName.fstr)
+! 		stop
+! 	end if
 		
 ! 	write(0,"(A)") "OK"
 	
