@@ -154,7 +154,7 @@ program main
 	
 	call ifile.init( iFileName.fstr )
 	call nFunc.fromFStream( ifile, columns=columns )
-	call ifile.destroy()
+	call ifile.close()
 	
 	if( idTypeOfSpectrum /= -1 ) then
 		

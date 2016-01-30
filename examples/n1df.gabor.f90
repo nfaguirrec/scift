@@ -299,7 +299,7 @@ program main
 	
 	call ifile.init( iFileName.fstr )
 	call nFunc.fromFStream( ifile, columns=columns )
-	call ifile.destroy()
+	call ifile.close()
 	
 	if( nPoints == -1 ) nPoints = nFunc.nPoints()
 	

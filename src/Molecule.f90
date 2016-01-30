@@ -1461,11 +1461,7 @@ module Molecule_
 			ssum = ssum - charge
 		end if
 		
-		if( Math_isEven( ssum ) ) then
-			output = 1
-		else
-			output = 3
-		end if
+		output = int( mod(ssum,2) + 1.0_8 )
 	end function minSpinMultiplicity
 	
 	!>

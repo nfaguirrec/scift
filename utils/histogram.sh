@@ -140,6 +140,11 @@ EOF
 	
 	gnuplot -p .plot$$
 	
+	if [ -n "$oDataFile" ]
+	then
+		cat .data$$ > $oDataFile
+	fi
+	
 # 	rm .data$$ .plot$$ .tmpFile1$$ .tmpFile$$
 	rm .data$$ .plot$$ .tmpFile$$
 }
@@ -194,9 +199,6 @@ function hist2D()
 		yb='`echo $min2`'
 		ye='`echo $max2`'
 		hy='`echo $h2`'
-		
-# 		print xb, xe, hx
-# 		print yb, ye, hy
 	}
 
 	{
@@ -234,11 +236,21 @@ function hist2D()
 			for( ny=0; y<=ye; ny++ ){
 				y = yb + ny*hy
 				
-				if( (nx,ny) in mymap )
-# 					printf "%20.10f%20.10f%20.10f\n", x, y, mymap[nx,ny]/(hx*hy*sum)
-					printf "%20.10f%20.10f%20.10f\n", x, y, mymap[nx,ny]
-				else
-					printf "%20.10f%20.10f%20.10f\n", x, y, 0.0
+				if( "'`echo $type`'" == "freq" ){
+				
+					if( (nx,ny) in mymap )
+						printf "%20.10f%20.10f%20.10f\n", x, y, mymap[nx,ny]/(hx*hy*sum)
+					else
+						printf "%20.10f%20.10f%20.10f\n", x, y, 0.0
+						
+				}else if( "'`echo $type`'" == "counts" ){
+				
+					if( (nx,ny) in mymap )
+						printf "%20.10f%20.10f%20.10f\n", x, y, mymap[nx,ny]
+					else
+						printf "%20.10f%20.10f%20.10f\n", x, y, 0.0
+						
+				}
 			}
 			
 			print ""
@@ -312,6 +324,11 @@ pause -1
 EOF
 
 	gnuplot -p .plot$$
+	
+	if [ -n "$oDataFile" ]
+	then
+		cat .data$$ > $oDataFile
+	fi
 
 	rm .data$$ .plot$$ .tmpFile$$
 }
@@ -323,8 +340,9 @@ function main()
 	local nbars="30,30"
 	local type="freq"
 	local dimensions="1"
+	local oDataFile=""
 	
-	while getopts "f:c:n:t:d:h" OPTNAME
+	while getopts "f:c:n:t:d:hs:" OPTNAME
 	do
 		case $OPTNAME in
 			f)
@@ -347,6 +365,9 @@ function main()
 				;;
 			d)
 				dimensions=$OPTARG
+				;;
+			s)
+				oDataFile=$OPTARG
 				;;
 			h)
 				usage
