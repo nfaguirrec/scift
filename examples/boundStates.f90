@@ -70,7 +70,7 @@ program boundStates
 ! 	call nFunc.fromFStream( ifile, columns=columns, units=[angs,cm1] )
 	call nFunc.fromFStream( ifile, columns=columns )
 ! 	call nFunc.show()
-	call ifile.destroy()
+	call ifile.close()
 	
 	call nFuncSpline.init( nFunc )
 	nFuncSmooth = nFuncSpline.smooth( smoothFactor )

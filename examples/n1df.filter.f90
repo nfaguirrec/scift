@@ -39,7 +39,7 @@ program main
 	
 	call ifile.init( iFileName.fstr )
 	call nFunc.fromFStream( ifile, columns=columns )
-	call ifile.destroy()
+	call ifile.close()
 	
 ! 	call oFunc.init( nFunc.xGrid, value=0.0_8 )
 	call oFunc.init( nFunc.xGrid )

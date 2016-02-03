@@ -89,8 +89,8 @@ module Table_
 		
 		call ifile.init( fileName )
 		
-		allocate( rawData( ifile.numberOfLines, ifile.maxRows ) )
-		allocate( currentRow(ifile.maxRows) )
+		allocate( rawData( ifile.numberOfLines, ifile.minNColumns ) )
+		allocate( currentRow(ifile.minNColumns) )
 		
 		nCol = 1
 		do while( .not. ifile.eof() )

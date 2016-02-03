@@ -61,6 +61,9 @@ class Spectrum:
 			
 		i=0
 		for line in ifile:
+			if( len(line) <= 1 ):
+				continue
+			
 			tokens = line.split()
 			
 			if( len(tokens) > 1 ):

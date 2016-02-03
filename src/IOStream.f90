@@ -68,11 +68,13 @@ module IOStream_
 	!!
 	type, public, extends ( FStream ) :: IFStream
 		integer :: numberOfLines = 0
-		integer :: maxRows = 0
+		integer :: minNColumns = 0
+		integer :: maxNColumns = 0
 		integer :: currentLine = 0
 		
 		contains
 			procedure :: scan => IFStream_scan
+			procedure :: rewind => IFStream_rewind
 			procedure :: readLine => IFStream_readLine
 			procedure :: peek => IFStream_peek
 			procedure :: showContent => IFStream_showContent
@@ -220,9 +222,13 @@ module IOStream_
 				fmt = int(log10(1.0*this.numberOfLines+1))+1
 				write(STDOUT, "(i<fmt>)", advance="no") this.numberOfLines
 				
-				write(STDOUT, "(a)", advance="no") ",maxRows="
-				fmt = int(log10(1.0*this.maxRows+1))+1
-				write(STDOUT, "(i<fmt>)", advance="no") this.maxRows
+				write(STDOUT, "(a)", advance="no") ",minNColumns="
+				fmt = int(log10(1.0*this.minNColumns+1))+1
+				write(STDOUT, "(i<fmt>)", advance="no") this.minNColumns
+				
+				write(STDOUT, "(a)", advance="no") ",maxNColumns="
+				fmt = int(log10(1.0*this.maxNColumns+1))+1
+				write(STDOUT, "(i<fmt>)", advance="no") this.maxNColumns
 		end select
 
 		write(STDOUT, "(a)", advance="no") ">"
@@ -247,7 +253,8 @@ module IOStream_
 		else
 			this.numberOfLines = -1
 			iostat = 1
-			this.maxRows = -1
+			this.maxNColumns = -1
+			this.minNColumns = 1000
 			do while( iostat /= -1 )
 				this.numberOfLines = this.numberOfLines + 1
 				read( this.unit, "(a)", iostat=iostat ) buffer
@@ -255,8 +262,12 @@ module IOStream_
 				call strBuffer.init( trim(buffer) )
 				call strBuffer.split( tokens, " " )
 				
-				if( this.maxRows < size(tokens) ) then
-					this.maxRows = size(tokens)
+				if( this.minNColumns > size(tokens) ) then
+					this.minNColumns = size(tokens)
+				end if
+				
+				if( this.maxNColumns < size(tokens) ) then
+					this.maxNColumns = size(tokens)
 				end if
 				
 				deallocate( tokens )
@@ -265,6 +276,15 @@ module IOStream_
 		
 		close( unit=this.unit )
 	end subroutine IFStream_scan
+	
+	!>
+	!! @brief
+	!!
+	subroutine IFStream_rewind( this )
+		class(IFStream) :: this
+		
+		rewind( unit=this.unit )
+	end subroutine IFStream_rewind
 	
 	!>
 	!! @brief Extract information from the file i.e. numberOfLines
