@@ -131,6 +131,9 @@
 			procedure :: interpolatePoint
 			procedure :: interpolateOnGrid
 			
+			generic :: nearestValue => nearestValuePoint
+			procedure :: nearestValuePoint
+			
 			__ADD_METHODS__
 	end type NFunction
 	
@@ -2183,4 +2186,30 @@
 		deallocate( dArray )
 	end function interpolateOnGrid
 	
+	!>
+	!! @brief
+	!!
+	function nearestValuePoint( this, x ) result( output )
+		class(NFunction), intent(in) :: this
+		real(8), intent(in) :: x
+		__TYPE_VALUE__ :: output
+		
+		integer :: ix, iy, iz
+		
+		if( .not. this.xGrid.isEquallyspaced ) then
+			call GOptions_error( &
+				"This subroutine is not available for functions wich are not equally spaced", &
+				"NFunction.nearestValue()" &
+			)
+		end if
+		
+		! Map x to a point dx in the grid [1,n]
+		ix = floor( 1.0000001*(x-this.xGrid.min)/this.xGrid.stepSize+1.0 )
+		
+		if( ix < 1 .or. ix > this.xGrid.nPoints ) then
+			output = 0.0_8
+		else
+			output = this.fArray(ix)
+		end if
+	end function nearestValuePoint
 #endif
