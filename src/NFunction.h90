@@ -131,6 +131,8 @@
 			procedure :: interpolatePoint
 			procedure :: interpolateOnGrid
 			
+			procedure :: derivative
+			
 			generic :: nearestValue => nearestValuePoint
 			procedure :: nearestValuePoint
 			
@@ -2185,6 +2187,37 @@
 		
 		deallocate( dArray )
 	end function interpolateOnGrid
+	
+	!>
+	!! @brief Returns the numeric value of the derivative of the function evaluated in the same xgrid
+	!!
+	!! @input stencil  Number of points that will be used to approximate the derivative (default=3)
+	!! @input order  order of the derivative (default = 1)
+	!!
+	function derivative( this, stencil, order ) result( output )
+		class(NFunction) :: this
+		integer, optional, intent(in) :: stencil
+		integer, optional, intent(in) :: order
+		type(NFunction) :: output
+		
+		integer :: effOrder
+		
+		__TYPE_VALUE__, allocatable :: dArray(:)
+		integer :: i
+		
+		effOrder = 1
+		if( present(order) ) effOrder = order
+		
+		allocate( dArray(this.xGrid.nPoints) )
+		
+		do i=1,this.xGrid.nPoints
+			dArray(i) = this.interpolatePoint( this.xGrid.at(i), stencil, effOrder )
+		end do
+		
+		call output.fromGridArray( this.xGrid, dArray )
+		
+		deallocate( dArray )
+	end function derivative
 	
 	!>
 	!! @brief
