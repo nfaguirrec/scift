@@ -56,7 +56,7 @@ program main
 		
 		call iFile.init( iFileName.fstr )
 		call nFunc.fromFStream( iFile, columns=columns )
-		call iFile.destroy()
+		call iFile.close()
 	end if
 	
 	call pFinder.init( nFunc, method, windowSize, tolerance, bandwidth )
