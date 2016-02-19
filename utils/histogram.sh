@@ -26,7 +26,7 @@
 
 function usage(){
         echo "Usage:"
-        echo "   $ histogram.sh -f file -c columns [-n nbars] [-t type] [-d dimensions] [-h]"
+        echo "   $ histogram.sh -f file -c columns [-n nbars] [-t type] [-d dimensions] [-h] [-s file]"
         echo ""
         echo "   -f file"
         echo "      Input file name"
@@ -42,6 +42,10 @@ function usage(){
         echo "   -d dimensions"
         echo "      Number of dimensions"
         echo "      (default: 1)"
+        echo "   -s file"
+        echo "      Saves histrogram in file"
+        echo "   -x "
+        echo "      No plot"
         echo "   -h"
         echo "      This will print this same message"
         echo ""
@@ -135,10 +139,15 @@ function hist1D()
 		set boxwidth bw absolute
 		set y2range [0:]
 		plot [$min-2*bw:$max+2*bw] [0:] ".data$$" i 0 u 1:2 w boxes  #, ".data$$" w p
-		pause -1
+		
 EOF
+
+	if [ "$SHOW_PLOT" = "TRUE" ]
+	then
+		echo "pause -1" >> .plot$$
+	fi
 	
-	gnuplot -p .plot$$
+	gnuplot .plot$$
 	
 	if [ -n "$oDataFile" ]
 	then
@@ -320,10 +329,14 @@ plot \
 
 # unset multiplot
 
-pause -1
 EOF
 
-	gnuplot -p .plot$$
+	if [ "$SHOW_PLOT" = "TRUE" ]
+	then
+		echo "pause -1" >> .plot$$
+	fi
+
+	gnuplot .plot$$
 	
 	if [ -n "$oDataFile" ]
 	then
@@ -342,7 +355,9 @@ function main()
 	local dimensions="1"
 	local oDataFile=""
 	
-	while getopts "f:c:n:t:d:hs:" OPTNAME
+	SHOW_PLOT="TRUE"
+	
+	while getopts "f:c:n:t:d:hs:x" OPTNAME
 	do
 		case $OPTNAME in
 			f)
@@ -368,6 +383,9 @@ function main()
 				;;
 			s)
 				oDataFile=$OPTARG
+				;;
+			x)
+				SHOW_PLOT="FALSE"
 				;;
 			h)
 				usage

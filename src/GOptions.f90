@@ -27,7 +27,6 @@
 !! @brief
 !!
 module GOptions_
-	use UnitsConverter_
 	use IOStream_
 	use Timer_
 	

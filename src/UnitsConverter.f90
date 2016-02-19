@@ -74,6 +74,7 @@
 
 !!! Será renombrada UnitsManager
 module UnitsConverter_
+	use GOptions_
 	use String_
 ! 	use StringRealPair_
 ! 	use StringRealMap_
@@ -117,15 +118,15 @@ module UnitsConverter_
 		"bohr", &
 		"g", &
 		"kg", &
-		"m_au", &
-		"e_au", &
+		"au", &
 		"Eh", &
 		"Ha", &
 		"deg", &
 		"kelvin", &
 		"fs", &
 		"ps", &
-		"nm" &
+		"nm", &
+		"microm" &
 	]
 	
 	real(8), private, parameter :: UnitsConverter_VALUE(UnitsConverter_NUNITS) = [ &
@@ -139,8 +140,7 @@ module UnitsConverter_
 		1.0_8, &                                   ! bohr
 		1.0_8/1.660538782e-24, &                   ! g    <<<<<<<<<<< Verificar
 		1.0_8/1.660538782e-27, &                   ! kg   <<<<<<<<<<< Verificar
-		1.0_8, &                                   ! m_au
-		1.0_8, &                                   ! e_au
+		1.0_8, &                                   ! au
 		1.0_8, &                                   ! Eh
 		1.0_8, &                                   ! Ha
 		acos(-1.0_8)/180.0_8, &                    ! deg
@@ -148,7 +148,8 @@ module UnitsConverter_
 ! 		1.0/0.02418884326505_8 &                   ! fs
 		1.0d-15*1.0/2.418884326505d-17, &          ! fs
 		1.0d-12*1.0/2.418884326505d-17, &          ! ps
-		10.0_8/0.52917726_8 &                      ! nm
+		10.0_8/0.52917726_8, &                     ! nm
+		1.0d3*10.0_8/0.52917726_8 &                ! microm
 	]
 
 	real(8), public, parameter :: amu       =   UnitsConverter_VALUE(1)
@@ -161,15 +162,15 @@ module UnitsConverter_
 	real(8), public, parameter :: bohr      =   UnitsConverter_VALUE(8)
 	real(8), public, parameter :: g         =   UnitsConverter_VALUE(9)
 	real(8), public, parameter :: kg        =   UnitsConverter_VALUE(10)
-	real(8), public, parameter :: m_au      =   UnitsConverter_VALUE(11)
-	real(8), public, parameter :: e_au      =   UnitsConverter_VALUE(12)
-	real(8), public, parameter :: Eh        =   UnitsConverter_VALUE(13)
-	real(8), public, parameter :: Ha        =   UnitsConverter_VALUE(14)
-	real(8), public, parameter :: deg       =   UnitsConverter_VALUE(15)
-	real(8), public, parameter :: kelvin    =   UnitsConverter_VALUE(16)
-	real(8), public, parameter :: fs        =   UnitsConverter_VALUE(17)
-	real(8), public, parameter :: ps        =   UnitsConverter_VALUE(18)
-	real(8), public, parameter :: nm        =   UnitsConverter_VALUE(19)
+	real(8), public, parameter :: au        =   UnitsConverter_VALUE(11)
+	real(8), public, parameter :: Eh        =   UnitsConverter_VALUE(12)
+	real(8), public, parameter :: Ha        =   UnitsConverter_VALUE(13)
+	real(8), public, parameter :: deg       =   UnitsConverter_VALUE(14)
+	real(8), public, parameter :: kelvin    =   UnitsConverter_VALUE(15)
+	real(8), public, parameter :: fs        =   UnitsConverter_VALUE(16)
+	real(8), public, parameter :: ps        =   UnitsConverter_VALUE(17)
+	real(8), public, parameter :: nm        =   UnitsConverter_VALUE(18)
+	real(8), public, parameter :: microm    =   UnitsConverter_VALUE(19)
 	
 	contains
 	
@@ -188,6 +189,8 @@ module UnitsConverter_
 				return
 			end if
 		end do
+		
+		if( len_trim(name) > 0 ) call GOptions_warning( "Unknown unit ("//trim(name)//")", "UnitsConverter.sUnit()" )
 		
 		output = 1.0_8
 	end function sUnit

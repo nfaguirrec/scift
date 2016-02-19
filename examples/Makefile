@@ -1,6 +1,6 @@
 MAKEFLAGS = -s
 FC = ifort
-FCFLAGS = -traceback -w -I. -fpp -I../src -mkl -g
+FCFLAGS = -static -static-intel -static-libgcc -mkl -traceback -w -I. -fpp -g -I../src
 LDFLAGS = -L../src -lscift
 TLIB = 
 
