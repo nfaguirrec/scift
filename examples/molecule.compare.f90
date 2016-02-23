@@ -2,6 +2,7 @@
 !! @brief Test program
 !!
 program main
+	use UnitsConverter_
 	use String_
 	use Matrix_
 	use Molecule_
@@ -13,6 +14,9 @@ program main
 	real(8) :: alpha
 	type(Matrix) :: I1, I2, Idiff, Isum
 	real(8) :: value
+	
+	real(8) :: R1, R2
+! 	integer, allocatable :: conn1(:,:), conn2(:,:)
 	
 	if( command_argument_count() < 2 ) then
 		write(*,*) "## ERROR ##"
@@ -53,15 +57,34 @@ program main
 		write(*,*) "Failed", value
 	end if
 	
-	write(*,"(A)", advance="no") "Connectivity ... "
+	write(*,"(A)", advance="no") "Radius ... "
+	R1 = mol1.radius()
+	R2 = mol2.radius()
 	
-	if ( mol1.nAtoms() /= 1 .or. mol2.nAtoms() /= 1 ) then
-		if( mol1.compareConnectivity( mol2, alpha ) ) then
-			write(*,*) "OK"
-		else
-			write(*,*) "Failed"
-		end if
+	value = abs( R1-R2 )
+	if( value < 0.5_8*angs ) then
+		write(*,*) "OK", value
 	else
-		write(*,*) "OK"
+		write(*,*) "Failed", value
 	end if
+	
+! 	write(*,"(A)", advance="no") "Connectivity ... "
+! 	
+! 	if ( mol1.nAtoms() /= 1 .or. mol2.nAtoms() /= 1 ) then
+! 		if( mol1.compareConnectivity( mol2, alpha ) ) then
+! 			write(*,*) "OK"
+! 		else
+! 			write(*,*) "Failed"
+! 		end if
+! 	else
+! 		write(*,*) "OK"
+! 	end if
+! 	
+! 	call mol1.connectivity( conn1, alpha )
+! 	call mol2.connectivity( conn2, alpha )
+! 	
+! 	write(*,"(A,<size(conn1,dim=1)>I5)") "conn1a = ", conn1(:,1)
+! 	write(*,"(A,<size(conn1,dim=1)>I5)") "conn1b = ", conn1(:,2)
+! 	write(*,"(A,<size(conn2,dim=1)>I5)") "conn2a = ", conn2(:,1)
+! 	write(*,"(A,<size(conn2,dim=1)>I5)") "conn2b = ", conn2(:,2)
 end program main

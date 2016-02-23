@@ -1423,9 +1423,12 @@ module Molecule_
 		allocate( patter(this.nAtoms()*this.nAtoms(),2) )
 		
 		k=1
-		do i=1,this.nAtoms()-1
-			do j=i+1,this.nAtoms()
-				if( this.atoms(i).isConnectedWith( this.atoms(j), alpha ) ) then
+! 		do i=1,this.nAtoms()-1
+! 			do j=i+1,this.nAtoms()
+! 				if( this.atoms(i).isConnectedWith( this.atoms(j), alpha ) ) then
+		do i=1,this.nAtoms()
+			do j=1,this.nAtoms()
+				if( i /= j .and. this.atoms(i).isConnectedWith( this.atoms(j), alpha ) ) then
 					patter( k, : ) = [ i, j ]
 					k = k+1
 				end if
