@@ -93,6 +93,7 @@ module GOptions_
 		enumerator :: FourierTransform_WINDOW_COS
 		enumerator :: FourierTransform_WINDOW_GAUSS
 		enumerator :: FourierTransform_WINDOW_ERF_TOPHAT
+		enumerator :: FourierTransform_WINDOW_FLATTOP
 	end enum
 	
 	!---------------------------------------------------------------------------

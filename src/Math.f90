@@ -52,6 +52,7 @@ module Math_
 		Math_sinc, &
 		Math_nsinc, &
 		Math_erfTophat, &
+		Math_flatTopWindow, &
 		Math_average, &
 		Math_stdev, &
 		Math_floorDivision, &
@@ -734,6 +735,25 @@ module Math_
 			output = 0.5-0.5*erf( 4.0*(t-(t0+w/2+dw/2))/dw )
 		end if
 	end function Math_erfTophat
+	
+	!>
+	!! @brief
+	!! @input t Independent variable (time)
+	!! @input t0 Position of its center
+	!! @input w width of the window
+	!!
+	function Math_flatTopWindow( t, t0, w ) result( output )
+		real(8) :: t
+		real(8) :: t0
+		real(8) :: w
+		real(8) :: output
+		
+		output = 0.0_8
+		if ( t>=t0-w/2 .and. t<=t0+w/2 ) then
+			output = 1d-9*( 215578947.0 + 416631580.0*cos(2.0*Math_PI*(t-t0)/w) + 277263158.0*cos(4.0*Math_PI*(t-t0)/w)\
+					+83578947.0*cos(6.0*Math_PI*(t-t0)/w) + 6947368.0*cos(8.0*Math_PI*(t-t0)/w) )
+		end if
+	end function Math_flatTopWindow
 	
 	!>
 	!! @brief

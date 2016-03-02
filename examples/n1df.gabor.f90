@@ -314,7 +314,7 @@ program main
 	n = 1
 	t = nFunc.xGrid.min!+3.0_8*sigma
 	do while( t <= nFunc.xGrid.max )!-3.0_8*sigma )
-		write(*,"(A,F10.5,A)", advance="no") "Generating ", t, " ... "
+		write(*,"(A,F10.6,A)", advance="no") "Generating ", t, " ... "
 		
 		call nFuncWindow.fromFunction( nFunc.xGrid, window )
 		
@@ -323,7 +323,8 @@ program main
 		spectrum = FourierTransform_spectrum( nFunc2, sgn=fftSgn, type=idTypeOfSpectrum, method=idTypeOfMethod )
 		
 ! 		if( mod(n-1,this.cFunction(keyFunc).tFileFrequency) == 0 ) then
-			oFileName = trim(dirName.fstr)//"/"//trim(FString_fromInteger(n-1,format="(I0.5)"))//trim(ext.fstr)
+! 			oFileName = trim(dirName.fstr)//"/"//trim(FString_fromInteger(n-1,format="(I0.5)"))//trim(ext.fstr)
+			oFileName = trim(dirName.fstr)//"/"//trim(adjustl(FString_fromReal(t,format="(F20.6)")))//trim(ext.fstr)
 			
 			if( isXRange ) then
 				call spectrum.save( oFileName.fstr, metadata="time = "//trim(FString_fromReal(t)), xrange=xrange )

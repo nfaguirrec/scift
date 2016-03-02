@@ -1621,6 +1621,8 @@ module FourierTransform_
 				effParam = 4.0_8
 			case( FourierTransform_WINDOW_ERF_TOPHAT )
 				effParam = 0.2_8
+			case( FourierTransform_WINDOW_FLATTOP )
+				effParam = 0.0_8
 		end select
 		
 		if( window.param > 0.0 ) effParam = window.param
@@ -1671,6 +1673,21 @@ module FourierTransform_
 				
 				do i=1,nPoints
 					windowValue = Math_erfTophat( iFunc.xGrid.at(i), t0, w, dw )
+					call oFunc.set( i, oFunc.at(i)*windowValue )
+					
+					if( useOFile ) write(32,*) iFunc.xGrid.at(i), windowValue
+				end do
+				
+			case( FourierTransform_WINDOW_FLATTOP )
+				
+				if( effCentered ) then
+					w = 2.0_8*range
+				else
+					w = range
+				end if
+				
+				do i=1,nPoints
+					windowValue = Math_flatTopWindow( iFunc.xGrid.at(i), t0, w )
 					call oFunc.set( i, oFunc.at(i)*windowValue )
 					
 					if( useOFile ) write(32,*) iFunc.xGrid.at(i), windowValue

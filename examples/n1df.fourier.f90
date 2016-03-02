@@ -145,6 +145,9 @@ program main
 		case( "ERF_TOPHAT" )
 			idTypeWindow = FourierTransform_WINDOW_ERF_TOPHAT
 			paramWindow = parser.getReal( "-pw", def=0.2_8 )
+		case( "FLATTOP" )
+			idTypeWindow = FourierTransform_WINDOW_FLATTOP
+			paramWindow = parser.getReal( "-pw", def=0.0_8 )
 	end select
 	
 	centeredWindow = parser.getLogical( "-cw", def=.false. )
