@@ -301,10 +301,10 @@ Table.o table_.mod: Table.f90 string_.mod iostream_.mod
 	echo -n 'Building Table.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c Table.f90
 
-test: test.f90 Math.o RNFunction.o GOptions.o Timer.o NIntegrator.o Grid.o String.o IOStream.o math_.mod rnfunction_.mod goptions_.mod timer_.mod nintegrator_.mod grid_.mod string_.mod iostream_.mod
+test: test.f90 Math.o RandomUtils.o Matrix.o math_.mod randomutils_.mod matrix_.mod
 	fmake
 	echo -n 'Building test.f90 '
-	time -f "(%E)" $(FC) $(FCFLAGS) test.f90 Math.o RNFunction.o GOptions.o Timer.o NIntegrator.o Grid.o String.o IOStream.o -o test $(LDFLAGS)
+	time -f "(%E)" $(FC) $(FCFLAGS) test.f90 Math.o RandomUtils.o Matrix.o -o test $(LDFLAGS)
 
 ThrularNumerovMethod.o thrularnumerovmethod_.mod: ThrularNumerovMethod.f90 math_.mod rnfunction_.mod goptions_.mod timer_.mod grid_.mod string_.mod iostream_.mod
 	fmake

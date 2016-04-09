@@ -112,6 +112,7 @@ module Molecule_
 			procedure :: compareFormula
 			procedure :: compareConnectivity
 			procedure :: compareGeometry
+			procedure :: isFragmentOf
 			
 			procedure, private :: updateMassNumber
 			procedure :: massNumber
@@ -686,12 +687,13 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	subroutine randomGeometry( this, radius, maxIter, overlappingRadius, gamma )
+	subroutine randomGeometry( this, radius, maxIter, overlappingRadius, gamma, radiusType )
 		class(Molecule) :: this 
 		real(8), optional, intent(in) :: radius
 		integer, optional, intent(in) :: maxIter
 		real(8), optional, intent(in) :: overlappingRadius
 		real(8), optional, intent(in) :: gamma
+		integer, optional, intent(in) :: radiusType
 		
 		integer :: effMaxIter
 		real(8) :: effRadius
@@ -716,7 +718,7 @@ module Molecule_
 		else
 			effRadius = 0.0_8
 			do i=1,this.nAtoms()
-				effRadius = effRadius + this.atoms(i).covalentRadius()
+				effRadius = effRadius + this.atoms(i).radius( type=radiusType )
 			end do
 			effRadius = effGamma*effRadius
 		end if
@@ -725,7 +727,7 @@ module Molecule_
 		if( present(overlappingRadius) ) effOverlappingRadius = overlappingRadius
 		
 ! Testing overlap
-#define OVERLAPPING(i,j) this.atoms(i).covalentRadius()+this.atoms(j).covalentRadius()-effOverlappingRadius > norm2( rVec2-rVec1 )
+#define OVERLAPPING(i,j) this.atoms(i).radius( type=radiusType )+this.atoms(j).radius( type=radiusType )-effOverlappingRadius > norm2( rVec2-rVec1 )
 
 ! ! Sampling on "x" axis, which is the axis with inertia moment equal to cero
 ! #define RVEC_X(i) [ sample(1,i), 0.0_8, 0.0_8 ]
@@ -846,8 +848,9 @@ module Molecule_
 	!!        defined as half the largest distance between
 	!!        two molecule atoms
 	!!
-	real(8) function radius( this ) result ( output )
+	real(8) function radius( this, type ) result ( output )
 		class(Molecule) :: this
+		integer, optional :: type
 		
 		real(8) :: rij
 		real(8) :: cRadius1, cRadius2
@@ -873,15 +876,12 @@ module Molecule_
 					end do
 				end do
 				
-				cRadius1 = AtomicElementsDB_instance.covalentRadius( this.atoms(si).symbol )
-				cRadius2 = AtomicElementsDB_instance.covalentRadius( this.atoms(sj).symbol )
+				cRadius1 = this.atoms(si).radius( type=type )
+				cRadius2 = this.atoms(sj).radius( type=type )
 				
 				this.radius_ = this.radius_/2.0_8 + max( cRadius1, cRadius2 )
 			else
-				this.radius_ = AtomicElementsDB_instance.covalentRadius( this.atoms(1).symbol )
-! 				this.radius_ = 0.76720_8*angs ! <--- radio covalente del átomo de carbono
-! 				this.radius_ = 3.40_8*angs/2.0_8    ! <--- mitad del radio cero del diátomo de argon
-! 				this.radius_ = 0.97_8*angs    ! <--- radio covalente del argon
+				this.radius_ = this.atoms(1).radius( type=type )
 			end if
 			
 			this.testRadius_ = .true.
@@ -972,6 +972,18 @@ module Molecule_
 		write(6,*) "### ERROR ### Cluster.compareGeometry(). This method is not implemented yet"
 		stop
 	end function compareGeometry
+	
+	!>
+	!! @brief
+	!!
+	function isFragmentOf( this, molRef ) result( output )
+		class(Molecule), intent(in) :: this
+		class(Molecule), intent(in) :: molRef
+		logical :: output
+		
+		output = .false.
+		if( all(this.composition <= molRef.composition) ) output = .true.
+	end function isFragmentOf
 	
 	!>
 	!! @brief

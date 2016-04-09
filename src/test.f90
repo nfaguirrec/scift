@@ -37,7 +37,7 @@ program test
 ! 	use RNFunction_
 !  	use CNFunction_
 ! 	use FourierTransform_
-	use NIntegrator_
+! 	use NIntegrator_
 ! 	use NDerivator_
 ! 	use NPotentialEnergyCurve_
 ! 	use Math_
@@ -59,7 +59,7 @@ program test
 ! 	use StringRealMap_
 ! 	use IVector_
 ! 	use RVector_
-! 	use Matrix_
+	use Matrix_
 ! 	use SpecialMatrix_
 ! 	use RealHistogram_
 ! 	use StringHistogram_
@@ -90,7 +90,7 @@ program test
 ! 	call Molecule_test()
 ! 	call RNFunction_test()
 !  	call CNFunction_test()
-	call NIntegrator_test()
+! 	call NIntegrator_test()
 ! 	call NDerivator_test()
 ! 	call NPotentialEnergyCurve_test()
 ! 	call Math_test()
@@ -114,7 +114,7 @@ program test
 ! 	call StringRealMap_test()
 ! 	call IVector_test()
 ! 	call RVector_test()
-! 	call Matrix_test()
+	call Matrix_test()
 ! 	call SpecialMatrix_test()
 ! 	call RealHistogram_test()
 ! 	call StringHistogram_test()

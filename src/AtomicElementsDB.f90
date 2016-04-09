@@ -27,6 +27,7 @@
 !! @brief
 !!
 module AtomicElementsDB_
+	use GOptions_
 	use UnitsConverter_
 	use String_
 	implicit none
@@ -115,6 +116,37 @@ module AtomicElementsDB_
 			             0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00 &
 		]
 		
+	! Mainly taken from:
+	!    S. S. Batsanov. Van der Waals Radii of Elements. Inorganic Materials 37 (2001) 871
+	!    http://download.springer.com/static/pdf/639/art%253A10.1023%252FA%253A1011625728803.pdf?originUrl=http%3A%2F%2Flink.springer.com%2Farticle%2F10.1023%2FA%3A1011625728803&token2=exp=1458657684~acl=%2Fstatic%2Fpdf%2F639%2Fart%25253A10.1023%25252FA%25253A1011625728803.pdf%3ForiginUrl%3Dhttp%253A%252F%252Flink.springer.com%252Farticle%252F10.1023%252FA%253A1011625728803*~hmac=6b9748bab749f1bbd3299905115c9d1804349b2665a6a454182c877b6b911379
+	!    Table 9. Equilibrium (lower figures) van der Waals radii of elements.
+	! Rest of elements were taken from:
+	!     http://www.webelements.com/periodicity/van_der_waals_radius/
+	!     A. Bondi, J. Phys. Chem., 1964, 68, 441.
+	real(8), parameter :: VANDERWAALS_RADIUS(AtomicElementsDB_nElems) = [ &
+			 1.56,                                                                                                 1.40, &
+			 2.63, 2.23,                                                             0.00, 0.00, 0.00, 0.00, 0.00, 1.54, &
+			 2.77, 2.42,                                                             0.00, 0.00, 0.00, 0.00, 0.00, 1.88, &
+			 3.02, 2.78, 2.62, 2.44, 2.27, 2.23, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 2.02, &
+			 3.15, 2.94, 2.71, 2.57, 2.46, 2.39, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 2.16, &
+			 3.30, 3.05, 2.81, &
+			             0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, &
+			                   2.52, 2.42, 2.36, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.96, 2.02, 0.00, 0.00, 0.00, 0.00, &
+			 0.00, 0.00, 0.00, &
+			             0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00 &
+! Values from second reference
+! 			 1.20,                                                                                                 1.40, &
+! 			 1.82, 0.00,                                                             0.00, 1.70, 1.55, 1.52, 1.47, 1.54, &
+! 			 2.27, 1.73,                                                             0.00, 2.10, 1.80, 1.80, 1.75, 1.88, &
+! 			 2.75, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.63, 1.40, 1.39, 1.87, 0.00, 1.85, 1.90, 1.85, 2.02, &
+! 			 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.63, 1.72, 1.58, 1.93, 2.17, 0.00, 2.06, 1.98, 2.16, &
+! 			 0.00, 0.00, 0.00, &
+! 			             0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, &
+! 			                   0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.75, 1.66, 1.55, 1.96, 2.02, 0.00, 0.00, 0.00, 0.00, &
+! 			 0.00, 0.00, 0.00, &
+! 			             0.00, 1.86, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00 &
+		]
+		
 	type, public :: AtomicElementsDB
 		
 		contains
@@ -122,7 +154,9 @@ module AtomicElementsDB_
 			procedure :: atomicNumber
 			procedure :: atomicMass
 			procedure :: atomicMassNumber
-			procedure :: covalentRadius
+			procedure :: radius
+			procedure, private :: covalentRadius
+			procedure, private :: VanDerWaalsRadius
 			procedure :: symbol
 	end type AtomicElementsDB
 	
@@ -227,7 +261,29 @@ module AtomicElementsDB_
 	end function atomicMassNumber
 	
 	!>
-	!! @brief Returns the atomic mass of the element with symbol "symbol" in atomic units
+	!! @brief Returns the covalent radius of the element with symbol "symbol" in atomic units
+	!!
+	pure function radius( this, symbol, type ) result( R )
+		class(AtomicElementsDB), intent(in) :: this
+		character(*), intent(in) :: symbol
+		integer, optional, intent(in) :: type
+		real(8) :: R
+		
+		integer :: effType
+		
+		effType = AtomicElementsDB_COVALENT_RADIUS
+		if( present(type) ) effType = type
+		
+		select case( effType )
+			case( AtomicElementsDB_COVALENT_RADIUS )
+				R = this.covalentRadius( symbol )
+			case( AtomicElementsDB_VANDERWAALS_RADIUS )
+				R = this.VanDerWaalsRadius( symbol )
+		end select
+	end function radius
+	
+	!>
+	!! @brief Returns the covalent radius of the element with symbol "symbol" in atomic units
 	!!
 	pure function covalentRadius( this, symbol ) result( R )
 		class(AtomicElementsDB), intent(in) :: this
@@ -247,6 +303,28 @@ module AtomicElementsDB_
 			end if
 		end do
 	end function covalentRadius
+	
+	!>
+	!! @brief Returns the Van der Waals radius of the element with symbol "symbol" in atomic units
+	!!
+	pure function VanDerWaalsRadius( this, symbol ) result( R )
+		class(AtomicElementsDB), intent(in) :: this
+		character(*), intent(in) :: symbol
+		real(8) :: R
+		
+		integer :: i
+		character(255) :: upperSymb
+		
+		call upper( symbol, upperSymb )
+		
+		R = -1.0_8
+		do i=1,AtomicElementsDB_nElems
+			if( trim(adjustl(upperSymb)) == trim(adjustl(UPPERCASE_SYMBOLS(i))) ) then
+				R = VANDERWAALS_RADIUS(i)*angs
+				exit
+			end if
+		end do
+	end function VanDerWaalsRadius
 	
 	!>
 	!! @brief

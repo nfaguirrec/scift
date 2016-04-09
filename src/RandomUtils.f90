@@ -250,11 +250,12 @@ module RandomUtils_
 	!>
 	!! @brief
 	!!
-	subroutine RandomUtils_sRandomMultiset( elems, sGroups, randomItem, constrainFunction )
+	subroutine RandomUtils_sRandomMultiset( elems, sGroups, randomItem, constrainFunction, success )
 		character(10), allocatable, intent(in) :: elems(:) ! @todo Hay que cambiar character(10) por character(:) allocatable o algo así
 		integer, intent(in) :: sGroups
 		character(10), allocatable, intent(inout) :: randomItem(:)
 		procedure(prototypeMultisetConstraint) :: constrainFunction
+		logical, optional, intent(out) :: success
 		
 		integer :: i, nElems
 		integer, allocatable :: randomItemBase(:)
@@ -295,9 +296,17 @@ module RandomUtils_
 		MSConstraint => null()
 		
 		if( .not. randomMultisetLocated ) then
-			write(6,"(A)") "### ERROR ### RandomUtils_randomMultiset: It can't be located a multiset with chosen constraint"
-			write(6,"(A)") "                                   Don't forget that the constraint don't must be dependent of order of elements"
-			stop
+			if( present(success) ) then
+				success = .false.
+			else
+				write(6,"(A)") "### ERROR ### RandomUtils_sRandomMultiset: It can't be located a multiset with chosen constraint"
+				write(6,"(A)") "                                   Don't forget that the constraint don't must be dependent of order of elements"
+				stop
+			end if
+		else
+			if( present(success) ) then
+				success = .true.
+			end if
 		end if
 		
 		randomMultisetLocated = .false.
@@ -315,11 +324,12 @@ module RandomUtils_
 	!>
 	!! @brief
 	!!
-	subroutine RandomUtils_iRandomMultiset( elems, sGroups, randomItem, constrainFunction )
+	subroutine RandomUtils_iRandomMultiset( elems, sGroups, randomItem, constrainFunction, success )
 		integer, allocatable, intent(in) :: elems(:)
 		integer, intent(in) :: sGroups
 		integer, allocatable, intent(inout) :: randomItem(:)
 		procedure(prototypeMultisetConstraint) :: constrainFunction
+		logical, optional, intent(out) :: success
 		
 		integer :: i, nElems
 		integer, allocatable :: randomItemBase(:)
@@ -360,9 +370,17 @@ module RandomUtils_
 		MSConstraint => null()
 		
 		if( .not. randomMultisetLocated ) then
-			write(6,"(A)") "### ERROR ### RandomUtils_randomMultiset: It can't be located a multiset with chosen constraint"
-			write(6,"(A)") "                                   Don't forget that the constraint don't must be dependent of order of elements"
-			stop
+			if( present(success) ) then
+				success = .false.
+			else
+				write(6,"(A)") "### ERROR ### RandomUtils_iRandomMultiset: It can't be located a multiset with chosen constraint"
+				write(6,"(A)") "                                   Don't forget that the constraint don't must be dependent of order of elements"
+				stop
+			end if
+		else
+			if( present(success) ) then
+				success = .true.
+			end if
 		end if
 		
 		randomMultisetLocated = .false.

@@ -4,7 +4,7 @@ FCFLAGS = -static -static-intel -static-libgcc -mkl -traceback -w -I. -fpp -g -I
 LDFLAGS = -L../src -lscift
 TLIB = 
 
-all:  $(TLIB) boundStates molecule.chemicalFormula molecule.compare molecule.fv molecule.inertia molecule.mass molecule.minMult molecule.move molecule.orient molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.filter n1df.fourier n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n3df.convert n3df.eval n3df.func n3df.oper 
+all:  $(TLIB) boundStates molecule.chemicalFormula molecule.compare molecule.fv molecule.inertia molecule.isFragmentOf molecule.mass molecule.minMult molecule.move molecule.orient molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.evaluate n1df.filter n1df.fourier n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper 
 
 boundStates: boundStates.f90  
 	fmake
@@ -30,6 +30,11 @@ molecule.inertia: molecule.inertia.f90
 	fmake
 	echo -n 'Building molecule.inertia.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) molecule.inertia.f90  -o molecule.inertia $(LDFLAGS)
+
+molecule.isFragmentOf: molecule.isFragmentOf.f90  
+	fmake
+	echo -n 'Building molecule.isFragmentOf.f90 '
+	time -f "(%E)" $(FC) $(FCFLAGS) molecule.isFragmentOf.f90  -o molecule.isFragmentOf $(LDFLAGS)
 
 molecule.mass: molecule.mass.f90  
 	fmake
@@ -85,6 +90,11 @@ n1df.derivative: n1df.derivative.f90
 	fmake
 	echo -n 'Building n1df.derivative.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) n1df.derivative.f90  -o n1df.derivative $(LDFLAGS)
+
+n1df.evaluate: n1df.evaluate.f90  
+	fmake
+	echo -n 'Building n1df.evaluate.f90 '
+	time -f "(%E)" $(FC) $(FCFLAGS) n1df.evaluate.f90  -o n1df.evaluate $(LDFLAGS)
 
 n1df.filter: n1df.filter.f90  
 	fmake
@@ -166,6 +176,11 @@ n1df.transitionElement: n1df.transitionElement.f90
 	echo -n 'Building n1df.transitionElement.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) n1df.transitionElement.f90  -o n1df.transitionElement $(LDFLAGS)
 
+n1df.translate: n1df.translate.f90  
+	fmake
+	echo -n 'Building n1df.translate.f90 '
+	time -f "(%E)" $(FC) $(FCFLAGS) n1df.translate.f90  -o n1df.translate $(LDFLAGS)
+
 n3df.convert: n3df.convert.f90  
 	fmake
 	echo -n 'Building n3df.convert.f90 '
@@ -187,10 +202,10 @@ n3df.oper: n3df.oper.f90
 	time -f "(%E)" $(FC) $(FCFLAGS) n3df.oper.f90  -o n3df.oper $(LDFLAGS)
 
 clean:
-	rm -f *.o *.mod *~ .deps boundStates molecule.chemicalFormula molecule.compare molecule.fv molecule.inertia molecule.mass molecule.minMult molecule.move molecule.orient molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.filter n1df.fourier n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
+	rm -f *.o *.mod *~ .deps boundStates molecule.chemicalFormula molecule.compare molecule.fv molecule.inertia molecule.isFragmentOf molecule.mass molecule.minMult molecule.move molecule.orient molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.evaluate n1df.filter n1df.fourier n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
 
 distclean:
-	rm -f *.o *.mod *~ .deps Makefile boundStates molecule.chemicalFormula molecule.compare molecule.fv molecule.inertia molecule.mass molecule.minMult molecule.move molecule.orient molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.filter n1df.fourier n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
+	rm -f *.o *.mod *~ .deps Makefile boundStates molecule.chemicalFormula molecule.compare molecule.fv molecule.inertia molecule.isFragmentOf molecule.mass molecule.minMult molecule.move molecule.orient molecule.radius molecule.random molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.derivative n1df.evaluate n1df.filter n1df.fourier n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
 
 Makefile: .deps
 	fmake

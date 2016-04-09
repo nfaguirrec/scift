@@ -52,7 +52,7 @@ module Atom_
 			procedure :: str
 			procedure :: show
 			
-			procedure :: covalentRadius
+			procedure :: radius
 			procedure :: mass
 			procedure :: atomicNumber
 			procedure :: isConnectedWith
@@ -210,10 +210,11 @@ module Atom_
 	!>
 	!! @brief
 	!!
-	function isConnectedWith( this, other, alpha ) result( output )
+	function isConnectedWith( this, other, alpha, radiusType ) result( output )
 		class(Atom), intent(in) :: this
 		class(Atom), intent(in) :: other
 		real(8), optional :: alpha
+		integer, optional :: radiusType
 		logical :: output
 		
 		real(8) :: dist, cutoff
@@ -223,7 +224,7 @@ module Atom_
 		if( present(alpha) ) effAlpha = alpha
 		
 		dist = sqrt(sum((this.r - other.r)**2))
-		cutoff = AtomicElementsDB_instance.covalentRadius( this.symbol ) + AtomicElementsDB_instance.covalentRadius( other.symbol )
+		cutoff = AtomicElementsDB_instance.radius( this.symbol, type=radiusType ) + AtomicElementsDB_instance.radius( other.symbol, type=radiusType )
 		
 		if( dist <= effAlpha*cutoff .and. dist > 0.01_8 ) then
 				output = .true.
@@ -235,12 +236,13 @@ module Atom_
 	!>
 	!! @brief
 	!!
-	pure function covalentRadius( this ) result( output )
+	pure function radius( this, type ) result( output )
 		class(Atom), intent(in) :: this
+		integer, optional, intent(in) :: type
 		real(8) :: output
 		
-		output = AtomicElementsDB_instance.covalentRadius( this.symbol )
-	end function covalentRadius
+		output = AtomicElementsDB_instance.radius( this.symbol, type=type )
+	end function radius
 	
 	!>
 	!! @brief

@@ -99,6 +99,7 @@ module Matrix_
 			generic :: operator(**) => rExponentiation, rExponentiationByReal
 			
 			procedure :: eigen
+			procedure :: eigenNotSorted
 			procedure :: inverse
 			procedure :: determinant
 			procedure, private :: inverse2x2
@@ -378,6 +379,7 @@ module Matrix_
 		deallocate( workSpace )
 		deallocate( eValuesBuffer )
 	end subroutine eigen
+
 ! 	subroutine eigen( this, eVecs, eVals )
 ! 		class(Matrix), intent(in) :: this
 ! 		type(Matrix), intent(inout) :: eVecs
@@ -409,6 +411,62 @@ module Matrix_
 ! 		
 ! 		deallocate( workSpace )
 ! 	end subroutine eigen
+
+	!>
+	!! @brief
+	!!
+	subroutine eigenNotSorted( this, eValues, eVals, eVecs )
+		class(Matrix), intent(in) :: this
+		real(8), allocatable, optional, intent(inout) :: eValues(:)
+		type(Matrix), optional, intent(inout) :: eVals
+		type(Matrix), optional, intent(inout) :: eVecs
+		
+		type(Matrix) :: copyMat, eVecsBufferR, eVecsBufferL
+		real(8), allocatable :: eValuesBufferR(:), eValuesBufferL(:)
+		real(8), allocatable :: workSpace(:)
+		integer :: i, ssize, info
+		
+		if( this.type /= SQUARE_MATRIX ) then
+			write(*,*) "### ERROR ### Matrix.eigenNotSorted: matrix not square"
+			stop
+		end if
+		
+		ssize = this.nRows
+		copyMat = this
+		eVecsBufferR = this
+		eVecsBufferL = this
+		
+		allocate( eValuesBufferR(ssize) )
+		allocate( eValuesBufferL(ssize) )
+		allocate( workSpace( 4*ssize ) )
+		
+		call dgeev( 'N', 'V', ssize, copyMat.data, ssize, eValuesBufferR, eValuesBufferL, eVecsBufferL.data, ssize, eVecsBufferR.data, ssize, workSpace, 4*ssize, info )
+		
+		if ( info /= 0 ) then
+			write(*,*) "### ERROR ### Matrix.eigenNotSorted: values matrix failed"
+		end if
+		
+		if( present(eValues) ) then
+			if( allocated(eValues) ) deallocate(eValues)
+			allocate(eValues(ssize))
+			eValues = eValuesBufferR
+		end if
+		
+		if( present(eVals) ) then
+			call eVals.init( ssize, ssize, 0.0_8 )
+			do i=1,ssize
+				call eVals.set( i, i, eValuesBufferR(i) )
+			end do
+		end if
+		
+		if( present(eVecs) ) then
+			eVecs = eVecsBufferR
+		end if
+		
+		deallocate( workSpace )
+		deallocate( eValuesBufferL )
+		deallocate( eValuesBufferR )
+	end subroutine eigenNotSorted
 	
 	!>
 	!! @brief
@@ -1531,10 +1589,32 @@ module Matrix_
 		A.data(5,:) = [ -0.65,  -6.34,   2.67,   1.80,  -7.10 ]
 		
 		write(*,*) ""
+		write(*,*) " Sorted"
+		write(*,*) "--------"
+		
+		write(*,*) ""
 		write(*,*) "A ="
 		call A.show( 6, .true. )
 		
 		call A.eigen( eVecs=B, eVals=C )
+		
+		write(*,*) ""
+		write(*,*) "eigenvectors ="
+		call B.show( 6, .true. )
+		
+		write(*,*) ""
+		write(*,*) "eigenvalues ="
+		call C.show( 6, .true. )
+		
+		write(*,*) ""
+		write(*,*) " Not sorted"
+		write(*,*) "------------"
+		
+		write(*,*) ""
+		write(*,*) "A ="
+		call A.show( 6, .true. )
+		
+		call A.eigenNotSorted( eVecs=B, eVals=C )
 		
 		write(*,*) ""
 		write(*,*) "eigenvectors ="

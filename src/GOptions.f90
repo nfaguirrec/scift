@@ -51,6 +51,14 @@ module GOptions_
 	type(Timer) :: GOptions_timer
 	
 	!---------------------------------------------------------------------------
+	! AtomicElementsDB constants
+	!---------------------------------------------------------------------------
+	enum, BIND(c)
+		enumerator :: AtomicElementsDB_COVALENT_RADIUS = 0
+		enumerator :: AtomicElementsDB_VANDERWAALS_RADIUS
+	end enum
+	
+	!---------------------------------------------------------------------------
 	! FFT and FFT3D constants
 	!---------------------------------------------------------------------------
 	enum, BIND(c)
