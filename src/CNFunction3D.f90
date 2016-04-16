@@ -135,7 +135,7 @@ module CNFunction3D_
 		if( present(ofile) ) then
 			unitEff = ofile.unit
 		else
-			unitEff = STDOUT
+			unitEff = IO_STDOUT
 		end if
 		
 		write(*,*) "### ERROR ### CNFunction3D.toFStream is no implemented yet"

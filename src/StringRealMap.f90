@@ -129,7 +129,7 @@ module StringRealMap_
 		if( present(ofile) ) then
 			unitEff = ofile.unit
 		else
-			unitEff = STDOUT
+			unitEff = IO_STDOUT
 		end if
 		
 		maxLen = 0

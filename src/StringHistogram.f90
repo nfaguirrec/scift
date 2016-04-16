@@ -27,6 +27,7 @@
 !! @brief
 !!
 module StringHistogram_
+	use GOptions_
 	use String_
 	use StringList_
 	use StringIntegerMap_
@@ -40,8 +41,14 @@ module StringHistogram_
 		StringHistogram_test
 		
 	type, public, extends( StringList ) :: StringHistogram
+		integer, private :: algorithm
+		
 		type(StringIntegerMap) :: counts
 		type(StringRealMap) :: density
+		
+		! Used in algorithm = Histogram_RUNNING
+		type(StringRealMap) :: rCounts
+		integer :: totalCounts
 		
 		contains
 			generic :: init => initStringHistogram
@@ -78,8 +85,27 @@ module StringHistogram_
 	!>
 	!! @brief Constructor
 	!!
-	subroutine initStringHistogram( this )
+	subroutine initStringHistogram( this, algorithm )
 		class(StringHistogram) :: this
+		integer, optional :: algorithm
+		
+		integer :: algorithmEff
+		
+		algorithmEff = Histogram_STORING
+		if( present(algorithm) ) then
+			if( algorithm == Histogram_STORING .or. algorithm == Histogram_RUNNING ) then
+				algorithmEff = algorithm
+			else
+				call GOptions_error( "Wrong value for paramenter algorithm. Possible values Histogram_RUNNING,Histogram_STORING", "StringHistogram.initStringHistogram()" )		
+			end if
+		end if
+		
+		this.algorithm = algorithmEff
+		call this.counts.clear()
+		call this.density.clear()
+		
+		call this.rCounts.clear()
+		this.totalCounts = 0
 		
 		call this.initList()
 	end subroutine initStringHistogram
@@ -91,8 +117,13 @@ module StringHistogram_
 		class(StringHistogram), intent(out) :: this
 		class(StringHistogram), intent(in) :: other
 
+		this.algorithm = other.algorithm
+		
 		this.counts = other.counts
 		this.density = other.density
+		
+		this.rCounts = other.rCounts
+		this.totalCounts = other.totalCounts
 	end subroutine copyStringHistogram
 	
 	!>
@@ -197,7 +228,16 @@ module StringHistogram_
 		class(StringHistogram) :: this
 		class(StringRealMapIterator), pointer :: iter
 		
-		iter => this.density.begin
+		if( this.algorithm == Histogram_RUNNING ) then
+		
+			iter => this.rCounts.begin
+			
+		else if( this.algorithm == Histogram_STORING ) then
+		
+			iter => this.density.begin
+			
+		end if
+
 	end subroutine densityBegin
 	
 	!>
@@ -208,7 +248,20 @@ module StringHistogram_
 		class(StringIntegerMapIterator), pointer :: iter
 		type(StringIntegerPair) :: output
 		
-		output = this.counts.pair( iter )
+		if( this.algorithm == Histogram_RUNNING ) then
+		
+			output = this.counts.pair( iter )
+			
+		else if( this.algorithm == Histogram_STORING ) then
+			
+			if( this.counts.isEmpty() ) then
+				call GOptions_error( "Run first build() Method", "StringHistogram.densityPair()" )
+			end if
+			
+			output = this.counts.pair( iter )
+		end if
+		
+		
 	end function countsPair
 	
 	!>
@@ -219,7 +272,20 @@ module StringHistogram_
 		class(StringRealMapIterator), pointer :: iter
 		type(StringRealPair) :: output
 		
-		output = this.density.pair( iter )
+		if( this.algorithm == Histogram_RUNNING ) then
+		
+			output = this.rCounts.pair( iter )
+			output.second = output.second/real(this.totalCounts,8)
+			
+		else if( this.algorithm == Histogram_STORING ) then
+			
+			if( this.density.isEmpty() ) then
+				call GOptions_error( "Run first build() Method", "StringHistogram.densityPair()" )		
+			end if
+			
+			output = this.density.pair( iter )
+		end if
+
 	end function densityPair
 	
 	!>
@@ -229,7 +295,25 @@ module StringHistogram_
 		class(StringHistogram) :: this
 		type(String), intent(in) :: value
 		
-		call this.append( value )
+		integer :: cValue
+		integer :: cValueR
+		
+		if( this.algorithm == Histogram_RUNNING ) then
+		
+			cValue = this.counts.at( value, defaultValue=0 )
+			call this.counts.set( value, cValue+1 )
+			
+			cValueR = this.rCounts.at( value, defaultValue=0.0_8 )
+			call this.rCounts.set( value, cValueR+1.0_8 )
+			
+			this.totalCounts = this.totalCounts + 1
+			
+		else if( this.algorithm == Histogram_STORING ) then
+		
+			call this.append( value )
+			
+		end if
+		
 	end subroutine addValue
 	
 	!>
@@ -242,8 +326,9 @@ module StringHistogram_
 		integer :: i
 		
 		do i=1,size(array)
-			call this.append( FString_toString( array(i) ) )
+			call this.addValue( FString_toString( array(i) ) )
 		end do
+		
 	end subroutine addFArray
 	
 	!>
@@ -254,6 +339,10 @@ module StringHistogram_
 		
 		class(StringListIterator), pointer :: iter
 		integer :: cValue
+		
+		if( this.algorithm == Histogram_RUNNING ) then
+			call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "StringHistogram.build()" )
+		end if
 		
 		call this.counts.clear()
 		call this.density.clear()
@@ -276,6 +365,7 @@ module StringHistogram_
 		class(StringHistogram), intent(in) :: this
 		real(8) :: output
 		
+		stop "### ERROR ### StringHistogram.mean(): This function is unimplemented yet"
 ! 		class(RealListIterator), pointer :: iter
 ! 		
 ! 		output = 0.0_8
@@ -296,6 +386,7 @@ module StringHistogram_
 		class(StringHistogram), intent(in) :: this
 		real(8) :: output
 		
+		stop "### ERROR ### StringHistogram.stdev(): This function is unimplemented yet"
 ! 		class(RealListIterator), pointer :: iter
 ! 		real(8) :: mean
 ! 		
@@ -367,13 +458,13 @@ module StringHistogram_
 	!!
 	subroutine StringHistogram_test()
 		type(StringHistogram) :: histogram
+		type(StringHistogram) :: histogramRunning
 		integer :: i
 		
-		class(StringRealMapIterator), pointer :: iter
-		type(StringRealPair) :: pair
+		class(StringRealMapIterator), pointer :: iter, iterRunning
+		type(StringRealPair) :: pair, pairRunning
 		
 		call histogram.init()
-		
 		call histogram.add( ["A", "A", "T", "U", "T", "U", "P", "A", "C", "Z", "U"] )
 		call histogram.add( ["B", "F", "G", "O", "T", "Q", "W", "T", "S", "X", "Q"] )
 		call histogram.add( ["Y", "F", "I", "E", "U", "W", "H", "A", "D", "C", "W"] )
@@ -384,9 +475,19 @@ module StringHistogram_
 		call histogram.add( ["D", "G", "D", "V", "I", "V", "B", "D", "K", "I", "U"] )
 		call histogram.add( ["A", "P", "B", "I", "D", "H", "J", "G", "L", "R", "I"] )
 		call histogram.add( ["S", "R", "Q", "M", "L", "S", "D", "J", "I", "U", "O"] )
-		
-		
 		call histogram.build()
+		
+		call histogramRunning.init( algorithm=Histogram_RUNNING )
+		call histogramRunning.add( ["A", "A", "T", "U", "T", "U", "P", "A", "C", "Z", "U"] )
+		call histogramRunning.add( ["B", "F", "G", "O", "T", "Q", "W", "T", "S", "X", "Q"] )
+		call histogramRunning.add( ["Y", "F", "I", "E", "U", "W", "H", "A", "D", "C", "W"] )
+		call histogramRunning.add( ["I", "F", "W", "O", "L", "R", "S", "H", "F", "V", "E"] )
+		call histogramRunning.add( ["W", "R", "T", "E", "I", "S", "V", "K", "G", "B", "R"] )
+		call histogramRunning.add( ["U", "I", "T", "U", "S", "G", "R", "X", "H", "N", "T"] )
+		call histogramRunning.add( ["I", "I", "P", "O", "N", "X", "C", "U", "J", "M", "Y"] )
+		call histogramRunning.add( ["D", "G", "D", "V", "I", "V", "B", "D", "K", "I", "U"] )
+		call histogramRunning.add( ["A", "P", "B", "I", "D", "H", "J", "G", "L", "R", "I"] )
+		call histogramRunning.add( ["S", "R", "Q", "M", "L", "S", "D", "J", "I", "U", "O"] )
 		
 		write(*,"(A20,I15)")   "    size = ", histogram.size()
 ! 		write(*,"(A20,F15.5)") "    mean = ", histogram.mean()
@@ -398,11 +499,14 @@ module StringHistogram_
 		call histogram.density.save("density.out")
 		
 		call histogram.densityBegin( iter )
+		call histogramRunning.densityBegin( iterRunning )
 		do while( associated(iter) )
 			pair = histogram.pair( iter )
-			write(*,"(A15,F15.5)") pair.first.fstr, pair.second
+			pairRunning = histogramRunning.pair( iterRunning )
+			write(*,"(A15,F15.5,5X,A15,F15.5)") pair.first.fstr, pair.second, pairRunning.first.fstr, pairRunning.second
 			
 			iter => iter.next
+			iterRunning => iterRunning.next
 		end do
 		
 ! 		do i=1,1000000

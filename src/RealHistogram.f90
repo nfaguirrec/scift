@@ -27,6 +27,7 @@
 !! @brief
 !!
 module RealHistogram_
+	use GOptions_
 	use Math_
 	use RealList_
 	use Grid_
@@ -34,22 +35,20 @@ module RealHistogram_
 	implicit none
 	private
 	
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	! http://en.wikipedia.org/wiki/Histogram
-	integer, public, parameter :: SQUAREROOT = 0
-	integer, public, parameter :: STURGES = 1
-	integer, public, parameter :: RICE = 2
-	integer, public, parameter :: DOANE = 3
-	integer, public, parameter :: SCOTT = 4
-	integer, public, parameter :: FREEDMAN_DIACONIS = 5
-	
 	public :: &
 		RealHistogram_test
 		
 	type, public, extends( RealList ) :: RealHistogram
 		integer, private :: rule
+		integer, private :: algorithm
+		
 		type(RNFunction) :: counts
 		type(RNFunction) :: density
+		
+		! Used in algorithm = Histogram_RUNNING
+		real(8), private :: n
+		real(8), private :: s1
+		real(8), private :: s2
 		
 		contains
 			generic :: init => initRealHistogram
@@ -86,16 +85,33 @@ module RealHistogram_
 	!! @brief Constructor
 	!! @see http://stat.ethz.ch/R-manual/R-devel/library/graphics/html/hist.html
 	!!
-	subroutine initRealHistogram( this, rule )
+	subroutine initRealHistogram( this, rule, algorithm )
 		class(RealHistogram) :: this
 		integer, optional :: rule
+		integer, optional :: algorithm
 		
-		integer :: Effrule
+		integer :: ruleEff
+		integer :: algorithmEff
 		
-		Effrule = SQUAREROOT
-		if( present(rule) ) Effrule = rule
+		ruleEff = Histogram_SQUAREROOT
+		if( present(rule) ) ruleEff = rule
 		
-		this.rule = Effrule
+		algorithmEff = Histogram_STORING
+		if( present(algorithm) ) then
+			if( algorithm == Histogram_STORING .or. algorithm == Histogram_RUNNING ) then
+				algorithmEff = algorithm
+			else
+				call GOptions_error( "Wrong value for paramenter algorithm. Possible values Histogram_RUNNING,Histogram_STORING", "RealHistogram.initRealHistogram()" )		
+			end if
+		end if
+		
+		this.rule = ruleEff
+		this.algorithm = algorithmEff
+		
+		this.n = 0
+		this.s1 = 0
+		this.s2 = 0
+		
 		call this.initList()
 	end subroutine initRealHistogram
 	
@@ -109,8 +125,14 @@ module RealHistogram_
 		call this.copyList( other )
 
 		this.rule = other.rule
+		this.algorithm = other.algorithm
+		
 		this.counts = other.counts
 		this.density = other.density
+		
+		this.n = other.n
+		this.s1 = other.s1
+		this.s2 = other.s2
 	end subroutine copyRealHistogram
 	
 	!>
@@ -215,7 +237,17 @@ module RealHistogram_
 		class(RealHistogram) :: this
 		real(8), intent(in) :: value
 		
-		call this.append( value )
+		if( this.algorithm == Histogram_RUNNING ) then
+		
+			this.s1 = this.s1 + value
+			this.s2 = this.s2 + value**2
+			this.n = this.n + 1
+			
+		else if( this.algorithm == Histogram_STORING ) then
+		
+			call this.append( value )
+			
+		end if
 	end subroutine addValue
 	
 	!>
@@ -228,8 +260,9 @@ module RealHistogram_
 		integer :: i
 		
 		do i=1,size(array)
-			call this.append( array(i) )
+			call this.addValue( array(i) )
 		end do
+
 	end subroutine addFArray
 	
 	!>
@@ -247,34 +280,40 @@ module RealHistogram_
 		type(Grid) :: xGrid
 		integer, allocatable :: counts(:)
 		
+		if( this.algorithm == Histogram_RUNNING ) then
+			call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "RealHistogram.build()" )
+		end if
+		
 		EffbinsPrecision = -1
 		if( present(binsPrecision) ) EffbinsPrecision = binsPrecision
 		
 		rrange = this.maximum() - this.minimum()
 		
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		! http://en.wikipedia.org/wiki/Histogram
 		select case( this.rule )
 			
-			! @todo SQUAREROOT no funciona, hay que revisar esta linea. Por el momento es completamente
-			!       satisfactorio STURGES
-			case( SQUAREROOT )
+			! @todo Histogram_SQUAREROOT no funciona, hay que revisar esta linea. Por el momento es completamente
+			!       satisfactorio Histogram_STURGES
+			case( Histogram_SQUAREROOT )
 				k = ceiling( sqrt( real(this.size(),8) ) )
 				
-			case( STURGES )
+			case( Histogram_STURGES )
 				k = ceiling( log( real(this.size(),8) )/log(2.0_8) + 1.0_8 )
 				
-			case( RICE )
+			case( Histogram_RICE )
 				k = ceiling( 2.0_8*real(this.size(),8)**(1.0_8/3.0_8) )
 			
-			case( DOANE )
+			case( Histogram_DOANE )
 				! Necesita tener implementado skewness
-				stop "### ERROR ### RealHistogram.build(): DOANE rule is not implemented"
+				stop "### ERROR ### RealHistogram.build(): Histogram_DOANE rule is not implemented"
 			
-			case( SCOTT )
+			case( Histogram_SCOTT )
 				k = ceiling( rrange*real(this.size(),8)**(1.0_8/3.0_8)/3.5_8/this.stdev() )
 			
-			case( FREEDMAN_DIACONIS )
+			case( Histogram_FREEDMAN_DIACONIS )
 				! Necesita tener implementado el rango intercuartil
-				stop "### ERROR ### RealHistogram.build(): FREEDMAN_DIACONIS rule is not implemented"
+				stop "### ERROR ### RealHistogram.build(): Histogram_FREEDMAN_DIACONIS rule is not implemented"
 				
 			case default
 				stop "### ERROR ### RealHistogram.build(): UNKNOWN rule is not implemented"
@@ -352,36 +391,48 @@ module RealHistogram_
 		
 		class(RealListIterator), pointer :: iter
 		integer :: i
-
-		if( present(weights) ) then
-			if( size(weights) < this.size() ) then
-				write(*,"(A,I5,A,I5,A)") "### ERROR ### RealHistogram.mean(). Inconsistent size for weights. size(weights) /= this.size() (", size(weights), ", ", this.size(), ")"
-				stop
+		
+		if( this.algorithm == Histogram_RUNNING ) then
+			
+			if( present(weights) ) then
+				call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "RealHistogram.mean( weights )" )
 			end if
 			
-			output = 0.0_8
-			iter => this.begin
-			i = 1
-			do while( associated(iter) )
-				output = output + iter.data*weights(i)
-				
-				iter => iter.next
-				i = i+1
-			end do
+			output = this.s1/this.n
 			
-			output = output/sum(weights(1:i-1))
-		else
-			output = 0.0_8
-			iter => this.begin
-			i = 1
-			do while( associated(iter) )
-				output = output + iter.data
+		else if( this.algorithm == Histogram_STORING ) then
+		
+			if( present(weights) ) then
+				if( size(weights) < this.size() ) then
+					write(*,"(A,I5,A,I5,A)") "### ERROR ### RealHistogram.mean(). Inconsistent size for weights. size(weights) /= this.size() (", size(weights), ", ", this.size(), ")"
+					stop
+				end if
 				
-				iter => iter.next
-				i = i+1
-			end do
+				output = 0.0_8
+				iter => this.begin
+				i = 1
+				do while( associated(iter) )
+					output = output + iter.data*weights(i)
+					
+					iter => iter.next
+					i = i+1
+				end do
+				
+				output = output/sum(weights(1:i-1))
+			else
+				output = 0.0_8
+				iter => this.begin
+				i = 1
+				do while( associated(iter) )
+					output = output + iter.data
+					
+					iter => iter.next
+					i = i+1
+				end do
+				
+				output = output/real(this.size(),8)
+			end if
 			
-			output = output/real(this.size(),8)
 		end if
 	end function mean
 	
@@ -393,7 +444,19 @@ module RealHistogram_
 		real(8), optional, intent(in) :: weights(:)
 		real(8) :: output
 		
-		output = sqrt( this.var( weights ) )
+		if( this.algorithm == Histogram_RUNNING ) then
+			if( present(weights) ) then
+				call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "RealHistogram.stdev( weights )" )
+			end if
+			
+			output = sqrt((this.n*this.s2-this.s1**2)/real(this.n,8)/real(this.n-1.0_8,8))
+			
+		else if( this.algorithm == Histogram_STORING ) then
+		
+			output = sqrt( this.var( weights ) )
+			
+		end if
+
 	end function stdev
 	
 	!>
@@ -407,6 +470,10 @@ module RealHistogram_
 		class(RealListIterator), pointer :: iter
 		real(8) :: mean
 		integer :: i
+		
+		if( this.algorithm == Histogram_RUNNING ) then
+			call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "RealHistogram.var()" )
+		end if
 		
 		if( this.size() == 1 ) then
 			output = 0.0_8
@@ -482,6 +549,11 @@ module RealHistogram_
 		
 		class(RealListIterator), pointer :: iter
 		
+		! @todo se puede poner otro atributo que vaya almacenando el minimio
+		if( this.algorithm == Histogram_RUNNING ) then
+			call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "RealHistogram.build()" )
+		end if
+		
 		output = Math_INF
 		iter => this.begin
 		do while( associated(iter) )
@@ -501,6 +573,11 @@ module RealHistogram_
 		real(8) :: output
 		
 		class(RealListIterator), pointer :: iter
+		
+		! @todo se puede poner otro atributo que vaya almacenando el maximum
+		if( this.algorithm == Histogram_RUNNING ) then
+			call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "RealHistogram.build()" )
+		end if
 		
 		output = -Math_INF
 		iter => this.begin
@@ -530,7 +607,16 @@ module RealHistogram_
 		class(RealHistogram), intent(in) :: this
 		real(8) :: output
 		
-		output = this.stdev()/sqrt( real(this.size(),8) )
+		if( this.algorithm == Histogram_RUNNING ) then
+		
+			output = this.stdev()/sqrt( this.n )
+			
+		else if( this.algorithm == Histogram_STORING ) then
+		
+			output = this.stdev()/sqrt( real(this.size(),8) )
+			
+		end if
+
 	end function stderr
 	
 	!>
@@ -542,13 +628,22 @@ module RealHistogram_
 		
 		class(RealListIterator), pointer :: iter
 		
-		output = 0.0_8
-		iter => this.begin
-		do while( associated(iter) )
-			output = output + iter.data
+		if( this.algorithm == Histogram_RUNNING ) then
+		
+			output = this.s1
 			
-			iter => iter.next
-		end do
+		else if( this.algorithm == Histogram_STORING ) then
+		
+			output = 0.0_8
+			iter => this.begin
+			do while( associated(iter) )
+				output = output + iter.data
+				
+				iter => iter.next
+			end do
+			
+		end if
+
 	end function summation
 	
 	!>
@@ -556,14 +651,15 @@ module RealHistogram_
 	!!
 	subroutine RealHistogram_test()
 		type(RealHistogram) :: histogram
+		type(RealHistogram) :: histogramRunning
 		type(RNFunction) :: nFunc
 		integer :: i
 		
 ! 		call histogram.init()
-! 		call histogram.init( SQUAREROOT )
-		call histogram.init( STURGES )
-! 		call histogram.init( RICE )
-! 		call histogram.init( SCOTT )
+! 		call histogram.init( Histogram_SQUAREROOT )
+		call histogram.init( Histogram_STURGES )
+! 		call histogram.init( Histogram_RICE )
+! 		call histogram.init( Histogram_SCOTT )
 		
 		call histogram.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
 		call histogram.add( [23.21883_8, 25.35600_8, 28.41117_8, 22.08219_8, 19.55053_8, 23.63690_8, 27.07390_8, 25.11683_8] )
@@ -578,6 +674,21 @@ module RealHistogram_
 		call histogram.add( [23.35024_8, 26.70019_8, 21.51930_8, 24.98537_8, 24.94632_8, 19.42552_8, 27.00687_8, 21.65142_8] )
 		call histogram.add( [25.00371_8, 23.40407_8, 21.82391_8, 24.25161_8, 24.28748_8, 24.17388_8, 21.20663_8, 26.66869_8] )
 		call histogram.add( [22.89491_8, 24.81186_8, 25.14049_8, 22.61879_8] )
+		
+		call histogramRunning.init( algorithm=Histogram_RUNNING )
+		call histogramRunning.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
+		call histogramRunning.add( [23.21883_8, 25.35600_8, 28.41117_8, 22.08219_8, 19.55053_8, 23.63690_8, 27.07390_8, 25.11683_8] )
+		call histogramRunning.add( [24.07832_8, 22.04728_8, 29.07267_8, 23.84218_8, 24.07261_8, 23.97873_8, 25.67417_8, 23.89337_8] )
+		call histogramRunning.add( [23.49143_8, 26.14219_8, 22.87863_8, 21.59113_8, 23.56555_8, 26.42314_8, 23.51600_8, 26.27489_8] )
+		call histogramRunning.add( [21.07893_8, 20.48072_8, 24.90150_8, 23.17327_8, 23.81940_8, 25.11435_8, 26.52324_8, 18.73398_8] )
+		call histogramRunning.add( [24.09926_8, 23.07400_8, 26.71212_8, 21.77789_8, 25.51567_8, 25.13831_8, 22.11752_8, 22.47796_8] )
+		call histogramRunning.add( [25.39945_8, 26.71204_8, 25.67166_8, 22.52061_8, 23.62552_8, 26.00762_8, 25.37902_8, 26.28057_8] )
+		call histogramRunning.add( [22.61389_8, 24.06349_8, 24.33601_8, 21.97826_8, 26.48619_8, 25.47802_8, 26.89355_8, 26.07590_8] )
+		call histogramRunning.add( [21.74619_8, 21.99553_8, 23.40948_8, 25.48071_8, 23.02762_8, 22.70441_8, 25.03438_8, 25.67790_8] )
+		call histogramRunning.add( [24.68533_8, 21.26442_8, 24.89509_8, 24.71221_8, 25.12706_8, 26.05145_8, 20.59260_8, 22.63209_8] )
+		call histogramRunning.add( [23.35024_8, 26.70019_8, 21.51930_8, 24.98537_8, 24.94632_8, 19.42552_8, 27.00687_8, 21.65142_8] )
+		call histogramRunning.add( [25.00371_8, 23.40407_8, 21.82391_8, 24.25161_8, 24.28748_8, 24.17388_8, 21.20663_8, 26.66869_8] )
+		call histogramRunning.add( [22.89491_8, 24.81186_8, 25.14049_8, 22.61879_8] )
 		
 		! ! http://en.wikipedia.org/wiki/Descriptive_statistics
 		! ! http://personality-project.org/r/html/describe.html
@@ -640,29 +751,30 @@ module RealHistogram_
 		!  [1] 19.22222 20.26667 21.31111 22.35555 23.40000 24.44444 25.48889 26.53333
 		!  [9] 27.57777 28.62222 29.66666
 
-		! @todo Parece que solo funciona con la combinación STURGES y binsPrecision=1
+		! @todo Parece que solo funciona con la combinación Histogram_STURGES y binsPrecision=1
 		call histogram.build( binsPrecision=3 )
 ! 		call histogram.build()
 		
 		write(*,"(A20,I15)")   "    size = ", histogram.size()
-		write(*,"(A20,F15.5)") "    mean = ", histogram.mean()
-		write(*,"(A20,F15.5)") "   stdev = ", histogram.stdev()
+		write(*,"(A20,2F15.5)") "    mean = ", histogram.mean(), histogramRunning.mean()
+		write(*,"(A20,2F15.5)") "   stdev = ", histogram.stdev(), histogramRunning.stdev()
 		write(*,"(A20,F15.5)") " minimum = ", histogram.minimum()
 		write(*,"(A20,F15.5)") " maximum = ", histogram.maximum()
-		write(*,"(A20,F15.5)") "  stderr = ", histogram.stderr()
+		write(*,"(A20,2F15.5)") "  stderr = ", histogram.stderr(), histogramRunning.stderr()
 		
-		! plot "./counts.out" w boxes, "./counts.out" w p pt 7
-		call histogram.save("histData.out")
-		call histogram.counts.save("counts.out")
-		call histogram.density.save("density.out")
+		! plot "./counts.dat" w boxes, "./counts.dat" w p pt 7
+		call histogram.save("histData.dat")
+		call histogram.counts.save("counts.dat")
+		call histogram.density.save("density.dat")
 		
 		do i=1,1000000
 			call histogram.add( 1.456_8 )
+			call histogramRunning.add( 1.456_8 )
 		end do
 		
 		write(*,"(A)")   ""
 		write(*,"(A20,I15)")   "    size = ", histogram.size()
-		write(*,"(A20,F15.5)") "    mean = ", histogram.mean()
+		write(*,"(A20,2F15.5)") "    mean = ", histogram.mean(), histogramRunning.mean()
 
 ! 		write(*,"(A20,F15.5)") " mode = ", histogram.mode()
 ! 		write(*,"(A20,F15.5)") "stdev = ", histogram.median()

@@ -531,7 +531,7 @@ module GridND_
 		if( present(ofile) ) then
 			unitEff = ofile.unit
 		else
-			unitEff = STDOUT
+			unitEff = IO_STDOUT
 		end if
 		
 		do i=1,3

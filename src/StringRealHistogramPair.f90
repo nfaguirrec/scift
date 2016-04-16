@@ -24,6 +24,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 module StringRealHistogramPair_
+	use GOptions_
 	use String_
 	use RealHistogram_
 	implicit none
@@ -116,7 +117,7 @@ module StringRealHistogramPair_
 		
 		write(*,*) "call mypair1.init( str, hist )"
 		
-		call hist.init( STURGES )
+		call hist.init( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
 		
 		str = "Hola"

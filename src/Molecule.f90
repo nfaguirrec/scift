@@ -226,7 +226,7 @@ module Molecule_
 		
 		call ifile.close()
 		
-		deallocate( extension )
+		if( allocated(extension) ) deallocate( extension )
 		
 	end subroutine fromFile
 	
@@ -1579,7 +1579,6 @@ module Molecule_
 		
 		real(8) :: centerOfMass(3)
 		type(Matrix) :: Im, Vm, Rot, r
-		real(8), allocatable :: Imd(:)
 		real(8) :: rThetaPhi(3)
 		integer :: i
 		
@@ -1859,7 +1858,7 @@ module Molecule_
 		call mol1.show( formatted=.true. )
 		call mol1.load( "data/formats/MOLDEN", format=MOLDEN )
 		call mol1.show( formatted=.true. )
-		stop
+! 		stop
 		
 		write(*,*) ""
 		write(*,*) "Testing copy constructor"
@@ -1900,10 +1899,10 @@ module Molecule_
 		write(*,*) ""
 		write(*,*) "Testing rotation of molecule"
 		write(*,*) "============================"
-! 		call mol1.init( "data/formats/XYZ" )
+		call mol1.init( "data/formats/XYZ", format=XYZ )
 ! 		call mol1.init( "prueba.xyz" )
 ! 		call mol1.init( "C9T-cyclic.xyz" )
-		call mol1.init( "C2.xyz" )
+! 		call mol1.init( "C2.xyz" )
 		call mol1.rotate( alpha=45.0_8*deg, beta=45.0_8*deg, gamma=0.0_8*deg, debug=.true. )
 		write(*,*) ""
 		write(*,*) "Inertia tensor around its center of mass"
@@ -1950,7 +1949,7 @@ module Molecule_
 		
 		write(*,*) "Composition vector"
 		write(*,*) "-------------------"
-		call mol1.init( "data/formats/XYZ" )
+		call mol1.init( "data/formats/XYZ", format=XYZ )
 		call mol1.showCompositionVector()
 		
 		write(*,*) ""
@@ -1973,11 +1972,11 @@ module Molecule_
 		
 		write(*,*) "Testing rotation of molecule"
 		write(*,*) "============================"
-! 		call mol1.init( "data/formats/XYZ" )
+		call mol1.init( "data/formats/XYZ", format=XYZ )
 ! 		call mol1.init( "prueba.xyz" )
 ! 		call mol1.init( "C9T-cyclic.xyz" )
 ! 		call mol1.init( "C2.xyz" )
-		call mol1.init( "C1.xyz" )
+! 		call mol1.init( "C1.xyz" )
 		
 ! 		call mol1.show( formatted=.true. )
 		write(*,*) "Initial inertia tensor = "
@@ -2028,6 +2027,12 @@ module Molecule_
 		end do
 		
 		call mol1.save("salida.xyz")
+		
+		call mol1.load( "data/formats/RXYZ", format=XYZ )
+		do i=1,1000000
+			call mol1.buildInertiaTensor( Im )
+			mol2 = mol1
+		end do
 
 	end subroutine Molecule_test
 	

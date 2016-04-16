@@ -192,7 +192,7 @@ module RNFunction_
 ! 		integer :: i
 ! 		character(255) :: date
 ! 		
-! 		effUnit = STDOUT
+! 		effUnit = IO_STDOUT
 ! 		if( present(ofile) ) effUnit = ofile.unit
 ! 		
 ! 		effUnits = [1.0_8, 1.0_8]

@@ -121,7 +121,7 @@ module RNFunction2D_
 		if( present(ofile) ) then
 			unitEff = ofile.unit
 		else
-			unitEff = STDOUT
+			unitEff = IO_STDOUT
 		end if
 		
 		write(*,*) "### ERROR ### RNFunction2D.toFStream is no implemented yet"

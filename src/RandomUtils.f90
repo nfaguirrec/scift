@@ -236,6 +236,7 @@ module RandomUtils_
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			! Build all possibilities for each element in the item array
 			do i=effAt,nElems
+				call RandomUtils_randomizeVector( ids )
 				kMultiCombChosen(effNChosen) = ids(i)
 				
 				call randomMultisetBase( nElems, sGroups, randomItem, effNChosen + 1, i )
@@ -353,7 +354,7 @@ module RandomUtils_
 			ids(i) = i
 		end do
 		
-		call RandomUtils_randomizeVector( ids )
+! 		call RandomUtils_randomizeVector( ids )
 		
 		randomMultisetLocated = .false.
 		MSConstraint => constrainFunction
@@ -651,9 +652,12 @@ module RandomUtils_
 ! 		allocate( MyiArray(7) )
 ! 		MyiArray = [ 1, 3, 5, 7, 2, 4, 6 ]
 ! 		write(*,*) "set = [ 1, 3, 5, 7, 2, 4, 6 ]"
-		allocate( MyiArray(3) )
-		MyiArray = [ 1, 3, 5 ]
-		write(*,*) "set = [ 1, 3, 5 ]"
+! 		allocate( MyiArray(3) )
+! 		MyiArray = [ 1, 3, 5 ]
+! 		write(*,*) "set = [ 1, 3, 5 ]"
+		allocate( MyiArray(2) )
+		MyiArray = [ 1, 2 ]
+		write(*,*) "set = [ 1, 2 ]"
 		
 		write(*,*) "The constraint is: The sum of all elements cannot be greater than 8"
 		write(*,"(A)", advance="no") "Generation of 2000000 random unsorted multiset"

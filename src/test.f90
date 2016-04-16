@@ -33,7 +33,7 @@ program test
 ! 	use Atom_
 ! 	use AtomicElementsDB_
 ! 	use UnitsConverter_	
-! 	use Molecule_
+	use Molecule_
 ! 	use RNFunction_
 !  	use CNFunction_
 ! 	use FourierTransform_
@@ -59,10 +59,10 @@ program test
 ! 	use StringRealMap_
 ! 	use IVector_
 ! 	use RVector_
-	use Matrix_
+! 	use Matrix_
 ! 	use SpecialMatrix_
-! 	use RealHistogram_
-! 	use StringHistogram_
+	use RealHistogram_
+	use StringHistogram_
 ! 	use MoldenParser_
 ! 	use Grid3D_
 ! 	use RNFunction2D_
@@ -87,7 +87,7 @@ program test
 !	call String_test()
 ! 	call Atom_test()
 ! 	call AtomicElementsDB_test()
-! 	call Molecule_test()
+	call Molecule_test()
 ! 	call RNFunction_test()
 !  	call CNFunction_test()
 ! 	call NIntegrator_test()
@@ -99,9 +99,7 @@ program test
 ! 	call MathParser_test()
 !   	call BlocksIFileParser_test()
 ! 	call CommandLineParser_test()
-
 ! 	call RandomUtils_test()
-	
 ! 	call RandomSampler_test()
 ! 	call IntegerList_test()
 ! 	call RealList_test()
@@ -114,7 +112,7 @@ program test
 ! 	call StringRealMap_test()
 ! 	call IVector_test()
 ! 	call RVector_test()
-	call Matrix_test()
+! 	call Matrix_test()
 ! 	call SpecialMatrix_test()
 ! 	call RealHistogram_test()
 ! 	call StringHistogram_test()

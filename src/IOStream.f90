@@ -31,9 +31,9 @@ module IOStream_
 	!>
 	!! @brief Public parameters
 	!!
-	integer, public, parameter :: STDIN  = 5
-	integer, public, parameter :: STDOUT = 6
-	integer, public, parameter :: STDERR = 0
+	integer, public, parameter :: IO_STDIN  = 5
+	integer, public, parameter :: IO_STDOUT = 6
+	integer, public, parameter :: IO_STDERR = 0
 	character(19), parameter :: NULL_FILENAME = "@$@NULL_FILENAME@$@"
 	
 	public :: &
@@ -104,9 +104,9 @@ module IOStream_
 		
 		lastUnit = lastUnit + 1
 		select case ( lastUnit )
-			case ( STDIN )
+			case ( IO_STDIN )
 				lastUnit = lastUnit + 2
-			case ( STDOUT )
+			case ( IO_STDOUT )
 				lastUnit = lastUnit + 1
 		end select
 		
@@ -199,40 +199,40 @@ module IOStream_
 		
 		select type( this )
 			type is ( FStream )
-				write(STDOUT, "(a)", advance="no") "<FStream:"
+				write(IO_STDOUT, "(a)", advance="no") "<FStream:"
 			type is ( IFStream )
-				write(STDOUT, "(a)", advance="no") "<IFStream:"
+				write(IO_STDOUT, "(a)", advance="no") "<IFStream:"
 			type is ( OFStream )
-				write(STDOUT, "(a)", advance="no") "<OFStream:"
+				write(IO_STDOUT, "(a)", advance="no") "<OFStream:"
 		end select
 		
-		write(STDOUT, "(a)", advance="no") "name="
-		write(STDOUT, "(a)", advance="no") trim(this.name)
+		write(IO_STDOUT, "(a)", advance="no") "name="
+		write(IO_STDOUT, "(a)", advance="no") trim(this.name)
 		
-		write(STDOUT, "(a)", advance="no") ",extension="
-		write(STDOUT, "(a)", advance="no") trim(this.extension)
+		write(IO_STDOUT, "(a)", advance="no") ",extension="
+		write(IO_STDOUT, "(a)", advance="no") trim(this.extension)
 		
-		write(STDOUT, "(a)", advance="no") ",unit="
+		write(IO_STDOUT, "(a)", advance="no") ",unit="
 		fmt = int(log10(1.0*this.unit))+1
-		write(STDOUT, "(i<fmt>)", advance="no") this.unit
+		write(IO_STDOUT, "(i<fmt>)", advance="no") this.unit
 		
 		select type( this )
 			type is ( IFStream )
-				write(STDOUT, "(a)", advance="no") ",numberOfLines="
+				write(IO_STDOUT, "(a)", advance="no") ",numberOfLines="
 				fmt = int(log10(1.0*this.numberOfLines+1))+1
-				write(STDOUT, "(i<fmt>)", advance="no") this.numberOfLines
+				write(IO_STDOUT, "(i<fmt>)", advance="no") this.numberOfLines
 				
-				write(STDOUT, "(a)", advance="no") ",minNColumns="
+				write(IO_STDOUT, "(a)", advance="no") ",minNColumns="
 				fmt = int(log10(1.0*this.minNColumns+1))+1
-				write(STDOUT, "(i<fmt>)", advance="no") this.minNColumns
+				write(IO_STDOUT, "(i<fmt>)", advance="no") this.minNColumns
 				
-				write(STDOUT, "(a)", advance="no") ",maxNColumns="
+				write(IO_STDOUT, "(a)", advance="no") ",maxNColumns="
 				fmt = int(log10(1.0*this.maxNColumns+1))+1
-				write(STDOUT, "(i<fmt>)", advance="no") this.maxNColumns
+				write(IO_STDOUT, "(i<fmt>)", advance="no") this.maxNColumns
 		end select
 
-		write(STDOUT, "(a)", advance="no") ">"
-		write(STDOUT, *) ""
+		write(IO_STDOUT, "(a)", advance="no") ">"
+		write(IO_STDOUT, *) ""
 	end subroutine show
 	
 	!>
@@ -249,7 +249,7 @@ module IOStream_
 		open( unit=this.unit, file=this.name, status=this.status, iostat=iostat )
 		
 		if( iostat /= 0 ) then
-			write(STDOUT, *) "### Error ###: The file ( ", trim(this.name), " ) cannot be open"
+			write(IO_STDOUT, *) "### Error ###: The file ( ", trim(this.name), " ) cannot be open"
 		else
 			this.numberOfLines = -1
 			iostat = 1
@@ -349,7 +349,7 @@ module IOStream_
 		open( unit=this.unit, file=this.name, status=this.status, iostat=iostat )
 		
 		if( iostat /= 0 ) then
-			write(STDOUT, *) "### Error ###: The file ( ", trim(this.name), " ) cannot be open"
+			write(IO_STDOUT, *) "### Error ###: The file ( ", trim(this.name), " ) cannot be open"
 		else
 			iostat = 1
 			do while( iostat /= -1 )

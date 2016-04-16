@@ -151,6 +151,23 @@ module GOptions_
 		enumerator :: NPeakFinder_ENTROPY
 	end enum
 	
+	!---------------------------------------------------------------------------
+	! Histogram constants
+	!---------------------------------------------------------------------------
+	enum, BIND(c)
+		enumerator :: Histogram_SQUAREROOT = 0
+		enumerator :: Histogram_STURGES
+		enumerator :: Histogram_RICE
+		enumerator :: Histogram_DOANE
+		enumerator :: Histogram_SCOTT
+		enumerator :: Histogram_FREEDMAN_DIACONIS
+	end enum
+	
+	enum, BIND(c)
+		enumerator :: Histogram_STORING = 0
+		enumerator :: Histogram_RUNNING
+	end enum
+	
 	contains
 	
 	!>
@@ -165,11 +182,11 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(STDOUT,"(A)") ""
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "| "//trim(message)//" |"
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
-		write(STDOUT,"(A)") ""
+		write(IO_STDOUT,"(A)") ""
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "| "//trim(message)//" |"
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
+		write(IO_STDOUT,"(A)") ""
 	end subroutine GOptions_section
 	
 	!>
@@ -184,11 +201,11 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(STDOUT,"(A)") ""
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A)") " "//trim(message)//" "
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
-		write(STDOUT,"(A)") ""
+		write(IO_STDOUT,"(A)") ""
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") " "//trim(message)//" "
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
+		write(IO_STDOUT,"(A)") ""
 	end subroutine GOptions_subsection
 
 	!>
@@ -203,10 +220,10 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(STDOUT,"(A)") ""
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A)") " "//trim(message)//" "
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
-		write(STDOUT,"(A)") ""
+		write(IO_STDOUT,"(A)") ""
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") " "//trim(message)//" "
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
+		write(IO_STDOUT,"(A)") ""
 	end subroutine GOptions_paragraph
 	
 	!>
@@ -226,9 +243,9 @@ module GOptions_
 		effAddinfo = ""
 		if( present(addinfo) ) effAddinfo = addinfo
 		
-		write(STDOUT,"(A)") ""
-		write(STDERR,"(A)") "### ERROR ### "//trim(effWhere)//": "//trim(message)
-		write(STDERR,"(A)") "              "//trim(effAddinfo)
+		write(IO_STDOUT,"(A)") ""
+		write(IO_STDERR,"(A)") "### ERROR ### "//trim(effWhere)//": "//trim(message)
+		write(IO_STDERR,"(A)") "              "//trim(effAddinfo)
 		
 		stop
 	end subroutine GOptions_error
@@ -251,9 +268,9 @@ module GOptions_
 		if( present(addinfo) ) effAddinfo = addinfo
 		
 ! 		if( GOptions_debugLevel >= 1 ) then
-			write(STDOUT,"(A)") ""
-			write(STDERR,"(A)") "!!! WARNING ¡¡¡ "//trim(effWhere)//": "//trim(message)
-			write(STDERR,"(A)") "                "//trim(effAddinfo)
+			write(IO_STDOUT,"(A)") ""
+			write(IO_STDERR,"(A)") "!!! WARNING ¡¡¡ "//trim(effWhere)//": "//trim(message)
+			write(IO_STDERR,"(A)") "                "//trim(effAddinfo)
 ! 		end if
 	end subroutine GOptions_warning
 	
@@ -275,9 +292,9 @@ module GOptions_
 		if( present(addinfo) ) effAddinfo = addinfo
 		
 		if( GOptions_debugLevel >= 2 ) then
-			write(STDOUT,"(A)") ""
-			write(STDOUT,"(A)") "%%% INFO %%% "//trim(effWhere)//": "//trim(message)
-			write(STDOUT,"(A)") "             "//trim(effAddinfo)
+			write(IO_STDOUT,"(A)") ""
+			write(IO_STDOUT,"(A)") "%%% INFO %%% "//trim(effWhere)//": "//trim(message)
+			write(IO_STDOUT,"(A)") "             "//trim(effAddinfo)
 		end if
 	end subroutine GOptions_info
 		
@@ -320,7 +337,7 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A10,F20.5,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,F20.5,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_rValueReport
 	
 	!>
@@ -346,7 +363,7 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A10,L14,6X,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,L14,6X,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_lValueReport
 	
 	!>
@@ -372,7 +389,7 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A10,I14,6X,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,I14,6X,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_iValueReport
 
 	!>
@@ -393,7 +410,7 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A10,A20,A8,5X,A)") trim(varName), trim(value), trim(effMessage)
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,A20,A8,5X,A)") trim(varName), trim(value), trim(effMessage)
 	end subroutine GOptions_sValueReport
 	
 	!>
@@ -419,7 +436,7 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(STDOUT,"(<GOptions_indentLength*effIndent>X,A10,<size(values)>F15.5,A8,5X,A)") trim(varName), values, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,<size(values)>F15.5,A8,5X,A)") trim(varName), values, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_rArrValueReport
 	
 	!>
@@ -445,7 +462,7 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(STDOUT,"(A10,<size(values)>I15,A8,5X,A)") trim(varName), values, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT,"(A10,<size(values)>I15,A8,5X,A)") trim(varName), values, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_iArrValueReport
 	
 end module GOptions_

@@ -260,7 +260,7 @@ module Spline_
 		if( present(ofile) ) then
 			effunit = ofile.unit
 		else
-			effunit = STDOUT
+			effunit = IO_STDOUT
 		end if
 		
 		if( present(nPoints) ) then
