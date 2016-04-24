@@ -381,10 +381,10 @@ module IOStream_
 		call ifile.show()
 		call ifile.showContent()
 		
-! 		call ofile.init( "output.dat" )
+		call ofile.init( "output.dat" )
 ! 	! 	call ofile.write( "Hola amigos" )
 ! 		write( ofile.unit, * ) "Hola amigos"
-! 		call ofile.show()
+		call ofile.show()
 	end subroutine IOStream_test
 	
 end module IOStream_
