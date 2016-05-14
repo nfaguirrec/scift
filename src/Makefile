@@ -241,7 +241,7 @@ String.o string_.mod: String.f90
 	echo -n 'Building String.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c String.f90
 
-StringHistogram.o stringhistogram_.mod: StringHistogram.f90 stringrealmap_.mod stringintegermap_.mod stringlist_.mod iostream_.mod string_.mod stringrealpairlist_.mod stringrealpair_.mod stringintegerpairlist_.mod stringintegerpair_.mod
+StringHistogram.o stringhistogram_.mod: StringHistogram.f90 stringrealmap_.mod stringintegermap_.mod goptions_.mod timer_.mod stringlist_.mod iostream_.mod string_.mod stringrealpairlist_.mod stringrealpair_.mod stringintegerpairlist_.mod stringintegerpair_.mod
 	fmake
 	echo -n 'Building StringHistogram.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c StringHistogram.f90
@@ -266,7 +266,7 @@ StringList.o stringlist_.mod: StringList.f90 string_.mod iostream_.mod
 	echo -n 'Building StringList.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c StringList.f90
 
-StringRealHistogramMap.o stringrealhistogrammap_.mod: StringRealHistogramMap.f90 math_.mod stringrealhistogrampairlist_.mod rnfunction_.mod realhistogram_.mod goptions_.mod stringrealhistogrampair_.mod reallist_.mod timer_.mod grid_.mod string_.mod iostream_.mod
+StringRealHistogramMap.o stringrealhistogrammap_.mod: StringRealHistogramMap.f90 math_.mod stringrealhistogrampairlist_.mod rnfunction_.mod realhistogram_.mod stringrealhistogrampair_.mod goptions_.mod reallist_.mod timer_.mod grid_.mod string_.mod iostream_.mod
 	fmake
 	echo -n 'Building StringRealHistogramMap.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c StringRealHistogramMap.f90
@@ -276,7 +276,7 @@ StringRealHistogramPair.o stringrealhistogrampair_.mod: StringRealHistogramPair.
 	echo -n 'Building StringRealHistogramPair.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c StringRealHistogramPair.f90
 
-StringRealHistogramPairList.o stringrealhistogrampairlist_.mod: StringRealHistogramPairList.f90 math_.mod rnfunction_.mod realhistogram_.mod goptions_.mod stringrealhistogrampair_.mod reallist_.mod timer_.mod grid_.mod string_.mod iostream_.mod
+StringRealHistogramPairList.o stringrealhistogrampairlist_.mod: StringRealHistogramPairList.f90 math_.mod rnfunction_.mod realhistogram_.mod stringrealhistogrampair_.mod goptions_.mod reallist_.mod timer_.mod grid_.mod string_.mod iostream_.mod
 	fmake
 	echo -n 'Building StringRealHistogramPairList.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c StringRealHistogramPairList.f90
@@ -301,10 +301,10 @@ Table.o table_.mod: Table.f90 string_.mod iostream_.mod
 	echo -n 'Building Table.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c Table.f90
 
-test: test.f90 Math.o RandomUtils.o Matrix.o math_.mod randomutils_.mod matrix_.mod
+test: test.f90 AtomicElementsDB.o Math.o RNFunction.o RealHistogram.o StringRealMap.o StringIntegerMap.o GOptions.o RealList.o StringHistogram.o Timer.o StringList.o UnitsConverter.o SpecialMatrix.o Grid.o RandomUtils.o Atom.o String.o IOStream.o Molecule.o Matrix.o StringRealPairList.o StringRealPair.o StringIntegerPairList.o StringIntegerPair.o RandomSampler.o atomicelementsdb_.mod math_.mod rnfunction_.mod realhistogram_.mod stringrealmap_.mod stringintegermap_.mod goptions_.mod reallist_.mod stringhistogram_.mod timer_.mod stringlist_.mod unitsconverter_.mod specialmatrix_.mod grid_.mod randomutils_.mod atom_.mod string_.mod iostream_.mod molecule_.mod matrix_.mod stringrealpairlist_.mod stringrealpair_.mod stringintegerpairlist_.mod stringintegerpair_.mod randomsampler_.mod
 	fmake
 	echo -n 'Building test.f90 '
-	time -f "(%E)" $(FC) $(FCFLAGS) test.f90 Math.o RandomUtils.o Matrix.o -o test $(LDFLAGS)
+	time -f "(%E)" $(FC) $(FCFLAGS) test.f90 AtomicElementsDB.o Math.o RNFunction.o RealHistogram.o StringRealMap.o StringIntegerMap.o GOptions.o RealList.o StringHistogram.o Timer.o StringList.o UnitsConverter.o SpecialMatrix.o Grid.o RandomUtils.o Atom.o String.o IOStream.o Molecule.o Matrix.o StringRealPairList.o StringRealPair.o StringIntegerPairList.o StringIntegerPair.o RandomSampler.o -o test $(LDFLAGS)
 
 ThrularNumerovMethod.o thrularnumerovmethod_.mod: ThrularNumerovMethod.f90 math_.mod rnfunction_.mod goptions_.mod timer_.mod grid_.mod string_.mod iostream_.mod
 	fmake
