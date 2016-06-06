@@ -29,6 +29,8 @@
 module RealHistogram_
 	use GOptions_
 	use Math_
+	use String_
+	use IOStream_
 	use RealList_
 	use Grid_
 	use RNFunction_
@@ -61,9 +63,10 @@ module RealHistogram_
 			procedure :: show
 			
 			procedure :: setRule
-			generic :: add => addValue, addFArray
+			generic :: add => addValue, addFArray, addFile
 			procedure, private :: addValue
 			procedure, private :: addFArray
+			procedure, private :: addFile
 			
 			procedure :: build
 			procedure :: mean
@@ -268,14 +271,72 @@ module RealHistogram_
 	!>
 	!! @brief
 	!!
-	subroutine build( this, binsPrecision )
+	subroutine addFile( this, iFileName, column, tol, cComments )
 		class(RealHistogram) :: this
+		character(*), intent(in) :: iFileName
+		integer, optional, intent(in) :: column
+		real(8), optional, intent(in) :: tol
+		character(*), optional, intent(in) :: cComments
+		
+		type(IFStream) :: ifile
+		integer :: columnEff
+		character(:), allocatable :: cCommentsEff
+		type(String) :: buffer
+		character(20), allocatable :: tokens(:)
+		integer :: i
+		real(8), allocatable :: data(:)
+		integer :: nData
+		real(8) :: stepSize
+		
+		columnEff = 1
+		if( present(column) ) then
+			columnEff = column
+		end if
+		
+		cCommentsEff = "#"
+		if( present(cComments) ) then
+			cCommentsEff = cComments
+		end if
+		
+		call ifile.init( trim(iFileName) )
+		
+		!! En el peor de los casos cada
+		!! línea es un valor
+		allocate( data(ifile.numberOfLines) )
+		
+		nData = 1
+		do while( .not. ifile.eof() )
+			buffer = ifile.readLine( cCommentsEff )
+			
+			call buffer.split( tokens, " " )
+			
+			if( columnEff <= size(tokens) ) then
+				if( len(trim(tokens(columnEff))) /= 0 ) then
+					read( tokens(columnEff),* ) data(nData)
+					nData = nData + 1
+				end if
+			end if
+		end do
+		
+		call this.addFArray( data(1:nData-1) )
+		
+		deallocate( data )
+		call ifile.close()
+	end subroutine addFile
+	
+	!>
+	!! @brief
+	!!
+	subroutine build( this, nBins, binsPrecision )
+		class(RealHistogram) :: this
+		integer, optional, intent(in) :: nBins
 		integer, optional, intent(in) :: binsPrecision
 		
+		integer :: EffNBins
 		integer :: EffbinsPrecision
 		
 		class(RealListIterator), pointer :: iter
-		integer :: i, j, k
+		integer :: i, j
 		real(8) :: rrange, h, mmin, mmax, x, norm
 		type(Grid) :: xGrid
 		integer, allocatable :: counts(:)
@@ -284,100 +345,131 @@ module RealHistogram_
 			call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "RealHistogram.build()" )
 		end if
 		
+		EffNBins = -1
+		if( present(nBins) ) EffNBins = nBins
+		
 		EffbinsPrecision = -1
 		if( present(binsPrecision) ) EffbinsPrecision = binsPrecision
 		
 		rrange = this.maximum() - this.minimum()
 		
-		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		! http://en.wikipedia.org/wiki/Histogram
-		select case( this.rule )
-			
-			! @todo Histogram_SQUAREROOT no funciona, hay que revisar esta linea. Por el momento es completamente
-			!       satisfactorio Histogram_STURGES
-			case( Histogram_SQUAREROOT )
-				k = ceiling( sqrt( real(this.size(),8) ) )
+		if( EffNBins == -1 ) then
+			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			! http://en.wikipedia.org/wiki/Histogram
+			select case( this.rule )
 				
-			case( Histogram_STURGES )
-				k = ceiling( log( real(this.size(),8) )/log(2.0_8) + 1.0_8 )
+				! @todo Histogram_SQUAREROOT no funciona, hay que revisar esta linea. Por el momento es completamente
+				!       satisfactorio Histogram_STURGES
+				case( Histogram_SQUAREROOT )
+					EffNBins = ceiling( sqrt( real(this.size(),8) ) )
+					
+				case( Histogram_STURGES )
+					EffNBins = ceiling( log( real(this.size(),8) )/log(2.0_8) + 1.0_8 )
+					
+				case( Histogram_RICE )
+					EffNBins = ceiling( 2.0_8*real(this.size(),8)**(1.0_8/3.0_8) )
 				
-			case( Histogram_RICE )
-				k = ceiling( 2.0_8*real(this.size(),8)**(1.0_8/3.0_8) )
-			
-			case( Histogram_DOANE )
-				! Necesita tener implementado skewness
-				stop "### ERROR ### RealHistogram.build(): Histogram_DOANE rule is not implemented"
-			
-			case( Histogram_SCOTT )
-				k = ceiling( rrange*real(this.size(),8)**(1.0_8/3.0_8)/3.5_8/this.stdev() )
-			
-			case( Histogram_FREEDMAN_DIACONIS )
-				! Necesita tener implementado el rango intercuartil
-				stop "### ERROR ### RealHistogram.build(): Histogram_FREEDMAN_DIACONIS rule is not implemented"
+				case( Histogram_DOANE )
+					! Necesita tener implementado skewness
+					stop "### ERROR ### RealHistogram.build(): Histogram_DOANE rule is not implemented"
 				
-			case default
-				stop "### ERROR ### RealHistogram.build(): UNKNOWN rule is not implemented"
+				case( Histogram_SCOTT )
+					EffNBins = ceiling( rrange*real(this.size(),8)**(1.0_8/3.0_8)/3.5_8/this.stdev() )
 				
-		end select
+				case( Histogram_FREEDMAN_DIACONIS )
+					! Necesita tener implementado el rango intercuartil
+					stop "### ERROR ### RealHistogram.build(): Histogram_FREEDMAN_DIACONIS rule is not implemented"
+					
+				case default
+					stop "### ERROR ### RealHistogram.build(): UNKNOWN rule is not implemented"
+					
+			end select
+		end if
 		
 ! 		if( EffbinsPrecision /= -1 ) then
-! 			h = Math_fixPrecision( rrange/real(k,8), EffbinsPrecision )
+! 			h = Math_fixPrecision( rrange/real(EffNBins,8), EffbinsPrecision )
 ! 			mmin = Math_fixPrecision( this.minimum()-0.10_8*h, EffbinsPrecision )
 ! 			mmax = Math_fixPrecision( this.maximum()+0.10_8*h, EffbinsPrecision )
 ! 		else
-! 			h = rrange/real(k,8)
+! 			h = rrange/real(EffNBins,8)
 ! 			mmin = this.minimum()-0.10_8*h
 ! 			mmax = this.maximum()+0.10_8*h
 ! 		end if
 
-			h = rrange/real(k,8)
+			h = rrange/real(EffNBins,8)
 			mmin = this.minimum()
 			mmax = this.maximum()
 		
-! 		h = (mmax-h-mmin)/real(k-1,8)
+! 		h = (mmax-h-mmin)/real(EffNBins-1,8)
 		
-! 		write(6,*) "k = ", k
+! 		write(6,*) "EffNBins = ", EffNBins
 ! 		write(6,*) "h = ", h
 ! 		write(6,*) "mmin = ", mmin, this.minimum()
 ! 		write(6,*) "mmax = ", mmax, this.maximum()
 		
 ! 		call xGrid.init( mmin, mmax-h, stepSize=h ) ! El valor de X es el inicio del intervalo
 ! 		call xGrid.init( mmin+0.5_8*h, mmax-0.5_8*h, stepSize=h )   ! El valor de X es el centro del intervalo
-		write(*,*) "Inicializando ", mmin, mmax, h
+! 		write(*,*) "Inicializando ", mmin, mmax, h
 		call xGrid.initDefault( mmin, mmax, stepSize=h )   ! El valor de X es el centro del intervalo
 ! 		call xGrid.show()
 		
-		allocate( counts(xGrid.nPoints) )
-		
-		counts = 0
-		j = 1
-		iter => this.begin
-		do while( associated(iter) )
-! 			i = floor( ( iter.data - this.minimum() )/h + 1.0_8 )
-			i = int( ( iter.data - mmin )/h ) + 1
+		if( this.rule == Histogram_GAUSSIAN_DRESSING .or. this.rule == Histogram_LORENTZIAN_DRESSING ) then
 			
-			if( i>this.size() .or. i<1 ) then
-				write(*,*) "Fuera de los limites", i, k, this.size(), h
+			call this.counts.init( xGrid, 0.0_8 )
+			
+			do i=1,xGrid.nPoints
+				
+				iter => this.begin
+				do while( associated(iter) )
+					
+					if( abs(xGrid.at(i)-iter.data) < 6.0_8*3.0_8*h ) then
+						if( this.rule == Histogram_GAUSSIAN_DRESSING ) then
+							this.counts.fArray(i) = this.counts.fArray(i) + Math_gaussian( xGrid.at(i), iter.data, 1.0_8, 3.0_8*h )
+						else if( this.rule == Histogram_LORENTZIAN_DRESSING ) then
+							this.counts.fArray(i) = this.counts.fArray(i) + Math_lorentzian( xGrid.at(i), iter.data, 1.0_8, 3.0_8*h )
+						end if
+					end if
+					
+					iter => iter.next
+				end do
+				
+			end do
+			
+			this.density = this.counts
+			call this.density.normalize()
+		else
+			allocate( counts(xGrid.nPoints) )
+			
+			counts = 0
+			j = 1
+			iter => this.begin
+			do while( associated(iter) )
+	! 			i = floor( ( iter.data - this.minimum() )/h + 1.0_8 )
+				i = int( ( iter.data - mmin )/h ) + 1
+				
+				if( i>this.size() .or. i<1 ) then
+					write(*,*) "Fuera de los limites", i, EffNBins, this.size(), h
+					stop
+				end if
+				
+				counts(i) = counts(i) + 1
+				
+				write(6,"(i5,2f10.5,i5)") j, xGrid.at(j), iter.data, i
+				
+				iter => iter.next
+				j = j + 1
+			end do
+			
+			if( sum(counts) /= this.size() ) then
+				write(*,*) "### ERROR ### RealHistogram.build(). Problems in sampling. sum(counts) /= this.size() (", sum(counts), ", ", this.size(), ")"
 				stop
 			end if
 			
-			counts(i) = counts(i) + 1
+			call this.counts.init( xGrid, real(counts,8) )
+			call this.density.init( xGrid, real(counts,8)*h/real(this.size(),8) )
 			
-			write(6,"(i5,2f10.5,i5)") j, xGrid.at(j), iter.data, i
-			
-			iter => iter.next
-			j = j + 1
-		end do
-		
-		if( sum(counts) /= this.size() ) then
-			write(*,*) "### ERROR ### RealHistogram.build(). Problems in sampling. sum(counts) /= this.size() (", sum(counts), ", ", this.size(), ")"
-			stop
+			deallocate( counts )
 		end if
-		
-		call this.counts.init( xGrid, real(counts,8) )
-		call this.density.init( xGrid, real(counts,8)*h/real(this.size(),8) )
-		
-		deallocate( counts )
 		
 	end subroutine build
 	
@@ -780,6 +872,15 @@ module RealHistogram_
 ! 		write(*,"(A20,F15.5)") "stdev = ", histogram.median()
 ! 		mode = histogram.mode()
 ! 		median = histogram.skewness()
+		
+		write(*,*) "LORENTZIAN DRESSING"
+		write(*,*) "-------------------"
+		call histogram.clear()
+		call histogram.init( Histogram_LORENTZIAN_DRESSING )
+		call histogram.add( "data/formats/ONE_COLUMN" )
+		call histogram.show()
+		call histogram.build( nBins=10000 )
+		call histogram.density.save("density.dat")
 		
 	end subroutine RealHistogram_test
 	
