@@ -161,6 +161,8 @@ module GOptions_
 		enumerator :: Histogram_DOANE
 		enumerator :: Histogram_SCOTT
 		enumerator :: Histogram_FREEDMAN_DIACONIS
+		enumerator :: Histogram_GAUSSIAN_DRESSING
+		enumerator :: Histogram_LORENTZIAN_DRESSING
 	end enum
 	
 	enum, BIND(c)

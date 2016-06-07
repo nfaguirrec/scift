@@ -51,6 +51,8 @@ module Math_
 		Math_ubox, &
 		Math_sinc, &
 		Math_nsinc, &
+		Math_gaussian, &
+		Math_lorentzian, &
 		Math_erfTophat, &
 		Math_flatTopWindow, &
 		Math_average, &
@@ -711,6 +713,32 @@ module Math_
 		
 		output = sin(Math_PI*x)/Math_PI/x
 	end function Math_nsinc
+	
+	!>
+	!! @brief Gaussian function
+	!!
+	pure function Math_gaussian( x, x0, I0, FWHM  ) result( output )
+		real(8), intent(in) :: x, x0, I0, FWHM
+		real(8) :: output
+		
+		real(8) :: width
+		
+		width = FWHM/2.35482_8
+		output = I0*exp( -(x-x0)**2/2.0_8/width**2 )
+	end function Math_gaussian
+	
+	!>
+	!! @brief Gaussian lorentzian
+	!!
+	pure function Math_lorentzian( x, x0, I0, FWHM  ) result( output )
+		real(8), intent(in) :: x, x0, I0, FWHM
+		real(8) :: output
+		
+		real(8) :: width
+		
+		width = 0.5_8*FWHM
+		output = I0/( 1.0_8+((x-x0)/width)**2 )
+	end function Math_lorentzian
 	
 	!>
 	!! @brief
