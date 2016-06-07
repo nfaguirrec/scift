@@ -327,17 +327,21 @@ module RealHistogram_
 	!>
 	!! @brief
 	!!
-	subroutine build( this, nBins, binsPrecision )
+	subroutine build( this, nBins, binsPrecision, min, max )
 		class(RealHistogram) :: this
 		integer, optional, intent(in) :: nBins
 		integer, optional, intent(in) :: binsPrecision
+		real(8), optional, intent(in) :: min
+		real(8), optional, intent(in) :: max
 		
 		integer :: EffNBins
 		integer :: EffbinsPrecision
+		real(8) :: EffMin
+		real(8) :: EffMax
 		
 		class(RealListIterator), pointer :: iter
 		integer :: i, j
-		real(8) :: rrange, h, mmin, mmax, x, norm
+		real(8) :: rrange, h, x, norm
 		type(Grid) :: xGrid
 		integer, allocatable :: counts(:)
 		
@@ -351,7 +355,13 @@ module RealHistogram_
 		EffbinsPrecision = -1
 		if( present(binsPrecision) ) EffbinsPrecision = binsPrecision
 		
-		rrange = this.maximum() - this.minimum()
+		EffMin = this.minimum()
+		if( present(min) ) EffMin = min
+		
+		EffMax = this.maximum()
+		if( present(max) ) EffMax = max
+		
+		rrange = EffMax - EffMin
 		
 		if( EffNBins == -1 ) then
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -388,29 +398,27 @@ module RealHistogram_
 		
 ! 		if( EffbinsPrecision /= -1 ) then
 ! 			h = Math_fixPrecision( rrange/real(EffNBins,8), EffbinsPrecision )
-! 			mmin = Math_fixPrecision( this.minimum()-0.10_8*h, EffbinsPrecision )
-! 			mmax = Math_fixPrecision( this.maximum()+0.10_8*h, EffbinsPrecision )
+! 			EffMin = Math_fixPrecision( EffMin-0.10_8*h, EffbinsPrecision )
+! 			mmax = Math_fixPrecision( EffMax+0.10_8*h, EffbinsPrecision )
 ! 		else
 ! 			h = rrange/real(EffNBins,8)
-! 			mmin = this.minimum()-0.10_8*h
-! 			mmax = this.maximum()+0.10_8*h
+! 			EffMin = EffMin-0.10_8*h
+! 			mmax = EffMax+0.10_8*h
 ! 		end if
 
-			h = rrange/real(EffNBins,8)
-			mmin = this.minimum()
-			mmax = this.maximum()
+		h = rrange/real(EffNBins,8)
 		
-! 		h = (mmax-h-mmin)/real(EffNBins-1,8)
+! 		h = (EffMax-h-EffMin)/real(EffNBins-1,8)
 		
 ! 		write(6,*) "EffNBins = ", EffNBins
 ! 		write(6,*) "h = ", h
-! 		write(6,*) "mmin = ", mmin, this.minimum()
-! 		write(6,*) "mmax = ", mmax, this.maximum()
+! 		write(6,*) "EffMin = ", EffMin, EffMin
+! 		write(6,*) "EffMax = ", EffMax, EffMax
 		
-! 		call xGrid.init( mmin, mmax-h, stepSize=h ) ! El valor de X es el inicio del intervalo
-! 		call xGrid.init( mmin+0.5_8*h, mmax-0.5_8*h, stepSize=h )   ! El valor de X es el centro del intervalo
-! 		write(*,*) "Inicializando ", mmin, mmax, h
-		call xGrid.initDefault( mmin, mmax, stepSize=h )   ! El valor de X es el centro del intervalo
+! 		call xGrid.init( EffMin, EffMax-h, stepSize=h ) ! El valor de X es el inicio del intervalo
+! 		call xGrid.init( EffMin+0.5_8*h, EffMax-0.5_8*h, stepSize=h )   ! El valor de X es el centro del intervalo
+! 		write(*,*) "Inicializando ", EffMin, EffMax, h
+		call xGrid.initDefault( EffMin, EffMax, stepSize=h )   ! El valor de X es el centro del intervalo
 ! 		call xGrid.show()
 		
 		if( this.rule == Histogram_GAUSSIAN_DRESSING .or. this.rule == Histogram_LORENTZIAN_DRESSING ) then
@@ -444,8 +452,8 @@ module RealHistogram_
 			j = 1
 			iter => this.begin
 			do while( associated(iter) )
-	! 			i = floor( ( iter.data - this.minimum() )/h + 1.0_8 )
-				i = int( ( iter.data - mmin )/h ) + 1
+	! 			i = floor( ( iter.data - EffMin )/h + 1.0_8 )
+				i = int( ( iter.data - EffMin )/h ) + 1
 				
 				if( i>this.size() .or. i<1 ) then
 					write(*,*) "Fuera de los limites", i, EffNBins, this.size(), h
