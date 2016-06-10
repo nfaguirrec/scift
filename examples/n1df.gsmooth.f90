@@ -29,6 +29,14 @@ program main
 	integer :: columns(2)
 	integer :: i
 	
+	if( command_argument_count() < 6 ) then
+		write(*,"(A)") "usage:"
+		write(*,"(A)") "   n1df.gsmooth -i iFileName -o oFileName -s value [-c col1,col2]"
+		write(*,"(A)") "                                                          1,2    "
+		write(*,"(A)") ""
+		stop
+	end if
+	
 	iFileName = parser.getString( "-i" )
 	oFileName = parser.getString( "-o" )
 	sigma = parser.getReal( "-s" )
@@ -60,6 +68,8 @@ program main
 		call oFunc.set( i, integrator.evaluate( ta, tb ) )
 	end do
 	call oFunc.save( oFileName.fstr )
+	
+	deallocate( tokens )
 	
 	contains
 	

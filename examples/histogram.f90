@@ -3,6 +3,7 @@
 !!
 program main
 	use GOptions_
+	use String_
 	use CommandLineParser_
 	use RealList_
 	use RNFunction_
@@ -10,8 +11,8 @@ program main
 
 	implicit none
 	type(CommandLineParser) :: parser
-	character(255) :: iFileName
-	character(255) :: oFileName
+	type(String) :: iFileName
+	type(String) :: oFileName
 	real(8) :: minValue, maxValue
 	integer :: nBins
 	character(255) :: buffer
@@ -29,12 +30,12 @@ program main
 	oFileName = parser.getString( "-o" )
 	
 	call hist.init( Histogram_LORENTZIAN_DRESSING )
-	call hist.add( iFileName )
+	call hist.add( iFileName.fstr )
 	
 	minValue = parser.getReal( "-min", def=hist.minimum() )
 	maxValue = parser.getReal( "-max", def=hist.maximum() )
 	nBins = parser.getInteger( "-nbins", def=-1 )
 	
 	call hist.build( nBins=nBins, min=minValue, max=maxValue )
-	call hist.density.save( oFileName )
+	call hist.density.save( oFileName.fstr )
 end program main

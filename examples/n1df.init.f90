@@ -2,75 +2,78 @@
 !! @brief Test program
 !!
 program main
+	use GOptions_
+	use String_
+	use CommandLineParser_
 	use RNFunction_
 	use CNFunction_
 
 	implicit none
-	character(1000) :: formula
-	character(255) :: iFileRef
-	character(255) :: oFileName
+	type(CommandLineParser) :: parser
+	type(String) :: iFileRef
+	type(String) :: oFileName
 	real(8) :: rInitValue
 	complex(8) :: cInitValue
-	integer :: argc
-	character(255) :: buffer
 	
 	integer :: fileTypeA
 	type(RNFunction) :: rFunc, rA
 	type(CNFunction) :: cFunc, cA
 	
-	argc = command_argument_count()
+	type(String) :: strBuffer
+	character(5), allocatable :: tokens(:)
 	
-	if( argc < 2 ) then
-		write(*,*) "usage:"
-		write(*,*) "   n1df.func iFileRef oFileName [initValue]"
-		write(*,*) ""
+	if( command_argument_count() < 4 ) then
+		write(*,"(A)") "usage:"
+		write(*,"(A)") "   n1df.init -o oFileName ( -b iFileRef | -xgrid xmin,xmax,nPoints ) [-init value]"
+		write(*,"(A)") "                                                                             0.0  "
+		write(*,"(A)") ""
 		stop
 	end if
 	
-	call get_command_argument( 1, iFileRef )
-	call get_command_argument( 2, oFileName )
+	oFileName = parser.getString( "-o" )
+	iFileRef = parser.getString( "-b", def=FString_NULL )
 	
-	fileTypeA = CNFunction_checkTypeN1DF( iFileRef )
-	if( fileTypeA == 0 ) then
-		call rA.init( iFileRef )
-	else if( fileTypeA == 1 ) then
-		call cA.init( iFileRef )
+	if( iFileRef /= FString_NULL ) then
+		fileTypeA = CNFunction_checkTypeN1DF( iFileRef.fstr )
+		if( fileTypeA == 0 ) then
+			call rA.init( iFileRef.fstr )
+		else if( fileTypeA == 1 ) then
+			call cA.init( iFileRef.fstr )
+		else
+			write(0,*) "### ERROR ### unknown format for "//trim(iFileRef.fstr)
+			stop
+		end if
+		
+		if( fileTypeA == 0 ) then
+			
+			rInitValue = parser.getReal( "-init", def=0.0_8 )
+			call rFunc.init( rA.xGrid, value=rInitValue )
+			
+		else if( fileTypeA == 1 ) then
+			
+			CInitValue = parser.getReal( "-init", def=0.0_8 )
+			call cFunc.init( cA.xGrid, value=cInitValue )
+			
+		end if
 	else
-		write(0,*) "### ERROR ### unknown format for "//trim(iFileRef)
-		stop
-	end if
-	
-	if( fileTypeA == 0 ) then
+		fileTypeA = 0
 		
-		rInitValue = 0.0_8
-		select case( argc )
-			case( 3 )
-				call get_command_argument( 3, buffer )
-				read(buffer,*) rInitValue
-		end select
+		strBuffer = parser.getString( "-xgrid" )
+		call strBuffer.split( tokens, "," )
 		
-		call rFunc.init( rA.xGrid, value=rInitValue )
-		
-	else if( fileTypeA == 1 ) then
-		
-		cInitValue = 0.0_8
-		select case( argc )
-			case( 3 )
-				call get_command_argument( 3, buffer )
-				read(buffer,*) cInitValue
-		end select
-		
-		call cFunc.init( cA.xGrid, value=cInitValue )
-		
+		rInitValue = parser.getReal( "-init", def=0.0_8 )
+		call rFunc.init( FString_toReal(tokens(1)), FString_toReal(tokens(2)), nPoints=FString_toInteger(tokens(3)), value=rInitValue )
 	end if
 	
 	!---------------------------------------------
 	! Saving AB
 	!---------------------------------------------
 	if( fileTypeA == 0 ) then
-		call rFunc.save( oFileName )
+		call rFunc.save( oFileName.fstr )
 	else if( fileTypeA == 1 ) then
-		call cFunc.save( oFileName )
+		call cFunc.save( oFileName.fstr )
 	end if
+	
+	deallocate( tokens )
 	
 end program main

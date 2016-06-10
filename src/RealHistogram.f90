@@ -339,6 +339,8 @@ module RealHistogram_
 		real(8) :: EffMin
 		real(8) :: EffMax
 		
+		real(8) :: windowWidth
+		
 		class(RealListIterator), pointer :: iter
 		integer :: i, j
 		real(8) :: rrange, h, x, norm
@@ -423,18 +425,25 @@ module RealHistogram_
 		
 		if( this.rule == Histogram_GAUSSIAN_DRESSING .or. this.rule == Histogram_LORENTZIAN_DRESSING ) then
 			
+			windowWidth = 3.0_8*h
 			call this.counts.init( xGrid, 0.0_8 )
+			
 			
 			do i=1,xGrid.nPoints
 				
 				iter => this.begin
 				do while( associated(iter) )
+				
+					! Solo fue necesario para una aplicación particular
+! 					if( iter.data > 0.7_8 ) then
+! 						windowWidth = 20.0_8*h
+! 					end if
 					
-					if( abs(xGrid.at(i)-iter.data) < 6.0_8*3.0_8*h ) then
+					if( abs(xGrid.at(i)-iter.data) < 6.0_8*windowWidth ) then
 						if( this.rule == Histogram_GAUSSIAN_DRESSING ) then
-							this.counts.fArray(i) = this.counts.fArray(i) + Math_gaussian( xGrid.at(i), iter.data, 1.0_8, 3.0_8*h )
+							this.counts.fArray(i) = this.counts.fArray(i) + Math_gaussian( xGrid.at(i), iter.data, 1.0_8, windowWidth )
 						else if( this.rule == Histogram_LORENTZIAN_DRESSING ) then
-							this.counts.fArray(i) = this.counts.fArray(i) + Math_lorentzian( xGrid.at(i), iter.data, 1.0_8, 3.0_8*h )
+							this.counts.fArray(i) = this.counts.fArray(i) + Math_lorentzian( xGrid.at(i), iter.data, 1.0_8, windowWidth )
 						end if
 					end if
 					
