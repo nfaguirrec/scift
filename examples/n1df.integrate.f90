@@ -28,6 +28,7 @@ program main
 	integer :: i
 	real(8) :: a, b
 	integer :: idMethod
+	real(8) :: value
 	
 	argc = command_argument_count()
 	
@@ -84,13 +85,21 @@ program main
 	
 	if( nFunc.xGrid.isEquallyspaced ) then
 		call integrator.init( nFunc, idMethod )
-		write(*,*) integrator.evaluate( a, b )
 	else
 		call nFuncSpline.init( nFunc )
 		nFuncSmooth = nFuncSpline.smooth( smoothFactor )
 		
 		call integrator.init( nFuncSmooth, idMethod )
 		write(*,*) integrator.evaluate( a, b )
+	end if
+	
+	value = integrator.evaluate( a, b )
+	
+	! Para evitar que imprima en formato raro, por ejemplo +E002
+	if( abs(value) > 1d-98 ) then
+		write(*,"(E20.10)") value
+	else
+		write(*,"(E20.10)") 0.0_8
 	end if
 	
 ! 	if( .not. nFunc.xGrid.isEquallyspaced ) then

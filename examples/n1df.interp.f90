@@ -5,6 +5,7 @@ program main
 	use CommandLineParser_
 	use String_
 	use Spline_
+	use Grid_
 	use RNFunction_
 	use CNFunction_
 
@@ -17,8 +18,9 @@ program main
 	
 	integer :: argc
 	integer :: fileType
-	type(RNFunction) :: riFunc, rbFunc, roFunc
-	type(CNFunction) :: ciFunc, cbFunc, coFunc
+	type(RNFunction) :: riFunc, roFunc
+	type(CNFunction) :: ciFunc, coFunc
+	type(Grid) :: xGrid
 	type(Spline) :: spl
 	
 	argc = command_argument_count()
@@ -44,13 +46,13 @@ program main
 			riFunc = spl.smooth( 1 )
 		end if
 		
-		call rbFunc.init( bFileName.fstr )
-		roFunc = riFunc.interpolate( rbFunc.xGrid )
+		call xGrid.init( bFileName.fstr, column=1 )
+		roFunc = riFunc.interpolate( xGrid )
 		call roFunc.save( oFileName.fstr )
 	else if( fileType == 1 ) then
 		call ciFunc.init( iFileName.fstr )
-		call cbFunc.init( bFileName.fstr )
-		coFunc = ciFunc.interpolate( cbFunc.xGrid )
+		call xGrid.init( bFileName.fstr, column=1 )
+		coFunc = ciFunc.interpolate( xGrid )
 		call coFunc.save( oFileName.fstr )
 	else
 		write(0,*) "### ERROR ### unknown type for "//trim(iFileName.fstr)
