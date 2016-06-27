@@ -111,6 +111,7 @@ module Grid_
 		real(8), optional, intent(in) :: stepSize
 		
 		integer :: i
+		integer :: allocStat
 		
 		this.min = min
 		this.max = max
@@ -126,7 +127,8 @@ module Grid_
 		end if
 		
 		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(this.nPoints) )
+		allocate( this.data(this.nPoints), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.initDefault()" )
 		
 		do i=1,this.nPoints
 			this.data( i ) = this.min+real(i-1,8)*this.stepSize
@@ -152,13 +154,15 @@ module Grid_
 		
 		integer :: i
 		real(8) :: stepSize
+		integer :: allocStat
 		
 		this.min = minval(array)
 		this.max = maxval(array)
 		this.nPoints = size(array)
 		
 		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(this.nPoints) )
+		allocate( this.data(this.nPoints), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.fromArray()" )
 		
 		do i=1,this.nPoints
 			this.data( i ) = array( i )
@@ -188,6 +192,7 @@ module Grid_
 		real(8), allocatable :: data(:)
 		integer :: nData
 		real(8) :: stepSize
+		integer :: allocStat
 		
 		columnEff = 1
 		if( present(column) ) then
@@ -203,7 +208,8 @@ module Grid_
 		
 		!! En el peor de los casos cada
 		!! línea es un valor
-		allocate( data(ifile.numberOfLines) )
+		allocate( data(ifile.numberOfLines), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.fromFile()" )
 		
 		nData = 1
 		do while( .not. ifile.eof() )
@@ -220,7 +226,9 @@ module Grid_
 		end do
 		
 		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(nData-1) )
+		allocate( this.data(nData-1), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.fromFile()" )
+		
 		this.data = data(1:nData-1)
 		
 		deallocate( data )
@@ -242,6 +250,8 @@ module Grid_
 		class(Grid), intent(out) :: this
 		class(Grid), intent(in) :: other
 		
+		integer :: allocStat
+		
 		this.min = other.min
 		this.max = other.max
 		this.stepSize = other.stepSize
@@ -249,7 +259,9 @@ module Grid_
 		this.isEquallyspaced = other.isEquallyspaced
 		
 		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(this.nPoints) )
+		allocate( this.data(this.nPoints), stat=allocStat )
+		
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.copy()" )
 		
 		this.data = other.data
 	end subroutine copy

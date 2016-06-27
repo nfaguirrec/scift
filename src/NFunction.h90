@@ -157,6 +157,7 @@
 		__TYPE_VALUE__, optional, intent(in) :: value
 		
 		__TYPE_VALUE__ :: effValue
+		integer :: allocStat
 		
 		effValue = 0.0_8
 		if( present(value) ) effValue = value
@@ -164,7 +165,9 @@
 		this.xGrid = xGrid
 		
 		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(xGrid.nPoints) )
+		allocate( this.fArray(xGrid.nPoints), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromGrid()" )
+		
 		this.fArray = effValue
 	end subroutine fromGrid
 	
@@ -180,6 +183,7 @@
 		__TYPE_VALUE__, optional, intent(in) :: value
 		
 		__TYPE_VALUE__ :: effValue
+		integer :: allocStat
 		
 		effValue = 0.0_8
 		if( present(value) ) effValue = value
@@ -188,7 +192,8 @@
 		call this.xGrid.init( min, max, nPoints, stepSize )
 		
 		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray( this.xGrid.nPoints ) )
+		allocate( this.fArray( this.xGrid.nPoints ), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromGridData()" )
 		
 		this.fArray = effValue
 	end subroutine fromGridData
@@ -204,6 +209,8 @@
 		real(8), optional, intent(in) :: cutoff
 		
 		integer :: i
+		integer :: allocStat
+		
 		real(8) :: effUnits(2)
 		real(8) :: effCutoff
 		
@@ -224,7 +231,8 @@
 		call this.xGrid.setUnits( effUnits(1) )
 		
 		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray( size(xArray) ) )
+		allocate( this.fArray( size(xArray) ), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromArrays()" )
 		
 		do i=1,size(fArray,dim=1)
 #if __ID_TYPE__ == 0
@@ -246,6 +254,8 @@
 		real(8), optional, intent(in) :: cutoff
 		
 		integer :: i
+		integer :: allocStat
+		
 		real(8) :: effUnits(2)
 		real(8) :: effCutoff
 		
@@ -267,7 +277,8 @@
 			stop
 		end if
 		
-		allocate( this.fArray(xGrid.nPoints) )
+		allocate( this.fArray(xGrid.nPoints), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromGridArray()" )
 		
 		do i=1,size(fArray,dim=1)
 #if __ID_TYPE__ == 0
@@ -290,6 +301,8 @@
 		real(8), optional, intent(in) :: cutoff
 		
 		integer :: i
+		integer :: allocStat
+		
 		real(8) :: effUnits(2)
 		real(8) :: effCutoff
 		
@@ -306,7 +319,8 @@
 		call this.xGrid.setUnits( effUnits(1) )
 		
 		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(this.nPoints()) )
+		allocate( this.fArray(this.nPoints()), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromFunction()" )
 		
 		do i=1,this.nPoints()
 #if __ID_TYPE__ == 0
@@ -388,10 +402,13 @@
 		class(NFunction), intent(inout) :: this
 		class(NFunction), intent(in) :: other
 		
+		integer :: allocStat
+		
 		call this.xGrid.copy( other.xGrid )
 		
 		if( allocated(this.fArray) ) deallocate( this.fArray )
-		allocate( this.fArray(this.nPoints()) )
+		allocate( this.fArray(this.nPoints()), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.copyNFunction()" )
 		
 		this.fArray = other.fArray
 	end subroutine copyNFunction
@@ -1119,6 +1136,7 @@
 		integer :: idType
 		__TYPE_VALUE__, allocatable :: fArray(:)
 		
+		integer :: allocStat
 		type(Grid) :: xGrid
 		
 		open( unit=1, file=trim(fileName), action='read', form="unformatted" )
@@ -1141,7 +1159,8 @@
 		
 		xMax = xMin + (nx-1)*hx
 		
-		allocate( fArray(nx) )
+		allocate( fArray(nx), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.loadN1DF()" )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!
 		! Volumetric data
@@ -1235,6 +1254,7 @@
 		__TYPE_VALUE__, allocatable :: fArray(:)
 		real(8), allocatable :: cubeDataLine(:)
 		
+		integer :: allocStat
 		type(Grid) :: xGrid
 		
 		effFormat = CUBE_FORMAT
@@ -1281,8 +1301,11 @@
 			read(1,"(A)") sBuffer
 		end do
 		
-		allocate( fArray( nx ) )
-		allocate( cubeDataLine(nx) )
+		allocate( fArray( nx ), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.loadCUBE()" )
+		
+		allocate( cubeDataLine(nx), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.loadCUBE()" )
 		
 		read(1,"(6E13.5)") ( cubeDataLine(ix), ix=1,nx )
 				
@@ -1519,6 +1542,7 @@
 		integer :: newN
 		integer :: i
 		integer :: ii
+		integer :: allocStat
 		
 		effDir = 1
 		if( present(dir) ) effDir = dir
@@ -1532,7 +1556,9 @@
 			if( effDir == 1 ) then
 			
 				newN = xGrid.nPoints
-				allocate( fArray(newN) )
+				allocate( fArray(newN), stat=allocStat )
+				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
+				
 				fArray = 0.0_8
 				
 				do i=1,oldN
@@ -1542,7 +1568,9 @@
 			else if( effDir == -1 ) then
 			
 				newN = xGrid.nPoints
-				allocate( fArray(newN) )
+				allocate( fArray(newN), stat=allocStat )
+				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
+				
 				fArray = 0.0_8
 				
 				do i=dn+1,newN
@@ -1552,7 +1580,9 @@
 			else if( effDir == 0 ) then
 				
 				newN = xGrid.nPoints
-				allocate( fArray(newN) )
+				allocate( fArray(newN), stat=allocStat )
+				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
+				
 				fArray = 0.0_8
 				
 				ii=1
@@ -1570,7 +1600,9 @@
 			if( effDir == 1 ) then
 			
 				newN = xGrid.nPoints
-				allocate( fArray(newN) )
+				allocate( fArray(newN), stat=allocStat )
+				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
+				
 				fArray = 0.0_8
 				
 				do i=1,newN
@@ -1580,7 +1612,9 @@
 			else if( effDir == -1 ) then
 			
 				newN = xGrid.nPoints
-				allocate( fArray(newN) )
+				allocate( fArray(newN), stat=allocStat )
+				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
+				
 				fArray = 0.0_8
 				
 				do i=1,newN
@@ -1590,7 +1624,9 @@
 			else if( effDir == 0 ) then
 				
 				newN = xGrid.nPoints
-				allocate( fArray(newN) )
+				allocate( fArray(newN), stat=allocStat )
+				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
+				
 				fArray = 0.0_8
 				
 				ii=1
@@ -2175,9 +2211,11 @@
 		type(NFunction) :: output
 		
 		__TYPE_VALUE__, allocatable :: dArray(:)
+		integer :: allocStat
 		integer :: i
 		
-		allocate( dArray(xGrid.nPoints) )
+		allocate( dArray(xGrid.nPoints), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.interpolateOnGrid()" )
 		
 		do i=1,xGrid.nPoints
 			dArray(i) = this.interpolatePoint( xGrid.at(i), stencil, order )
@@ -2203,12 +2241,14 @@
 		integer :: effOrder
 		
 		__TYPE_VALUE__, allocatable :: dArray(:)
+		integer :: allocStat
 		integer :: i
 		
 		effOrder = 1
 		if( present(order) ) effOrder = order
 		
-		allocate( dArray(this.xGrid.nPoints) )
+		allocate( dArray(this.xGrid.nPoints), stat=allocStat )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.derivative()" )
 		
 		do i=1,this.xGrid.nPoints
 			dArray(i) = this.interpolatePoint( this.xGrid.at(i), stencil, effOrder )
