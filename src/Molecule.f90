@@ -1089,7 +1089,8 @@ module Molecule_
 		
 		keys = 0
 		do i=1,size(this.atoms)
-			keys(i) = FString_hashKey( this.atoms(i).symbol )
+! 			keys(i) = FString_hashKey( this.atoms(i).symbol )
+			keys(i) = AtomicElementsDB_instance.atomicNumber( this.atoms(i).symbol )
 		end do
 		
 		allocate( counts(minval( keys ):maxval( keys )) )
@@ -1098,7 +1099,8 @@ module Molecule_
 		
 		counts = 0
 		do i=1,size(this.atoms)
-			key = FString_hashKey( this.atoms(i).symbol )
+! 			key = FString_hashKey( this.atoms(i).symbol )
+			key = AtomicElementsDB_instance.atomicNumber( this.atoms(i).symbol )
 			counts( key ) = counts( key ) + 1
 			
 			symb( key ) = this.atoms(i).symbol
@@ -1115,7 +1117,8 @@ module Molecule_
 		this.composition = 0
 		
 		this.chemicalFormula_ = ""
-		do i=maxval(keys),minval(keys),-1
+! 		do i=maxval(keys),minval(keys),-1
+		do i=minval(keys),maxval(keys)
 			if( counts(i) /= 0 ) then
 				this.chemicalFormula_ = trim(adjustl(this.chemicalFormula_))//trim(adjustl(symb( i )))//"_"//trim(FString_fromInteger( counts(i) ))
 				this.composition( zVec(i) ) = counts(i)
