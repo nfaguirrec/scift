@@ -3,6 +3,7 @@
 !!
 program main
 	use UnitsConverter_
+	use AtomicElementsDB_
 	use String_
 	use Matrix_
 	use Molecule_
@@ -130,7 +131,7 @@ program main
 		type(Matrix) :: Im
 		
 		integer :: i
-		real(8) :: centerOfMass(3)
+		real(8) :: centerOfMass(3), massI
 		real(8), allocatable :: X(:), Y(:), Z(:), m(:)
 		type(Matrix) :: diagInertiaTensor, Vm
 		type(Matrix) :: r, u
@@ -140,7 +141,8 @@ program main
 		! 1) Calculate the center of mass
 		centerOfMass = 0.0_8
 		do i=1,mol.nAtoms()
-			centerOfMass = centerOfMass + 1.0_8*mol.atoms(i).r  ! mass(i) = 1.0
+			massI = AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol )
+			centerOfMass = centerOfMass + massI*mol.atoms(i).r  ! mass(i) = 1.0
 		end do
 		centerOfMass = centerOfMass/real(mol.nAtoms(),8)  ! Total mass = nAtoms
 		
@@ -153,7 +155,7 @@ program main
 			X(i) = mol.atoms(i).x
 			Y(i) = mol.atoms(i).y
 			Z(i) = mol.atoms(i).z
-			m(i) = 1.0_8
+			m(i) = AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol )
 		end do
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
