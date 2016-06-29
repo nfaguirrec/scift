@@ -141,7 +141,7 @@ program main
 		! 1) Calculate the center of mass
 		centerOfMass = 0.0_8
 		do i=1,mol.nAtoms()
-			massI = AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol )
+			massI = log( real( AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol )+1, 8 ) )
 			centerOfMass = centerOfMass + massI*mol.atoms(i).r  ! mass(i) = 1.0
 		end do
 		centerOfMass = centerOfMass/real(mol.nAtoms(),8)  ! Total mass = nAtoms
@@ -155,7 +155,7 @@ program main
 			X(i) = mol.atoms(i).x
 			Y(i) = mol.atoms(i).y
 			Z(i) = mol.atoms(i).z
-			m(i) = AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol )
+			m(i) = log( real( AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol )+1, 8 ) )
 		end do
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
