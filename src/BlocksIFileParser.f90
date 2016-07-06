@@ -207,10 +207,33 @@ module BlocksIFileParser_
 		integer :: iostat
 		integer :: posComment
 		integer :: i
-		character(999) :: buffer
+		character(1000) :: buffer
 		character(:), allocatable :: line
-		character(999) :: fileContent(1000)
+		character(1000), allocatable :: fileContent(:)
 		
+		open( 10, file=this.iFile, status="old", iostat=iostat )
+		
+		! This block get the number of lines, including comments
+		if( iostat /= 0 ) then
+			write(*, *) "### Error ###: The file ( ", this.iFile, " ) cannot be open"
+			stop
+		else
+			this.numberOfLines = 1
+			iostat = 1
+			do while( .true. )
+				read(10,'(A)', iostat=iostat) buffer
+				
+				if( iostat == -1 ) exit
+				this.numberOfLines = this.numberOfLines + 1
+			end do
+		end if
+		this.numberOfLines = this.numberOfLines - 1
+		
+		close(10)
+		
+		allocate( fileContent(this.numberOfLines) )
+		
+		! This block get the effective number of lines (without comments), and loads the information
 		open( 10, file=this.iFile, status="old", iostat=iostat )
 		
 		if( iostat /= 0 ) then
@@ -248,15 +271,17 @@ module BlocksIFileParser_
 				
 			end do
 		end if
-		
 		this.numberOfLines = this.numberOfLines - 1
+		
+		close( 10 )
+		
 		allocate( this.lines( this.numberOfLines ) )
 		
 		do i=1,this.numberOfLines
 			this.lines(i) = trim( fileContent(i) )
 		end do
 		
-		close( 10 )
+		deallocate( fileContent )
 	end subroutine load
 	
 	!>
