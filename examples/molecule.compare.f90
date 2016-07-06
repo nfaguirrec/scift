@@ -99,10 +99,18 @@ program main
 		Ivalue(i) = 100.0_8*abs( Idiff.get(i,i) )/Iaver.get(i,i)
 	end do
 	
-	if( mol1.fv() == mol2.fv() .and. Ivalue(1) < gamma .and. Ivalue(2) < gamma .and. Ivalue(3) < gamma ) then
-		write(*,"(A,2I3,3F20.5)") "OK", mol1.fv(), mol2.fv(), Ivalue
+	if( mol1.fv() == mol2.fv() ) then
+		if( mol1.isLineal() ) then
+			if( Ivalue(2) < gamma .and. Ivalue(3) < gamma ) then
+				write(*,"(A,2I3,3F20.5)") "OK", mol1.fv(), mol2.fv(), Ivalue(2:3)
+			end if
+		else
+			if( Ivalue(1) < gamma .and. Ivalue(2) < gamma .and. Ivalue(3) < gamma ) then
+				write(*,"(A,2I3,3F20.5)") "OK", mol1.fv(), mol2.fv(), Ivalue(1:3)
+			end if
+		end if
 	else
-		write(*,"(A,2I3,3F20.5)") "Failed", mol1.fv(), mol2.fv(), Ivalue
+		write(*,"(A,2I3,3F20.5)") "Failed", mol1.fv(), mol2.fv()
 	end if
 	
 	R1 = mol1.radius()
@@ -141,7 +149,7 @@ program main
 		! 1) Calculate the center of mass
 		centerOfMass = 0.0_8
 		do i=1,mol.nAtoms()
-			massI = log( real( AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol )+1, 8 ) )
+			massI = log10( real(AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol ),8) ) + 1.0_8
 			centerOfMass = centerOfMass + massI*mol.atoms(i).r  ! mass(i) = 1.0
 		end do
 		centerOfMass = centerOfMass/real(mol.nAtoms(),8)  ! Total mass = nAtoms
@@ -155,7 +163,7 @@ program main
 			X(i) = mol.atoms(i).x
 			Y(i) = mol.atoms(i).y
 			Z(i) = mol.atoms(i).z
-			m(i) = log( real( AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol )+1, 8 ) )
+			m(i) = log10( real(AtomicElementsDB_instance.atomicNumber( mol.atoms(i).symbol ),8) ) + 1.0_8
 		end do
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

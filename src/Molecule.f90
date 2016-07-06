@@ -1658,8 +1658,8 @@ module Molecule_
 		if( this.nAtoms() == 1 ) then
 			this.fv_ = 0
 			this.fr_ = 0
-! 		else if( abs( this.diagInertiaTensor.get(1,1) ) < 1e-3 ) then ! Este valor detecta a partir 179.988 deg.
-		else if( abs( this.diagInertiaTensor.get(1,1) ) < 1e-4 ) then ! Este valor detecta a partir 179.991 deg.
+		else if( abs( this.diagInertiaTensor.get(1,1) ) < 1e-3 ) then ! Este valor detecta a partir 179.988 deg.
+! 		else if( abs( this.diagInertiaTensor.get(1,1) ) < 1e-4 ) then ! Este valor detecta a partir 179.991 deg.
 			this.fv_ = 3*this.nAtoms()-5
 			this.fr_ = 2
 			
