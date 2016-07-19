@@ -1120,7 +1120,11 @@ module Molecule_
 ! 		do i=maxval(keys),minval(keys),-1
 		do i=minval(keys),maxval(keys)
 			if( counts(i) /= 0 ) then
-				this.chemicalFormula_ = trim(adjustl(this.chemicalFormula_))//trim(adjustl(symb( i )))//"_"//trim(FString_fromInteger( counts(i) ))
+				if( counts(i) == 1 ) then
+					this.chemicalFormula_ = trim(adjustl(this.chemicalFormula_))//trim(adjustl(symb( i )))
+				else
+					this.chemicalFormula_ = trim(adjustl(this.chemicalFormula_))//trim(adjustl(symb( i )))//"_"//trim(FString_fromInteger( counts(i) ))
+				end if
 				this.composition( zVec(i) ) = counts(i)
 			end if
 		end do
