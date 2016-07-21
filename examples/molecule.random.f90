@@ -23,11 +23,11 @@ program main
 	real(8) :: gamma
 	
 	if( command_argument_count() < 1 ) then
-		write(*,*) "## ERROR ## Number of Parameter == 1"
+		write(*,*) "Usage:"
+		write(*,*) "   molecule.random -i xyzfile"
+		write(*,*) "   molecule.random 3H,C,S"
 		stop
 	end if
-	
-	gamma = parser.getReal( "-gamma", def=0.6_8 )
 	
 	iFileName = parser.getString( "-i", def=FString_NULL )
 	if( iFileName /= FString_NULL ) then
@@ -84,11 +84,11 @@ program main
 		deallocate( tokens )
 	end if
 	
-	if( mol.nAtoms() > 2 ) then
-		call mol.randomGeometry( gamma=gamma )
-	else
-		call mol.randomGeometry( gamma=1.0_8 )
-	end if
+	gamma = 0.7_8
+	if( mol.nAtoms() == 2 ) gamma = 2.0_8
+	if( mol.nAtoms() == 3 ) gamma = 1.0_8
+	
+	call mol.randomGeometry( gamma=gamma )
 	
 	call mol.save()
 end program main
