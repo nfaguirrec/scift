@@ -20,5 +20,5 @@ program main
 	
 	call mol.init( iFileName.fstr )
 	
-	write(*,"(A)") trim(FString_replace( mol.chemicalFormula(), "_", "" ) )
+	write(*,"(A)") trim(mol.chemicalFormula())
 end program main
