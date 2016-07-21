@@ -60,6 +60,9 @@ module Math_
 		Math_floorDivision, &
 		Math_isNaN, &
 		Math_isInf, &
+		Math_dotProduct, &
+		Math_crossProduct, &
+		Math_pointLineDistance, &
 		Math_test
 		
 	interface Math_sort
@@ -1028,6 +1031,41 @@ module Math_
 		
 		output = .not. IEEE_IS_FINITE( x )
 	end function Math_isInf
+	
+	!>
+	!! @brief Returns the scalar product of two vectors (r1,r2),
+	!!        which must have the same length (same number of elements).
+	!!
+	function Math_dotProduct( r1, r2 ) result( output )
+		real(8) :: r1(3), r2(3)
+		real(8) :: output
+		
+		output = DOT_PRODUCT( r1, r2 )
+	end function Math_dotProduct
+	
+	!>
+	!! @brief Returns the cross product of two vectors (r1,r2),
+	!!        which must have the same length (same number of elements).
+	!!
+	function Math_crossProduct( r1, r2 ) result( output )
+		real(8) :: r1(3), r2(3)
+		real(8) :: output(3)
+		
+		output(1) = r1(2)*r2(3) - r1(3)*r2(2)
+		output(2) = r1(3)*r2(1) - r1(1)*r2(3)
+		output(3) = r1(1)*r2(2) - r1(2)*r2(1)
+	end function Math_crossProduct
+	
+	!>
+	!! @brief Returns the distance from the point r0 to the line specified by
+	!!        two points r1 and r2 lying on it. Only 3D case is available.
+	!!
+	function Math_pointLineDistance( r0, r1, r2 ) result( output )
+		real(8) :: r0(3), r1(3), r2(3)
+		real(8) :: output
+		
+		output = norm2(Math_crossProduct( r0-r1, r0-r2 ))/norm2(r2-r1)
+	end function Math_pointLineDistance
 	
 	!>
 	!! @brief Test method

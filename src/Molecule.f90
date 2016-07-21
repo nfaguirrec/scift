@@ -104,6 +104,7 @@ module Molecule_
 			procedure :: randomGeometry
 			
 			procedure :: set
+			procedure, private :: extremeAtoms
 			procedure :: radius
 			procedure :: nAtoms
 			procedure :: fv
@@ -844,6 +845,36 @@ module Molecule_
 	end subroutine set
 	
 	!>
+	!! @brief Return the ids (si, sj) of the most extreame atoms in the molecule.
+	!!        Optionally the distance is also returned (rij)
+	!!
+	subroutine extremeAtoms( this, si, sj, rij )
+		class(Molecule), intent(in) :: this
+		integer, intent(out) :: si, sj
+		real(8), optional, intent(out) :: rij
+		
+		integer :: i, j
+		real(8) :: dist, maxDist
+		
+		si = -1
+		sj = -1
+		dist = 0.0_8
+		do i=1,size(this.atoms)-1
+			do j=i+1,size(this.atoms)
+				dist = norm2( this.atoms(j).r-this.atoms(i).r )
+				
+				if( dist > maxDist ) then
+					maxDist = dist
+					si = i
+					sj = j
+				end if
+			end do
+		end do
+		
+		if( present(rij) ) rij = maxDist
+	end subroutine 
+	
+	!>
 	!! @brief Return the radius of the system in atomic units
 	!!        defined as half the largest distance between
 	!!        two molecule atoms
@@ -862,19 +893,7 @@ module Molecule_
 			
 			if( this.nAtoms() > 1 ) then
 				
-				si = -1
-				sj = -1
-				do i=1,size(this.atoms)-1
-					do j=i+1,size(this.atoms)
-						rij = norm2( this.atoms(j).r-this.atoms(i).r )
-						
-						if( rij > this.radius_ ) then
-							this.radius_ = rij
-							si = i
-							sj = j
-						end if
-					end do
-				end do
+				call this.extremeAtoms( si, sj, this.radius_ )
 				
 				cRadius1 = this.atoms(si).radius( type=type )
 				cRadius2 = this.atoms(sj).radius( type=type )
@@ -1584,7 +1603,8 @@ module Molecule_
 		real(8) :: centerOfMass(3)
 		type(Matrix) :: Im, Vm, Rot, r
 		real(8) :: rThetaPhi(3)
-		integer :: i
+		integer :: i, si, sj
+		real(8) :: rms_di
 		
 		effMoveCM = .true.
 		if( present(moveCM) ) effMoveCM = moveCM
@@ -1614,6 +1634,15 @@ module Molecule_
 		call this.buildInertiaTensor( Im, CM=.false. )
 		call Im.eigen( eVecs=Vm, eVals=this.diagInertiaTensor )
 ! 		call Vm.show( formatted=.true. )
+		
+		if( effDebug ) then
+			write(*,*) "Inertia tensor = "
+			call Im.show( formatted=.true. )
+			write(*,*) ""
+			write(*,*) "Diagonal inertia tensor = "
+			call this.diagInertiaTensor.show( formatted=.true. )
+			write(*,*) ""
+		end if
 		
 		rThetaPhi = Math_cart2Spher( Vm.data(:,3) )
 		Rot = SpecialMatrix_rotation( rThetaPhi(3), rThetaPhi(2), 0.0_8 )
@@ -1657,15 +1686,41 @@ module Molecule_
 		!    for the rotational and the vibrational motions
 		this.isLineal_ = 0
 		if( this.nAtoms() == 1 ) then
+			if( effDebug ) write(*,*) "* Atom detected"
+			
 			this.fv_ = 0
 			this.fr_ = 0
-		else if( abs( this.diagInertiaTensor.get(1,1) ) < 1e-3 ) then ! Este valor detecta a partir 179.988 deg.
-! 		else if( abs( this.diagInertiaTensor.get(1,1) ) < 1e-4 ) then ! Este valor detecta a partir 179.991 deg.
-			this.fv_ = 3*this.nAtoms()-5
-			this.fr_ = 2
+		else if( abs( this.diagInertiaTensor.get(1,1) ) < 1.0 ) then ! La molecula es candidata a ser lineal
+			
+			if( effDebug ) write(*,*) "* Candidate to linear molecule detected. I1=", abs( this.diagInertiaTensor.get(1,1) ), "< 1.0 a.u."
+			
+			call this.extremeAtoms( si, sj )
+			if( effDebug ) write(*,*) "Extreme atoms = ", si, sj
+			
+			rms_di = 0.0_8
+			do i=1,this.nAtoms()
+				rms_di = rms_di + Math_pointLineDistance( this.atoms(i).r, this.atoms(si).r, this.atoms(sj).r )
+			end do
+			rms_di = rms_di/real(this.nAtoms(),8)
+			
+			if( effDebug ) write(*,*) "Error in linear configuration = ", rms_di
+			
+			if( rms_di < 1d-2 ) then
+				if( effDebug ) write(*,*) "* Linear molecule detected. rms_di=", rms_di, "< 1e-2 a.u."
+				
+				this.fv_ = 3*this.nAtoms()-5
+				this.fr_ = 2
+			else
+				if( effDebug ) write(*,*) "* Nonlinear molecule detected. rms_di=", rms_di, "> 1e-2 a.u."
+				
+				this.fv_ = 3*this.nAtoms()-6
+				this.fr_ = 3
+			end if
 			
 			this.isLineal_ = 1
 		else
+			if( effDebug ) write(*,*) "* Nonlinear molecule detected. I1=", abs( this.diagInertiaTensor.get(1,1) ), "> 1.0 a.u."
+			
 			this.fv_ = 3*this.nAtoms()-6
 			this.fr_ = 3
 		end if

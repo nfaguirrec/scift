@@ -21,7 +21,7 @@ program main
 	iFileName = sBuffer
 	
 	call mol.init( iFileName.fstr )
-	call mol.orient()
+	call mol.orient( debug=.false. )
 	
 	write(*,"(I20)") mol.fv()
 end program main
