@@ -379,8 +379,9 @@ module FourierTransform_
 		if( present(shift) ) effShift = shift
 		
 		if( sgn == FourierTransform_FORWARD ) then
-		
-			call dfftw_execute( this.planF )
+			
+			! call dfftw_execute( this.planF ) << @todo Es un error conocido del compilador de intel. ver http://www.fftw.org/doc/Plan-execution-in-Fortran.html
+			call dfftw_execute_dft( this.planF, this.iFunc.fArray, this.iFunc.fArray )
 			
 			if( effSync ) then
 				this.iFunc.xGrid = this.omega
@@ -400,7 +401,8 @@ module FourierTransform_
 				end if
 			end if
 			
-			call dfftw_execute( this.planB )
+			! call dfftw_execute( this.planB ) << @todo Es un error conocido del compilador de intel. ver http://www.fftw.org/doc/Plan-execution-in-Fortran.html
+			call dfftw_execute_dft( this.planB, this.iFunc.fArray, this.iFunc.fArray )
 			
 			if( effSync ) then
 				this.iFunc.xGrid = this.x

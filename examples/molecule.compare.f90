@@ -103,10 +103,14 @@ program main
 		if( mol1.isLineal() ) then
 			if( Ivalue(2) < gamma .and. Ivalue(3) < gamma ) then
 				write(*,"(A,2I3,3F20.5)") "OK", mol1.fv(), mol2.fv(), Ivalue(2:3)
+			else
+				write(*,"(A,I3,3F20.5)") "Failed", mol1.fv(), Ivalue(2), Ivalue(3)
 			end if
 		else
 			if( Ivalue(1) < gamma .and. Ivalue(2) < gamma .and. Ivalue(3) < gamma ) then
 				write(*,"(A,2I3,3F20.5)") "OK", mol1.fv(), mol2.fv(), Ivalue(1:3)
+			else
+				write(*,"(A,I3,3F20.5)") "Failed", mol1.fv(), Ivalue(1), Ivalue(2), Ivalue(3)
 			end if
 		end if
 	else
