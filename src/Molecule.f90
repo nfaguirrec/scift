@@ -1690,9 +1690,9 @@ module Molecule_
 			
 			this.fv_ = 0
 			this.fr_ = 0
-		else if( abs( this.diagInertiaTensor.get(1,1) ) < 1.0 ) then ! La molecula es candidata a ser lineal
+		else if( abs( this.diagInertiaTensor.get(1,1) ) < 10.0 ) then ! La molecula es candidata a ser lineal
 			
-			if( effDebug ) write(*,*) "* Candidate to linear molecule detected. I1=", abs( this.diagInertiaTensor.get(1,1) ), "< 1.0 a.u."
+			if( effDebug ) write(*,*) "* Candidate to linear molecule detected. I1=", abs( this.diagInertiaTensor.get(1,1) ), "< 10.0 a.u."
 			
 			call this.extremeAtoms( si, sj )
 			if( effDebug ) write(*,*) "Extreme atoms = ", si, sj
@@ -1719,7 +1719,7 @@ module Molecule_
 			
 			this.isLineal_ = 1
 		else
-			if( effDebug ) write(*,*) "* Nonlinear molecule detected. I1=", abs( this.diagInertiaTensor.get(1,1) ), "> 1.0 a.u."
+			if( effDebug ) write(*,*) "* Nonlinear molecule detected. I1=", abs( this.diagInertiaTensor.get(1,1) ), "> 10.0 a.u."
 			
 			this.fv_ = 3*this.nAtoms()-6
 			this.fr_ = 3
