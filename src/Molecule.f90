@@ -1042,7 +1042,9 @@ module Molecule_
 	end function compareGeometry
 	
 	!>
-	!! @brief
+	!! @brief see. Pedro J. Ballester and W. Graham Richards
+	!!             Proc. R. Soc. A (2007) 463, 1307–1321
+	!!             doi:10.1098/rspa.2007.1823
 	!!
 	function ballesterDescriptors( this, useMassWeight ) result( output )
 		class(Molecule), intent(in) :: this
