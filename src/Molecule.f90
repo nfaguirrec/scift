@@ -1025,7 +1025,14 @@ module Molecule_
 		this_descrip = this.ballesterDescriptors( useMassWeight=useMassWeight )
 		other_descrip = other.ballesterDescriptors( useMassWeight=useMassWeight )
 		
-		similarity = 1.0_8/( 1.0_8+abs(sum( this.ballesterDescriptors()-other.ballesterDescriptors() ))/12.0_8 )
+		! Jaccard similarity index
+		this_descrip  =  this_descrip + abs(minval(this_descrip))
+		other_descrip = other_descrip + abs(minval(other_descrip))
+		similarity = sum( min(this_descrip,other_descrip) )
+		similarity = similarity/sum( max(this_descrip,other_descrip) )
+		
+		! Native Ballester similarity index
+! 		similarity = 1.0_8/( 1.0_8+abs(sum( this.ballesterDescriptors()-other.ballesterDescriptors() ))/12.0_8 )
 		
 		output = .false.
 		if( similarity > effThr  ) output = .true.
@@ -1063,9 +1070,9 @@ module Molecule_
 		
 		do i=1,this.nAtoms()
 			if( effUseMassWeight ) then
-				distance(i) = norm2( this.atoms(i).r - this.geomCenter_ )
+				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.centerOfMass_ )
 			else
-				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.geomCenter_ )
+				distance(i) = norm2( this.atoms(i).r - this.geomCenter_ )
 			end if
 		end do
 		
@@ -1078,9 +1085,9 @@ module Molecule_
 		
 		do i=1,this.nAtoms()
 			if( effUseMassWeight ) then
-				distance(i) = norm2( this.atoms(i).r - this.atoms(id_min(1)).r )
-			else
 				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.atoms(id_min(1)).r )
+			else
+				distance(i) = norm2( this.atoms(i).r - this.atoms(id_min(1)).r )
 			end if
 		end do
 		
@@ -1090,9 +1097,9 @@ module Molecule_
 		
 		do i=1,this.nAtoms()
 			if( effUseMassWeight ) then
-				distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
-			else
 				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.atoms(id_max(1)).r )
+			else
+				distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
 			end if
 		end do
 		
@@ -1104,9 +1111,9 @@ module Molecule_
 		
 		do i=1,this.nAtoms()
 			if( effUseMassWeight ) then
-				distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
-			else
 				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.atoms(id_max(1)).r )
+			else
+				distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
 			end if
 		end do
 		
