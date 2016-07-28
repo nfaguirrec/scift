@@ -6,6 +6,7 @@ all:
 
 clean:
 	cd src; make clean
+	cd examples; make clean
 	
 install: src/libscift.a
 	echo ''

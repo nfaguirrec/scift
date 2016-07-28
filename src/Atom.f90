@@ -54,6 +54,7 @@ module Atom_
 			
 			procedure :: radius
 			procedure :: mass
+			procedure :: massNumber
 			procedure :: atomicNumber
 			procedure :: isConnectedWith
 	end type Atom
@@ -253,6 +254,16 @@ module Atom_
 		
 		output = AtomicElementsDB_instance.atomicMass( this.symbol )
 	end function mass
+	
+	!>
+	!! @brief
+	!!
+	pure function massNumber( this ) result( output )
+		class(Atom), intent(in) :: this
+		real(8) :: output
+		
+		output = AtomicElementsDB_instance.atomicMassNumber( this.symbol )
+	end function massNumber
 	
 	!>
 	!! @brief

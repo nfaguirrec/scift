@@ -57,6 +57,7 @@ module Math_
 		Math_flatTopWindow, &
 		Math_average, &
 		Math_stdev, &
+		Math_skewness, &
 		Math_floorDivision, &
 		Math_isNaN, &
 		Math_isInf, &
@@ -807,22 +808,50 @@ module Math_
 	!>
 	!! @brief
 	!!
-	function Math_stdev( array ) result( output )
+	function Math_stdev( array, aver ) result( output )
 		real(8), allocatable, intent(in) :: array(:)
+		real(8), optional, intent(in) :: aver
 		real(8) :: output
 		
-		integer :: i
-		real(8) :: aver, ssum
+		real(8) :: effAver
 		
-		aver = Math_average( array )
+		integer :: i
+		real(8) :: ssum
+		
+		if( present(aver) ) then
+			effAver = aver
+		else
+			effAver = Math_average( array )
+		end if
 		
 		ssum = 0.0_8
 		do i=1,size(array)
-			ssum = ssum + ( array(i) - aver )**2
+			ssum = ssum + ( array(i) - effAver )**2
 		end do
 		
 		output = sqrt( ssum/real(size(array),8) )
 	end function Math_stdev
+	
+	!>
+	!! @brief
+	!!
+	function Math_skewness( array ) result( output )
+		real(8), allocatable, intent(in) :: array(:)
+		real(8) :: output
+		
+		integer :: i
+		real(8) :: aver, stdev, ssum
+		
+		aver = Math_average( array )
+		stdev = Math_stdev( array, aver )
+		
+		ssum = 0.0_8
+		do i=1,size(array)
+			ssum = ssum + ( array(i) - aver )**3
+		end do
+		
+		output = ssum/real(size(array),8)/stdev**3
+	end function Math_skewness
 	
 	!>
 	!! @brief

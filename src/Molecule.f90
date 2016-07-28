@@ -113,6 +113,7 @@ module Molecule_
 			procedure :: compareFormula
 			procedure :: compareConnectivity
 			procedure :: compareGeometry
+			procedure :: ballesterDescriptors
 			procedure :: isFragmentOf
 			
 			procedure, private :: updateMassNumber
@@ -937,14 +938,28 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	function compareFormula( this, other ) result( output )
+	function compareFormula( this, other, debug ) result( output )
 		class(Molecule), intent(in) :: this
 		class(Molecule), intent(in) :: other
+		logical, optional :: debug
 		logical :: output
+		
+		logical :: effDebug
+		
+		effDebug = .false.
+		if( present(debug) ) effDebug = debug
 		
 		output = .false.
 		if( trim(this.chemicalFormula()) == trim(other.chemicalFormula()) ) then
 			output = .true.
+		end if
+		
+		if( effDebug ) then
+			write(*,*) ""
+			write(*,*) "Formula1 = ", trim(this.chemicalFormula())
+			write(*,*) "Formula2 = ", trim(other.chemicalFormula())
+			write(*,*) "  Equal? = ", output
+			write(*,*) ""
 		end if
 	end function compareFormula
 	
@@ -984,13 +999,121 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	function compareGeometry( this ) result( output )
+	function compareGeometry( this, other, useMassWeight, thr, debug ) result( output )
 		class(Molecule), intent(in) :: this
+		class(Molecule), intent(in) :: other
+		logical, optional :: useMassWeight
+		real(8), optional, intent(in) :: thr
+		logical, optional, intent(in) :: debug
 		logical :: output
 		
-		write(6,*) "### ERROR ### Cluster.compareGeometry(). This method is not implemented yet"
-		stop
+		real(8):: effThr
+		logical :: effDebug
+		
+		real(8) :: this_descrip(12), other_descrip(12)
+		real(8) :: similarity
+		
+		effDebug = .false.
+		if( present(debug) ) effDebug = debug
+		
+		effThr = 0.98_8
+		if( present(thr) ) effThr = thr
+		
+		if( .not. this.axesChosen ) call this.orient()
+		if( .not. other.axesChosen ) call other.orient()
+		
+		this_descrip = this.ballesterDescriptors( useMassWeight=useMassWeight )
+		other_descrip = other.ballesterDescriptors( useMassWeight=useMassWeight )
+		
+		similarity = 1.0_8/( 1.0_8+abs(sum( this.ballesterDescriptors()-other.ballesterDescriptors() ))/12.0_8 )
+		
+		output = .false.
+		if( similarity > effThr  ) output = .true.
+		
+		if( effDebug ) then
+			write(*,*) ""
+			write(*,"(A,12F10.5)")  "  Descrip1 = ", this_descrip
+			write(*,"(A,12F10.5)")  "  Descrip2 = ", other_descrip
+			write(*,"(A,F10.5)")    "Similarity = ", similarity
+			write(*,"(A,F10.5)")    " Threshold = ", effThr
+			write(*,*)              "    Equal? = ", output
+			write(*,*) ""
+		end if
 	end function compareGeometry
+	
+	!>
+	!! @brief
+	!!
+	function ballesterDescriptors( this, useMassWeight ) result( output )
+		class(Molecule), intent(in) :: this
+		logical, optional :: useMassWeight
+		real(8) :: output(12)
+		
+		logical :: effUseMassWeight
+		
+		real(8), allocatable :: distance(:)
+		integer :: i, id_min(1), id_max(1)
+		
+		effUseMassWeight = .false.
+		if( present(useMassWeight) ) effUseMassWeight = useMassWeight
+		
+		allocate( distance(this.nAtoms()) )
+		
+		do i=1,this.nAtoms()
+			if( effUseMassWeight ) then
+				distance(i) = norm2( this.atoms(i).r - this.geomCenter_ )
+			else
+				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.geomCenter_ )
+			end if
+		end do
+		
+		output(1) = Math_average( distance )
+		output(2) = Math_stdev( distance )
+		output(3) = Math_skewness( distance )
+		
+		id_min = minloc( distance )
+		id_max = maxloc( distance )
+		
+		do i=1,this.nAtoms()
+			if( effUseMassWeight ) then
+				distance(i) = norm2( this.atoms(i).r - this.atoms(id_min(1)).r )
+			else
+				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.atoms(id_min(1)).r )
+			end if
+		end do
+		
+		output(4) = Math_average( distance )
+		output(5) = Math_stdev( distance )
+		output(6) = Math_skewness( distance )
+		
+		do i=1,this.nAtoms()
+			if( effUseMassWeight ) then
+				distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
+			else
+				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.atoms(id_max(1)).r )
+			end if
+		end do
+		
+		output(7) = Math_average( distance )
+		output(8) = Math_stdev( distance )
+		output(9) = Math_skewness( distance )
+		
+		id_max = maxloc( distance )
+		
+		do i=1,this.nAtoms()
+			if( effUseMassWeight ) then
+				distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
+			else
+				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.atoms(id_max(1)).r )
+			end if
+		end do
+		
+		output(10) = Math_average( distance )
+		output(11) = Math_stdev( distance )
+		output(12) = Math_skewness( distance )
+		
+		deallocate( distance )
+	end function ballesterDescriptors
 	
 	!>
 	!! @brief
