@@ -1070,7 +1070,7 @@ module Molecule_
 		
 		do i=1,this.nAtoms()
 			if( effUseMassWeight ) then
-				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.centerOfMass_ )
+				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.geomCenter_ )
 			else
 				distance(i) = norm2( this.atoms(i).r - this.geomCenter_ )
 			end if
