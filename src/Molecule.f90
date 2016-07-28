@@ -1016,7 +1016,7 @@ module Molecule_
 		effDebug = .false.
 		if( present(debug) ) effDebug = debug
 		
-		effThr = 0.98_8
+		effThr = 0.93_8
 		if( present(thr) ) effThr = thr
 		
 		if( .not. this.axesChosen ) call this.orient()
@@ -1062,20 +1062,26 @@ module Molecule_
 		
 		real(8), allocatable :: distance(:)
 		integer :: i, id_min(1), id_max(1)
+		real(8), allocatable :: wi(:)
 		
 		effUseMassWeight = .false.
 		if( present(useMassWeight) ) effUseMassWeight = useMassWeight
 		
+		if( effUseMassWeight ) then
+			allocate( wi(this.nAtoms()) )
+			do i=1,this.nAtoms()
+				wi(i) = this.atoms(i).mass()
+			end do
+			wi = wi/this.mass()
+		end if
+		
 		allocate( distance(this.nAtoms()) )
 		
 		do i=1,this.nAtoms()
-			if( effUseMassWeight ) then
-				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.geomCenter_ )
-			else
-				distance(i) = norm2( this.atoms(i).r - this.geomCenter_ )
-			end if
+			distance(i) = norm2( this.atoms(i).r - this.geomCenter_ )
 		end do
 		
+		if( effUseMassWeight ) distance = wi*distance
 		output(1) = Math_average( distance )
 		output(2) = Math_stdev( distance )
 		output(3) = Math_skewness( distance )
@@ -1084,25 +1090,19 @@ module Molecule_
 		id_max = maxloc( distance )
 		
 		do i=1,this.nAtoms()
-			if( effUseMassWeight ) then
-				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.atoms(id_min(1)).r )
-			else
-				distance(i) = norm2( this.atoms(i).r - this.atoms(id_min(1)).r )
-			end if
+			distance(i) = norm2( this.atoms(i).r - this.atoms(id_min(1)).r )
 		end do
 		
+		if( effUseMassWeight ) distance = wi*distance
 		output(4) = Math_average( distance )
 		output(5) = Math_stdev( distance )
 		output(6) = Math_skewness( distance )
 		
 		do i=1,this.nAtoms()
-			if( effUseMassWeight ) then
-				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.atoms(id_max(1)).r )
-			else
-				distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
-			end if
+			distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
 		end do
 		
+		if( effUseMassWeight ) distance = wi*distance
 		output(7) = Math_average( distance )
 		output(8) = Math_stdev( distance )
 		output(9) = Math_skewness( distance )
@@ -1110,18 +1110,16 @@ module Molecule_
 		id_max = maxloc( distance )
 		
 		do i=1,this.nAtoms()
-			if( effUseMassWeight ) then
-				distance(i) = norm2( this.atoms(i).massNumber()*this.atoms(i).r - this.atoms(id_max(1)).r )
-			else
-				distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
-			end if
+			distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
 		end do
 		
+		if( effUseMassWeight ) distance = wi*distance
 		output(10) = Math_average( distance )
 		output(11) = Math_stdev( distance )
 		output(12) = Math_skewness( distance )
 		
 		deallocate( distance )
+		if( effUseMassWeight ) deallocate( wi )
 	end function ballesterDescriptors
 	
 	!>
