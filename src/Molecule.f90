@@ -1064,7 +1064,7 @@ module Molecule_
 		this_descrip(8) = this.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
 		this_descrip(9) = this.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
 		
-		call other.buildGraph()
+		call other.buildGraph( alpha=effAlpha )
 		
 		A = other.molGraph.adjacencyMatrix()
 		D = other.molGraph.distanceMatrix()
