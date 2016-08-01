@@ -211,11 +211,12 @@ module Atom_
 	!>
 	!! @brief
 	!!
-	function isConnectedWith( this, other, alpha, radiusType ) result( output )
+	function isConnectedWith( this, other, alpha, radiusType, distance ) result( output )
 		class(Atom), intent(in) :: this
 		class(Atom), intent(in) :: other
 		real(8), optional :: alpha
 		integer, optional :: radiusType
+		real(8), optional, intent(out) :: distance
 		logical :: output
 		
 		real(8) :: dist, cutoff
@@ -232,6 +233,8 @@ module Atom_
 		else
 				output = .false.
 		end if
+		
+		if( present(distance) ) distance = dist
 	end function isConnectedWith
 	
 	!>

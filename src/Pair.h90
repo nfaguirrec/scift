@@ -5,6 +5,8 @@
 		__TYPE_ITEMFIRST__ :: first
 		__TYPE_ITEMSECOND__ :: second
 		
+		__ADD_ATTRIBUTES__
+		
 		contains
 			generic :: init => initDefault
 			generic :: assignment(=) => copyPair
@@ -14,6 +16,8 @@
 			final :: destroyPair
 			procedure :: str
 			procedure :: show
+			
+			__ADD_METHODS__
 	end type Pair
 	
 	contains

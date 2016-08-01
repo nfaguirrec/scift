@@ -36,12 +36,16 @@ module StringIntegerPair_
 #define __TYPE_ITEMFIRST__  type(String)
 #define __CLASS_ITEMSECOND__ integer
 #define __TYPE_ITEMSECOND__  integer
+#define __ADD_ATTRIBUTES__
+#define __ADD_METHODS__
 #include "Pair.h90"
+#undef Pair
 #undef __CLASS_ITEMFIRST__
 #undef __TYPE_ITEMFIRST__
 #undef __CLASS_ITEMSECOND__
 #undef __TYPE_ITEMSECOND__
-#undef Pair
+#undef __ADD_ATTRIBUTES__
+#undef __ADD_METHODS__
 	
 	!*
 	! @brief Convert to string

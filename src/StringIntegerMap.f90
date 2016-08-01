@@ -47,6 +47,7 @@ module StringIntegerMap_
 #define __TYPE_MAPVALUE__     integer
 #define __ADD_METHODS__
 #include "Map.h90"
+#undef Map
 #undef __CLASS_MAPITERATOR__
 #undef __TYPE_MAPLIST__
 #undef __TYPE_MAPPAIR__
@@ -55,7 +56,6 @@ module StringIntegerMap_
 #undef __CLASS_MAPVALUE__
 #undef __TYPE_MAPVALUE__
 #undef __ADD_METHODS__
-#undef Map
 	
 	!*
 	! @brief Convert to string

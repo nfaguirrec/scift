@@ -1,10 +1,10 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!
 !!  This file is part of scift (Scientific Fortran Tools).
-!!  Copyright (C) by authors (2010-2013)
+!!  Copyright (C) by authors (2010-2016)
 !!  
 !!  Authors (alphabetic order):
-!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2010-2015)
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2010-2016)
 !!  
 !!  Contributors (alphabetic order):
 !!  
@@ -51,12 +51,15 @@ program test
 ! 	use IntegerList_
 ! 	use RealList_
 ! 	use StringList_
+	use IntegerVector_
 ! 	use StringIntegerPair_
 ! 	use StringIntegerPairList_
 ! 	use StringIntegerMap_
 ! 	use StringRealPair_
 ! 	use StringRealPairList_
 ! 	use StringRealMap_
+	use Edge_
+	use Graph_
 ! 	use IVector_
 ! 	use RVector_
 ! 	use Matrix_
@@ -103,6 +106,7 @@ program test
 ! 	call RandomSampler_test()
 ! 	call IntegerList_test()
 ! 	call RealList_test()
+! 	call IntegerVector_test()
 ! 	call StringList_test()
 ! 	call StringIntegerPair_test()
 ! 	call StringIntegerPairList_test()
@@ -110,11 +114,13 @@ program test
 ! 	call StringRealPair_test()
 ! 	call StringRealPairList_test()
 ! 	call StringRealMap_test()
+! 	call Edge_test()
+	call Graph_test()
 ! 	call IVector_test()
 ! 	call RVector_test()
 ! 	call Matrix_test()
 ! 	call SpecialMatrix_test()
-	call RealHistogram_test()
+! 	call RealHistogram_test()
 ! 	call StringHistogram_test()
 ! 	call MoldenParser_test()
 ! 	call Grid3D_test()

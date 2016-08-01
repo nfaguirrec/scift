@@ -1,0 +1,775 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!!  This file is part of scift (Scientific Fortran Tools).
+!!  Copyright (C) by authors (2010-2016)
+!!  
+!!  Authors (alphabetic order):
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2016-2016)
+!!  
+!!  Contributors (alphabetic order):
+!!  
+!!  Redistribution and use in source and binary forms, with or
+!!  without modification, are permitted provided that the
+!!  following conditions are met:
+!!  
+!!   * Redistributions of binary or source code must retain
+!!     the above copyright notice and this list of conditions
+!!     and/or other materials provided with the distribution.
+!!   * All advertising materials mentioning features or use of
+!!     this software must display the following acknowledgement:
+!!     
+!!     This product includes software from scift
+!!     (Scientific Fortran Tools) project and its contributors.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#ifndef VECTOR_H90
+#define VECTOR_H90 1
+	
+	!>
+	!!
+	!!
+	type, public :: VectorIterator
+		class(VectorIterator), public, pointer :: prev => null()
+		class(VectorIterator), public, pointer :: next => null()
+		__TYPE_ITEMVECTOR__ , public :: data
+	end type VectorIterator
+	
+	!>
+	!!
+	!!
+	type, public :: Vector
+		integer :: nItems = 0
+		integer :: resizeIncrement = 256
+! 		class(VectorIterator), pointer :: begin => null()
+! 		class(VectorIterator), pointer :: end => null()
+		__TYPE_ITEMVECTOR__ , allocatable :: data(:)
+		
+		__ADD_ATTRIBUTES__
+		
+		contains
+			generic :: init => initVector
+			generic :: assignment(=) => copyVector
+			generic :: operator(==) => equal
+			
+			procedure :: initVector
+			procedure :: copyVector
+			final :: destroyVector
+			procedure :: equal
+			procedure :: str
+			procedure :: show
+			procedure :: save
+			procedure :: toFStream
+			procedure, private :: resize
+			generic :: size => ssize
+			procedure, private :: ssize
+			procedure :: capacity
+			procedure :: isEmpty
+			generic :: append => appendValue, appendFArray
+			procedure, private :: appendValue
+			procedure, private :: appendFArray
+			procedure :: prepend
+			procedure :: insert
+			generic :: erase => eraseFromPtr, eraseFromPos
+			procedure :: eraseFromPtr
+			procedure :: eraseFromPos
+			procedure :: remove
+			procedure :: eraseAllExcept
+			procedure :: eraseAllExceptFirst
+			procedure :: eraseAllExceptLast
+			procedure :: clear
+			generic :: set => setFromPos
+			procedure, private :: setFromPos
+			procedure :: first
+			procedure :: last
+			generic :: at => atFromPtr, atFromPos
+			procedure, private :: atFromPtr
+			procedure, private :: atFromPos
+			generic :: replace => replaceFromPtr, replaceFromPos
+			procedure, private :: replaceFromPtr
+			procedure, private :: replaceFromPos
+			procedure :: indexOf
+			procedure :: lastIndexOf
+			procedure :: contains
+			procedure :: ptr
+			procedure :: fArray
+			
+			__ADD_METHODS__
+	end type Vector
+	
+	!>
+	!! Encapsulated VectorIterator 
+	!!
+	type, private :: EVectorIterator
+		class(VectorIterator), pointer :: p
+	end type EVectorIterator
+	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!!
+	!! Constructs an empty list
+	!!
+	subroutine initVector( this, initialSize, value, resizeIncrement )
+		class(Vector) :: this
+		integer, optional, intent(in) :: initialSize
+		__TYPE_ITEMVECTOR__, optional, intent(in) :: value
+		integer, optional, intent(in) :: resizeIncrement
+		
+		if( allocated(this.data) ) deallocate( this.data )
+		
+		this.nItems = 0
+		if( present(initialSize) ) then
+			allocate( this.data(initialSize) )
+			this.nItems = initialSize
+			
+			if( present(value) ) this.data = value
+		end if
+		
+		this.resizeIncrement = 256
+		if( present(resizeIncrement) ) this.resizeIncrement = resizeIncrement
+	end subroutine initVector
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	!! Constructs a copy of other
+	!! @see operator(=)
+	!!
+	subroutine copyVector( this, other )
+		class(Vector), intent(out) :: this
+		class(Vector), intent(in) :: other
+		
+		this.nItems = other.nItems
+		this.resizeIncrement = other.resizeIncrement
+		
+		if( allocated(this.data) ) deallocate( this.data )
+		allocate( this.data(other.capacity()) )
+		
+		this.data = other.data
+	end subroutine copyVector
+	
+	!>
+	!! @brief Destructor
+	!!
+	!! Destroys the list. References to the values in the
+	!! list, and all iterators over this list, become invalid.
+	!!
+	subroutine destroyVector( this )
+		type(Vector), intent(inout) :: this
+		
+		call this.clear()
+	end subroutine destroyVector
+	
+	!>
+	!! @brief Show 
+	!!
+	!! Writes the list to out unit. It's Neccesarry that the method str
+	!! is implemented in the child class
+	!!
+	subroutine show( this, unit, formatted )
+		class(Vector) :: this
+		integer, optional, intent(in) :: unit
+		logical, optional :: formatted
+		
+		integer :: effunit
+		logical :: effFormatted
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effunit = 6
+		if( present(unit) ) effunit = unit
+		
+		write(effunit,"(a)") trim(str(this,effFormatted))
+	end subroutine show
+	
+	!>
+	!! Save the data in two column format in a
+	!! selected unit
+	!!
+	subroutine save( this, ofileName )
+		use IOStream_
+		class(Vector), intent(in) :: this
+		character(*), optional, intent(in) :: ofileName
+		
+		type(OFStream) :: ofile
+		
+		if( present(ofileName) ) then
+			call ofile.init( ofileName )
+			call this.toFStream( ofile )
+			call ofile.close()
+		else
+			call toFStream( this )
+		end if
+	end subroutine save
+	
+	!>
+	!! Save the data in two column format in a
+	!! selected unit
+	!!
+	subroutine resize( this, newSize, value )
+		class(Vector) :: this
+		integer, intent(in) :: newSize
+		__TYPE_ITEMVECTOR__, optional, intent(in) :: value
+		
+		__TYPE_ITEMVECTOR__, allocatable :: dataBuffer(:)
+		
+		if( allocated(this.data) ) then
+			allocate( dataBuffer(this.size()) )
+			
+			dataBuffer = this.data(1:this.size())
+			
+			deallocate( this.data )
+			allocate( this.data( newSize ) )
+			
+			this.data( 1:size(dataBuffer) ) = dataBuffer
+			
+			if( present(value) ) this.data( size(dataBuffer)+1:size(this.data) ) = value
+			
+			deallocate( dataBuffer )
+		else
+			allocate( this.data( newSize ) )
+			
+			if( present(value) ) this.data = value
+		end if
+	end subroutine resize
+	
+	!>
+	!! @brief Returns the number of items in the list
+	!!
+	function ssize( this ) result( output )
+		class(Vector), intent(in) :: this
+		integer :: output
+		
+		output = this.nItems
+	end function ssize
+	
+	!>
+	!! @brief Returns the number of items in the list
+	!!
+	function capacity( this ) result( output )
+		class(Vector), intent(in) :: this
+		integer :: output
+		
+		output = 0
+		if( allocated(this.data) ) output = size( this.data )
+	end function capacity
+	
+	!>
+	!! @brief Returns true if the list contains no items, otherwise returns false
+	!!
+	function isEmpty( this ) result( output )
+		class(Vector), intent(in) :: this
+		logical :: output
+		
+		output = ( this.nItems == 0 )
+	end function isEmpty
+	
+	!>
+	!! @brief Inserts a value at the end of the list
+	!!
+	subroutine appendValue( this, item )
+		class(Vector), intent(inout) :: this
+		__CLASS_ITEMVECTOR__, intent(in) :: item
+		
+		if ( this.nItems == 0 ) then
+			call this.resize( this.resizeIncrement )
+		else if ( this.nItems == this.capacity() ) then
+			call this.resize( this.capacity() + this.resizeIncrement )
+		end if
+		
+		this.nItems = this.nItems + 1
+		this.data( this.nItems ) = item
+	end subroutine appendValue
+	
+	!>
+	!! @brief Inserts values at the end of the list
+	!!
+	subroutine appendFArray( this, array )
+		class(Vector) :: this
+		__CLASS_ITEMVECTOR__, intent(in) :: array(:)
+		
+		integer :: i
+		
+		do i=1,size(array)
+			call this.append( array(i) )
+		end do
+	end subroutine appendFArray
+	
+	!>
+	!! @brief Inserts value at the beginning of the list
+	!!
+	subroutine prepend( this, item )
+		class(Vector), intent(inout) :: this
+		__CLASS_ITEMVECTOR__, intent(in) :: item
+		
+		integer :: i
+		
+		if ( this.nItems == 0 ) then
+			call this.resize( this.resizeIncrement )
+		else if ( this.nItems == this.capacity() ) then
+			call this.resize( this.capacity() + this.resizeIncrement )
+		end if
+		
+		do i=this.size(),1,-1
+			this.data( i+1 ) = this.data( i )
+		end do
+		this.data(1) = item
+		
+		this.nItems = this.nItems + 1
+	end subroutine prepend
+	
+	!>
+	!! @brief Inserts value in front of the item pointed to by the iterator before.
+	!!
+	subroutine insert( this, before, item )
+		class(Vector), intent(inout) :: this 
+		class(VectorIterator), intent(in), pointer :: before
+		__CLASS_ITEMVECTOR__, intent(in) :: item
+		
+		write(*,*) "### ERRROR ### Vector.insert( pointer, item ) is not implemented yet"
+		stop
+		
+! 		class(VectorIterator), pointer :: cBefore
+! 		class(VectorIterator), pointer :: after
+! 		cBefore => before
+! 		
+! ! 		class(VectorIterator), pointer :: elem
+! ! 		
+! ! 		allocate(elem)
+! ! 		
+! ! 		! copy
+! ! 		elem.data = item
+! ! 		
+! ! 		elem.prev => before
+! ! 		
+! ! 		if ( associated(before.next) ) then
+! ! 			elem.next => before.next
+! ! 			before.next.prev => elem
+! ! 			before.next => elem
+! ! 		else
+! ! 			before.next => elem
+! ! 			this.end => elem
+! ! 		end if
+! ! 		
+! ! 		this.nItems = this.nItems+1 
+! 
+! 		
+! 		if ( associated(cBefore.next) ) then
+! 			after => cBefore.next
+! 			
+! 			cBefore.next => null()
+! 			allocate(cBefore.next)
+! 			
+! 			! copy
+! 			cBefore.next.data = item
+! 			
+! 			cBefore.next.next => after
+! 			cBefore.next.prev => cBefore
+! 			after.prev => cBefore.next
+! 			
+! 			this.nItems = this.nItems+1 
+! 		else
+! 			call this.append( item )
+! 		end if
+		
+	end subroutine insert
+	
+	!>
+	!! @brief Removes the item pointed to by the iterator ptr from the list
+	!!
+	subroutine eraseFromPtr( this, ptr )
+		class(Vector), intent(inout) :: this
+		class(VectorIterator), pointer, intent(in) :: ptr
+		
+		write(*,*) "### ERRROR ### Vector.eraseFromPtr( pointer ) is not implemented yet"
+		stop
+		
+! 		class(VectorIterator), pointer :: cPtr
+! 		cPtr => ptr
+! 		
+! 		if( associated(cPtr.prev) .and. associated(cPtr.next) ) then ! < El elemento enta en medio de otros dos
+! 			cPtr.prev.next => cPtr.next
+! 			cPtr.next.prev => cPtr.prev
+! 			cPtr.prev => null()
+! 			cPtr.next => null()
+! 		else if( ( .not. associated(cPtr.prev) ) .and. associated(cPtr.next) ) then ! < El elemento es la cabeza
+! 			this.begin => cPtr.next
+! 			cPtr.next => null()
+! 			this.begin.prev => null()
+! 		else if( associated(cPtr.prev) .and. ( .not. associated(cPtr.next) ) ) then ! < El elemento es la cola
+! 			this.end => cPtr.prev
+! 			cPtr.prev => null()
+! 			this.end.next => null()
+! 		end if
+! 		
+! 		deallocate(cPtr)
+! 		
+! 		this.nItems = this.nItems-1 
+! 		
+! 		if( this.nItems == 0 ) then
+! 			this.begin => null()
+! 			this.end => null()
+! 		end if
+	end subroutine eraseFromPtr
+	
+	!>
+	!! @brief Removes the item in pos-th position in the list,
+	!!
+	subroutine eraseFromPos( this, pos )
+		class(Vector) :: this
+		integer, intent(in) :: pos
+		
+		integer :: i
+		
+		if( this.size() > 0 ) then
+			do i=pos+1,this.size()
+				this.data(i-1) = this.data(i)
+			end do
+			
+			this.nItems = this.nItems-1
+		end if
+	end subroutine eraseFromPos
+	
+	!>
+	!! @brief Removes from the vector all the elements that compare equal to val.
+	!!
+	subroutine remove( this, value )
+		class(Vector) :: this
+		__TYPE_ITEMVECTOR__, intent(in) :: value
+		
+		integer :: i
+		
+		if( this.size() > 0 ) then
+			i = 1
+			do while( i /= this.size() )
+				if( this.data(i) == value ) then
+					call this.erase( i )
+					i = 1
+				else
+					i = i+1
+				end if
+			end do
+		end if
+	end subroutine remove
+	
+	!>
+	!! @brief Removes all the items in the list except those identified with the position given by posVec vector
+	!!
+	subroutine eraseAllExcept( this, posVec )
+		class(Vector), intent(inout) :: this
+		integer, intent(in) :: posVec(:)
+		
+		__TYPE_ITEMVECTOR__, allocatable :: dataBuffer(:)
+		integer :: i
+		integer :: nItems
+		
+		nItems = size(posVec)
+		
+		if( any( posVec > this.ssize() ) ) then
+			write(*,"(A)") "### ERROR ### Vector.eraseAllExcept( posVec ): There is one value X than X > size"
+			write(*,"(A,I3)")                 "                size = ", this.ssize()
+			write(*,"(A,<size(posVec)>I3,A)") "              posVec = (", posVec, ")"
+			stop
+		end if
+		
+		allocate( dataBuffer(nItems) )
+		
+		! @todo Probablemente tenga que organizar los valores de posVec
+		
+		do i=1,nItems
+			dataBuffer( i ) = this.data( posVec(i) )
+		end do
+		
+		deallocate( this.data )
+		allocate( this.data(nItems) )
+		this.nItems = nItems
+			
+		this.data = dataBuffer
+		
+		! @todo Actualizar apuntadores
+		
+		deallocate( dataBuffer )
+	end subroutine eraseAllExcept
+	
+	!>
+	!! @brief Removes all the items in the list except this nItems-th first
+	!!
+	subroutine eraseAllExceptFirst( this, nItems )
+		class(Vector), intent(inout) :: this
+		integer, intent(in) :: nItems
+		
+		integer :: i
+		integer, allocatable :: ids(:)
+		
+		if( nItems > this.ssize() ) then
+			write(*,*) ""
+			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ Vector.eraseAllExceptFirst( nItems ). nItems > size (", nItems, " > ", this.size(), "). Vector is not affected."
+			return
+		end if
+		
+		allocate( ids(nItems) )
+		
+		do i=1,nItems
+			ids(i) = i
+		end do
+		
+		call this.eraseAllExcept( ids )
+		
+		deallocate( ids )
+	end subroutine eraseAllExceptFirst
+	
+	!>
+	!! @brief Removes all the items in the list except this nItems-th last
+	!!
+	subroutine eraseAllExceptLast( this, nItems )
+		class(Vector), intent(inout) :: this
+		integer, intent(in) :: nItems
+		
+		integer :: i, j
+		integer, allocatable :: ids(:)
+		
+		if( nItems > this.ssize() ) then
+			write(*,*) ""
+			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ Vector.eraseAllExceptLast( nItems ). nItems > size (", nItems, " > ", this.size(), "). Vector is not affected."
+			return
+		end if
+		
+		allocate( ids(nItems) )
+		
+! 		j = 1
+! 		do i=this.size()-nItems,this.size()
+! 			ids(j) = i
+! 			j = j+1
+! 		end do
+		
+		j = this.size()-nItems
+		do i=1,nItems
+			ids(i) = j+i
+		end do
+		
+		call this.eraseAllExcept( ids )
+		
+		deallocate( ids )
+	end subroutine eraseAllExceptLast
+	
+	!>
+	!! @brief Removes all the items in the list
+	!!
+	subroutine clear( this )
+		class(Vector), intent(inout) :: this
+		
+		if( allocated(this.data) ) deallocate(this.data)
+		this.nItems = 0
+		
+! 		class(VectorIterator), pointer :: iter
+! 		class(VectorIterator), pointer :: iterPos
+! 		
+! 		if( .not. ( associated(this.begin) .and. associated(this.end) ) ) return
+! 		
+! 		iter => this.begin
+! ! 		if( associated(iter.next) ) iterPos => iter.next
+! 		
+! 		do while ( associated(iter) )
+! 			call this.erase( iter )
+! 			iter => this.begin
+! ! 			iter => iterPos
+! 			
+! ! 			if( associated(iterPos) ) iterPos => iter.next
+! 		end do
+! 		
+! ! 		this.nItems = 0
+! ! 		this.begin => null()
+! ! 		this.end => null()
+	end subroutine clear
+	
+	!>
+	!! @brief Sets the pos-th item from the list
+	!!
+	subroutine setFromPos( this, pos, value )
+		class(Vector) :: this
+		integer, intent(in) :: pos
+		__TYPE_ITEMVECTOR__, intent(in) :: value
+		
+		this.data( pos ) = value
+	end subroutine setFromPos
+	
+	!>
+	!! @brief
+	!!
+	function first( this ) result( output )
+		class(Vector), intent(in) :: this
+		__TYPE_ITEMVECTOR__ :: output
+		
+		output = this.data( 1 )
+	end function first
+	
+	!>
+	!! @brief
+	!!
+	function last( this ) result( output )
+		class(Vector), intent(in) :: this
+		__TYPE_ITEMVECTOR__ :: output
+		
+		output = this.data( this.size() )
+	end function last
+	
+	!>
+	!! @brief Returns the item pointed to by the iterator ptr from the list
+	!!
+	function atFromPtr( this, ptr ) result( output )
+		class(Vector), intent(in) :: this
+		class(VectorIterator), intent(in), pointer :: ptr
+		__TYPE_ITEMVECTOR__ :: output
+		
+! 		output = ptr.data
+		write(*,*) "### ERRROR ### Vector.atFromPtr( pointer ) is not implemented yet"
+		stop
+	end function atFromPtr
+	
+	!>
+	!! @brief Returns the pos-th item from the list
+	!!
+	function atFromPos( this, pos ) result( output )
+		class(Vector), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_ITEMVECTOR__ :: output
+		
+		output = this.data( pos )
+	end function atFromPos
+	
+	!>
+	!! @brief Replaces by item the item pointed to by the iterator ptr from the list
+	!!
+	subroutine replaceFromPtr( this, ptr, item )
+		class(Vector), intent(in) :: this
+		class(VectorIterator), intent(inout), pointer :: ptr
+		__TYPE_ITEMVECTOR__, intent(in) :: item
+		
+		write(*,*) "### ERRROR ### Vector.replaceFromPtr( pointer, item ) is not implemented yet"
+		stop
+	end subroutine replaceFromPtr
+	
+	!>
+	!! @brief Replaces by item the pos-th item from the list
+	!!
+	subroutine replaceFromPos( this, pos, item )
+		class(Vector) :: this
+		integer, intent(in) :: pos
+		__TYPE_ITEMVECTOR__, intent(in) :: item
+		
+		this.data( pos ) = item
+	end subroutine replaceFromPos
+	
+	!>
+	!! @brief Returns the index position of the first occurrence of value in the vector, searching
+	!!        forward from index position from. Returns -1 if no item matched.
+	!!        This function requires the value type to have an implementation of operator ==.
+	!!
+	function indexOf( this, value, from ) result( output )
+		class(Vector) :: this
+		__TYPE_ITEMVECTOR__, intent(in) :: value
+		integer, optional, intent(in) :: from
+		integer :: output
+		
+		integer :: effFrom
+		
+		integer :: i
+		
+		effFrom = 1
+		if( present(from) ) effFrom = from
+		
+		output=-1
+		do i=effFrom,this.size()
+			if( this.data(i) == value ) then
+				output = i
+				exit
+			end if
+		end do
+	end function indexOf
+	
+	!>
+	!! @brief Returns the index position of the last occurrence of the value value in the vector,
+	!!        searching backward from index position from. If from is -1 (the default), the search
+	!!        starts at the last item. Returns -1 if no item matched.
+	!!        This function requires the value type to have an implementation of operator ==.
+	!!
+	function lastIndexOf( this, value, from ) result( output )
+		class(Vector) :: this
+		__TYPE_ITEMVECTOR__, intent(in) :: value
+		integer, optional, intent(in) :: from
+		integer :: output
+		
+		integer :: effFrom
+		
+		integer :: i
+		
+		effFrom = this.size()
+		if( present(from) ) effFrom = from
+		
+		output=-1
+		do i=effFrom,1,-1
+			if( this.data(i) == value ) then
+				output = i
+				exit
+			end if
+		end do
+	end function lastIndexOf
+	
+	!>
+	!! @brief Returns true if the vector contains an occurrence of value; otherwise returns false.
+	!!
+	function contains( this, value ) result( output )
+		class(Vector) :: this
+		__TYPE_ITEMVECTOR__, intent(in) :: value
+		logical :: output
+		
+		output = .false.
+		if( this.indexOf(value) /= -1 ) output = .true.
+	end function contains
+	
+	!>
+	!! @brief Returns the pointer associated to pos-th element
+	!!
+	function ptr( this, pos ) result( output )
+		class(Vector), intent(in) :: this
+		integer, intent(in) :: pos
+		type(VectorIterator), pointer :: output
+		
+		write(*,*) "### ERRROR ### Vector.ptr( pos ) is not implemented yet"
+		stop
+! 		integer :: i
+! 		class(VectorIterator), pointer :: iter
+! 		
+! 		i=1
+! 		iter => this.begin
+! 		do while ( associated(iter) )
+! 			if( i==pos ) then
+! 				output = iter
+! 				return
+! 			end if
+! 			
+! 			iter => iter.next
+! 			i = i+1
+! 		end do
+	end function ptr
+	
+	!>
+	!! @brief
+	!!
+	function fArray( this ) result( output )
+		class(Vector), intent(in) :: this
+! 		__CLASS_ITEMVECTOR__, allocatable :: output(:)  !<<< No entiendo por que no puede ser polimorfica
+		__TYPE_ITEMVECTOR__, allocatable :: output(:)
+		
+		integer :: i
+		class(VectorIterator), pointer :: iter
+		
+		if( allocated(output) ) deallocate(output)
+		allocate( output(this.size()) )
+		
+		output = this.data(1:this.nItems)
+	end function fArray
+#endif

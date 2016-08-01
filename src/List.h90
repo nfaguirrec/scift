@@ -689,6 +689,7 @@
 		integer :: i
 		class(ListIterator), pointer :: iter
 		
+		if( allocated(output) ) deallocate(output)
 		allocate( output(this.size()) )
 		
 		i=1

@@ -34,6 +34,8 @@ module Math_
 	real(8), public, parameter :: Math_NAN = 0.0_8/0.0_8
 	complex(8), public, parameter :: Math_I = cmplx(0.0_8,1.0_8)
 	
+	integer, public, parameter :: Math_IINF = huge(0)
+	
 	public :: &
 		Math_wigner3j, &
 		Math_cart2Spher, &
@@ -61,6 +63,7 @@ module Math_
 		Math_floorDivision, &
 		Math_isNaN, &
 		Math_isInf, &
+		Math_isIInf, &
 		Math_dotProduct, &
 		Math_crossProduct, &
 		Math_pointLineDistance, &
@@ -1060,6 +1063,16 @@ module Math_
 		
 		output = .not. IEEE_IS_FINITE( x )
 	end function Math_isInf
+	
+	!>
+	!! @brief The result has the value true if the value of x is Inf; otherwise, false.
+	!!
+	function Math_isIInf( x ) result( output )
+		integer, intent(in) :: x
+		logical :: output
+		
+		output = ( huge(0) == x )
+	end function Math_isIInf
 	
 	!>
 	!! @brief Returns the scalar product of two vectors (r1,r2),

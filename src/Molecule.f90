@@ -38,6 +38,8 @@ module Molecule_
 	use RandomSampler_
 	use Atom_
 	use AtomicElementsDB_
+	use IntegerVector_
+	use Graph_
 	implicit none
 	private
 	
@@ -56,6 +58,7 @@ module Molecule_
 		type(Matrix) :: diagInertiaTensor  !<- Diagonal inertia tensor respect to its center of mass. It is calculated only one time
 		logical, private :: axesChosen = .false.
 		integer :: composition( AtomicElementsDB_nElems ) !<- [ n1, n2, ..., nN ] n=numberOfAtomsWithZ, pos = atomicNumber
+		type(Graph) :: molGraph
 		
 		!---------------------------------------------------------------
 		! This parameters will be calculated only if necessary,
@@ -111,8 +114,8 @@ module Molecule_
 			procedure :: fr
 			procedure :: isLineal
 			procedure :: compareFormula
-			procedure :: compareConnectivity
 			procedure :: compareGeometry
+			procedure :: compareConnectivity
 			procedure :: ballesterDescriptors
 			procedure :: isFragmentOf
 			
@@ -131,7 +134,8 @@ module Molecule_
 			procedure :: inertiaTensor
 			procedure :: inertiaAxis
 			procedure :: inertiaAxes
-			procedure :: connectivity
+! 			procedure, private :: buildGraph
+			procedure :: buildGraph
 			procedure :: minSpinMultiplicity
 			
 			procedure :: orient
@@ -966,39 +970,6 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	function compareConnectivity( this, other, alpha ) result( output )
-		class(Molecule), intent(in) :: this
-		class(Molecule), intent(in) :: other
-		real(8), optional :: alpha
-		logical :: output
-		
-		integer, allocatable :: conn1(:,:), conn2(:,:)
-		
-		call this.connectivity( conn1, alpha )
-		call other.connectivity( conn2, alpha )
-		
-! 		write(*,*) "mol1"
-! 		write(*,*) conn1(:,1)
-! 		write(*,*) conn1(:,2)
-! 		write(*,*) "mol2"
-! 		write(*,*) conn2(:,1)
-! 		write(*,*) conn2(:,2)
-		
-		output = .false.
-		
-		if( size(conn1) /= 0 .and. size(conn2) /= 0 ) then
-			if( all( conn1 == conn2 ) ) then
-				output = .true.
-			end if
-		end if
-		
-		if( allocated(conn1) ) deallocate( conn1 )
-		if( allocated(conn2) ) deallocate( conn2 )
-	end function compareConnectivity
-	
-	!>
-	!! @brief
-	!!
 	function compareGeometry( this, other, useMassWeight, thr, debug ) result( output )
 		class(Molecule), intent(in) :: this
 		class(Molecule), intent(in) :: other
@@ -1010,13 +981,13 @@ module Molecule_
 		real(8):: effThr
 		logical :: effDebug
 		
-		real(8) :: this_descrip(12), other_descrip(12)
+		real(8) :: this_descrip(15), other_descrip(15)
 		real(8) :: similarity
 		
 		effDebug = .false.
 		if( present(debug) ) effDebug = debug
 		
-		effThr = 0.93_8
+		effThr = 0.92_8
 		if( present(thr) ) effThr = thr
 		
 		if( .not. this.axesChosen ) call this.orient()
@@ -1026,27 +997,112 @@ module Molecule_
 		other_descrip = other.ballesterDescriptors( useMassWeight=useMassWeight )
 		
 		! Jaccard similarity index
-		this_descrip  =  this_descrip + abs(minval(this_descrip))
-		other_descrip = other_descrip + abs(minval(other_descrip))
-		similarity = sum( min(this_descrip,other_descrip) )
-		similarity = similarity/sum( max(this_descrip,other_descrip) )
+! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
+! 		other_descrip = other_descrip + abs(minval(other_descrip))
+! 		similarity = sum( min(this_descrip,other_descrip) )
+! 		similarity = similarity/sum( max(this_descrip,other_descrip) )
 		
 		! Native Ballester similarity index
-! 		similarity = 1.0_8/( 1.0_8+abs(sum( this.ballesterDescriptors()-other.ballesterDescriptors() ))/12.0_8 )
+		similarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
 		
 		output = .false.
 		if( similarity > effThr  ) output = .true.
 		
 		if( effDebug ) then
 			write(*,*) ""
-			write(*,"(A,12F10.5)")  "  Descrip1 = ", this_descrip
-			write(*,"(A,12F10.5)")  "  Descrip2 = ", other_descrip
+			write(*,"(A,<size(this_descrip)>F10.5)")  "  Descrip1 = ", this_descrip
+			write(*,"(A,<size(other_descrip)>F10.5)")  "  Descrip2 = ", other_descrip
 			write(*,"(A,F10.5)")    "Similarity = ", similarity
 			write(*,"(A,F10.5)")    " Threshold = ", effThr
 			write(*,*)              "    Equal? = ", output
 			write(*,*) ""
 		end if
 	end function compareGeometry
+	
+	!>
+	!! @brief
+	!!
+	function compareConnectivity( this, other, alpha, thr, debug ) result( output )
+		class(Molecule), intent(in) :: this
+		class(Molecule), intent(in) :: other
+		real(8), optional, intent(in) :: alpha
+		real(8), optional, intent(in) :: thr
+		logical, optional :: debug
+		logical :: output
+		
+		real(8):: effAlpha
+		real(8):: effThr
+		logical :: effDebug
+		
+		real(8) :: this_descrip(9), other_descrip(9)
+		real(8) :: similarity
+		type(Matrix) :: A, D, L, Omega
+		
+		effAlpha = 1.0_8
+		if( present(alpha) ) effAlpha = alpha
+		
+		effThr = 0.92_8
+		if( present(thr) ) effThr = thr
+		
+		effDebug = .false.
+		if( present(debug) ) effDebug = debug
+		
+		call this.buildGraph( alpha=effAlpha )
+		
+		A = this.molGraph.adjacencyMatrix()
+		D = this.molGraph.distanceMatrix()
+		L = this.molGraph.laplacianMatrix()
+		Omega = this.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
+		
+		this_descrip(1) = this.molGraph.randicIndex()
+		this_descrip(2) = this.molGraph.wienerIndex( distanceMatrix=D )
+		this_descrip(3) = this.molGraph.inverseWienerIndex( distanceMatrix=D )
+		this_descrip(4) = this.molGraph.balabanIndex( distanceMatrix=D )
+		this_descrip(5) = this.molGraph.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
+		this_descrip(6) = this.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
+		this_descrip(7) = this.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		this_descrip(8) = this.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		this_descrip(9) = this.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		
+		call other.buildGraph()
+		
+		A = other.molGraph.adjacencyMatrix()
+		D = other.molGraph.distanceMatrix()
+		L = other.molGraph.laplacianMatrix()
+		Omega = other.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
+		
+		other_descrip(1) = other.molGraph.randicIndex()
+		other_descrip(2) = other.molGraph.wienerIndex( distanceMatrix=D )
+		other_descrip(3) = other.molGraph.inverseWienerIndex( distanceMatrix=D )
+		other_descrip(4) = other.molGraph.balabanIndex( distanceMatrix=D )
+		other_descrip(5) = other.molGraph.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
+		other_descrip(6) = other.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
+		other_descrip(7) = other.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		other_descrip(8) = other.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		other_descrip(9) = other.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		
+		! Jaccard similarity index
+! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
+! 		other_descrip = other_descrip + abs(minval(other_descrip))
+! 		similarity = sum( min(this_descrip,other_descrip) )
+! 		similarity = similarity/sum( max(this_descrip,other_descrip) )
+		
+		! Native Ballester similarity index
+		similarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
+		
+		output = .false.
+		if( similarity > effThr ) output = .true.
+		
+		if( effDebug ) then
+			write(*,*) ""
+			write(*,"(A,<size(this_descrip)>F10.5)")  "  Descrip1 = ", this_descrip
+			write(*,"(A,<size(other_descrip)>F10.5)")  "  Descrip2 = ", other_descrip
+			write(*,"(A,F10.5)")    "Similarity = ", similarity
+			write(*,"(A,F10.5)")    " Threshold = ", effThr
+			write(*,*)              "    Equal? = ", output
+			write(*,*) ""
+		end if
+	end function compareConnectivity
 	
 	!>
 	!! @brief see. Pedro J. Ballester and W. Graham Richards
@@ -1056,13 +1112,15 @@ module Molecule_
 	function ballesterDescriptors( this, useMassWeight ) result( output )
 		class(Molecule), intent(in) :: this
 		logical, optional :: useMassWeight
-		real(8) :: output(12)
+		real(8) :: output(15)
 		
 		logical :: effUseMassWeight
 		
 		real(8), allocatable :: distance(:)
 		integer :: i, id_min(1), id_max(1)
 		real(8), allocatable :: wi(:)
+		type(Matrix) :: Im
+		real(8), allocatable :: diagUIm(:)
 		
 		effUseMassWeight = .false.
 		if( present(useMassWeight) ) effUseMassWeight = useMassWeight
@@ -1118,8 +1176,16 @@ module Molecule_
 		output(11) = Math_stdev( distance )
 		output(12) = Math_skewness( distance )
 		
+		call this.buildInertiaTensor( Im, unitaryMasses=.true. )
+		call Im.eigen( eValues=diagUIm )
+		
+		output(13) = diagUIm(1)!/maxval(diagUIm)
+		output(14) = diagUIm(2)!/maxval(diagUIm)
+		output(15) = diagUIm(3)!/maxval(diagUIm)
+		
 		deallocate( distance )
 		if( effUseMassWeight ) deallocate( wi )
+		deallocate( diagUIm )
 	end function ballesterDescriptors
 	
 	!>
@@ -1577,38 +1643,27 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	subroutine connectivity( this, output, alpha )
-		class(Molecule), intent(in) :: this
-		integer, allocatable :: output(:,:)
+	subroutine buildGraph( this, alpha )
+		class(Molecule) :: this
 		real(8), optional :: alpha
 		
-		integer, allocatable :: patter(:,:)
-		integer :: i, j, k
+		integer :: i, j
+		real(8) :: dij
 		
-		allocate( patter(this.nAtoms()*this.nAtoms(),2) )
+		call this.molGraph.init( directed=.false. )
 		
-		k=1
-! 		do i=1,this.nAtoms()-1
-! 			do j=i+1,this.nAtoms()
-! 				if( this.atoms(i).isConnectedWith( this.atoms(j), alpha ) ) then
+		do i=1,this.nAtoms()
+			call this.molGraph.newNode()
+		end do
+		
 		do i=1,this.nAtoms()
 			do j=1,this.nAtoms()
-				if( i /= j .and. this.atoms(i).isConnectedWith( this.atoms(j), alpha ) ) then
-					patter( k, : ) = [ i, j ]
-					k = k+1
+				if( i/=j .and. this.atoms(i).isConnectedWith( this.atoms(j), alpha=alpha, distance=dij ) ) then
+					call this.molGraph.newEdge( i, j, weight=dij )
 				end if
 			end do
 		end do
-		k = k-1
-		
-		if( allocated(output) ) deallocate( output )
-		allocate( output(k,2) )
-		do i=1,k
-			output(i,:) = patter(i,:)
-		end do
-		
-		deallocate( patter )
-	end subroutine connectivity
+	end subroutine buildGraph
 	
 	!>
 	!! @brief Returns the minimum spin multiplicity (i.e. singlet(1) or triplet(3) )
@@ -1637,12 +1692,13 @@ module Molecule_
 	!!        the moment of inertia tensor will be calculated around of the
 	!!        center of mass
 	!!
-	subroutine buildInertiaTensor( this, Im, CM, center, axes )
+	subroutine buildInertiaTensor( this, Im, CM, center, axes, unitaryMasses )
 		class(Molecule), intent(in) :: this
 		type(Matrix), intent(out) :: Im
 		logical, optional, intent(in) :: CM
 		real(8), optional, intent(in) :: center(3)
 		type(Matrix), optional, intent(in) :: axes
+		logical, optional, intent(in) :: unitaryMasses
 		
 		integer :: i
 		real(8) :: centerOfMass(3)
@@ -1651,6 +1707,7 @@ module Molecule_
 		
 		logical :: effCM
 		real(8) :: effCenter(3)
+		logical :: effUnitaryMasses
 		
 		effCM = .true.
 		if( present(CM) ) effCM = CM
@@ -1660,6 +1717,9 @@ module Molecule_
 			effCM = .false.
 			effCenter = center
 		end if
+		
+		effUnitaryMasses = .false.
+		if( present(unitaryMasses) ) effUnitaryMasses = unitaryMasses
 		
 		allocate( X(this.nAtoms()) )
 		allocate( Y(this.nAtoms()) )
@@ -1674,14 +1734,24 @@ module Molecule_
 				X(i) = r.get(1,1)
 				Y(i) = r.get(2,1)
 				Z(i) = r.get(3,1)
-				m(i) = AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )
+				
+				if( effUnitaryMasses ) then
+					m(i) = 1.0_8
+				else
+					m(i) = AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )
+				end if
 			end do
 		else
 			do i=1,this.nAtoms()
 				X(i) = this.atoms(i).x
 				Y(i) = this.atoms(i).y
 				Z(i) = this.atoms(i).z
-				m(i) = AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )
+				
+				if( effUnitaryMasses ) then
+					m(i) = 1.0_8
+				else
+					m(i) = AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )
+				end if
 			end do
 		end if
 		
