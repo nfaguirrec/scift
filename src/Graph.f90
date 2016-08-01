@@ -29,7 +29,7 @@ module Graph_
 	use IOStream_
 	use RealVector_
 	use IntegerVector_
-	use NodeContainer_
+	use IntegerHyperVector_
 	use Node_
 	use Edge_
 	use NodeVector_
@@ -42,9 +42,9 @@ module Graph_
 		Graph_test
 		
 	type, public :: Graph
-		type(NodeContainer), private :: node2Neighbors
-		type(NodeContainer), private :: node2InEdges
-		type(NodeContainer), private :: node2OutEdges
+		type(IntegerHyperVector), private :: node2Neighbors
+		type(IntegerHyperVector), private :: node2InEdges
+		type(IntegerHyperVector), private :: node2OutEdges
 		
 		type(NodeVector), private :: nodeProperties
 		type(EdgeVector), private :: edgeProperties
@@ -972,7 +972,7 @@ module Graph_
 	!!
 	subroutine Graph_test()
 		type(Graph) :: mygraph
-! 		class(NodeContainerIterator), pointer :: iter
+! 		class(IntegerHyperVectorIterator), pointer :: iter
 
 		type(IntegerVector) :: ivec
 		integer :: id

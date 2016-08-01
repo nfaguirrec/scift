@@ -23,7 +23,7 @@
 !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-module NodeContainer_
+module IntegerHyperVector_
 	use Math_
 	use IOStream_
 	use IntegerVector_
@@ -32,14 +32,14 @@ module NodeContainer_
 	private
 	
 	public :: &
-		NodeContainer_test
+		IntegerHyperVector_test
 		
 !>
 !! This class use the Vector template declared into Vector.h90 file,
 !! please take a look to this file for details
 !!
-#define Vector NodeContainer
-#define VectorIterator NodeContainerIterator
+#define Vector IntegerHyperVector
+#define VectorIterator IntegerHyperVectorIterator
 #define __CLASS_ITEMVECTOR__ class(IntegerVector)
 #define __TYPE_ITEMVECTOR__ type(IntegerVector)
 #define __ADD_ATTRIBUTES__
@@ -56,14 +56,14 @@ module NodeContainer_
 	!! @brief
 	!!
 	function equal( this, other ) result( output )
-		class(NodeContainer), intent(in) :: this
-		class(NodeContainer), intent(in) :: other
+		class(IntegerHyperVector), intent(in) :: this
+		class(IntegerHyperVector), intent(in) :: other
 		logical :: output
 		
 ! 		this.nItems = other.nItems
 ! 		this.resizeIncrement = other.resizeIncrement
 		
-		write(*,*) "### ERROR ### NodeContainer.equal  is not implemented yet"
+		write(*,*) "### ERROR ### IntegerHyperVector.equal  is not implemented yet"
 		stop
 ! 		output = all( this.data(1:this.size()) == other.data(1:other.size()) )
 	end function equal
@@ -72,7 +72,7 @@ module NodeContainer_
 	!! @brief Converts to string
 	!!
 	function str( this, formatted, prefix ) result( output )
-		class(NodeContainer) :: this 
+		class(IntegerHyperVector) :: this 
 		character(:), allocatable :: output
 		logical, optional :: formatted
 		character(*), optional :: prefix
@@ -97,7 +97,7 @@ module NodeContainer_
 #define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
-			output = trim(output)//"<NodeContainer:"
+			output = trim(output)//"<IntegerHyperVector:"
 ! 			ITEMI( "min=", this.min )
 ! 			ITEMR( ",size=", this.size )
 #undef RFMT
@@ -128,12 +128,12 @@ module NodeContainer_
 	!! selected unit
 	!!
 	subroutine toFStream( this, ofile )
-		class(NodeContainer) :: this
+		class(IntegerHyperVector) :: this
 		type(OFStream), optional, intent(in) :: ofile
 		
 		integer :: unitEff
 		
-		type(NodeContainerIterator), pointer :: iter
+		type(IntegerHyperVectorIterator), pointer :: iter
 		
 		if( present(ofile) ) then
 			unitEff = ofile.unit
@@ -154,9 +154,9 @@ module NodeContainer_
 	!>
 	!! @brief Test method
 	!!
-	subroutine NodeContainer_test()
-		type(NodeContainer) :: mygraph
-! 		class(NodeContainerIterator), pointer :: iter
+	subroutine IntegerHyperVector_test()
+		type(IntegerHyperVector) :: mygraph
+! 		class(IntegerHyperVectorIterator), pointer :: iter
 
 ! 		type(IntegerVector) :: ivec
 ! 		integer :: id
@@ -373,6 +373,6 @@ module NodeContainer_
 ! ! 		call mygraph.append( 3 )
 ! ! 		call showMyGraph( mygraph )
 
-	end subroutine NodeContainer_test
+	end subroutine IntegerHyperVector_test
 	
-end module NodeContainer_
+end module IntegerHyperVector_
