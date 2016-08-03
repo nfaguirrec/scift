@@ -71,6 +71,7 @@ module Graph_
 		procedure :: nNodes
 		procedure :: nEdges
 		procedure :: isDirected
+		procedure :: isConnected
 		procedure :: newNode
 		procedure :: newNodes
 		procedure, private :: newEdgeBase
@@ -316,6 +317,39 @@ module Graph_
 		
 		output = this.directed
 	end function isDirected
+	
+	!>
+	!! @brief
+	!!
+	function isConnected( this, nComponents ) result( output )
+		class(Graph), intent(in) :: this
+		integer, optional, intent(out) :: nComponents
+		logical :: output
+		
+		integer :: i, nComp
+		type(Matrix) :: L
+		real(8), allocatable :: diagL(:)
+		
+		allocate( diagL(this.nNodes()) )
+		
+		L = this.laplacianMatrix()
+		call L.eigen( eValues=diagL )
+		
+		nComp = 0
+		do i=1,this.nNodes()
+			if( abs(diagL(i)) < 1e-5 ) then
+				nComp = nComp + 1
+			end if
+		end do
+		
+		output = .false.
+		if( nComp == 1 ) output = .true.
+		
+		if( present(nComponents) ) nComponents = nComp
+		
+		deallocate( diagL )
+		
+	end function isConnected
 	
 	!>
 	!! @brief
