@@ -52,6 +52,7 @@ program test
 ! 	use RealList_
 ! 	use StringList_
 	use IntegerVector_
+	use IntegerHyperVector_
 ! 	use StringIntegerPair_
 ! 	use StringIntegerPairList_
 ! 	use StringIntegerMap_
@@ -107,6 +108,7 @@ program test
 ! 	call IntegerList_test()
 ! 	call RealList_test()
 ! 	call IntegerVector_test()
+	call IntegerHyperVector_test()
 ! 	call StringList_test()
 ! 	call StringIntegerPair_test()
 ! 	call StringIntegerPairList_test()
@@ -115,7 +117,7 @@ program test
 ! 	call StringRealPairList_test()
 ! 	call StringRealMap_test()
 ! 	call Edge_test()
-	call Graph_test()
+! 	call Graph_test()
 ! 	call IVector_test()
 ! 	call RVector_test()
 ! 	call Matrix_test()

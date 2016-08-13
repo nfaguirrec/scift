@@ -151,227 +151,151 @@ module IntegerHyperVector_
 ! 		end do
 	end subroutine toFStream
 	
+	subroutine showMyHVector( myvec )
+		type(IntegerHyperVector), target :: myvec
+		
+		type(IntegerVector), pointer :: ivec
+		integer :: i, j
+		
+		do i=1,myvec.size()
+			ivec => myvec.data(i)
+			
+			write(*,"(I2,A)", advance="no") i, ") "
+			
+			do j=1,ivec.size()
+				write(*,"(I2,A)", advance="no") ivec.at(j), " --> "
+			end do
+			
+			write(*,*)
+		end do
+		write(*,*)
+	end subroutine showMyHVector
+	
 	!>
 	!! @brief Test method
 	!!
 	subroutine IntegerHyperVector_test()
-		type(IntegerHyperVector) :: mygraph
+		type(IntegerHyperVector) :: hvec
 ! 		class(IntegerHyperVectorIterator), pointer :: iter
 
-! 		type(IntegerVector) :: ivec
-! 		integer :: id
-! 		type(IntegerEdge) :: edge
-! 		type(IntegerVector) :: path
-! 		
-! 		type(Matrix) :: dMatrix
-! 		
-! 		integer :: i
-! 		
-! 		call mygraph.init()
-! 		
-! 		!------------------------------------------
-! 		! Ejemplo 1
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		
-! ! 		call mygraph.newEdges( 1, [2,3,6] )
-! ! 		call mygraph.newEdges( 2, [1,3,4] )
-! ! 		call mygraph.newEdges( 3, [1,2,4,6] )
-! ! 		call mygraph.newEdges( 4, [2,3,5] )
-! ! 		call mygraph.newEdges( 5, [4,6] )
-! ! 		call mygraph.newEdges( 6, [1,3,5] )
-! 
-! 		!------------------------------------------
-! 		! Ejemplo 3
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		
-! ! 		call mygraph.newEdges( 1, [2,3,4] )
-! ! 		call mygraph.newEdges( 2, [5,1] )
-! ! 		call mygraph.newEdges( 3, [8] )
-! ! 		call mygraph.newEdges( 4, [1] )
-! ! 		call mygraph.newEdges( 5, [2,6,7] )
-! ! 		call mygraph.newEdges( 6, [5] )
-! ! 		call mygraph.newEdges( 7, [5] )
-! ! 		call mygraph.newEdges( 8, [3] )
-! ! 		
-! ! 		call showMyGraph( mygraph )
-! ! 		
-! ! 		call mygraph.computeDijkstraPaths( 1 )
-! ! 		write(*,*) "distance from 1 to 6 = ", mygraph.distance(6)
-! ! 		path = mygraph.shortestPath(6)
-! ! 		call path.show()
-! 
-! ! 		!------------------------------------------
-! ! 		! Ejemplo 2
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		
-! ! 		call mygraph.newEdges( 1, [2] )
-! ! 		call mygraph.newEdges( 2, [1,3,4] )
-! ! 		call mygraph.newEdges( 3, [2,4] )
-! ! 		call mygraph.newEdges( 4, [2,3,5] )
-! ! 		call mygraph.newEdges( 5, [4,6] )
-! ! 		call mygraph.newEdges( 6, [5] )
-! 
-! 		!------------------------------------------
-! 		! Ejemplo Diego
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		
-! 		call mygraph.newEdges( 1, [2,4] )
-! 		call mygraph.newEdges( 2, [1,3] )
-! 		call mygraph.newEdges( 3, [2,4] )
-! 		call mygraph.newEdges( 4, [1,3] )
-! 		
-! 		dMatrix = mygraph.distanceMatrix()
-! 		call dMatrix.show( formatted=.true. )
-! 		write(*,*) "Wiener index = ", mygraph.wienerIndex()
-! 		
+		type(IntegerVector) :: ivec
+		integer :: id
+		
+		type(Matrix) :: dMatrix
+		
+		integer :: i
+		
+		call hvec.init()
+		
+		write(*,*) "-------------------------"
+		write(*,*) "Testing for append method"
+		write(*,*) "-------------------------"
+		
+		write(*,*) "call hvec.append( [1,1,1] )"
+		write(*,*) "call hvec.append( [2,2,2,2] )"
+		write(*,*) "call hvec.append( [1,1] )"
+		write(*,*)
+		
+		call ivec.init( 3, value=1 )
+		call hvec.append( ivec )
+		call ivec.init( 4, value=2 )
+		call hvec.append( ivec )
+		call ivec.init( 2, value=1 )
+		call hvec.append( ivec )
+		
+		call showMyHVector( hvec )
+		
+		write(*,*) "-------------------------"
+		write(*,*) "Testing for prepend method"
+		write(*,*) "-------------------------"
+		
+		write(*,*) "call hvec.prepend( [4,4] )"
+		write(*,*) "call hvec.prepend( [5,5,5,5] )"
+		write(*,*) "call hvec.prepend( [8,8,8] )"
+		write(*,*)
+		
+		call ivec.init( 2, value=4 )
+		call hvec.prepend( ivec )
+		call ivec.init( 4, value=5 )
+		call hvec.prepend( ivec )
+		call ivec.init( 3, value=8 )
+		call hvec.prepend( ivec )
+		
+		call showMyHVector( hvec )
+
 ! ! 		write(*,*) "-------------------------"
-! ! 		write(*,*) "Testing for append method"
+! ! 		write(*,*) "Testing for insert method"
 ! ! 		write(*,*) "-------------------------"
 ! ! 		
-! ! 		write(*,*) "call mygraph.append( 8 )"
-! ! 		write(*,*) "call mygraph.append( 5 )"
-! ! 		write(*,*) "call mygraph.append( 1 )"
+! ! 		write(*,*) "iter => hvec.begin"
+! ! 		write(*,*) "iter => iter.next"
+! ! 		write(*,*) "iter => iter.next"
+! ! 		write(*,*) "call hvec.insert( iter, 1 )"
 ! ! 		write(*,*)
+! ! 		
+! ! 		iter => hvec.begin
+! ! 		iter => iter.next
+! ! 		iter => iter.next
+! ! 		
+! ! 		call hvec.insert( iter, 1 )
+! ! 		call showMyGraph( hvec )
+! ! 		
+! ! 		write(*,*)
+! ! 		write(*,*) "call hvec.insert( iter, 2 )"
+! ! 		write(*,*)
+! ! 		
+! ! 		call hvec.insert( iter, 2 )
+! ! 		call showMyGraph( hvec )
+! ! 		
+! ! 		write(*,*)
+! ! 		write(*,*) "call hvec.insert( hvec.end, 9 )"
+! ! 		write(*,*)
+! ! 				
+! ! 		call hvec.insert( hvec.end, 9 )
+! ! 		call showMyGraph( hvec )
+! 
+! 		write(*,*) "------------------------"
+! 		write(*,*) "Testing for erase method"
+! 		write(*,*) "------------------------"
 ! 		
-! ! 		call mygraph.append( 8 )
-! ! 		call mygraph.append( 5 )
-! ! 		call mygraph.append( 1 )
-! ! 		
-! ! 		call showMyGraph( mygraph )
-! ! 		
-! ! 		write(*,*) "-------------------------"
-! ! ! 		write(*,*) "Testing for prepend method"
-! ! ! 		write(*,*) "-------------------------"
-! ! ! 		
-! ! ! 		write(*,*) "call mygraph.prepend( 2 )"
-! ! ! 		write(*,*) "call mygraph.prepend( 7 )"
-! ! ! 		write(*,*) "call mygraph.prepend( 0 )"
-! ! ! 		write(*,*)
-! ! ! 		
-! ! ! 		call mygraph.prepend( 2 )
-! ! ! 		call mygraph.prepend( 7 )
-! ! ! 		call mygraph.prepend( 0 )
-! ! ! 		
-! ! ! 		call showMyGraph( mygraph )
-! ! 
-! ! 		write(*,*) "--------------------------"
-! ! 		write(*,*) "Testing for prepend method"
-! ! 		write(*,*) "--------------------------"
-! ! 		
-! ! 		write(*,*) "call mygraph.prepend( 8 )"
-! ! 		write(*,*) "call mygraph.prepend( 5 )"
-! ! 		write(*,*) "call mygraph.prepend( 1 )"
+! 		write(*,*) "call hvec.erase( 2 )"
+! 		write(*,*)
+! 		
+! 		call hvec.erase( 2 )
+! 		call showMyGraph( hvec )
+! 
+! ! 		write(*,*) "iter => hvec.begin"
+! ! 		write(*,*) "iter => iter.next"
+! ! 		write(*,*) "call hvec.erase( iter )"
 ! ! 		write(*,*)
 ! ! 		
-! ! 		call mygraph.prepend( 8 )
-! ! 		call mygraph.prepend( 5 )
-! ! 		call mygraph.prepend( 1 )
+! ! 		iter => hvec.begin
+! ! 		iter => iter.next
 ! ! 		
-! ! 		call showMyGraph( mygraph )
-! ! ! 		
-! ! ! 		write(*,*) "-------------------------"
-! ! ! 		write(*,*) "Testing for insert method"
-! ! ! 		write(*,*) "-------------------------"
-! ! ! 		
-! ! ! 		write(*,*) "iter => mygraph.begin"
-! ! ! 		write(*,*) "iter => iter.next"
-! ! ! 		write(*,*) "iter => iter.next"
-! ! ! 		write(*,*) "call mygraph.insert( iter, 1 )"
-! ! ! 		write(*,*)
-! ! ! 		
-! ! ! 		iter => mygraph.begin
-! ! ! 		iter => iter.next
-! ! ! 		iter => iter.next
-! ! ! 		
-! ! ! 		call mygraph.insert( iter, 1 )
-! ! ! 		call showMyGraph( mygraph )
-! ! ! 		
-! ! ! 		write(*,*)
-! ! ! 		write(*,*) "call mygraph.insert( iter, 2 )"
-! ! ! 		write(*,*)
-! ! ! 		
-! ! ! 		call mygraph.insert( iter, 2 )
-! ! ! 		call showMyGraph( mygraph )
-! ! ! 		
-! ! ! 		write(*,*)
-! ! ! 		write(*,*) "call mygraph.insert( mygraph.end, 9 )"
-! ! ! 		write(*,*)
-! ! ! 				
-! ! ! 		call mygraph.insert( mygraph.end, 9 )
-! ! ! 		call showMyGraph( mygraph )
-! ! 
-! ! 		write(*,*) "------------------------"
-! ! 		write(*,*) "Testing for erase method"
-! ! 		write(*,*) "------------------------"
+! ! 		call hvec.erase( iter )
+! ! 		call showMyGraph( hvec )
 ! ! 		
-! ! 		write(*,*) "call mygraph.erase( 2 )"
+! ! 		write(*,*)
+! ! 		write(*,*) "call hvec.erase( hvec.begin )"
 ! ! 		write(*,*)
 ! ! 		
-! ! 		call mygraph.erase( 2 )
-! ! 		call showMyGraph( mygraph )
-! ! 
-! ! ! 		write(*,*) "iter => mygraph.begin"
-! ! ! 		write(*,*) "iter => iter.next"
-! ! ! 		write(*,*) "call mygraph.erase( iter )"
-! ! ! 		write(*,*)
-! ! ! 		
-! ! ! 		iter => mygraph.begin
-! ! ! 		iter => iter.next
-! ! ! 		
-! ! ! 		call mygraph.erase( iter )
-! ! ! 		call showMyGraph( mygraph )
-! ! ! 		
-! ! ! 		write(*,*)
-! ! ! 		write(*,*) "call mygraph.erase( mygraph.begin )"
-! ! ! 		write(*,*)
-! ! ! 		
-! ! ! 		call mygraph.erase( mygraph.begin )
-! ! ! 		call showMyGraph( mygraph )
-! ! ! 		
-! ! ! 		write(*,*)
-! ! ! 		write(*,*) "call mygraph.erase( mygraph.end )"
-! ! ! 		write(*,*)
-! ! ! 		call mygraph.erase( mygraph.end )
-! ! ! 		call showMyGraph( mygraph )
+! ! 		call hvec.erase( hvec.begin )
+! ! 		call showMyGraph( hvec )
 ! ! 		
-! ! 		write(*,*) "------------------------"
-! ! 		write(*,*) "Testing for clear method"
-! ! 		write(*,*) "------------------------"
-! ! 		
-! ! 		write(*,*) "call mygraph.clear()"
 ! ! 		write(*,*)
-! ! 		call mygraph.clear()
-! ! 		call showMyGraph( mygraph )
-! ! 
-! ! 		write(*,*) "call mygraph.append( 1 )"
-! ! 		write(*,*) "call mygraph.append( 2 )"
-! ! 		write(*,*) "call mygraph.append( 3 )"
+! ! 		write(*,*) "call hvec.erase( hvec.end )"
 ! ! 		write(*,*)
-! ! 		
-! ! 		call mygraph.append( 1 )
-! ! 		call mygraph.append( 2 )
-! ! 		call mygraph.append( 3 )
-! ! 		call showMyGraph( mygraph )
+! ! 		call hvec.erase( hvec.end )
+! ! 		call showMyGraph( hvec )
+		
+		write(*,*) "------------------------"
+		write(*,*) "Testing for clear method"
+		write(*,*) "------------------------"
+		
+		write(*,*) "call hvec.clear()"
+		write(*,*)
+		call hvec.clear()
+		call showMyHVector( hvec )
 
 	end subroutine IntegerHyperVector_test
 	

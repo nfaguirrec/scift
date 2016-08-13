@@ -854,6 +854,10 @@ module Math_
 		end do
 		
 		output = ssum/real(size(array),8)/stdev**3
+		
+		! Esto ocurre si stdev es cero, entonces es una delta de Dirac
+		! y por lo tanto simetrica, por eso he puesto output=0
+		if( Math_isNaN(output) ) output = 0.0_8
 	end function Math_skewness
 	
 	!>

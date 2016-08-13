@@ -74,9 +74,11 @@ module Graph_
 		procedure :: isConnected
 		procedure :: newNode
 		procedure :: newNodes
+		procedure :: deleteNode
 		procedure, private :: newEdgeBase
 		procedure :: newEdge
 		procedure :: newEdges
+		procedure :: deleteEdge
 		procedure :: getEdgeId
 		procedure :: computeDijkstraPaths
 		procedure :: distance
@@ -277,7 +279,7 @@ module Graph_
 ! 			do i=1,this.nEdges(),edgeStep
 			do i=1,this.nEdges()
 				edge1 => this.edgeProperties.data(i)
-				output = trim(output)//"   "//trim(FString_fromInteger(i))//" -->   ("
+				output = trim(output)//"  "//trim(FString_fromInteger(i,format="(I2)"))//" -->   ("
 				output = trim(output)//" "//trim(FString_fromInteger(edge1.sNode))
 				output = trim(output)//", "//trim(FString_fromInteger(edge1.tNode))
 				output = trim(output)//", "//trim(FString_fromReal(edge1.weight,format="(F5.3)"))
@@ -391,6 +393,54 @@ module Graph_
 	!>
 	!! @brief
 	!!
+	subroutine deleteNode( this, nodeId )
+		class(Graph), target :: this
+		integer, intent(in) :: nodeId
+		
+		integer :: i
+		type(IntegerVector), pointer :: ivec1
+		
+! 		type(IntegerHyperVector), private :: node2Neighbors
+! 		type(IntegerHyperVector), private :: node2InEdges
+! 		type(IntegerHyperVector), private :: node2OutEdges
+! 		
+! 		type(NodeVector), private :: nodeProperties
+! 		type(EdgeVector), private :: edgeProperties
+
+		!        (1)          
+		!         |           1 -->   2
+		!        (2)          2 -->   1,   3,   4
+		!       /   \         3 -->   2,   5
+		!     (3)   (4)       4 -->   2,   5
+		!       \   /         5 -->   3,   4
+		!        (5)
+		
+		!        (2)          
+		!       /   \         2 -->   3,   4
+		!     (3)   (4)       3 -->   2,   5
+		!       \   /         4 -->   2,   5
+		!        (5)          5 -->   3,   4
+		
+		!        (1)          1 -->   2,   3
+		!       /   \         2 -->   1,   4
+		!     (2)   (3)       3 -->   1,   4
+		!       \   /         4 -->   2,   3
+		!        (4)
+
+		
+! 		call this.node2Neighbors.erase( nodeId )
+		do i=1,this.node2Neighbors.size()
+			ivec1 => this.node2Neighbors.data(i)
+			call ivec1.remove( nodeId )
+		end do
+		
+! 		call this.node2Neighbors.remove( nodeId )
+
+	end subroutine deleteNode
+	
+	!>
+	!! @brief
+	!!
 	subroutine newEdgeBase( this, sNode, tNode, weight, id )
 		class(Graph), target :: this
 		integer, intent(in) :: sNode, tNode
@@ -456,6 +506,15 @@ module Graph_
 			call this.newEdge( sNode, tNodesVec(i), weights(i) )
 		end do
 	end subroutine newEdges
+	
+	!>
+	!! @brief
+	!!
+	subroutine deleteEdge( this, edgeId )
+		class(Graph) :: this
+		integer, intent(in) :: edgeId
+		
+	end subroutine deleteEdge
 	
 	!>
 	!! @brief
@@ -1148,6 +1207,47 @@ module Graph_
 		write(*,*) "MolecularTopological   ", 360.0_8, mygraph.molecularTopologicalIndex()
 		write(*,*) "Kirchhoff              ", 834.0_8/85.0_8, mygraph.kirchhoffIndex()
 		write(*,*) "KirchhoffSum           ", 672.0_8/85.0_8, mygraph.kirchhoffSumIndex()
+		
+		write(*,*) ""
+		write(*,*) "Testing delete nodes and edges"
+		write(*,*) "------------------------------"
+		call mygraph.clear()
+		call mygraph.newNode()
+		call mygraph.newNode()
+		call mygraph.newNode()
+		call mygraph.newNode()
+		call mygraph.newNode()
+		
+		call mygraph.newEdges( 1, [2], [1.01_8] )
+		call mygraph.newEdges( 2, [3,4], [1.01_8,1.43_8] )
+		call mygraph.newEdges( 3, [5], [1.01_8] )
+		call mygraph.newEdges( 4, [5], [1.01_8] )
+		
+		!        (1)
+		!         |
+		!        (2)
+		!       /   \
+		!     (3)   (4)
+		!       \   /
+		!        (5)
+		
+		call mygraph.show( formatted=.true. )
+		
+		call mygraph.deleteNode( 1 )
+		
+		!        (2)
+		!       /   \
+		!     (3)   (4)
+		!       \   /
+		!        (5)
+		
+		!        (1)
+		!       /   \
+		!     (2)   (3)
+		!       \   /
+		!        (4)
+		
+		call mygraph.show( formatted=.true. )
 		
 	end subroutine Graph_test
 
