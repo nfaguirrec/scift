@@ -10,10 +10,14 @@
 		contains
 			generic :: init => initDefault
 			generic :: assignment(=) => copyPair
+			generic :: operator(==) => equal
+			generic :: operator(/=) => nequal
 			
 			procedure :: initDefault
 			procedure :: copyPair
 			final :: destroyPair
+			procedure :: equal
+			procedure :: nequal
 			procedure :: str
 			procedure :: show
 			
@@ -22,9 +26,9 @@
 	
 	contains
 	
-	!*
-	! @brief Constructor
-	!*
+	!>
+	!! @brief Constructor
+	!!
 	subroutine initDefault( this, first, second )
 		class(Pair) :: this
 		__TYPE_ITEMFIRST__ :: first
@@ -34,9 +38,9 @@
 		this.second = second
 	end subroutine initDefault
 	
-	!*
-	! @brief Copy constructor
-	!*
+	!>
+	!! @brief Copy constructor
+	!!
 	subroutine copyPair( this, other )
 		class(Pair), intent(out) :: this
 		class(Pair), intent(in) :: other
@@ -45,17 +49,42 @@
 		this.second = other.second
 	end subroutine copyPair
 	
-	!*
-	! @brief Destructor
-	!*
+	!>
+	!! @brief
+	!!
+	function equal( this, other ) result( output )
+		class(Pair), intent(in) :: this
+		class(Pair), intent(in) :: other
+		logical :: output
+		
+		output = .false.
+		if( this.first == other.first .and. this.second == other.second ) then
+			output = .true.
+		end if
+	end function equal
+	
+	!>
+	!! @brief 
+	!!
+	function nequal( this, other ) result( output )
+		class(Pair), intent(in) :: this
+		class(Pair), intent(in) :: other
+		logical :: output
+		
+		output = .not. ( this == other )
+	end function nequal
+	
+	!>
+	!! @brief Destructor
+	!!
 	subroutine destroyPair( this )
 		type(Pair), intent(inout) :: this
 		
 	end subroutine destroyPair
 	
-	!*
-	! @brief Show 
-	!*
+	!>
+	!! @brief Show 
+	!!
 	subroutine show( this, unit, formatted )
 		class(Pair) :: this
 		integer, optional, intent(in) :: unit

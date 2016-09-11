@@ -34,11 +34,13 @@ module Node_
 		contains
 			generic :: init => initDefault
 			generic :: assignment(=) => copy
-			generic :: operator(==) => eq
+			generic :: operator(==) => equal
+			generic :: operator(/=) => nequal
 			
 			procedure :: initDefault
 			procedure :: copy
-			procedure :: eq
+			procedure :: equal
+			procedure :: nequal
 	end type Node
 	
 	contains
@@ -78,12 +80,22 @@ module Node_
 	!>
 	!! @brief 
 	!!
-	function eq( this, other ) result( output )
+	function equal( this, other ) result( output )
 		class(Node), intent(in) :: this
 		class(Node), intent(in) :: other
 		logical :: output
 		
 ! 		output = ( this.sNode == other.sNode .and. this.tNode == other.tNode )
-	end function eq
-
+	end function equal
+	
+	!>
+	!! @brief 
+	!!
+	function nequal( this, other ) result( output )
+		class(Node), intent(in) :: this
+		class(Node), intent(in) :: other
+		logical :: output
+		
+		output = .not. ( this == other )
+	end function nequal
 end module Node_

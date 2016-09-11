@@ -39,7 +39,7 @@ module Molecule_
 	use Atom_
 	use AtomicElementsDB_
 	use IntegerVector_
-	use Graph_
+	use IntegerGraph_
 	implicit none
 	private
 	
@@ -58,7 +58,7 @@ module Molecule_
 		type(Matrix) :: diagInertiaTensor  !<- Diagonal inertia tensor respect to its center of mass. It is calculated only one time
 		logical, private :: axesChosen = .false.
 		integer :: composition( AtomicElementsDB_nElems ) !<- [ n1, n2, ..., nN ] n=numberOfAtomsWithZ, pos = atomicNumber
-		type(Graph) :: molGraph
+		type(IntegerGraph) :: molGraph
 		
 		!---------------------------------------------------------------
 		! This parameters will be calculated only if necessary,

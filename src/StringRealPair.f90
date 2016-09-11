@@ -47,9 +47,9 @@ module StringRealPair_
 #undef __ADD_ATTRIBUTES__
 #undef __ADD_METHODS__
 	
-	!*
-	! @brief Convert to string
-	!*
+	!>
+	!! @brief Convert to string
+	!!
 	function str( this, formatted, prefix ) result( output )
 		class(StringRealPair) :: this 
 		character(:), allocatable :: output
@@ -102,9 +102,9 @@ module StringRealPair_
 		end if
 	end function str
 	
-	!*
-	! @brief Test method
-	!*
+	!>
+	!! @brief Test method
+	!!
 	subroutine StringRealPair_test()
 		type(String) :: str
 		type(StringRealPair) :: mypair1

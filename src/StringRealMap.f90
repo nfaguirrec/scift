@@ -57,9 +57,9 @@ module StringRealMap_
 #undef __ADD_METHODS__
 #undef Map
 	
-	!*
-	! @brief Convert to string
-	!*
+	!>
+	!! @brief Convert to string
+	!!
 	function str( this, formatted, prefix ) result( output )
 		class(StringRealMap) :: this 
 		character(:), allocatable :: output
@@ -168,9 +168,9 @@ module StringRealMap_
 		write(*,*)
 	end subroutine
 	
-	!*
-	! @brief Test method
-	!*
+	!>
+	!! @brief Test method
+	!!
 	subroutine StringRealMap_test()
 		type(String) :: str
 		type(StringRealPair) :: pair
