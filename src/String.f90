@@ -139,6 +139,7 @@ module String_
 		FString_replaceByRealArr, &
 		FString_count, &
 		FString_hashKey, &
+		FString_isInteger, &
 		FString_isNumeric, &
 		FString_toUpper, &
 		FString_toLower, &
@@ -191,6 +192,7 @@ module String_
 			procedure :: toComplex
 			procedure :: removeTabs
 			procedure :: hashKey
+			procedure :: isInteger
 			procedure :: isNumeric
 			procedure :: toUpper
 			procedure :: toLower
@@ -929,6 +931,18 @@ module String_
 	
 	!>
 	!! @brief 
+	!! @todo Al parecer si this=,R,S:0,5 dice que es de tipo numerico
+	!!
+	function isInteger( this ) result( output )
+		class(String), intent(in) :: this
+		logical :: output
+		
+		output = FString_isInteger( this.fstr )
+	end function isInteger
+	
+	!>
+	!! @brief
+	!! @todo Al parecer si this=,R,S:0,5 dice que es de tipo numerico
 	!!
 	function isNumeric( this ) result( output )
 		class(String), intent(in) :: this
@@ -1028,6 +1042,25 @@ module String_
 	
 	!>
 	!! @brief 
+	!! @todo Al parecer si this=,R,S:0,5 dice que es de tipo numerico
+	!!
+	function FString_isInteger( str ) result( output )
+		character(*), intent(in) :: str
+		logical :: output
+		
+		integer :: realType
+		integer :: e
+		
+		output = .false.
+		
+		read( str, *, iostat=e ) realType
+		
+		output = ( e == 0 )
+	end function FString_isInteger
+	
+	!>
+	!! @brief 
+	!! @todo Al parecer si this=,R,S:0,5 dice que es de tipo numerico
 	!!
 	function FString_isNumeric( str ) result( output )
 		character(*), intent(in) :: str
