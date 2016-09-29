@@ -5,7 +5,7 @@ program main
 	use String_
 	use Matrix_
 	use Molecule_
-	use Graph_
+	use IntegerGraph_
 	implicit none
 	
 	character(1000) :: sBuffer
