@@ -32,7 +32,7 @@ program main
 	integer :: i
 	
 	parser.usage = &
-	"$ boundStates -i fileName -c col1:col2 [ -m 17.48445 ] [ -n 10 ] [ -s 10 ]"//ENDL//ENDL &
+	"$ boundStates -i fileName  [ -c col1:col2 ] [ -m mass ] [ -n nstates ] [ -s smooth ]"//ENDL//ENDL &
 	//"OPTIONS"//ENDL//ENDL &
 	//"-i fileName"//ENDL &
 	//"   Input file name in columns format in a.u."//ENDL &
@@ -53,7 +53,7 @@ program main
 	
 	smoothOFile = parser.getString( "-so", def="smooth.dat" )
 	
-	buffer = parser.get( "-c" )
+	buffer = parser.get( "-c", def="1:2" )
 	call buffer.split( tokens, ":" )
 	columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 	
@@ -62,6 +62,8 @@ program main
 	smoothFactor = parser.getInteger( "-s", def=10 )
 	task = parser.getInteger( "-s", def=0 )
 	
+	write(*,"(A,A)")        "# -------------- INPUT PARAMETERS -------------- "
+	write(*,"(A)")          "#"
 	write(*,"(A,A)")        "# fileName      (-i) = ", trim(fileName.fstr)
 	write(*,"(A,A20)")      "# columns       (-c) = ", trim(FString_fromInteger(columns(1)))//":"//trim(FString_fromInteger(columns(2)))
 	write(*,"(A,F20.5,A5)") "# reducedMass   (-m) = ", reducedMass, "a.u."
@@ -69,11 +71,21 @@ program main
 	write(*,"(A,A)")        "# smoothOFile  (-so) = ", smoothOFile.fstr
 	write(*,"(A,I20)")      "# smoothFactor  (-s) = ", smoothFactor
 	write(*,"(A,I20)")      "# task          (-t) = ", task
-	write(*,*) ""
+	write(*,"(A)")          "#"
 	
 	call ifile.init( fileName.fstr )
 	call nFunc.fromFStream( ifile, columns=columns )
 	call ifile.close()
+	
+	write(*,"(A,A)")        "# -------------- GRID INFORMATION -------------- "
+	write(*,"(A)")          "#"
+	write(*,"(A,F20.5)")    "# min = ", nFunc.min()
+	write(*,"(A,F20.5)")    "# max = ", nFunc.max()
+	write(*,"(A,F20.5)")    "# stepSize = ", nFunc.stepSize()
+	write(*,"(A,I20)")      "# nPoints = ", nFunc.nPoints()
+	write(*,"(A,L10)")      "# equallySpaced = ", nFunc.isEquallyspaced()
+	write(*,"(A)")          "#"
+	write(*,*) ""
 	
 	call nFuncSpline.init( nFunc )
 	nFuncSmooth = nFuncSpline.smooth( smoothFactor )
@@ -82,9 +94,9 @@ program main
 	call solver.init( nFuncSmooth, rMass=reducedMass )
 	
 	if( task == 1 ) then
-		call solver.run( task=FourierGridDiagonalization_EIGENFUNCTIONS, nStates=nStates )
+		call solver.run( task=FourierGridDiagonalization_EIGENFUNCTIONS, nStates=nStates, type=0 )
 	else
-		call solver.run( task=FourierGridDiagonalization_EIGENVALUES, nStates=nStates )
+		call solver.run( task=FourierGridDiagonalization_EIGENVALUES, nStates=nStates, type=0 )
 	end if
 	
 	write(*,*) ""
@@ -96,7 +108,8 @@ program main
 			write(*,"(I5,F20.10)") i, solver.eigenValues(i)
 			
 			if( task == 1 ) then
-				call solver.eigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
+! 				call solver.cEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
+				call solver.rEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
 			end if
 		end if
 	end do

@@ -103,6 +103,7 @@ module AtomicElementsDB_
 ! 		]
 
 	! De piamod, pero hay que revisar el molden.f
+	! @todo Revisar. Los valores de U, Np, Pu los he tomado de la tabla anterior que esta comentada
 	real(8), parameter :: COVALENT_RADIUS(AtomicElementsDB_nElems) = [ &
 			 0.37,                                                                                                 0.70, &
 			 1.23, 0.89,                                                             0.90, 0.85, 0.74, 0.74, 0.72, 0.70, &
@@ -113,7 +114,7 @@ module AtomicElementsDB_
 			             0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, &
 			                   0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, &
 			 0.00, 0.00, 0.00, &
-			             0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00 &
+			             0.00, 0.00, 1.70, 1.69, 1.70, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00 &
 		]
 		
 	! Mainly taken from:

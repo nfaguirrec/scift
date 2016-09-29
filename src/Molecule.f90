@@ -105,6 +105,7 @@ module Molecule_
 			procedure, private :: saveXYZ
 			
 			procedure :: randomGeometry
+			procedure :: overlapping
 			
 			procedure :: set
 			procedure, private :: extremeAtoms
@@ -689,6 +690,55 @@ module Molecule_
 			call ofile.close()
 		end if
 	end subroutine saveXYZ
+	
+	!>
+	!! @brief
+	!!
+	function overlapping( this, other, overlappingRadius, gamma, radiusType ) result( output )
+		class(Molecule) :: this
+		class(Molecule) :: other
+		real(8), optional, intent(in) :: overlappingRadius
+		real(8), optional, intent(in) :: gamma
+		integer, optional, intent(in) :: radiusType
+		
+		real(8) :: effOverlappingRadius
+		real(8) :: effGamma
+		
+		real(8) :: rVec1(3), rVec2(3)
+		integer :: i, j
+		logical :: output
+		
+		effGamma = 1.0
+		if( present(gamma) ) effGamma = gamma
+		
+		effOverlappingRadius = 0.0
+		if( present(overlappingRadius) ) effOverlappingRadius = overlappingRadius
+		
+! Testing overlap
+#define OVERLAPPING(i,j) this.atoms(i).radius( type=radiusType )+other.atoms(j).radius( type=radiusType )-effOverlappingRadius > norm2( rVec2-rVec1 )
+
+		output = .false.
+		
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		! Se verifica que a los centros no sobrelapen ni que
+		! se salgan del radio del sistema
+		do i=1,this.nAtoms()
+			rVec1 = this.atoms(i).r
+			
+			do j=1,other.nAtoms()
+				
+				rVec2 = other.atoms(j).r
+				
+				output = OVERLAPPING(i,j)
+				
+				if( output ) exit
+			end do
+			
+			if( output ) exit
+		end do
+		
+#undef OVERLAPPING
+	end function overlapping
 	
 	!>
 	!! @brief
