@@ -444,7 +444,7 @@
 		
 		if( this.size() > 0 ) then
 			i = 1
-			do while( i /= this.size() )
+			do while( i <= this.size() )
 				if( this.data(i) == value ) then
 					call this.erase( i )
 					i = 1

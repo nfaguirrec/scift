@@ -57,9 +57,9 @@ module StringIntegerMap_
 #undef __TYPE_MAPVALUE__
 #undef __ADD_METHODS__
 	
-	!*
-	! @brief Convert to string
-	!*
+	!>
+	!! @brief Convert to string
+	!!
 	function str( this, formatted, prefix ) result( output )
 		class(StringIntegerMap) :: this 
 		character(:), allocatable :: output
@@ -165,9 +165,9 @@ module StringIntegerMap_
 		write(*,*)
 	end subroutine
 	
-	!*
-	! @brief Test method
-	!*
+	!>
+	!! @brief Test method
+	!!
 	subroutine StringIntegerMap_test()
 		type(String) :: str
 		type(StringIntegerPair) :: pair

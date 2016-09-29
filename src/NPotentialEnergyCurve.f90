@@ -124,9 +124,9 @@ module NPotentialEnergyCurve_
 		call this.fromGridArray( rGrid, y )
 	end subroutine run
 	
-	!**
-	! This is neccesary only for NPotentialEnergyCurve_test()
-	!**
+	!>
+	!! This is neccesary only for NPotentialEnergyCurve_test()
+	!!
 	function shortRangeDefault( x ) result( output )
 		real(8), intent(in) :: x
 		real(8) :: output
@@ -155,9 +155,9 @@ module NPotentialEnergyCurve_
 				- 2.0_8*exp(alpha*(Re-x)) )
 	end function shortRangeDefault
 	
-	!**
-	! This is neccesary only for NPotentialEnergyCurve_test()
-	!**
+	!>
+	!! This is neccesary only for NPotentialEnergyCurve_test()
+	!!
 	function veryShortRangeDefault( x ) result( output )
 		real(8), intent(in) :: x
 		real(8) :: output
@@ -165,9 +165,9 @@ module NPotentialEnergyCurve_
 		output = shortRangeDefault( 2.5_8 )
 	end function veryShortRangeDefault
 	
-	!**
-	! This is neccesary only for NPotentialEnergyCurve_test()
-	!**
+	!>
+	!! This is neccesary only for NPotentialEnergyCurve_test()
+	!!
 	function longRangeDefault( x ) result( output )
 		real(8), intent(in) :: x
 		real(8) :: output
@@ -178,9 +178,9 @@ module NPotentialEnergyCurve_
 		output = sign(1.0,c6)*(c6/x)**6.0_8+sign(1.0,c8)*(c8/x)**8.0_8
 	end function longRangeDefault
 	
-	!**
-	! @todo Hay que revisar que el valor del estado ligado es correcto
-	!**
+	!>
+	!! @todo Hay que revisar que el valor del estado ligado es correcto
+	!!
 	subroutine NPotentialEnergyCurve_test()
 		implicit none
 		type(Grid) :: rGrid

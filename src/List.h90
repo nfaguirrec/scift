@@ -126,10 +126,14 @@
 		contains
 			generic :: init => initList
 			generic :: assignment(=) => copyList
+			generic :: operator(==) => equal
+			generic :: operator(/=) => nequal
 			
 			procedure :: initList
 			procedure :: copyList
 			final :: destroyList
+			procedure :: equal
+			procedure :: nequal
 			procedure :: str
 			procedure :: show
 			procedure :: save
@@ -155,6 +159,9 @@
 			generic :: replace => replaceFromPtr, replaceFromPos
 			procedure, private :: replaceFromPtr
 			procedure, private :: replaceFromPos
+			procedure :: pointerOf
+			procedure :: lastPointerOf
+			procedure :: contains
 			procedure :: ptr
 			procedure :: fArray
 			
@@ -175,11 +182,21 @@
 	!!
 	!! Constructs an empty list
 	!!
-	subroutine initList( this )
+	subroutine initList( this, initialSize, value )
 		class(List) :: this
+		integer, optional, intent(in) :: initialSize
+		__CLASS_ITEMLIST__, optional, intent(in) :: value
+		
+		integer :: i
 		
 		if( this.size() > 0 ) then
 			call this.clear()
+		end if
+		
+		if( present(initialSize) .and. present(value) ) then
+			do i=1,initialSize
+				call this.append( value )
+			end do
 		end if
 	end subroutine initList
 	
@@ -215,6 +232,44 @@
 		
 		call this.clear()
 	end subroutine destroyList
+	
+	!>
+	!! @brief
+	!!
+	function equal( this, other ) result( output )
+		class(List), intent(in) :: this
+		class(List), intent(in) :: other
+		logical :: output
+		
+		type(ListIterator), pointer :: iter1, iter2
+		
+		output = .false.
+		
+		iter1 => this.begin
+		iter2 => other.begin
+		do while ( associated(iter1) .and. associated(iter2) )
+			iter1 => iter1.next
+			iter2 => iter2.next
+			
+			if( iter1.data /= iter2.data ) then
+				output = .false.
+				return
+			end if
+		end do
+		
+		output = .true.
+	end function equal
+	
+	!>
+	!! @brief 
+	!!
+	function nequal( this, other ) result( output )
+		class(List), intent(in) :: this
+		class(List), intent(in) :: other
+		logical :: output
+		
+		output = .not. ( this == other )
+	end function nequal
 	
 	!>
 	!! @brief Show 
@@ -654,6 +709,72 @@
 			i = i+1
 		end do
 	end subroutine replaceFromPos
+	
+	!>
+	!! @brief Returns the index position of the first occurrence of value in the vector, searching
+	!!        forward from index position from. Returns -1 if no item matched.
+	!!        This function requires the value type to have an implementation of operator ==.
+	!!
+	function pointerOf( this, value, from ) result( output )
+		class(List) :: this
+		__TYPE_ITEMLIST__, intent(in) :: value
+		class(ListIterator), pointer, optional, intent(in) :: from
+		type(ListIterator), pointer :: output
+		
+		class(ListIterator), pointer :: iter
+		
+		iter => this.begin
+		if( present(from) ) iter => from
+		
+		do while ( associated(iter) )
+			if( iter.data == value ) then
+				output = iter
+				exit
+			end if
+			
+			iter => iter.next
+		end do
+	end function pointerOf
+	
+	!>
+	!! @brief Returns the index position of the last occurrence of the value value in the vector,
+	!!        searching backward from index position from. If from is -1 (the default), the search
+	!!        starts at the last item. Returns -1 if no item matched.
+	!!        This function requires the value type to have an implementation of operator ==.
+	!!
+	function lastPointerOf( this, value, from ) result( output )
+		class(List) :: this
+		__TYPE_ITEMLIST__, intent(in) :: value
+		integer, optional, intent(in) :: from
+		integer :: output
+		
+! 		integer :: effFrom
+! 		
+! 		integer :: i
+! 		
+! 		effFrom = this.size()
+! 		if( present(from) ) effFrom = from
+! 		
+! 		output=-1
+! 		do i=effFrom,1,-1
+! 			if( this.data(i) == value ) then
+! 				output = i
+! 				exit
+! 			end if
+! 		end do
+	end function lastPointerOf
+	
+	!>
+	!! @brief Returns true if the vector contains an occurrence of value; otherwise returns false.
+	!!
+	function contains( this, value ) result( output )
+		class(List) :: this
+		__TYPE_ITEMLIST__, intent(in) :: value
+		logical :: output
+		
+		output = .false.
+		if( associated( this.pointerOf(value) ) ) output = .true.
+	end function contains
 	
 	!>
 	!! @brief Returns the pointer associated to pos-th element

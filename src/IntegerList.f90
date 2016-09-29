@@ -44,7 +44,7 @@ module IntegerList_
 #undef ListIterator
 #undef __CLASS_ITEMLIST__
 #undef __TYPE_ITEMLIST__
-	
+
 	!>
 	!! @brief Converts to string
 	!!
