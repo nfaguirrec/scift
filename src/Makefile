@@ -61,7 +61,7 @@ FFTW3.o fftw3_.mod: FFTW3.f90
 	echo -n 'Building FFTW3.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c FFTW3.f90
 
-FourierGridDiagonalization.o fouriergriddiagonalization_.mod: FourierGridDiagonalization.f90 math_.mod rnfunction_.mod goptions_.mod timer_.mod grid_.mod string_.mod iostream_.mod
+FourierGridDiagonalization.o fouriergriddiagonalization_.mod: FourierGridDiagonalization.f90 math_.mod rnfunction_.mod goptions_.mod cnfunction_.mod timer_.mod grid_.mod string_.mod iostream_.mod
 	fmake
 	echo -n 'Building FourierGridDiagonalization.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c FourierGridDiagonalization.f90
@@ -186,7 +186,7 @@ MoldenParser.o moldenparser_.mod: MoldenParser.f90 goptions_.mod timer_.mod unit
 	echo -n 'Building MoldenParser.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c MoldenParser.f90
 
-Molecule.o molecule_.mod: Molecule.f90 atomicelementsdb_.mod math_.mod integervector_.mod goptions_.mod timer_.mod stringlist_.mod unitsconverter_.mod specialmatrix_.mod randomutils_.mod string_.mod atom_.mod iostream_.mod matrix_.mod randomsampler_.mod
+Molecule.o molecule_.mod: Molecule.f90 edgevector_.mod nodevector_.mod atomicelementsdb_.mod math_.mod edge_.mod integervector_.mod goptions_.mod timer_.mod stringlist_.mod unitsconverter_.mod specialmatrix_.mod integerhypervector_.mod integergraph_.mod realvector_.mod randomutils_.mod string_.mod atom_.mod iostream_.mod node_.mod matrix_.mod randomsampler_.mod
 	fmake
 	echo -n 'Building Molecule.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) -c Molecule.f90

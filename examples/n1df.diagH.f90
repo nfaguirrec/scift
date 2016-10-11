@@ -104,14 +104,14 @@ program main
 	write(*,"(A5,A20,A20)") "#    ", "       a.u."
 	write(*,"(A5,A20,A20)") "# ---", "-----------"
 	do i=1,nStates
-		if ( solver.eigenValues(i) < 0.0_8 ) then
+! 		if ( solver.eigenValues(i) < 0.0_8 ) then
 			write(*,"(I5,F20.10)") i, solver.eigenValues(i)
 			
 			if( task == 1 ) then
 ! 				call solver.cEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
 				call solver.rEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
 			end if
-		end if
+! 		end if
 	end do
 
 end program main
