@@ -35,7 +35,7 @@ module BlocksIFileParser_
 		BlocksIFileParser_test
 	
 	type, public :: BlocksIFileParser
-		character(:), private, allocatable :: iFile
+		character(:), private, allocatable :: iFileName
 		
 		integer, private :: numberOfLines
 		character(1000), allocatable, private :: lines(:)
@@ -71,6 +71,7 @@ module BlocksIFileParser_
 			procedure :: show
 			procedure :: showContent
 			procedure, private :: load
+			procedure :: inputFileName
 			procedure :: isThereBlock
 			procedure :: get => getString
 			procedure :: getString
@@ -97,7 +98,7 @@ module BlocksIFileParser_
 		effcComments = "#"
 		if( present(cComments) ) effcComments = cComments
 		
-		this.iFile = iFileName
+		this.iFileName = iFileName
 		
 		this.numberOfLines = 0
 		if( allocated(this.lines) ) deallocate(this.lines)
@@ -211,11 +212,11 @@ module BlocksIFileParser_
 		character(:), allocatable :: line
 		character(1000), allocatable :: fileContent(:)
 		
-		open( 10, file=this.iFile, status="old", iostat=iostat )
+		open( 10, file=this.iFileName, status="old", iostat=iostat )
 		
 		! This block get the number of lines, including comments
 		if( iostat /= 0 ) then
-			write(*, *) "### Error ###: The file ( ", this.iFile, " ) cannot be open"
+			write(*, *) "### Error ###: The file ( ", this.iFileName, " ) cannot be open"
 			stop
 		else
 			this.numberOfLines = 1
@@ -234,10 +235,10 @@ module BlocksIFileParser_
 		allocate( fileContent(this.numberOfLines) )
 		
 		! This block get the effective number of lines (without comments), and loads the information
-		open( 10, file=this.iFile, status="old", iostat=iostat )
+		open( 10, file=this.iFileName, status="old", iostat=iostat )
 		
 		if( iostat /= 0 ) then
-			write(*, *) "### Error ###: The file ( ", this.iFile, " ) cannot be open"
+			write(*, *) "### Error ###: The file ( ", this.iFileName, " ) cannot be open"
 			stop
 		else
 			this.numberOfLines = 1
@@ -283,6 +284,16 @@ module BlocksIFileParser_
 		
 		deallocate( fileContent )
 	end subroutine load
+	
+	!>
+	!! @brief
+	!!
+	function inputFileName( this ) result( output )
+		class(BlocksIFileParser), intent(in) :: this
+		type(String) :: output
+		
+		output = this.iFileName
+	end function inputFileName
 	
 	!>
 	!! @brief
