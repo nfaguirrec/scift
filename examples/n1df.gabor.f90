@@ -314,7 +314,7 @@ program main
 	n = 1
 	t = nFunc.xGrid.min!+3.0_8*sigma
 	do while( t <= nFunc.xGrid.max )!-3.0_8*sigma )
-		write(*,"(A,F10.6,A)", advance="no") "Generating ", t, " ... "
+		write(*,"(A,F20.6,A)", advance="no") "Generating ", t, " ... "
 		
 		call nFuncWindow.fromFunction( nFunc.xGrid, window )
 		
