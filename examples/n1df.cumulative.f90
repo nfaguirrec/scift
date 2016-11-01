@@ -34,14 +34,14 @@ program main
 	
 	if( argc < 2 ) then
 		write(*,"(X,A)") "Usage:"
-		write(*,"(X,A)") "   n1df.cumulative -i ifile [-c columns] [-s smoothFactor] [-a lowerLimit] [-b upperLimit] [-m method]"
-		write(*,"(X,A)") "                                   1,2                 1          min(x)          max(x)       BOOLE"
+		write(*,"(X,A)") "   n1df.cumulative -i ifile -o ofile [-c columns] [-s smoothFactor] [-a lowerLimit] [-b upperLimit] [-m method]"
+		write(*,"(X,A)") "                                        1,2                 1          min(x)          max(x)       BOOLE"
 		write(*,"(X,A)") ""
-		write(*,"(X,A)") "                                                                                               SIMPSON"
-		write(*,"(X,A)") "                                                                                               SIMPSON38"
-		write(*,"(X,A)") "                                                                                               TRAPEZOIDAL"
-		write(*,"(X,A)") "                                                                                               FIXED_QUADRATURE"
-		write(*,"(X,A)") "                                                                                               ADAPTIVE_QUADRATURE"
+		write(*,"(X,A)") "                                                                                                    SIMPSON"
+		write(*,"(X,A)") "                                                                                                    SIMPSON38"
+		write(*,"(X,A)") "                                                                                                    TRAPEZOIDAL"
+		write(*,"(X,A)") "                                                                                                    FIXED_QUADRATURE"
+		write(*,"(X,A)") "                                                                                                    ADAPTIVE_QUADRATURE"
 		stop
 	end if
 	
@@ -84,8 +84,6 @@ program main
 			idMethod = -1
 	end select
 	
-	call cnFunc.init( nFunc.xGrid )
-	
 	if( nFunc.xGrid.isEquallyspaced ) then
 		call integrator.init( nFunc, idMethod )
 	else
@@ -95,19 +93,14 @@ program main
 		call integrator.init( nFuncSmooth, idMethod )
 	end if
 	
-	ixa = floor( 1.0000001*(a-nFunc.xGrid.min)/nFunc.xGrid.stepSize+1.0 )
-	ixb = floor( 1.0000001*(b-nFunc.xGrid.min)/nFunc.xGrid.stepSize+1.0 )
+	ixa = nFunc.xGrid.pos(a)
+	ixb = nFunc.xGrid.pos(b)
+	
+	call cnFunc.init( nFunc.xGrid )
 	
 	do i=ixa,ixb
-		
-		value = integrator.evaluate( nFunc.x( ixa ), nFunc.x( ixb ) )
-		
-		! Para evitar que imprima en formato raro, por ejemplo +E002
-		if( abs(value) > 1d-98 ) then
-			call cnFunc.set( ixa, value )
-		else
-			call cnFunc.set( ixa, 0.0_8 )
-		end if
+		value = integrator.evaluate( a, nFunc.x( i ) )
+		call cnFunc.set( i, value )
 	end do
 	
 	call cnFunc.save( oFileName.fstr )
