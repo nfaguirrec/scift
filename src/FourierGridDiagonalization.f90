@@ -161,6 +161,8 @@ module FourierGridDiagonalization_
 	!! @brief Starts the numerical method
 	!!        The Fourier Grid Hamiltonian Method for Calculating Vibrational Energy Levels of Triatomic Molecules
 	!!        http://onlinelibrary.wiley.com/doi/10.1002/qua.22547/pdf
+	!!        The Fourier grid Hamiltonian method for bound state eigenvalues and eigenfunctions
+	!!        http://scitation.aip.org/content/aip/journal/jcp/91/6/10.1063/1.456888
 	!!
 	subroutine runReal( this, task, nStates, iRange, vRange, abstol )
 		class(FourierGridDiagonalization) :: this

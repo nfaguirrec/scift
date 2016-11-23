@@ -60,8 +60,11 @@ program main
 		case( "BAND_PASS" )
 			frequencyCutoffL = parser.getReal( "-fL" )
 			frequencyCutoffH = parser.getReal( "-fH" )
+		case( "BAND_STOP" )
+			frequencyCutoffL = parser.getReal( "-fL" )
+			frequencyCutoffH = parser.getReal( "-fH" )
 		case default
-			write(*,*) "### ERROR ### Bad value for parameter -t ( LOW_PASS | HIGH_PASS | BAND_PASS )"
+			write(*,*) "### ERROR ### Bad value for parameter -t ( LOW_PASS | HIGH_PASS | BAND_PASS | BAND_STOP )"
 			stop
 	end select
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -92,7 +95,9 @@ program main
 		case( "HIGH_PASS" )
 			FnFunc.fArray = merge( FnFunc.fArray, FnFunc.fArray*0.0_8, FnFunc.xGrid.data < frequencyCutoff )
 		case( "BAND_PASS" )
-			FnFunc.fArray = merge( FnFunc.fArray, FnFunc.fArray*0.0_8, FnFunc.xGrid.data > frequencyCutoffL .and. FnFunc.xGrid.data < frequencyCutoffL )
+			FnFunc.fArray = merge( FnFunc.fArray, FnFunc.fArray*0.0_8, FnFunc.xGrid.data > frequencyCutoffL .and. FnFunc.xGrid.data < frequencyCutoffH )
+		case( "BAND_STOP" )
+			FnFunc.fArray = merge( FnFunc.fArray, FnFunc.fArray*0.0_8, FnFunc.xGrid.data < frequencyCutoffL .or. FnFunc.xGrid.data > frequencyCutoffH )
 	end select
 	
 	nFunc = FourierTransform_fft( FnFunc, sgn=FourierTransform_FORWARD )
