@@ -293,6 +293,7 @@ module NIntegrator_
 	
 	!>
 	!! @brief Boole rule
+	!!        http://fourier.eng.hmc.edu/e176/lectures/ch6/node6.html
 	!!
 	function booleRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
