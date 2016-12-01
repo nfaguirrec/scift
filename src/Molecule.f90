@@ -1060,8 +1060,8 @@ module Molecule_
 		
 		if( effDebug ) then
 			write(*,*) ""
-			write(*,"(A,<size(this_descrip)>F10.5)")  "  Descrip1 = ", this_descrip
-			write(*,"(A,<size(other_descrip)>F10.5)")  "  Descrip2 = ", other_descrip
+			write(*,"(A,<size(this_descrip)>F10.4)")  "  Descrip1 = ", this_descrip
+			write(*,"(A,<size(other_descrip)>F10.4)")  "  Descrip2 = ", other_descrip
 			write(*,"(A,F10.5)")    "Similarity = ", similarity
 			write(*,"(A,F10.5)")    " Threshold = ", effThr
 			write(*,*)              "    Equal? = ", output
@@ -1145,8 +1145,8 @@ module Molecule_
 		
 		if( effDebug ) then
 			write(*,*) ""
-			write(*,"(A,<size(this_descrip)>F10.5)")  "  Descrip1 = ", this_descrip
-			write(*,"(A,<size(other_descrip)>F10.5)")  "  Descrip2 = ", other_descrip
+			write(*,"(A,<size(this_descrip)>F10.4)")  "  Descrip1 = ", this_descrip
+			write(*,"(A,<size(other_descrip)>F10.4)")  "  Descrip2 = ", other_descrip
 			write(*,"(A,F10.5)")    "Similarity = ", similarity
 			write(*,"(A,F10.5)")    " Threshold = ", effThr
 			write(*,*)              "    Equal? = ", output
