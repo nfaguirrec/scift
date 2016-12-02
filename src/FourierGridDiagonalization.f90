@@ -469,7 +469,8 @@ module FourierGridDiagonalization_
 		
 		integer :: nEigenFound
 		real(8), allocatable :: eigenValues(:)
-		real(8), allocatable :: eigenVectors(:,:)
+! 		real(8), allocatable :: eigenVectors(:,:)
+		complex(8), allocatable :: eigenVectors(:,:)
 		
 		type(CNFunction) :: phi
 		type(FourierTransform) :: fft
@@ -554,7 +555,7 @@ module FourierGridDiagonalization_
 			phi.fArray = T*phi.fArray
 			call fft.execute( sgn=FourierTransform_BACKWARD )
 			
-			H(:,n) = phi.fArray(:)
+			H(n,:) = phi.fArray(:)
 			H(n,n) = H(n,n) + this.potential.at( n )
 		end do
 		
@@ -572,13 +573,21 @@ module FourierGridDiagonalization_
 		if( allocated(this.eigenValues) ) deallocate( this.eigenValues )
 		allocate( this.eigenValues( nEigenFound ) )
 		
-		if( allocated(this.rEigenFunctions) ) deallocate( this.rEigenFunctions )
-		allocate( this.rEigenFunctions( nEigenFound ) )
+		if( allocated(this.cEigenFunctions) ) deallocate( this.cEigenFunctions )
+		allocate( this.cEigenFunctions( nEigenFound ) )
 		
 		this.eigenValues(1:nEigenFound) = eigenValues(1:nEigenFound)
 		do i=1,nEigenFound
-			call this.rEigenFunctions(i).fromGridArray( this.potential.xGrid, eigenVectors(:,i) )
+			call this.cEigenFunctions(i).fromGridArray( this.potential.xGrid, eigenVectors(:,i) )
 		end do
+		
+! 		if( allocated(this.rEigenFunctions) ) deallocate( this.rEigenFunctions )
+! 		allocate( this.rEigenFunctions( nEigenFound ) )
+! 		
+! 		this.eigenValues(1:nEigenFound) = eigenValues(1:nEigenFound)
+! 		do i=1,nEigenFound
+! 			call this.rEigenFunctions(i).fromGridArray( this.potential.xGrid, eigenVectors(:,i) )
+! 		end do
 		
 		deallocate( eigenValues )
 		deallocate( eigenVectors )

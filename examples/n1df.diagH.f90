@@ -122,8 +122,8 @@ program main
 			write(*,"(I5,F20.10)") i, solver.eigenValues(i)
 			
 			if( task == 1 ) then
-! 				call solver.cEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
-				call solver.rEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
+				call solver.cEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
+! 				call solver.rEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
 			end if
 ! 		end if
 	end do
