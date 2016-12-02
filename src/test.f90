@@ -85,7 +85,7 @@ program test
 ! 	use MathFormula_
 ! 	use MDIntegrator_
 ! 	use ThrularNumerovMethod_
-! 	use FourierGridDiagonalization_
+	use FourierGridDiagonalization_
 	implicit none
 	
 ! 	call IOStream_test()
@@ -119,7 +119,7 @@ program test
 ! 	call StringRealPairList_test()
 ! 	call StringRealMap_test()
 ! 	call Edge_test()
-	call IntegerGraph_test()
+! 	call IntegerGraph_test()
 ! 	call IVector_test()
 ! 	call RVector_test()
 ! 	call Matrix_test()
@@ -145,5 +145,5 @@ program test
 ! 	call MathFormula_test()
 ! 	call MDIntegrator_test()
 ! 	call ThrularNumerovMethod_test()
-! 	call FourierGridDiagonalization_test()
+	call FourierGridDiagonalization_test()
 end program test

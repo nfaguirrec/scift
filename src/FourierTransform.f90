@@ -60,6 +60,7 @@ module FourierTransform_
 	private
 	
 	public :: &
+		FourierTransform_omegaArray, &
 		FourierTransform_omegaGrid, &
 		FourierTransform_xGrid, &
 		FourierTransform_phase, &

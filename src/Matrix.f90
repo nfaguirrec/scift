@@ -44,6 +44,7 @@ module Matrix_
 	
 	public :: &
 ! 		Matrix_lMultiplicationByReal, & ! NO FUNCIONA LA MULTIPLICACION POR IZQUIERDA
+		Matrix_str, &
 		Matrix_get, &
 		Matrix_trace, &
 		Matrix_norm2, &
@@ -1357,6 +1358,149 @@ module Matrix_
 			write(*,*) "### ERROR ### The Matrix.projectionOntoNewAxes method is only implemented for column matrices"
 		end if
 	end function projectionOntoNewAxes
+	
+	!>
+	!! @brief Convert to string
+	!!
+	function Matrix_str( fArray, formatted, prefix, precision ) result( output )
+		real(8), allocatable :: fArray(:,:)
+		character(:), allocatable :: output
+		logical, optional :: formatted
+		character(*), optional :: prefix
+		integer, optional :: precision
+		
+		integer :: ncolEff = 10
+		
+		logical :: effFormatted
+		character(:), allocatable :: effPrefix
+		integer :: effPrecision
+		
+		integer :: fmt
+		character(20000) :: fstr
+		integer :: i, j, k, upper
+		
+		integer :: auxColNum
+		integer :: lowerLimit
+		integer :: upperLimit
+		
+		integer :: maxIPart
+		
+		effFormatted = .false.
+		if( present(formatted) ) effFormatted = formatted
+		
+		effPrefix = ""
+		if( present(prefix) ) effPrefix = prefix
+		
+		effPrecision = 6
+		if( present(precision) ) effPrecision = precision
+		
+		output = ""
+		
+		if( .not. effFormatted ) then
+#define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
+
+#define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
+#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+		
+			output = trim(output)//"<Matrix:"
+! 			ITEMI( "min=", fArray.min )
+! 			ITEMR( ",size=", fArray.size )
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+			output = trim(output)//">"
+		else
+#define LINE(l) output = trim(output)//effPrefix//l//new_line('')
+#define ITEMS(l,v) output = trim(output)//effPrefix//l; write(fstr, "(x,a)") trim(v); output = trim(output)//trim(fstr)//new_line('')
+#define ITEMI(l,v) output = trim(output)//effPrefix//l; write(fstr, "(i10)") v; output = trim(output)//trim(fstr)//new_line('')
+#define ITEMR(l,v) output = trim(output)//effPrefix//l; write(fstr, "(f10.5)") v; output = trim(output)//trim(fstr)//new_line('')
+
+! 			LINE("Matrix")
+! 			LINE("---------")
+! 			LINE("")
+! 			maxIPart = RFMT( maxval( fArray, mask=( fArray .lt. Math_Inf .and. .not. IEEE_IS_NAN(fArray) ) ) )
+			maxIPart = min( RFMT( maxval( fArray, mask=( IEEE_IS_FINITE(fArray) ) ) ), 15 )
+			
+			do k=1, ceiling( (size(fArray,dim=2)*1.0)/(ncolEff*1.0) )
+			
+				lowerLimit = ncolEff*(k-1)+1
+				upperLimit = ncolEff*k
+				auxColNum = ncolEff
+				
+				if ( upperLimit > size(fArray,dim=2) ) then
+					auxColNum =  ncolEff-upperLimit+size(fArray,dim=2)
+					upperLimit = size(fArray,dim=2)
+				end if
+				
+				if( k /= 1 ) then
+					LINE("")
+				end if
+				
+! 				if( present( columnKeys ) ) then
+! 					if( tmpFlags == WITH_COLUMN_KEYS .or. tmpFlags == WITH_BOTH_KEYS ) then
+! 						write (6,"(21X,<auxColNum>A15)") ( columnKeys(i), i = lowerLimit, upperLimit )
+! 					end if
+! 				else
+! 					if( tmpFlags /= WITHOUT_KEYS ) then
+! 						if( tmpFlags == WITH_COLUMN_KEYS .or. tmpFlags == WITH_BOTH_KEYS ) then
+! 							write(fstr,"(I5,<upper>F10.4)") i, ( fArray(i,k), k=ncolEff*(j-1)+1,upper )
+							write (fstr,"(5X,<auxColNum>I<maxIPart+5+effPrecision>)") ( i,i=lowerLimit,upperLimit )
+							output = trim(output)//trim(fstr)//new_line('')
+! 						end if
+! 					end if
+! 				end if
+					
+! 				LINE("")
+				
+! 				if( present( rowKeys ) ) then
+! 				
+! 					if( tmpFlags == WITH_ROW_KEYS .or. tmpFlags == WITH_BOTH_KEYS ) then
+! 						write (6,"(A18,<auxColNum>F15.6)") ( rowKeys(i), ( fArray.values(i,j), j=lowerLimit,upperLimit ), i = 1, size(fArray,dim=1) )
+! 					else
+! 						write (6,"(5X,<auxColNum>F15.6)") ( ( fArray.values(i,j), j=lowerLimit,upperLimit ), i = 1, size(fArray,dim=1) )
+! 					end if
+! 					
+! 				else
+! 					if( tmpFlags /= WITHOUT_KEYS ) then
+					
+! 						if( ( tmpFlags == WITH_ROW_KEYS .or. tmpFlags == WITH_BOTH_KEYS ) .and. tmpFlags /= WITHOUT_KEYS ) then
+					do i=1,size(fArray,dim=1)
+						write (fstr,"(I5,<auxColNum>F<maxIPart+5+effPrecision>.<effPrecision>)") i, ( fArray(i,j), j=lowerLimit,upperLimit )
+						
+						if( i /= size(fArray,dim=1) ) then
+							output = trim(output)//trim(fstr)//new_line('')
+						else
+							output = trim(output)//trim(fstr)
+						end if
+					end do
+! 							write (fstr,"(I5,<auxColNum>F15.6)") ( i, ( fArray(i,j), j=lowerLimit,upperLimit ), i=1,size(fArray,dim=1) )
+! 							output = trim(output)//trim(fstr)//new_line('')
+! 						else
+! 							write (6,"(5X,<auxColNum>F15.6)") ( ( fArray.values(i,j), j=lowerLimit,upperLimit ), i = 1, size(fArray,dim=1) )
+! 						end if
+						
+! 					else
+! 					
+! 						write (fstr,"(5X,<auxColNum>F15.6)") ( ( fArray(i,j), j=lowerLimit,upperLimit ), i=1,size(fArray,dim=1) )
+! 						output = trim(output)//trim(fstr)//new_line('')
+! 
+! 					end if
+! 				end if
+				
+				if( k /= ceiling( (size(fArray,dim=2)*1.0)/(ncolEff*1.0) ) ) then
+					LINE("")
+				end if
+				
+			end do
+#undef RFMT
+
+#undef LINE
+#undef ITEMS
+#undef ITEMI
+#undef ITEMR
+		end if
+	end function Matrix_str
 	
 	!>
 	!! @brief  Returns the i,j-th element of M
