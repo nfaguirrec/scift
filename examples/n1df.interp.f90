@@ -15,6 +15,7 @@ program main
 	type(String) :: iFileName
 	type(String) :: bFileName
 	type(String) :: oFileName
+	real(8) :: value
 	
 	integer :: argc
 	integer :: fileType
@@ -27,13 +28,14 @@ program main
 	
 	if( argc < 6 ) then
 		write(*,*) "Usage:"
-		write(*,*) "   n1df.interp -i ifile -b bfile -o ofile"
+		write(*,*) "   n1df.interp -i ifile -b bfile -o ofile [-v value]"
 		stop
 	end if
 	
 	iFileName = parser.getString( "-i" )
 	bFileName = parser.getString( "-b" )
 	oFileName = parser.getString( "-o" )
+	value = parser.getReal( "-v", def=0.0_8 )
 	
 	fileType = RNFunction_checkTypeN1DF( iFileName.fstr )
 	

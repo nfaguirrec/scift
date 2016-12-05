@@ -2141,19 +2141,22 @@
 	!>
 	!! @brief Returns the numeric value of the function or its derivative in the point x
 	!!
-	!! @input     x  Point where the funtion or derivative will be evaluated
+	!! @input x  Point where the funtion or derivative will be evaluated
 	!! @input stencil  Number of points that will be used to approximate the function (default=3)
 	!! @input order  order of the derivative (default = 0)
+	!! @input value  default value where x is not defined (default = 0.0_8)
 	!!
-	function interpolatePoint( this, x, stencil, order ) result( output )
+	function interpolatePoint( this, x, stencil, order, value ) result( output )
 		class(NFunction), intent(in) :: this
 		real(8), intent(in) :: x
 		integer, optional, intent(in) :: stencil
 		integer, optional, intent(in) :: order
+		real(8), optional, intent(in) :: value
 		__TYPE_VALUE__ :: output
 		
 		integer :: effOrder
 		integer :: effStencil
+		real(8) :: effValue
 		
 		integer :: i, pos
 		real(8), allocatable :: coeff(:,:,:)
@@ -2164,13 +2167,16 @@
 		effStencil = 3
 		if( present(stencil) ) effStencil = stencil
 		
+		effValue = 0.0_8
+		if( present(value) ) effValue = value
+		
 		if( .not. this.xGrid.isEquallyspaced ) then
 			write(6,"(A)") "### ERROR ### Numerical derivatives for non equally spaced grids are not implemented yet"
 			stop
 		end if
 		
 		if( x < this.xGrid.min .or. x > this.xGrid.max ) then
-			output = 0.0_8
+			output = effValue
 			return
 		end if
 		
@@ -2203,11 +2209,12 @@
 	!! @input stencil  Number of points that will be used to approximate the function (default=3)
 	!! @input order  order of the derivative (default = 0)
 	!!
-	function interpolateOnGrid( this, xGrid, stencil, order ) result( output )
+	function interpolateOnGrid( this, xGrid, stencil, order, value ) result( output )
 		class(NFunction) :: this
 		type(Grid) :: xGrid
 		integer, optional, intent(in) :: stencil
 		integer, optional, intent(in) :: order
+		real(8), optional, intent(in) :: value
 		type(NFunction) :: output
 		
 		__TYPE_VALUE__, allocatable :: dArray(:)
@@ -2218,7 +2225,7 @@
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.interpolateOnGrid()" )
 		
 		do i=1,xGrid.nPoints
-			dArray(i) = this.interpolatePoint( xGrid.at(i), stencil, order )
+			dArray(i) = this.interpolatePoint( xGrid.at(i), stencil=stencil, order=order, value=value )
 		end do
 		
 		call output.fromGridArray( xGrid, dArray )

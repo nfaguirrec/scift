@@ -90,7 +90,7 @@ program main
 		nFuncSmooth = nFuncSpline.smooth( smoothFactor )
 		
 		call integrator.init( nFuncSmooth, idMethod )
-		write(*,*) integrator.evaluate( a, b )
+! 		write(*,*) integrator.evaluate( a, b )
 	end if
 	
 	value = integrator.evaluate( a, b )
