@@ -129,6 +129,7 @@ module String_
 		FString_toString, &
 		FString_toIntegerArray, &
 		FString_toRealArray, &
+		FString_fromString, &
 		FString_fromInteger, &
 		FString_fromReal, &
 		FString_fromLogical, &
@@ -664,6 +665,16 @@ module String_
 		deallocate(tokens)
 		deallocate(strBuffer)
 	end subroutine FString_toRealArray
+	
+	!>
+	!! @brief 
+	!!
+	function FString_fromString( str ) result( output )
+		type(String), intent(in) :: str
+		character(:), allocatable :: output
+		
+		output = str.fstr
+	end function FString_fromString
 	
 	!>
 	!! @brief 
