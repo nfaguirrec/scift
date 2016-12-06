@@ -49,12 +49,12 @@ program main
 		end if
 		
 		call xGrid.init( bFileName.fstr, column=1 )
-		roFunc = riFunc.interpolate( xGrid )
+		roFunc = riFunc.interpolate( xGrid, value=value )
 		call roFunc.save( oFileName.fstr )
 	else if( fileType == 1 ) then
 		call ciFunc.init( iFileName.fstr )
 		call xGrid.init( bFileName.fstr, column=1 )
-		coFunc = ciFunc.interpolate( xGrid )
+		coFunc = ciFunc.interpolate( xGrid, value=dcmplx(value) )
 		call coFunc.save( oFileName.fstr )
 	else
 		write(0,*) "### ERROR ### unknown type for "//trim(iFileName.fstr)
