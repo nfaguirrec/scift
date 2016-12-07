@@ -26,6 +26,7 @@
 			procedure :: isEmpty
 			procedure, private :: privateFind
 			procedure :: find
+			procedure :: contains
 			procedure :: insert
 			generic :: set => setFromPtr, insert
 			procedure :: setFromPtr
@@ -209,7 +210,9 @@
 	end function privateFind
 	
 	!>
-	!! @brief
+	!! @brief Returns true if the map contains an item with key key; otherwise returns false.
+	!!        Additionally, returns an iterator ptr pointing to the item with key key in the map.
+	!!        If the map contains no item with key key, the function returns ptr=>null().
 	!!
 	function find( this, key, ptr ) result( output )
 		class(Map), intent(in) :: this
@@ -233,6 +236,22 @@
 			output = .true.
 		end if
 	end function find
+	
+	!>
+	!! @brief Returns true if the map contains an item with key key; otherwise returns false.
+	!!
+	function contains( this, key ) result( output )
+		class(Map), intent(in) :: this
+		type(String), intent(in) :: key
+		logical :: output
+		
+		__CLASS_MAPITERATOR__, pointer :: ptr
+		integer :: loc
+		
+		output = this.find( key, ptr )
+		
+		ptr => null()
+	end function contains
 	
 	!>
 	!! @brief
