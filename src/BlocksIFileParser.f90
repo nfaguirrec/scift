@@ -36,6 +36,7 @@ module BlocksIFileParser_
 	
 	type, public :: BlocksIFileParser
 		character(:), private, allocatable :: iFileName
+		logical, private :: notifyGetMethods
 		
 		integer, private :: numberOfLines
 		character(1000), allocatable, private :: lines(:)
@@ -71,9 +72,11 @@ module BlocksIFileParser_
 			procedure :: show
 			procedure :: showContent
 			procedure, private :: load
+			procedure :: isEmpty
 			procedure :: inputFileName
 			procedure :: isThereBlock
-			procedure :: get => getString
+			procedure :: get => getStringBase
+			procedure, private :: getStringBase
 			procedure :: getString
 			procedure :: getLogical
 			procedure :: getInteger
@@ -88,17 +91,23 @@ module BlocksIFileParser_
 	!>
 	!! @brief Constructor
 	!!
-	subroutine initDefault( this, iFileName, cComments )
+	subroutine initDefault( this, iFileName, cComments, notifyGetMethods )
 		class(BlocksIFileParser) :: this 
 		character(*), intent(in) :: iFileName
 		character(*), optional, intent(in) :: cComments
+		logical, optional, intent(in) :: notifyGetMethods
 		
 		character(10) :: effcComments
+		logical :: effNotifyGetMethods
 		
 		effcComments = "#"
 		if( present(cComments) ) effcComments = cComments
 		
+		effNotifyGetMethods = .false.
+		if( present(notifyGetMethods) ) effNotifyGetMethods = notifyGetMethods
+		
 		this.iFileName = iFileName
+		this.notifyGetMethods = effNotifyGetMethods
 		
 		this.numberOfLines = 0
 		if( allocated(this.lines) ) deallocate(this.lines)
@@ -114,10 +123,11 @@ module BlocksIFileParser_
 	!! @brief Copy constructor
 	!!
 	subroutine copy( this, other )
-		class(BlocksIFileParser), intent(out) :: this
+		class(BlocksIFileParser), intent(inout) :: this
 		class(BlocksIFileParser), intent(in) :: other
 		
-		write(*,*) "@@@ Warning @@@ BlocksIFileParser.copy is not implemented"
+		write(*,*) "### Error ### BlocksIFileParser.copy is not implemented"
+		stop
 	end subroutine copy
 	
 	!>
@@ -288,6 +298,19 @@ module BlocksIFileParser_
 	!>
 	!! @brief
 	!!
+	function isEmpty( this ) result( output )
+		class(BlocksIFileParser), intent(in) :: this
+		logical :: output
+		
+		output = .false.
+		if( this.numberOfLines == 0 ) then
+			output = .true.
+		end if
+	end function isEmpty
+	
+	!>
+	!! @brief
+	!!
 	function inputFileName( this ) result( output )
 		class(BlocksIFileParser), intent(in) :: this
 		type(String) :: output
@@ -298,7 +321,7 @@ module BlocksIFileParser_
 	!>
 	!! @brief
 	!!
-	function getString( this, item, def ) result( output )
+	function getStringBase( this, item, def ) result( output )
 		class(BlocksIFileParser), intent(in) :: this 
 		character(*), intent(in) :: item
 		character(*), optional, intent(in) :: def
@@ -319,6 +342,11 @@ module BlocksIFileParser_
 		if( present(def) ) effdef = def
 		
 		call FString_split( item, targetItem, ":" )
+		
+		if( .not. this.isThereBlock( targetItem(1) ) .and. .not. present(def) ) then
+			write(*,*) "### ERROR ### BlocksIFileParser: Block "//trim(targetItem(1))//" is required"
+			stop
+		end if
 		
 		foundBegin = .false.
 		i=1
@@ -352,7 +380,7 @@ module BlocksIFileParser_
 				if( effdef /= "$$EMPTY**$$..@" ) then
 					output = trim(adjustl(effdef))
 				else
-					write(*,*) "### ERROR ### BlocksIFileParser: Parameter "//trim(targetItem(2))//" is required"
+					write(*,*) "### ERROR ### BlocksIFileParser: Parameter "//trim(item)//" is required"
 					stop
 				end if
 				
@@ -365,7 +393,7 @@ module BlocksIFileParser_
 		if( .not. foundBegin .and. effdef /= "$$EMPTY**$$..@" ) then
 			output = trim(adjustl(effdef))
 		else
-			write(*,*) "### ERROR ### BlocksIFileParser: Parameter "//trim(targetItem(2))//" is required"
+			write(*,*) "### ERROR ### BlocksIFileParser: Parameter "//trim(item)//" is required"
 			stop
 		end if
 
@@ -374,9 +402,9 @@ module BlocksIFileParser_
 ! 			stop
 ! 		end if
 		
-		deallocate( targetItem )
-		deallocate( fstrBufferList )
-	end function getString
+		if( allocated(targetItem) ) deallocate( targetItem )
+		if( allocated(fstrBufferList) ) deallocate( fstrBufferList )
+	end function getStringBase
 	
 	!>
 	!! @brief
@@ -421,8 +449,7 @@ module BlocksIFileParser_
 		
 		output = .false.
 		
-		deallocate( fstrBufferList )
-		return
+		if( allocated(fstrBufferList) ) deallocate( fstrBufferList )
 	end function isThereBlock
 	
 	!>
@@ -440,7 +467,7 @@ module BlocksIFileParser_
 		type(String), allocatable :: strBufferList(:)
 		character(1000), allocatable :: fstrBufferList(:)
 		
-		effIgnoreVars = .false.
+		effIgnoreVars = .true.
 		if( present(ignoreVars) ) effIgnoreVars = ignoreVars
 		
 		if( allocated(output) ) then
@@ -461,7 +488,7 @@ module BlocksIFileParser_
 				i=i+1
 				
 				do while( index( this.lines(i), "END" ) == 0 )
-					if( index( this.lines(i), " = " ) == 0 .or. effIgnoreVars ) then
+					if( index( this.lines(i), " = " ) == 0 .or. .not. effIgnoreVars ) then
 						strBufferList(j) = adjustl(trim(this.lines(i)))
 						j=j+1
 					end if
@@ -486,9 +513,35 @@ module BlocksIFileParser_
 			end if
 		end do
 		
-		deallocate( fstrBufferList )
-		deallocate( strBufferList )
+		if( allocated(fstrBufferList) ) deallocate( fstrBufferList )
+		if( allocated(strBufferList) ) deallocate( strBufferList )
 	end subroutine getBlock
+	
+	!>
+	!! @brief
+	!!
+	function getString( this, item, def ) result( output )
+		class(BlocksIFileParser), intent(in) :: this 
+		character(*), intent(in) :: item
+		character(*), optional, intent(in) :: def
+		type(String) :: output
+		
+		type(String) :: tmp
+		
+		if( present(def) ) then
+			output = this.getStringBase( item, trim(def) )
+			
+			if( this.notifyGetMethods ) then
+				write(*,"(A40,A20,A,A20,A)") item//" = ", trim(output.fstr), "        ( ", def, " )"
+			end if
+		else
+			output = this.getStringBase( item )
+			
+			if( this.notifyGetMethods ) then
+				write(*,"(A40,A20)") item//" = ", trim(output.fstr)
+			end if
+		end if
+	end function getString
 	
 	!>
 	!! @brief
@@ -504,10 +557,19 @@ module BlocksIFileParser_
 		
 		if( present(def) ) then
 			write( buffer, * ) def
-			output = String_toLogical( this.getString( item, trim(buffer) ) )
+			output = String_toLogical( this.getStringBase( item, trim(buffer) ) )
+			
+			if( this.notifyGetMethods ) then
+				write(*,"(A40,L20,A,L20,A)") item//" = ", output, "        ( ", def, " )"
+			end if
 		else
-			output = String_toLogical( this.getString( item ) )
+			output = String_toLogical( this.getStringBase( item ) )
+			
+			if( this.notifyGetMethods ) then
+				write(*,"(A40,L20)") item//" = ", output
+			end if
 		end if
+		
 	end function getLogical
 	
 	!>
@@ -524,10 +586,19 @@ module BlocksIFileParser_
 		
 		if( present(def) ) then
 			write( buffer, * ) def
-			output = String_toInteger( this.getString( item, trim(buffer) ) )
+			output = String_toInteger( this.getStringBase( item, trim(buffer) ) )
+			
+			if( this.notifyGetMethods ) then
+				write(*,"(A40,I20,A,I20,A)") item//" = ", output, "        ( ", def, " )"
+			end if
 		else
-			output = String_toInteger( this.getString( item ) )
+			output = String_toInteger( this.getStringBase( item ) )
+			
+			if( this.notifyGetMethods ) then
+				write(*,"(A40,I20)") item//" = ", output
+			end if
 		end if
+		
 	end function getInteger
 	
 	!>
@@ -543,10 +614,19 @@ module BlocksIFileParser_
 		
 		if( present(def) ) then
 			write( buffer, * ) def
-			output = String_toReal( this.getString( item, trim(buffer) ) )
+			output = String_toReal( this.getStringBase( item, trim(buffer) ) )
+			
+			if( this.notifyGetMethods ) then
+				write(*,"(A40,F20.8,A,F20.8,A)") item//" = ", output, "        ( ", def, " )"
+			end if
 		else
-			output = String_toReal( this.getString( item ) )
+			output = String_toReal( this.getStringBase( item ) )
+			
+			if( this.notifyGetMethods ) then
+				write(*,"(A40,F20.8,A,F20.8,A)") item//" = ", output
+			end if
 		end if
+		
 	end function getReal
 	
 	!>
@@ -567,10 +647,12 @@ module BlocksIFileParser_
 		stop
 ! 		if( present(def) ) then
 ! 			write( buffer, * ) def
-! 			output = String_toRealArray( this.getString( item, "("//trim(buffer) ) )
+! 			output = String_toRealArray( this.getStringBase( item, "("//trim(buffer) ) )
 ! 		else
-! 			output = String_toRealArray( this.getString( item ) )
+! 			output = String_toRealArray( this.getStringBase( item ) )
 ! 		end if
+		
+! 		write(*,*) "  ", item, " = ", output
 	end function getRealArray
 	
 	!>
@@ -631,12 +713,16 @@ module BlocksIFileParser_
 		real(8) :: rarray(3)
 		real(8) :: iarray(4)
 		
-		call parser.init( "data/formats/BLOCKIFILE" )
+		call parser.init( "data/formats/BLOCKIFILE", notifyGetMethods=.true. )
 		call parser.showContent()
 		
 		buffer = parser.get( "ICONS:betin", def="0.0" )
 		write(*,*) "betin = ", buffer.toReal()
 		write(*,*) "betin = ", buffer.toInteger()
+		
+! 		help = "This is a test to"//ENDL// &
+! 		       "include in the feature "//ENDL
+! 		buffer = parser.getString( "ICONS:hola", def="kk", help=help.fstr )
 		
 		write(*,*) "rsys = ", String_toReal( parser.get( "ICONS:rsys", def="0.0" ) )
 		

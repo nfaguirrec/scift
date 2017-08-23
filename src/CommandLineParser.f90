@@ -151,8 +151,8 @@ module CommandLineParser_
 		character(*), optional, intent(in) :: def
 		type(String) :: output
 		
-		character(100) :: effdef
-		character(100) :: buffer
+		character(10000) :: effdef
+		character(10000) :: buffer
 		integer :: i
 		
 		if( present(def) ) then

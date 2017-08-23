@@ -56,6 +56,7 @@ module Atom_
 			procedure :: mass
 			procedure :: massNumber
 			procedure :: atomicNumber
+			procedure :: color
 			procedure :: isConnectedWith
 	end type Atom
 	
@@ -277,6 +278,16 @@ module Atom_
 		
 		output = AtomicElementsDB_instance.atomicNumber( this.symbol )
 	end function atomicNumber
+	
+	!>
+	!! @brief
+	!!
+	pure function color( this ) result( output )
+		class(Atom), intent(in) :: this
+		character(6) :: output
+		
+		output = AtomicElementsDB_instance.color( this.symbol )
+	end function color
 	
 	!>
 	!! @test Testing the Atom class
