@@ -170,6 +170,14 @@ module GOptions_
 		enumerator :: Histogram_RUNNING
 	end enum
 	
+	!---------------------------------------------------------------------------
+	! Molecule constants
+	!---------------------------------------------------------------------------
+	enum, BIND(c)
+		enumerator :: Molecule_FIXED_DISTORSION = 0
+		enumerator :: Molecule_RANDOM_DISTORSION
+	end enum
+	
 	contains
 	
 	!>

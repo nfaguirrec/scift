@@ -375,7 +375,8 @@ module RealHistogram_
 				case( Histogram_SQUAREROOT )
 					EffNBins = ceiling( sqrt( real(this.size(),8) ) )
 					
-				case( Histogram_STURGES )
+				! @todo Hay que ver si es adecuado utilizar STURGES para los casos dressing
+				case( Histogram_STURGES, Histogram_GAUSSIAN_DRESSING, Histogram_LORENTZIAN_DRESSING )
 					EffNBins = ceiling( log( real(this.size(),8) )/log(2.0_8) + 1.0_8 )
 					
 				case( Histogram_RICE )
@@ -417,9 +418,11 @@ module RealHistogram_
 ! 		write(6,*) "EffMin = ", EffMin, EffMin
 ! 		write(6,*) "EffMax = ", EffMax, EffMax
 		
+		if( abs(rrange) <= h ) return
+		
 ! 		call xGrid.init( EffMin, EffMax-h, stepSize=h ) ! El valor de X es el inicio del intervalo
 ! 		call xGrid.init( EffMin+0.5_8*h, EffMax-0.5_8*h, stepSize=h )   ! El valor de X es el centro del intervalo
-! 		write(*,*) "Inicializando ", EffMin, EffMax, h
+! 		write(*,*) "Inicializando ", EffMin, EffMax, h, EffNBins
 		call xGrid.initDefault( EffMin, EffMax, stepSize=h )   ! El valor de X es el centro del intervalo
 ! 		call xGrid.show()
 		
@@ -471,7 +474,7 @@ module RealHistogram_
 				
 				counts(i) = counts(i) + 1
 				
-				write(6,"(i5,2f10.5,i5)") j, xGrid.at(j), iter.data, i
+! 				write(6,"(i5,2f10.5,i5)") j, xGrid.at(j), iter.data, i
 				
 				iter => iter.next
 				j = j + 1

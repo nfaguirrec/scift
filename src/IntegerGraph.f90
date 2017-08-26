@@ -35,6 +35,7 @@ module IntegerGraph_
 	use NodeVector_
 	use EdgeVector_
 	use Matrix_
+	use StringIntegerMap_
 	implicit none
 	private
 	
@@ -48,6 +49,8 @@ module IntegerGraph_
 		IntegerGraph_test
 		
 	type, public :: IntegerGraph
+		character(:), allocatable :: name
+		
 		type(IntegerHyperVector), private :: node2Neighbors
 		type(IntegerHyperVector), private :: node2InEdges
 		type(IntegerHyperVector), private :: node2OutEdges
@@ -78,6 +81,7 @@ module IntegerGraph_
 		procedure :: nEdges
 		procedure :: isDirected
 		procedure :: isConnected
+		procedure :: nComponents
 		procedure :: newNode
 		procedure :: newNodes
 		procedure :: deleteNode
@@ -88,6 +92,10 @@ module IntegerGraph_
 		procedure :: deleteEdge
 		procedure :: deleteEdges
 		procedure :: getEdgeId
+		procedure :: setNodeProperties
+		procedure :: getNodeProperties
+		procedure :: setEdgeProperties
+		procedure :: getEdgeProperties
 		procedure :: save
 		procedure, private :: saveGML
 		procedure, private :: saveDOT
@@ -108,6 +116,8 @@ module IntegerGraph_
 		procedure :: kirchhoffSumIndex
 		procedure :: wienerSumIndex
 		procedure :: JOmegaIndex
+		procedure :: indicesBasedComparison
+		procedure, private :: makeComplete
 		
 	end type IntegerGraph
 	
@@ -116,9 +126,15 @@ module IntegerGraph_
 	!>
 	!! @brief Constructor
 	!!
-	subroutine initIntegerGraph( this, directed )
+	subroutine initIntegerGraph( this, directed, complete, name )
 		class(IntegerGraph) :: this
 		logical, optional :: directed
+		integer, optional :: complete
+		character(*), optional, intent(in) :: name
+		
+		if( allocated(this.name) ) deallocate(this.name)
+		this.name = "unknown"
+                if( present(name) ) this.name = name
 		
 		this.directed = .false.
 		if( present(directed) ) this.directed = directed
@@ -131,6 +147,8 @@ module IntegerGraph_
 		
 		call this.nodeProperties.init()
 		call this.edgeProperties.init()
+		
+		if( present(complete) ) call this.makeComplete( n=complete )
 	end subroutine initIntegerGraph
 	
 	!>
@@ -174,49 +192,95 @@ module IntegerGraph_
 	!>
 	!! @brief Show 
 	!!
-	subroutine show( this, unit, formatted )
+	subroutine show( this, unit, formatted, nodesLabels, nodePropertiesUnits, edgePropertiesUnits )
 		class(IntegerGraph) :: this
 		integer, optional, intent(in) :: unit
 		logical, optional :: formatted
+		character(*), optional, intent(in) :: nodesLabels(:) 
+		real(8), optional, intent(in) :: nodePropertiesUnits
+		real(8), optional, intent(in) :: edgePropertiesUnits
 		
 		integer :: effunit
 		
 		effunit = 6
 		if( present(unit) ) effunit = unit
 		
-		write(effunit,"(a)") trim(this.str(formatted=formatted))
+		write(effunit,"(a)") trim(this.str( formatted=formatted, nodesLabels=nodesLabels, nodePropertiesUnits=nodePropertiesUnits, edgePropertiesUnits=edgePropertiesUnits ))
 	end subroutine show
 	
 	!>
 	!! @brief Convert to string
 	!!
-	function str( this, formatted ) result( output )
+	function str( this, formatted, nodesLabels, nodePropertiesUnits, edgePropertiesUnits ) result( output )
 		class(IntegerGraph), target :: this 
 		character(:), allocatable :: output
 		logical, optional :: formatted
+		character(*), optional, intent(in) :: nodesLabels(:)
+		real(8), optional, intent(in) :: nodePropertiesUnits
+		real(8), optional, intent(in) :: edgePropertiesUnits
 		
 		logical :: effFormatted
+		real(8) :: effNodePropertiesUnits
+		real(8) :: effEdgePropertiesUnits
 		
-		integer :: i, j
+		integer :: i, j, loc
 		type(IntegerVector), pointer :: ivec
-		type(Node), pointer :: node1
-		type(Edge), pointer :: edge1
-		integer :: edgeStep
+		type(Node), pointer :: node
+		type(Edge), pointer :: edge
+		character(100) :: edgeLabel
 		
 		effFormatted = .false.
 		if( present(formatted) ) effFormatted = formatted
 		
-		edgeStep = 1
-		if( .not. this.isDirected() ) edgeStep = 2
+		effNodePropertiesUnits = 1.0_8
+		if( present(nodePropertiesUnits) ) effNodePropertiesUnits = nodePropertiesUnits
+		
+		effEdgePropertiesUnits = 1.0_8
+		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
 		
 		output = ""
 		
 		if( .not. effFormatted ) then
 			output = trim(output)//"<IntegerGraph:"
-			output = trim(output)//">"
+			output = trim(output)//"nodes="//trim(FString_fromInteger(this.nNodes()))//","
+			output = trim(output)//"edges={"
+			do i=1,this.nEdges()
+				
+				loc = 0
+				if( .not. this.isDirected() .and. i > 1 ) then
+					do j=i-1,1,-1
+						if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
+							this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+							loc = 1
+							exit
+						end if
+					end do
+				end if
+				
+				if( loc == 1 ) cycle
+				
+				if( i /= 1 ) output = trim(output)//", "
+			
+				edge => this.edgeProperties.data(i)
+				
+				edgeLabel = edge.label
+				if( present(nodesLabels) ) then
+					if( FString_hashKey(trim( nodesLabels(edge.sNode)) ) > FString_hashKey(trim( nodesLabels(edge.tNode)) ) ) then
+						edgeLabel = trim(nodesLabels(edge.sNode))//"--"//trim(nodesLabels(edge.tNode))
+					else
+						edgeLabel = trim(nodesLabels(edge.tNode))//"--"//trim(nodesLabels(edge.sNode))
+					end if
+				end if
+				
+				output = trim(output)//trim(edgeLabel)
+			end do
+			output = trim(output)//"}>"
 		else
-			output = trim(output)//"IntegerGraph"//new_line('')
-			output = trim(output)//"----------------"//new_line('')
+			output = trim(output)//new_line('')
+			output = trim(output)//"---------------"//new_line('')
+			output = trim(output)//" IntegerGraph  "//new_line('')
+			output = trim(output)//"---------------"//new_line('')
+			output = trim(output)//new_line('')
 			output = trim(output)//"Number of nodes = "//trim(FString_fromInteger(this.nNodes()))//new_line('')
 			output = trim(output)//"Number of edges = "//trim(FString_fromInteger(this.nNodes()))//new_line('')
 			output = trim(output)//"      Directed? = "//trim(FString_fromLogical(this.isDirected()))//new_line('')
@@ -225,13 +289,18 @@ module IntegerGraph_
 			output = trim(output)//"node2Neighbors"//new_line('')
 			do i=1,this.nNodes()
 				ivec => this.node2Neighbors.data(i)
-				output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
+				
+				if( this.isDirected() ) then
+					output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
+				else
+					output = trim(output)//"   "//trim(FString_fromInteger(i))//" -- "
+				end if
 				
 				do j=1,ivec.size()
 					if( j /= ivec.size() ) then
-						output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))//","
+						output = trim(output)//" "//trim(FString_fromInteger(ivec.at(j)))//","
 					else
-						output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))
+						output = trim(output)//" "//trim(FString_fromInteger(ivec.at(j)))
 					end if
 				end do
 				
@@ -241,60 +310,109 @@ module IntegerGraph_
 			output = trim(output)//new_line('')
 			output = trim(output)//"Node properties"//new_line('')
 			do i=1,this.nNodes()
-				node1 => this.nodeProperties.data(i)
-				output = trim(output)//"   "//trim(FString_fromInteger(i))//" -->   ("
-				output = trim(output)//" "//trim(FString_fromReal(node1.weight,format="(F5.3)"))
-				output = trim(output)//", "//trim(FString_fromInteger(node1.id))//" )"//new_line('')
-			end do
-			
-			output = trim(output)//new_line('')
-			output = trim(output)//"node2InEdges"//new_line('')
-			do i=1,this.nNodes()
-				ivec => this.node2InEdges.data(i)
+				node => this.nodeProperties.data(i)
+				
 				output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
 				
-				do j=1,ivec.size()
-! 					if( this.isDirected() .or. ( .not. this.isDirected() .and. mod(ivec.at(j),2) /= 0 ) ) then
-						if( j /= ivec.size() ) then
-							output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))//","
-						else
-							output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))
-						end if
-! 					end if
+				if( present(nodesLabels) ) then
+					output = trim(output)//" [ "//trim(nodesLabels(i))
+				else
+					output = trim(output)//" [ "//trim(node.label)
+				end if
+				
+				output = trim(output)//", "//trim(adjustl(FString_fromReal(node.weight/effNodePropertiesUnits,format="(F10.3)")))
+				output = trim(output)//", "//trim(FString_fromInteger(node.id))
+				output = trim(output)//" ]"//new_line('')
+			end do
+			
+			if( this.isDirected() ) then
+				write(5,*) "@@@ WARNING @@@ nodesLabels is not implemented for directed graphs"
+				
+				output = trim(output)//new_line('')
+				output = trim(output)//"node2InEdges"//new_line('')
+				do i=1,this.nNodes()
+					ivec => this.node2InEdges.data(i)
+					output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
+					
+					do j=1,ivec.size()
+! 						if( this.isDirected() .or. ( .not. this.isDirected() .and. mod(ivec.at(j),2) /= 0 ) ) then
+							if( j /= ivec.size() ) then
+								output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))//","
+							else
+								output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))
+							end if
+! 						end if
+					end do
+					
+					output = trim(output)//new_line('')
 				end do
 				
 				output = trim(output)//new_line('')
-			end do
-			
-			output = trim(output)//new_line('')
-			output = trim(output)//"node2OutEdges"//new_line('')
-			do i=1,this.nNodes()
-				ivec => this.node2OutEdges.data(i)
-				output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
-				
-				do j=1,ivec.size()
-! 					if( this.isDirected() .or. ( .not. this.isDirected() .and. mod(ivec.at(j),2) /= 0 ) ) then
-						if( j /= ivec.size() ) then
-							output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))//","
-						else
-							output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))
-						end if
-! 					end if
+				output = trim(output)//"node2OutEdges"//new_line('')
+				do i=1,this.nNodes()
+					ivec => this.node2OutEdges.data(i)
+					output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
+					
+					do j=1,ivec.size()
+! 						if( this.isDirected() .or. ( .not. this.isDirected() .and. mod(ivec.at(j),2) /= 0 ) ) then
+							if( j /= ivec.size() ) then
+								output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))//","
+							else
+								output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))
+							end if
+! 						end if
+					end do
+					
+					output = trim(output)//new_line('')
 				end do
-				
-				output = trim(output)//new_line('')
-			end do
+			end if
 			
 			output = trim(output)//new_line('')
 			output = trim(output)//"Edge properties"//new_line('')
-! 			do i=1,this.nEdges(),edgeStep
 			do i=1,this.nEdges()
-				edge1 => this.edgeProperties.data(i)
-				output = trim(output)//"  "//trim(FString_fromInteger(i,format="(I2)"))//" -->   ("
-				output = trim(output)//" "//trim(FString_fromInteger(edge1.sNode))
-				output = trim(output)//", "//trim(FString_fromInteger(edge1.tNode))
-				output = trim(output)//", "//trim(FString_fromReal(edge1.weight,format="(F5.3)"))
-				output = trim(output)//", "//trim(FString_fromInteger(edge1.id))//" )"//new_line('')
+			
+				loc = 0
+				if( .not. this.isDirected() .and. i > 1 ) then
+					do j=i-1,1,-1
+						if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
+							this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+							loc = 1
+							exit
+						end if
+					end do
+				end if
+				
+				if( loc == 1 ) cycle
+			
+				edge => this.edgeProperties.data(i)
+				
+				if( this.isDirected() ) then
+					output = trim(output)//"  "//trim(FString_fromInteger(i))//" --> "
+				else
+					output = trim(output)//"  "//trim(FString_fromInteger((i+1)/2))//" --> "
+				end if
+				
+				edgeLabel = edge.label
+				if( present(nodesLabels) ) then
+					if( FString_hashKey(trim( nodesLabels(edge.sNode)) ) > FString_hashKey(trim( nodesLabels(edge.tNode)) ) ) then
+						edgeLabel = trim(nodesLabels(edge.sNode))//"--"//trim(nodesLabels(edge.tNode))
+					else
+						edgeLabel = trim(nodesLabels(edge.tNode))//"--"//trim(nodesLabels(edge.sNode))
+					end if
+				end if
+				
+				output = trim(output)//" [ "//trim(FString_fromInteger(edge.sNode))
+				output = trim(output)//", "//trim(FString_fromInteger(edge.tNode))
+				output = trim(output)//", "//trim(edgeLabel)
+				output = trim(output)//", "//trim(adjustl(FString_fromReal(edge.weight/effEdgePropertiesUnits,format="(F10.3)")))
+				
+				if( this.isDirected() ) then
+					output = trim(output)//", "//trim(FString_fromInteger(edge.id))
+				else
+					output = trim(output)//", "//trim(FString_fromInteger((edge.id+1)/2))
+				end if
+				
+				output = trim(output)//" ]"//new_line('')
 			end do
 		end if
 		
@@ -334,9 +452,10 @@ module IntegerGraph_
 	!>
 	!! @brief
 	!!
-	function isConnected( this, nComponents ) result( output )
+	function isConnected( this, nComponents, laplacianMatrix ) result( output )
 		class(IntegerGraph), intent(in) :: this
 		integer, optional, intent(out) :: nComponents
+		type(Matrix), optional, intent(in) :: laplacianMatrix
 		logical :: output
 		
 		integer :: i, nComp
@@ -345,7 +464,12 @@ module IntegerGraph_
 		
 		allocate( diagL(this.nNodes()) )
 		
-		L = this.laplacianMatrix()
+		if( present(laplacianMatrix) ) then
+			L = laplacianMatrix
+		else
+			L = this.laplacianMatrix()
+		end if
+		
 		call L.eigen( eValues=diagL )
 		
 		nComp = 0
@@ -367,12 +491,34 @@ module IntegerGraph_
 	!>
 	!! @brief
 	!!
-	subroutine newNode( this, id )
+	function nComponents( this, laplacianMatrix ) result( output )
+		class(IntegerGraph), intent(in) :: this
+		type(Matrix), optional, intent(in) :: laplacianMatrix
+		integer :: output
+		
+		type(Matrix) :: L
+		logical :: isConnected
+		
+		if( present(laplacianMatrix) ) then
+			L = laplacianMatrix
+		else
+			L = this.laplacianMatrix()
+		end if
+		
+		isConnected = this.isConnected( output, laplacianMatrix )
+	end function nComponents
+	
+	!>
+	!! @brief
+	!!
+	subroutine newNode( this, label, weight, id )
 		class(IntegerGraph) :: this
+		character(*), optional, intent(in) :: label
+		real(8), optional, intent(in) :: weight
 		integer, optional, intent(out) :: id
 		
 		integer :: effId
-		type(Node) :: node1
+		type(Node) :: node
 		type(IntegerVector) :: ivec
 		
 		call ivec.init()
@@ -381,8 +527,8 @@ module IntegerGraph_
 		call this.node2OutEdges.append( ivec )
 		
 		effId = this.nodeProperties.size()+1
-		call node1.init( id=effId )
-		call this.nodeProperties.append( node1 )
+		call node.init( id=effId, label=label, weight=weight )
+		call this.nodeProperties.append( node )
 		
 		if( present(id) ) id = effId
 	end subroutine newNode
@@ -390,15 +536,31 @@ module IntegerGraph_
 	!>
 	!! @brief
 	!!
-	subroutine newNodes( this, n )
+	subroutine newNodes( this, n, labels, weights )
 		class(IntegerGraph) :: this
 		integer, intent(in) :: n
+		character(*), optional, intent(in) :: labels(:)
+		real(8), optional, intent(in) :: weights(:)
 		
 		integer :: i
 		
-		do i=1,n
-			call this.newNode()
-		end do
+		if( present(labels) .and. present(weights) ) then
+			do i=1,n
+				call this.newNode( label=labels(i), weight=weights(i) )
+			end do
+		else if( present(labels) ) then
+			do i=1,n
+				call this.newNode( label=labels(i) )
+			end do
+		else if( present(weights) ) then
+			do i=1,n
+				call this.newNode( weight=weights(i) )
+			end do
+		else
+			do i=1,n
+				call this.newNode()
+			end do
+		end if
 	end subroutine newNodes
 	
 	!>
@@ -761,10 +923,59 @@ module IntegerGraph_
 	!>
 	!! @brief
 	!!
-	subroutine save( this, oFileName, format )
+	subroutine setNodeProperties( this, nodeId, nodeProperties )
+		class(IntegerGraph), target :: this
+		integer, intent(in) :: nodeId
+		type(Node), intent(in) :: nodeProperties
+		
+		this.nodeProperties.data(nodeId) = nodeProperties
+	end subroutine setNodeProperties
+	
+	!>
+	!! @brief
+	!!
+	function getNodeProperties( this, nodeId ) result( output )
+		class(IntegerGraph), target :: this
+		integer, intent(in) :: nodeId
+		type(Node) :: output
+		
+		output = this.nodeProperties.data(nodeId)
+	end function getNodeProperties
+	
+	!>
+	!! @brief
+	!!
+	subroutine setEdgeProperties( this, edgeId, edgeProperties )
+		class(IntegerGraph), target :: this
+		integer, intent(in) :: edgeId
+		type(Edge), intent(in) :: edgeProperties
+		
+		this.edgeProperties.data(edgeId) = edgeProperties
+	end subroutine setEdgeProperties
+	
+	!>
+	!! @brief
+	!!
+	function getEdgeProperties( this, edgeId ) result( output )
+		class(IntegerGraph), target :: this
+		integer, intent(in) :: edgeId
+		type(Edge) :: output
+		
+		output = this.edgeProperties.data(edgeId)
+	end function getEdgeProperties
+	
+	!>
+	!! @brief
+	!!
+	subroutine save( this, oFileName, format, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
 		class(IntegerGraph) :: this
 		character(*), optional, intent(in) :: oFileName
 		integer, optional, intent(in) :: format
+		character(*), optional, intent(in) :: name
+		character(*), optional, intent(in) :: nodesLabels(:)
+		real(8), optional, intent(in) :: nodePropertiesUnits
+		real(8), optional, intent(in) :: edgePropertiesUnits
+		character(*), optional, intent(in) :: nodesColors(:)
 		
 		integer :: effFormat
 		
@@ -773,21 +984,29 @@ module IntegerGraph_
 		
 		select case ( effFormat )
 			case( GML )
-				call this.saveGML( oFileName )
+				call this.saveGML( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
 			case( DOT )
-				call this.saveDOT( oFileName )
+				call this.saveDOT( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
 		end select
 	end subroutine save
 	
 	!>
 	!! @brief
 	!!
-	subroutine saveGML( this, oFileName )
+	subroutine saveGML( this, oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
 		class(IntegerGraph) :: this
 		character(*), optional, intent(in) :: oFileName
+		character(*), optional, intent(in) :: name
+		character(*), optional, intent(in) :: nodesLabels(:)
+		real(8), optional, intent(in) :: nodePropertiesUnits
+		real(8), optional, intent(in) :: edgePropertiesUnits
+		character(*), optional, intent(in) :: nodesColors(:)
+		
+		integer :: effUnit
+		real(8) :: effNodePropertiesUnits
+		real(8) :: effEdgePropertiesUnits
 		
 		integer :: i
-		integer :: effUnit
 		
 		if( present(oFileName) ) then
 			effUnit = 31
@@ -795,6 +1014,14 @@ module IntegerGraph_
 		else
 			effUnit = 6
 		end if
+		
+		effNodePropertiesUnits = 1.0_8
+		if( present(nodePropertiesUnits) ) effNodePropertiesUnits = nodePropertiesUnits
+		
+		effEdgePropertiesUnits = 1.0_8
+		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
+		
+		write(*,"(A)") "@@@ WARNING @@@ IntegerGraph.saveGML() is not well tested yet"
 		
 		write(effUnit,"(A)") "graph["
 		write(effUnit,"(A)") "   comment "//achar(34)//"Created by scift library"//achar(34)
@@ -822,14 +1049,22 @@ module IntegerGraph_
 	!>
 	!! @brief
 	!!
-	subroutine saveDOT( this, oFileName, name )
+	subroutine saveDOT( this, oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
 		class(IntegerGraph) :: this
 		character(*), optional, intent(in) :: oFileName
 		character(*), optional, intent(in) :: name
+		character(*), optional, intent(in) :: nodesLabels(:)
+		real(8), optional, intent(in) :: nodePropertiesUnits
+		real(8), optional, intent(in) :: edgePropertiesUnits
+		character(*), optional, intent(in) :: nodesColors(:)
 		
-		integer :: i
-		integer :: effUnit
 		character(100) :: effName
+		real(8) :: effNodePropertiesUnits
+		real(8) :: effEdgePropertiesUnits
+		
+		integer :: i, j, loc, idNode
+		integer :: effUnit
+		character(100) :: colorOptions
 		
 		if( present(oFileName) ) then
 			effUnit = 31
@@ -839,9 +1074,13 @@ module IntegerGraph_
 		end if
 		
 		effName = "mygraph"
-		if( present(name) ) then
-			effName = name
-		end if
+		if( present(name) ) effName = name
+		
+		effNodePropertiesUnits = 1.0_8
+		if( present(nodePropertiesUnits) ) effNodePropertiesUnits = nodePropertiesUnits
+		
+		effEdgePropertiesUnits = 1.0_8
+		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
 		
 		if( this.isDirected() ) then
 			write(effUnit,"(A)") "digraph "//trim(effName)//" {"
@@ -851,19 +1090,51 @@ module IntegerGraph_
 		
 		do i=1,this.nNodes()
 ! 			write(effUnit,"(A)") "   "//trim(FString_fromInteger(i))//" [shape=box]"
-			write(effUnit,"(A)") "   "//trim(FString_fromInteger(i))
+			write(effUnit,"(A)", advance="no") "   "//trim(FString_fromInteger(i))
+
+			colorOptions = ""
+			if( present(nodesColors) ) then
+				colorOptions = " style = filled, fillcolor = "//char(34)//"#"//trim(nodesColors(i))//char(34)
+			end if
+			
+			if( present(nodesLabels) ) then
+				write(effUnit,"(A)") " [ label = "//char(34)//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//char(34)//trim(colorOptions)//" ]"
+			else
+! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this.nodeProperties.data(i).label)//"("//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
+				write(effUnit,"(A)") " [ label = "//char(34)//trim(this.nodeProperties.data(i).label)//char(34)//trim(colorOptions)//" ]"
+			end if
 		end do
 		
 		do i=1,this.nEdges()
-			write(effUnit,"(A)",advance="no") "   "//trim(FString_fromInteger(this.edgeProperties.data(i).sNode))
+			
+			loc = 0
+			if( .not. this.isDirected() .and. i > 1 ) then
+				do j=i-1,1,-1
+					if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
+						this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+						loc = 1
+						exit
+					end if
+				end do
+			end if
+			
+			if( loc == 1 ) cycle
+			
+			idNode = this.edgeProperties.data(i).sNode
+			write(effUnit,"(A)",advance="no") "   "//trim(FString_fromInteger(idNode))
 			
 			if( this.isDirected() ) then
 				write(effUnit,"(A)",advance="no") " -> "
 			else
 				write(effUnit,"(A)",advance="no") " -- "
 			end if
-
-			write(effUnit,"(A)") trim(FString_fromInteger(this.edgeProperties.data(i).tNode))
+			
+			idNode = this.edgeProperties.data(i).tNode
+			write(effUnit,"(A)",advance="no") trim(FString_fromInteger(idNode))
+			! @todo Hay que poner un parametro que hage swap entre weight y label, para que quede bien el dibujo en dot
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(this.edgeProperties.data(i).label)//char(34)
+			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.2)")))//char(34)
+			write(effUnit,"(A)") " weight = "//trim(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.1)"))//" ]"
 		end do
 		
 		write(effUnit,"(A)") "}"
@@ -1387,6 +1658,172 @@ module IntegerGraph_
 		
 		output = this.balabanIndex( distanceMatrix=OmegaD )
 	end function JOmegaIndex
+	
+	!>
+	!! @brief 
+	!! @todo This method is almost the same used in the class Molecule. Thay have to be merged in the future
+	!!
+	function indicesBasedComparison( this, other, thr, checkLabels, similarity ) result( output )
+		class(IntegerGraph), intent(in) :: this
+		class(IntegerGraph), intent(in) :: other
+		real(8), optional, intent(in) :: thr
+		logical, optional, intent(in) :: checkLabels
+		real(8), optional, intent(out) :: similarity
+		logical :: output
+		
+		real(8):: effThr
+		logical:: effCheckLabels
+		
+		real(8) :: this_descrip(9), other_descrip(9)
+		real(8) :: effSimilarity
+		type(Matrix) :: A, D, L, Omega
+		Type(StringIntegerMap) :: labelsMapThis, labelsMapOther
+		type(String) :: sBuffer
+		integer :: i
+		real(8) :: w1, w2
+		
+		effThr = 0.92_8
+		if( present(thr) ) effThr = thr
+		
+		effCheckLabels = .false.
+		if( present(checkLabels) ) effCheckLabels = checkLabels
+		
+		if( this.nNodes() /= other.nNodes() .or. this.nEdges() /= other.nEdges() ) then
+			output = 0.0_8
+			return
+		end if
+		
+		if( effCheckLabels ) then
+			call labelsMapThis.init()
+			do i=1,this.nNodes()
+				sBuffer = trim(this.nodeProperties.data(i).label)
+				call labelsMapThis.set( sBuffer, labelsMapThis.at( sBuffer, defaultValue=0 )+1 )
+			end do
+			
+			call labelsMapOther.init()
+			do i=1,this.nNodes()
+				sBuffer = trim(this.nodeProperties.data(i).label)
+				call labelsMapOther.set( sBuffer, labelsMapOther.at( sBuffer, defaultValue=0 )+1 )
+			end do
+			
+			if( labelsMapThis.size() /= labelsMapOther.size() ) then
+				output = 0.0_8
+				return
+			end if
+			
+			do i=1,labelsMapThis.size()
+				if( labelsMapThis.keyFromPos(i) /= labelsMapOther.keyFromPos(i) .or. labelsMapThis.atFromPos(i) /= labelsMapOther.atFromPos(i) ) then
+					output = 0.0_8
+					return
+				end if
+			end do
+		end if
+		
+		if( this.nNodes() == 1 ) then
+			this_descrip = 0.0_8
+			other_descrip = 0.0_8
+			
+			this_descrip(1) = this.nodeProperties.data(1).weight
+			other_descrip(1) = other.nodeProperties.data(1).weight
+			
+		! Be Careful. Remember that undirected graphs include at least two directed edges for each undirected edge.
+! 		if( .not. this.isDirected() .and. this.nNodes() == 2 ) then
+! 			w1 = this.edgeProperties.data(i).weight
+! 			w2 = other.edgeProperties.data(i).weight
+! 			
+! 			effSimilarity = 1.0_8 - abs( w1-w2 )/max(w1,w2)
+! ! 			effSimilarity = 1.0_8/( 1.0_8+abs(w1-w2)/2 )
+! 			
+! 			output = .false.
+! 			if( effSimilarity > effThr ) output = .true.
+! 			
+! 			if( present(similarity) ) similarity = effSimilarity
+! 			
+! 			return
+! 		end if
+		else
+			A = this.adjacencyMatrix()
+			D = this.distanceMatrix()
+			L = this.laplacianMatrix()
+			
+			this_descrip(1) = this.randicIndex()
+			this_descrip(2) = this.wienerIndex( distanceMatrix=D )
+			this_descrip(3) = this.inverseWienerIndex( distanceMatrix=D )
+			this_descrip(4) = this.balabanIndex( distanceMatrix=D )
+			this_descrip(5) = this.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
+			
+			if( other.nComponents( laplacianMatrix=L ) > 1 ) then
+				this_descrip(6:9) = 0.0_8
+			else
+				Omega = this.resistanceDistanceMatrix( laplacianMatrix=L )
+				
+				this_descrip(6) = this.kirchhoffIndex( resistanceDistanceMatrix=Omega )
+				this_descrip(7) = this.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				this_descrip(8) = this.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				this_descrip(9) = this.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			end if
+			
+			A = other.adjacencyMatrix()
+			D = other.distanceMatrix()
+			L = other.laplacianMatrix()
+			
+			other_descrip(1) = other.randicIndex()
+			other_descrip(2) = other.wienerIndex( distanceMatrix=D )
+			other_descrip(3) = other.inverseWienerIndex( distanceMatrix=D )
+			other_descrip(4) = other.balabanIndex( distanceMatrix=D )
+			other_descrip(5) = other.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
+			
+			if( other.nComponents( laplacianMatrix=L ) > 1 ) then
+				other_descrip(6:9) = 1000.0_8
+			else
+				Omega = other.resistanceDistanceMatrix( laplacianMatrix=L )
+				
+				other_descrip(6) = other.kirchhoffIndex( resistanceDistanceMatrix=Omega )
+				other_descrip(7) = other.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				other_descrip(8) = other.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				other_descrip(9) = other.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			end if
+		end if
+		
+		! Jaccard similarity index
+! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
+! 		other_descrip = other_descrip + abs(minval(other_descrip))
+! 		effSimilarity = sum( min(this_descrip,other_descrip) )
+! 		effSimilarity = effSimilarity/sum( max(this_descrip,other_descrip) )
+		
+		! Native Ballester similarity index
+		effSimilarity = 1.0_8/( 1.0_8+sum(abs( this_descrip-other_descrip ))/real(size(this_descrip),8) )
+		
+		output = .false.
+		if( effSimilarity > effThr ) output = .true.
+		
+		if( present(similarity) ) similarity = effSimilarity
+		
+! 		write(*,"(A,<size(this_descrip)>F8.3)") "   Descriptor1 = ", this_descrip
+! 		write(*,"(A,<size(this_descrip)>F8.3)") "   Descriptor2 = ", other_descrip
+! 		write(*,"(A,F8.3)") "   similarity = ", effSimilarity
+		
+	end function indicesBasedComparison
+	
+	!>
+	!! @brief Makes a complete graph with n nodes
+	!!
+	subroutine makeComplete( this, n )
+		class(IntegerGraph), intent(inout) :: this
+		integer, intent(in) :: n
+		
+		integer :: i, j
+		
+		call this.newNodes( n )
+		
+		do i=1,this.nNodes()
+			do j=1,this.nNodes()
+				if( i/=j ) then
+					call this.newEdge( i, j )
+				end if
+			end do
+		end do
+	end subroutine makeComplete
 	
 	!>
 	!! @brief Test method

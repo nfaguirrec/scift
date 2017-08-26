@@ -24,7 +24,7 @@ program main
 	
 	if( command_argument_count() < 2 ) then
 		write(*,*) "Usage: molecule.compare file1 file2 [ debug ] [ thr ] [alpha]"
-		write(*,*) "                                      false     0.92    1.0  "
+		write(*,*) "                                      false     0.92    1.1  "
 		stop
 	end if
 	
@@ -42,7 +42,7 @@ program main
 	call get_command_argument( 4, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) thr = FString_toReal(sBuffer)
 	
-	alpha = 1.0_8
+	alpha = 1.1_8
 	call get_command_argument( 5, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) alpha = FString_toReal(sBuffer)
 	

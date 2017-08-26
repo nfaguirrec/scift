@@ -210,9 +210,7 @@
 	end function privateFind
 	
 	!>
-	!! @brief Returns true if the map contains an item with key key; otherwise returns false.
-	!!        Additionally, returns an iterator ptr pointing to the item with key key in the map.
-	!!        If the map contains no item with key key, the function returns ptr=>null().
+	!! @brief
 	!!
 	function find( this, key, ptr ) result( output )
 		class(Map), intent(in) :: this

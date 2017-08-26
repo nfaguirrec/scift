@@ -44,7 +44,7 @@ program test
 ! 	use Grid_
 ! 	use Table_
 ! 	use MathParser_
-!  	use BlocksIFileParser_
+ 	use BlocksIFileParser_
 ! 	use CommandLineParser_
 ! 	use RandomUtils_
 ! 	use RandomSampler_
@@ -56,7 +56,7 @@ program test
 	use IntegerHyperVector_
 ! 	use StringIntegerPair_
 ! 	use StringIntegerPairList_
-! 	use StringIntegerMap_
+	use StringIntegerMap_
 ! 	use StringRealPair_
 ! 	use StringRealPairList_
 ! 	use StringRealMap_
@@ -119,7 +119,7 @@ program test
 ! 	call StringRealPairList_test()
 ! 	call StringRealMap_test()
 ! 	call Edge_test()
-! 	call IntegerGraph_test()
+	call IntegerGraph_test()
 ! 	call IVector_test()
 ! 	call RVector_test()
 ! 	call Matrix_test()
@@ -145,5 +145,5 @@ program test
 ! 	call MathFormula_test()
 ! 	call MDIntegrator_test()
 ! 	call ThrularNumerovMethod_test()
-	call FourierGridDiagonalization_test()
+! 	call FourierGridDiagonalization_test()
 end program test

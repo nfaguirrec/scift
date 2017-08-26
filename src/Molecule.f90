@@ -4,7 +4,7 @@
 !!  Copyright (C) by authors (2011-2013)
 !!  
 !!  Authors (alphabetic order):
-!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2011-2013)
+!!    * Aguirre N.F. (nfaguirrec@gmail.com)  (2011-2017)
 !!  
 !!  Contributors (alphabetic order):
 !!  
@@ -35,10 +35,12 @@ module Molecule_
 	use Math_
 	use Matrix_
 	use SpecialMatrix_
+	use RandomUtils_
 	use RandomSampler_
 	use Atom_
 	use AtomicElementsDB_
 	use IntegerVector_
+	use Node_
 	use IntegerGraph_
 	implicit none
 	private
@@ -46,8 +48,9 @@ module Molecule_
 	!>
 	!! @brief Public parameters
 	!!
-	integer, public, parameter :: XYZ  = 1
-	integer, public, parameter :: MOLDEN  = 2
+	integer, public, parameter :: XYZ = 1
+	integer, public, parameter :: MOLDEN = 2
+	integer, public, parameter :: LINEAR_PACKAGING = 1
 	
 	public :: &
 		Molecule_test
@@ -89,22 +92,27 @@ module Molecule_
 		!---------------------------------------------------------------
 		
 		contains
-			generic :: init => initBase, fromFile
+			generic :: init => initBase, fromFile, fromMolecules
 			generic :: assignment(=) => copyMolecule
 			procedure :: initBase
 			procedure :: fromFile
+			procedure :: fromMolecules
 			procedure :: copyMolecule
 			final :: destroyMolecule
 			procedure :: str
 			procedure :: show
 			procedure :: showCompositionVector
+			procedure :: showGraph
 			procedure :: load => fromFile
 			procedure :: loadXYZ
 			procedure :: loadGeomMOLDEN
 			procedure :: save
 			procedure, private :: saveXYZ
+			procedure :: saveDOT
 			
 			procedure :: randomGeometry
+			procedure, private :: distortBase
+			procedure :: distort
 			procedure :: overlapping
 			
 			procedure :: set
@@ -119,6 +127,10 @@ module Molecule_
 			procedure :: compareConnectivity
 			procedure :: ballesterDescriptors
 			procedure :: isFragmentOf
+			
+			procedure :: distance
+			procedure :: angle
+			procedure :: dihedral
 			
 			procedure, private :: updateMassNumber
 			procedure :: massNumber
@@ -141,7 +153,6 @@ module Molecule_
 			
 			procedure :: orient
 			procedure :: rotate
-			
 	end type Molecule
 	
 	contains
@@ -209,7 +220,7 @@ module Molecule_
 			case( AUTO_FORMAT )
 				sBuffer = FString_removeFileExtension( fileName, extension=extension )
 				
-				if( trim(extension) == ".xyz" ) then
+				if( trim(extension) == ".xyz" .or. trim(extension) == ".xyz0" ) then
 					call this.loadXYZ( ifile, loadName=loadName )
 				else if( trim(extension) == ".rxyz" ) then
 					call this.loadXYZ( ifile, loadName=loadName )
@@ -238,10 +249,73 @@ module Molecule_
 	end subroutine fromFile
 	
 	!>
+	!! @brief Constructor
+	!!
+	subroutine fromMolecules( this, molecules, overlap, method )
+		class(Molecule) :: this
+		class(Molecule), intent(in) :: molecules(:)
+		real(8), optional :: overlap
+		integer, optional :: method
+		
+		real(8) :: effOverlap
+		integer :: effMethod
+		
+		real(8) :: position
+		type(Molecule) :: thisCopy
+		type(Molecule) :: otherCopy
+		integer :: i, j, k, nAtoms, nMolecules
+		
+		effOverlap = -5.0_8*angs
+		if( present(overlap) ) effOverlap = overlap
+		
+		effMethod = LINEAR_PACKAGING
+		if( present(method) ) effMethod = method
+		
+		thisCopy = this
+		
+		select case( effMethod )
+		
+			case( LINEAR_PACKAGING )
+				
+				nMolecules = size(molecules)
+				
+				nAtoms = 0
+				do i=1,nMolecules
+					nAtoms = nAtoms + molecules(i).nAtoms()
+				end do
+				call this.init( nAtoms )
+				
+				k = 1
+				position = 0.0_8
+				do i=1,nMolecules
+					if( i>1 ) then
+						position = position + molecules(i-1).radius() + molecules(i).radius() - overlap
+					end if
+					
+					otherCopy = molecules(i)
+					call otherCopy.setCenter( [ 0.0_8, 0.0_8, position ] )
+					
+					do j=1,otherCopy.nAtoms()
+						call this.set( k, otherCopy.atoms(j) )
+						k = k + 1
+					end do
+				end do
+				
+				call this.orient()
+				
+			case default
+				write(*,*) "### ERROR ### Molecule.fromMolecules(). parameter 'method="//trim(FString_fromInteger(method))//"' is not implemented yet"
+				stop
+				
+		end select
+				
+	end subroutine fromMolecules
+	
+	!>
 	!! @brief Copy constructor
 	!!
 	subroutine copyMolecule( this, other )
-		class(Molecule), intent(out) :: this
+		class(Molecule), intent(inout) :: this
 		class(Molecule), intent(in) :: other
 		
 		integer :: i
@@ -281,6 +355,8 @@ module Molecule_
 		this.isLineal_ = other.isLineal_
 		this.fv_ = other.fv_
 		this.fr_ = other.fr_
+		
+		this.molGraph = other.molGraph
 	end subroutine copyMolecule
 	
 	!>
@@ -419,6 +495,44 @@ module Molecule_
 	end subroutine showCompositionVector
 	
 	!>
+	!! @brief Show graph
+	!!
+	subroutine showGraph( this, nodesSuffixes, unit )
+		class(Molecule) :: this
+		character(*), optional, intent(in) :: nodesSuffixes(:)
+		integer, optional, intent(in) :: unit
+		
+		character(100), allocatable :: effNodesLabels(:)
+		integer :: i
+		
+		if( present(nodesSuffixes) ) then
+			
+			if( size(nodesSuffixes) /= this.nAtoms() ) then
+				call GOptions_error( &
+					"Wrong size for nodesSuffixes array (size,nAtoms) ==> ("//trim(FString_fromInteger(size(nodesSuffixes)))//","//trim(FString_fromInteger(this.nAtoms()))//")", &
+					"Molecule.showGraph()" &
+					)
+			end if
+			
+			allocate( effNodesLabels( this.nAtoms() )  )
+			
+			do i=1,this.nAtoms()
+				effNodesLabels(i) = trim(this.atoms(i).symbol)//trim(nodesSuffixes(i))
+			end do
+			
+			call this.molGraph.show( unit=unit, formatted=.true., nodesLabels=effNodesLabels, edgePropertiesUnits=angs )
+			
+			deallocate( effNodesLabels )
+		else
+! 			call this.molGraph.show( unit=unit, formatted=.true., nodesLabels=this.atoms(:).symbol, edgePropertiesUnits=angs )
+			call this.molGraph.show( unit=unit, formatted=.true., edgePropertiesUnits=angs )
+		end if
+		
+		
+! 		//"("//trim(FString_fromInteger(i))//")"
+	end subroutine showGraph
+	
+	!>
 	!! @brief Load the molecule from XYZ file in angstrom
 	!!
 	subroutine loadXYZ( this, ifile, loadName )
@@ -439,7 +553,7 @@ module Molecule_
 		if( allocated(this.atoms) ) deallocate(this.atoms)
 		
 		if( ifile.numberOfLines < 3 ) then
-			write(*,*) "### ERROR ### bad format in XYZ file"
+			write(*,"(A)") "### ERROR ### bad format in XYZ file ("//trim(ifile.name)//")"
 			stop
 		end if
 		
@@ -464,7 +578,7 @@ module Molecule_
 			
 		do i=1,nAtoms
 			if( ifile.eof() ) then
-				write(*,*) "### ERROR ### Inconsistent number of atoms in XYZ file, line "//FString_fromInteger(ifile.currentLine)
+				write(*,"(A)") "### ERROR ### Inconsistent number of atoms in XYZ file, line "//trim(FString_fromInteger(ifile.currentLine))//" ("//trim(ifile.name)//")"
 				stop
 			end if
 			
@@ -473,7 +587,7 @@ module Molecule_
 			call buffer.split( tokens, " " )
 			
 			if( buffer.length() == 0 .or. size(tokens)<3 ) then
-				write(*,*) "### ERROR ### Inconsistent XYZ file, line "//FString_fromInteger(ifile.currentLine)
+				write(*,"(A)") "### ERROR ### Inconsistent XYZ file, line "//trim(FString_fromInteger(ifile.currentLine))//" ("//trim(ifile.name)//")"
 				stop
 			end if
 			
@@ -485,14 +599,14 @@ module Molecule_
 				)
 		end do
 		
-		if( .not. ifile.eof() ) then
-			buffer = ifile.readLine()
-			
-			if( buffer.length() /= 0 ) then
-				write(*,*) "### ERROR ### Inconsistent XYZ file, line "//FString_fromInteger(ifile.currentLine)
-				stop
-			end if
-		end if
+! 		if( .not. ifile.eof() ) then
+! 			buffer = ifile.readLine()
+! 			
+! 			if( buffer.length() /= 0 ) then
+! 				write(*,"(A)") "### ERROR ### Inconsistent XYZ file, line "//trim(FString_fromInteger(ifile.currentLine))//" ("//trim(ifile.name)//")"
+! 				stop
+! 			end if
+! 		end if
 		
 		deallocate( tokens )
 		
@@ -692,6 +806,74 @@ module Molecule_
 	end subroutine saveXYZ
 	
 	!>
+	!! @brief Save the molecule to file
+	!!
+	subroutine saveDOT( this, fileName, nodesLabels, nodesSuffixes )
+		class(Molecule) :: this
+		character(*), optional, intent(in) :: fileName
+		character(*), optional, intent(in) :: nodesLabels(:)
+		character(*), optional, intent(in) :: nodesSuffixes(:)
+		
+		character(100), allocatable :: effNodesLabels(:)
+		character(6), allocatable :: colors(:)
+		integer :: i
+		type(Node) :: nodeProp
+		
+		if( this.molGraph.nNodes() < 1 ) then
+			call GOptions_error( &
+				"Molecular graph has to be created before call this function", &
+				"Molecule.saveDOT()" &
+				)
+		end if
+		
+		if( present(nodesLabels) ) then
+			if( size(nodesLabels) /= this.nAtoms() ) then
+				call GOptions_error( &
+					"Wrong size for nodesLabels array (size,nAtoms) ==> ("//trim(FString_fromInteger(size(nodesLabels)))//","//trim(FString_fromInteger(this.nAtoms()))//")", &
+					"molecule.graph.main()" &
+					)
+			end if
+		end if
+		
+		if( present(nodesSuffixes) ) then
+			if( size(nodesSuffixes) /= this.nAtoms() ) then
+				call GOptions_error( &
+					"Wrong size for nodesSuffixes array (size,nAtoms) ==> ("//trim(FString_fromInteger(size(nodesSuffixes)))//","//trim(FString_fromInteger(this.nAtoms()))//")", &
+					"molecule.graph.main()" &
+					)
+			end if
+		end if
+		
+		allocate( colors( this.molGraph.nNodes() ) )
+		allocate( effNodesLabels( this.molGraph.nNodes() )  )
+		
+		do i=1,this.nAtoms()
+			colors(i) = this.atoms(i).color()
+		end do
+		
+		if( present(nodesLabels) .and. present(nodesSuffixes) ) then
+			do i=1,this.molGraph.nNodes()
+				effNodesLabels(i) = trim(nodesLabels(i))//trim(nodesSuffixes(i))
+			end do
+			call this.molGraph.save( oFileName=fileName, format=DOT, nodesLabels=effNodesLabels, edgePropertiesUnits=angs, nodesColors=colors )
+		else if( present(nodesSuffixes) ) then
+			do i=1,this.molGraph.nNodes()
+				nodeProp = this.molGraph.getNodeProperties(i)
+				effNodesLabels(i) = trim(nodeProp.label)//trim(nodesSuffixes(i))
+			end do
+			call this.molGraph.save( oFileName=fileName, format=DOT, nodesLabels=effNodesLabels, edgePropertiesUnits=angs, nodesColors=colors )
+		else if( present(nodesLabels) ) then
+			do i=1,this.molGraph.nNodes()
+				effNodesLabels(i) = trim(nodesLabels(i))
+			end do
+			call this.molGraph.save( oFileName=fileName, format=DOT, nodesLabels=effNodesLabels, edgePropertiesUnits=angs, nodesColors=colors )
+		else
+			call this.molGraph.save( oFileName=fileName, format=DOT, edgePropertiesUnits=angs, nodesColors=colors )
+		end if
+		
+	end subroutine saveDOT
+	
+	!>
 	!! @brief
 	!!
 	function overlapping( this, other, overlappingRadius, gamma, radiusType ) result( output )
@@ -856,8 +1038,8 @@ module Molecule_
 				end if
 			end do
 			
-			nTrials_ = nTrials_ + 1
 			if( .not. overlap ) exit
+			nTrials_ = nTrials_ + 1
 		end do
 		
 		do i=1,this.nAtoms()
@@ -880,6 +1062,213 @@ module Molecule_
 		
 		call this.orient()
 	end subroutine randomGeometry
+	
+	!>
+	!! @brief
+	!!
+	subroutine distortBase( this, radius, method, maxIter, overlappingRadius, radiusType )
+		class(Molecule) :: this
+		real(8), optional, intent(in) :: radius
+		integer, optional, intent(in) :: method
+		integer, optional, intent(in) :: maxIter
+		real(8), optional, intent(in) :: overlappingRadius
+		integer, optional, intent(in) :: radiusType
+		
+		real(8) :: effRadius
+		integer :: effMethod
+		integer :: effMaxIter
+		real(8) :: effOverlappingRadius
+		
+		integer :: nTrials1, nTrials2
+		type(RandomSampler) :: rs
+		real(8), allocatable :: sample(:,:)
+		real(8) :: rVec1(3), rVec2(3)
+		integer :: i, j
+		logical :: overlap
+				
+		effRadius = 0.1_8
+		if( present(radius) ) effRadius = radius
+		
+		effMethod = Molecule_RANDOM_DISTORSION
+		if( present(method) ) effMethod = method
+		
+		effMaxIter = 100000
+		if( present(maxIter) ) effMaxIter = maxIter
+		
+		effOverlappingRadius = 0.0
+		if( present(overlappingRadius) ) effOverlappingRadius = overlappingRadius
+		
+! Testing overlap
+#define OVERLAPPING(i,j) this.atoms(i).radius( type=radiusType )+this.atoms(j).radius( type=radiusType )-effOverlappingRadius > norm2( rVec2-rVec1 )
+		
+		call RandomUtils_init()
+		allocate( sample(3,this.nAtoms()) )
+		
+		select case( effMethod )
+			
+			case( Molecule_FIXED_DISTORSION )
+			
+! Sampling on "x-y-z" axes in spherical coordinates
+#define RVEC_XYZ(i) [ sample(1,i)*sin(sample(2,i))*cos(sample(3,i)), sample(1,i)*sin(sample(2,i))*sin(sample(3,i)), sample(1,i)*cos(sample(2,i)) ]
+
+				overlap = .false.
+				nTrials1 = 0
+				do while( nTrials1 < effMaxIter )
+					overlap = .false.
+					
+					i =1
+					do i=1,this.nAtoms()
+! 						! This distribution is uniform on the surface but not on the volume
+						call random_number( rVec1 )
+						rVec1 = rVec1*[ effRadius, MATH_PI, 2.0_8*MATH_PI ]  ! r, theta, phi
+						rVec1(1) = effRadius
+						
+						sample(:,i) = rVec1
+					end do
+					
+					!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+					! Se verifica que a los centros no sobrelapen
+					do i=1,this.nAtoms()-1
+						rVec1 = this.atoms(i).r + RVEC_XYZ(i)
+						
+						do j=i+1,this.nAtoms()
+							
+							rVec2 = this.atoms(j).r + RVEC_XYZ(j)
+							
+							overlap = OVERLAPPING(i,j) > effRadius
+							
+							if( overlap ) exit
+						end do
+						
+						if( overlap ) exit
+					end do
+					
+					if( .not. overlap ) exit
+					nTrials1 = nTrials1 + 1
+				end do
+				
+				do i=1,this.nAtoms()
+					this.atoms(i).r = this.atoms(i).r + RVEC_XYZ(i)
+				end do
+#undef RVEC_XYZ
+				
+			case( Molecule_RANDOM_DISTORSION )
+				
+! Sampling on "x-y-z" axes in cartesian coordinates
+#define RVEC_XYZ(i) [ sample(1,i), sample(2,i), sample(3,i) ]
+
+				overlap = .false.
+				nTrials1 = 0
+				do while( nTrials1 < effMaxIter )
+					overlap = .false.
+					
+					do i=1,this.nAtoms()
+						nTrials2 = 1
+						do while( nTrials2 < effMaxIter )
+							call random_number( rVec1 )
+							rVec1 = rVec1*effRadius  ! Coordinated inside a cube with face effRadius
+						
+							overlap = norm2(rVec1) > effRadius
+							if( .not. overlap ) exit
+							
+							nTrials2 = nTrials2 + 1
+						end do
+						
+						sample(:,i) = rVec1
+					end do
+					
+					if( .not. overlap ) then
+						!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+						! Se verifica que a los centros no sobrelapen
+						do i=1,this.nAtoms()-1
+							rVec1 = this.atoms(i).r + RVEC_XYZ(i)
+							
+							do j=i+1,this.nAtoms()
+								
+								rVec2 = this.atoms(j).r + RVEC_XYZ(j)
+								
+								overlap = OVERLAPPING(i,j) > effRadius
+								
+								if( overlap ) exit
+							end do
+							
+							if( overlap ) exit
+						end do
+					else
+						if( overlap ) then
+							call GOptions_error( &
+								"Maximum number of iterations reached"//" (nTrials2 = "//trim(FString_fromInteger(nTrials2))//")", &
+								"Molecule.distortBase()", &
+								"Consider to increase radius("//trim(FString_fromReal(effRadius/angs))//" angs)" &
+								)
+						end if
+					end if
+					
+					
+					if( .not. overlap ) exit
+					nTrials1 = nTrials1 + 1
+				end do
+				
+				do i=1,this.nAtoms()
+					this.atoms(i).r = this.atoms(i).r + RVEC_XYZ(i)
+				end do
+#undef RVEC_XYZ
+				
+			end select
+		
+#undef OVERLAPPING
+			
+		if( overlap ) then
+			call GOptions_error( &
+				"Maximum number of iterations reached"//" (nTrials1 = "//trim(FString_fromInteger(nTrials1))//")", &
+				"Molecule.distortBase()", &
+				"Consider to increase radius("//trim(FString_fromReal(effRadius/angs))//" angs)" &
+				)
+		end if
+		
+		if( allocated(sample) ) deallocate( sample )
+	end subroutine distortBase
+	
+	!>
+	!! @brief
+	!!
+	subroutine distort( this, radius, method, maxIter, overlappingRadius, radiusType, useMassWeight, alpha, thr )
+		class(Molecule) :: this
+		real(8), optional, intent(in) :: radius
+		integer, optional, intent(in) :: method
+		integer, optional, intent(in) :: maxIter
+		real(8), optional, intent(in) :: overlappingRadius
+		integer, optional, intent(in) :: radiusType
+		logical, optional, intent(in) :: useMassWeight
+		real(8), optional, intent(in) :: alpha
+		real(8), optional, intent(in) :: thr
+		
+		integer :: effMaxIter
+		
+		type(Molecule) :: distorted
+		integer :: i
+		
+		effMaxIter = 100000
+		if( present(maxIter) ) effMaxIter = maxIter
+		
+		do i=1,effMaxIter
+			distorted = this
+
+			call distorted.distortBase( radius, method, maxIter=effMaxIter, overlappingRadius=overlappingRadius, radiusType=radiusType )
+			
+			if( .not. distorted.compareGeometry( this, useMassWeight=useMassWeight, thr=thr ) &
+				.and. distorted.compareConnectivity( this, alpha=alpha, thr=thr ) ) exit
+		end do
+		
+		if( i == effMaxIter ) then
+			call GOptions_error( &
+				"Maximum number of iterations reached (effMaxIter="//trim(FString_fromInteger(effMaxIter))//")", &
+				"Molecule.distort()" &
+			)
+		end if
+		
+		this = distorted
+	end subroutine distort
 	
 	!>
 	!! @brief
@@ -1030,6 +1419,8 @@ module Molecule_
 		
 		real(8):: effThr
 		logical :: effDebug
+		type(Molecule) :: effThis
+		type(Molecule) :: effOther
 		
 		real(8) :: this_descrip(15), other_descrip(15)
 		real(8) :: similarity
@@ -1040,11 +1431,14 @@ module Molecule_
 		effThr = 0.92_8
 		if( present(thr) ) effThr = thr
 		
-		if( .not. this.axesChosen ) call this.orient()
-		if( .not. other.axesChosen ) call other.orient()
+		effThis = this
+		effOther = other
 		
-		this_descrip = this.ballesterDescriptors( useMassWeight=useMassWeight )
-		other_descrip = other.ballesterDescriptors( useMassWeight=useMassWeight )
+		if( .not. effThis.axesChosen ) call effThis.orient()
+		if( .not. effOther.axesChosen ) call effOther.orient()
+		
+		this_descrip = effThis.ballesterDescriptors( useMassWeight=useMassWeight )
+		other_descrip = effOther.ballesterDescriptors( useMassWeight=useMassWeight )
 		
 		! Jaccard similarity index
 ! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
@@ -1102,34 +1496,46 @@ module Molecule_
 		A = this.molGraph.adjacencyMatrix()
 		D = this.molGraph.distanceMatrix()
 		L = this.molGraph.laplacianMatrix()
-		Omega = this.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
 		
 		this_descrip(1) = this.molGraph.randicIndex()
 		this_descrip(2) = this.molGraph.wienerIndex( distanceMatrix=D )
 		this_descrip(3) = this.molGraph.inverseWienerIndex( distanceMatrix=D )
 		this_descrip(4) = this.molGraph.balabanIndex( distanceMatrix=D )
 		this_descrip(5) = this.molGraph.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
-		this_descrip(6) = this.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
-		this_descrip(7) = this.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-		this_descrip(8) = this.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-		this_descrip(9) = this.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		
+		if( other.molGraph.nComponents( laplacianMatrix=L ) > 1 ) then
+			this_descrip(6:9) = 0.0_8
+		else
+			Omega = this.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
+			
+			this_descrip(6) = this.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
+			this_descrip(7) = this.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			this_descrip(8) = this.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			this_descrip(9) = this.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		end if
 		
 		call other.buildGraph( alpha=effAlpha )
 		
 		A = other.molGraph.adjacencyMatrix()
 		D = other.molGraph.distanceMatrix()
 		L = other.molGraph.laplacianMatrix()
-		Omega = other.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
 		
 		other_descrip(1) = other.molGraph.randicIndex()
 		other_descrip(2) = other.molGraph.wienerIndex( distanceMatrix=D )
 		other_descrip(3) = other.molGraph.inverseWienerIndex( distanceMatrix=D )
 		other_descrip(4) = other.molGraph.balabanIndex( distanceMatrix=D )
 		other_descrip(5) = other.molGraph.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
-		other_descrip(6) = other.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
-		other_descrip(7) = other.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-		other_descrip(8) = other.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-		other_descrip(9) = other.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		
+		if( other.molGraph.nComponents( laplacianMatrix=L ) > 1 ) then
+			other_descrip(6:9) = 1000.0_8
+		else
+			Omega = other.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
+			
+			other_descrip(6) = other.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
+			other_descrip(7) = other.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			other_descrip(8) = other.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			other_descrip(9) = other.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		end if
 		
 		! Jaccard similarity index
 ! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
@@ -1184,6 +1590,8 @@ module Molecule_
 		end if
 		
 		allocate( distance(this.nAtoms()) )
+		
+		call this.updateGeomCenter()
 		
 		do i=1,this.nAtoms()
 			distance(i) = norm2( this.atoms(i).r - this.geomCenter_ )
@@ -1249,6 +1657,53 @@ module Molecule_
 		output = .false.
 		if( all(this.composition <= molRef.composition) ) output = .true.
 	end function isFragmentOf
+	
+	!>
+	!! @brief
+	!!
+	function distance( this, atom1, atom2 ) result( output )
+		class(Molecule), intent(in) :: this
+		class(Atom), intent(in) :: atom1
+		class(Atom), intent(in) :: atom2
+		real(8) :: output
+		
+		output = norm2( atom1.r - atom2.r )
+	end function distance
+	
+	!>
+	!! @brief
+	!!
+	function angle( this, atom1, atom2, atom3 ) result( output )
+		class(Molecule), intent(in) :: this
+		class(Atom), intent(in) :: atom1
+		class(Atom), intent(in) :: atom2
+		class(Atom), intent(in) :: atom3
+		real(8) :: output
+		
+		real(8) :: v12(3), v32(3)
+		
+		v12 = atom1.r-atom2.r
+		v32 = atom3.r-atom2.r
+		
+		output = acos( sum(v12*v32)/norm2(v12)/norm2(v32) )
+	end function angle
+	
+	!>
+	!! @brief
+	!!
+	function dihedral( this, atom1, atom2, atom3, atom4 ) result( output )
+		class(Molecule), intent(in) :: this
+		class(Atom), intent(in) :: atom1
+		class(Atom), intent(in) :: atom2
+		class(Atom), intent(in) :: atom3
+		class(Atom), intent(in) :: atom4
+		real(8) :: output
+		
+		write(6,*) "### ERROR ### Molecule.dihedral(). Function not implemented yet"
+		stop
+		
+		output = 0.0_8
+	end function dihedral
 	
 	!>
 	!! @brief
@@ -1700,10 +2155,10 @@ module Molecule_
 		integer :: i, j
 		real(8) :: dij
 		
-		call this.molGraph.init( directed=.false. )
+		call this.molGraph.init( directed=.false., name=this.name )
 		
 		do i=1,this.nAtoms()
-			call this.molGraph.newNode()
+			call this.molGraph.newNode( label=trim(this.atoms(i).symbol) )
 		end do
 		
 		do i=1,this.nAtoms()

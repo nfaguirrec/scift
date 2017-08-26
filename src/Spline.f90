@@ -83,7 +83,7 @@ module Spline_
 		this.nFunc => nFunc
 		this.size = nFunc.nPoints()
 		
-		if( allocated(_B(_N)) ) deallocate( _B )
+		if( allocated(_B) ) deallocate( _B )
 		
 		allocate( _B(_N) )
 		allocate( a(_N) )

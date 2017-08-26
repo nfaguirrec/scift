@@ -16,6 +16,7 @@ program main
 	type(String) :: bFileName
 	type(String) :: oFileName
 	real(8) :: value
+	integer :: stencil
 	
 	integer :: argc
 	integer :: fileType
@@ -28,7 +29,7 @@ program main
 	
 	if( argc < 6 ) then
 		write(*,*) "Usage:"
-		write(*,*) "   n1df.interp -i ifile -b bfile -o ofile [-v value]"
+		write(*,*) "   n1df.interp -i ifile -b bfile -o ofile [-v value] [-s stencil]"
 		stop
 	end if
 	
@@ -36,6 +37,7 @@ program main
 	bFileName = parser.getString( "-b" )
 	oFileName = parser.getString( "-o" )
 	value = parser.getReal( "-v", def=0.0_8 )
+	stencil = parser.getInteger( "-s", def=3 )
 	
 	fileType = RNFunction_checkTypeN1DF( iFileName.fstr )
 	
@@ -49,12 +51,12 @@ program main
 		end if
 		
 		call xGrid.init( bFileName.fstr, column=1 )
-		roFunc = riFunc.interpolate( xGrid, value=value )
+		roFunc = riFunc.interpolate( xGrid, stencil=stencil, value=value )
 		call roFunc.save( oFileName.fstr )
 	else if( fileType == 1 ) then
 		call ciFunc.init( iFileName.fstr )
 		call xGrid.init( bFileName.fstr, column=1 )
-		coFunc = ciFunc.interpolate( xGrid, value=dcmplx(value) )
+		coFunc = ciFunc.interpolate( xGrid, stencil=stencil, value=dcmplx(value) )
 		call coFunc.save( oFileName.fstr )
 	else
 		write(0,*) "### ERROR ### unknown type for "//trim(iFileName.fstr)

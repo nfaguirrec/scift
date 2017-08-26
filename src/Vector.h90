@@ -71,9 +71,11 @@
 			procedure :: prepend
 			procedure :: insert
 			generic :: erase => eraseFromPtr, eraseFromPos
-			procedure :: eraseFromPtr
-			procedure :: eraseFromPos
-			procedure :: remove
+			procedure, private :: eraseFromPtr
+			procedure, private :: eraseFromPos
+			generic :: remove => removeFromValue, removeFromValues
+			procedure, private :: removeFromValue
+			procedure, private :: removeFromValues
 			procedure :: eraseAllExcept
 			procedure :: eraseAllExceptFirst
 			procedure :: eraseAllExceptLast
@@ -92,7 +94,7 @@
 			procedure :: lastIndexOf
 			procedure :: contains
 			procedure :: ptr
-			procedure :: fArray
+			procedure :: toFArray
 			
 			__ADD_METHODS__
 	end type Vector
@@ -140,6 +142,8 @@
 	subroutine copyVector( this, other )
 		class(Vector), intent(out) :: this
 		class(Vector), intent(in) :: other
+		
+		integer :: i
 		
 		this.nItems = other.nItems
 		this.resizeIncrement = other.resizeIncrement
@@ -434,9 +438,9 @@
 	end subroutine eraseFromPos
 	
 	!>
-	!! @brief Removes from the vector all the elements that compare equal to val.
+	!! @brief Removes from the vector all the elements that compare equal to value
 	!!
-	subroutine remove( this, value )
+	subroutine removeFromValue( this, value )
 		class(Vector) :: this
 		__TYPE_ITEMVECTOR__, intent(in) :: value
 		
@@ -453,7 +457,21 @@
 				end if
 			end do
 		end if
-	end subroutine remove
+	end subroutine removeFromValue
+	
+	!>
+	!! @brief Removes from the vector all the elements that compare equal to values
+	!!
+	subroutine removeFromValues( this, values )
+		class(Vector) :: this
+		__TYPE_ITEMVECTOR__, intent(in) :: values(:)
+		
+		integer :: i
+		
+		do i=1,size(values)
+			call this.removeFromValue( values(i) )
+		end do
+	end subroutine removeFromValues
 	
 	!>
 	!! @brief Removes all the items in the list except those identified with the position given by posVec vector
@@ -759,17 +777,17 @@
 	!>
 	!! @brief
 	!!
-	function fArray( this ) result( output )
+	subroutine toFArray( this, fArray )
 		class(Vector), intent(in) :: this
 ! 		__CLASS_ITEMVECTOR__, allocatable :: output(:)  !<<< No entiendo por que no puede ser polimorfica
-		__TYPE_ITEMVECTOR__, allocatable :: output(:)
+		__TYPE_ITEMVECTOR__, allocatable :: fArray(:)
 		
 		integer :: i
 		class(VectorIterator), pointer :: iter
 		
-		if( allocated(output) ) deallocate(output)
-		allocate( output(this.size()) )
+		if( allocated(fArray) ) deallocate(fArray)
+		allocate( fArray(this.size()) )
 		
-		output = this.data(1:this.nItems)
-	end function fArray
+		fArray = this.data(1:this.nItems)
+	end subroutine toFArray
 #endif

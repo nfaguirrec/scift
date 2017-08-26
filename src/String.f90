@@ -640,8 +640,8 @@ module String_
 		character(*), intent(in) :: str
 		real(8), allocatable :: output(:)
 		
-		character(1000), allocatable :: tokens(:)
-		character(:), allocatable :: strBuffer
+		character(10000), allocatable :: tokens(:)
+		character(10000) :: strBuffer
 		integer :: i
 		
 		call FString_split( trim(adjustl(str)), tokens, "()[]" )
@@ -649,7 +649,7 @@ module String_
 		
 		if( len_trim(strBuffer) == 0 ) then
 			deallocate(tokens)
-			deallocate(strBuffer)
+! 			deallocate(strBuffer)
 			return
 		end if
 		
@@ -663,7 +663,7 @@ module String_
 		end do
 		
 		deallocate(tokens)
-		deallocate(strBuffer)
+! 		deallocate(strBuffer)
 	end subroutine FString_toRealArray
 	
 	!>

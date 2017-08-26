@@ -74,6 +74,6 @@ program main
 		call cFunc.save( oFileName.fstr )
 	end if
 	
-	deallocate( tokens )
+	if( allocated(tokens) ) deallocate( tokens )
 	
 end program main

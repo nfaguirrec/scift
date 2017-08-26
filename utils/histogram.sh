@@ -30,9 +30,14 @@ function usage(){
         echo ""
         echo "   -f file"
         echo "      Input file name"
+        echo "   -b block"
+        echo "      It allows you to select the specific block. Blocks are separated by "
+        echo "   -l blockLocator"
+        echo "      Blocks are considered that start with a line that match with blockLocator"
+        echo "      (default = \"^[[:blank:]]*$\")"
         echo "   -c columns"
         echo "      Columns to consider in the histogram"
-        echo "      ( i.e. 2 for one dimension or 3,4 for tow dimensions )"
+        echo "      ( i.e. 2 for one dimension or 3,4 for two dimensions )"
         echo "   -n nbars"
         echo "      Number of bars to include in the plot"
         echo "      (default: 30 if n=1 or 30,30 if n=2)"
@@ -46,9 +51,119 @@ function usage(){
         echo "      Saves histrogram in file"
         echo "   -x "
         echo "      No plot"
+        echo "   -p "
+        echo "      Additional gnuplot commands. i.e. -p \"set size square; set title \"Test\"\""
         echo "   -h"
         echo "      This will print this same message"
         echo ""
+}
+
+##
+# @brief
+##
+function getBlock()
+{
+	local iFile=$1
+	local locator=$2
+	local nSkipBlocks=$3
+	local nSkipBlanks=$4
+# 	local mergeLocators=$5   # it is already TRUE
+	
+	gawk '
+		BEGIN{
+			loc=0
+			nBlanks=0
+			nBlocks=0
+			seq = 0
+			firstTime = 1
+		}
+		
+		{
+# 			print "0*", $0
+			
+			if( loc == 1 && $0~/^[[:blank:]]*$/ ){
+				nBlanks += 1
+# 				print "1*", $0, loc, nBlanks, nBlocks, seq
+				next
+			}
+			
+			if( nBlanks == '$(($nSkipBlanks+1))' ){
+# 				print "2**", $0, loc, nBlanks, nBlocks, seq
+				exit
+			}
+			
+			if( nBlanks == '$nSkipBlanks' && loc == 1 ){
+# 				print "3***", $0, loc, nBlanks, nBlocks, seq
+				print $0
+			}
+			
+			if( $0~/'"$locator"'/ ){
+				if( nBlocks-1 == '$nSkipBlocks' ){
+					loc = 1
+# 					print $0   # print header ?
+				}
+				
+				if( seq != 1 )
+					nBlocks+=1
+					
+				seq = 1
+				firstTime = 0
+				
+# 				print "4****", loc, nBlanks, nBlocks, seq
+			}else{
+				seq = 0
+			}
+		}
+	' $iFile
+}
+
+##
+# @brief
+##
+function averFromHistogram()
+{
+	local iFile=$1
+	
+	gawk '
+	BEGIN{
+		sum = 0.0
+		sumW = 0.0
+	}
+	{
+		sum += $2*$1
+		sumW += $2
+	}
+	END{
+		print sum/sumW
+	}
+	' $iFile
+}
+
+##
+# @brief
+##
+function stdevFromHistogram()
+{
+	local iFile=$1
+	
+	aver=`averFromHistogram $iFile`
+	
+	gawk '
+	BEGIN{
+		sum = 0.0
+		sumW = 0.0
+		n = 0
+	}
+	{
+		sum += $2*($1-'$aver')**2
+		sumW += $2
+		
+		if( $2 > 1e-8 )  n += 1
+	}
+	END{
+		print sqrt(sum/((n-1)*sumW)/n)
+	}
+	' $iFile
 }
 
 #############################################
@@ -86,7 +201,7 @@ function hist1D()
 	}
 
 	{
-		n=ceil(($1-x0)/h)
+		n=ceil(($1-x0)/h)+0.5  # Original equation is +1, but with 0.5 point is located in the middel of the interval
 		
 		if( n in mymap ){
 			mymap[n]+=1
@@ -104,7 +219,7 @@ function hist1D()
 		
 		for( n in mymap ){
 			if( "'`echo $type`'" == "freq" ){
-				printf "%20.10f%20.10f\n", x0+(n-0.5)*h, mymap[n]/(h*sum)
+				printf "%20.10f%20.10f\n", x0+(n-0.5)*h, mymap[n]/sum
 			}else if( "'`echo $type`'" == "counts" ){
 				printf "%20.10f%20.10f\n", x0+(n-0.5)*h, mymap[n]
 			}
@@ -115,7 +230,7 @@ function hist1D()
 	case $type in
 		"freq")
 			freqLabel="Frequency"
-			formatY="%.3f"
+			formatY="%.2f"
 			;;
 		"counts")
 			freqLabel="Counts"
@@ -124,22 +239,33 @@ function hist1D()
 	esac
 	
 	cat >> .plot$$ << EOF
-		tripdf(x,a)= abs(x)<=a ? (1.0-abs(x)/a)/a : 0.0
-		
-		set size square
-		unset key
-		set xtics out
-		set ytics out
-# 		set format x "%.1f"
-		set format y "$formatY"
-		set xlabel "Value"
-		set ylabel "$freqLabel"
-		set style fill solid 1.00 border -1
-		bw=($max-$min)/$nbars
-		set boxwidth bw absolute
-		set y2range [0:]
-		plot [$min-2*bw:$max+2*bw] [0:] ".data$$" i 0 u 1:2 w boxes  #, ".data$$" w p
-		
+tripdf(x,a)= abs(x)<=a ? (1.0-abs(x)/a)/a : 0.0
+
+unset key
+set grid front
+unset grid
+set format y "$formatY"
+set xlabel "Value"
+set ylabel "$freqLabel"
+set style fill solid 1.00 border -1
+bw=($max-$min)/$nbars
+set boxwidth bw absolute
+set yrange [0:] 
+
+margin=0.05
+
+range=abs($max-$min)
+set xrange [$min-margin*range:$max+margin*range]
+
+$GNUPLOT_PRECOMMANDS
+
+plot "-" i 0 u 1:2 w boxes lt 1  #, ".data$$" w p
+`cat .data$$`
+	EOF
+	
+# X = [ $min, $max ]
+# aver  = `averFromHistogram .data$$`
+# stdev = `stdevFromHistogram .data$$`
 EOF
 
 	if [ "$SHOW_PLOT" = "TRUE" ]
@@ -147,6 +273,7 @@ EOF
 		echo "pause -1" >> .plot$$
 	fi
 	
+	cat .plot$$
 	gnuplot .plot$$
 	
 	if [ -n "$oDataFile" ]
@@ -248,7 +375,7 @@ function hist2D()
 				if( "'`echo $type`'" == "freq" ){
 				
 					if( (nx,ny) in mymap )
-						printf "%20.10f%20.10f%20.10f\n", x, y, mymap[nx,ny]/(hx*hy*sum)
+						printf "%20.10f%20.10f%20.10f\n", x, y, mymap[nx,ny]/sum
 					else
 						printf "%20.10f%20.10f%20.10f\n", x, y, 0.0
 						
@@ -273,24 +400,12 @@ function hist2D()
 	cat >> .plot$$ << EOF
 set termopt enhanced
 set encoding iso_8859_1
-set size square
-set format y "%.1f"
-# set format x "%.1f"
-# set format cb "10^{%T}"
 
+# set format cb "10^{%T}"
 # set logscale cb
 
 unset key
 set palette defined ( 0 "white", 1 "blue", 2 "green", 3 "orange", 4 "yellow", 5 "red" )
-
-# set pm3d implicit at s
-# set xtics rotate by -45 font "Serif,8"
-set ytics font "Serif,8"
-set cbtics font "Serif,8"
-# set pointsize 0.3
-# set view map
-
-set mxtics 10
 
 margin=0.05
 
@@ -302,32 +417,18 @@ range2=abs($max2-$min2)
 set yrange [$min2-margin*range2:$max2+margin*range2]
 print "Y = [", $min2, ", ", $max2, "]"
 
-# set cbrange [$minZ+0.001:$maxZ]
-set cbrange [$minZ:0.6*$maxZ]
+# set cbrange [$minZ:$maxZ]
 print "Z = [", $minZ, ", ", $maxZ, "]"
 
-set xlabel 'X' font 'Serif,9'
-set ylabel 'Y' font 'Serif,9'
-# splot '.data$$' u 1:((\$2>0)?\$2:10.0):3 w p ps 0
-# splot '.data$$' u 1:2:3 w p ps 0
+$GNUPLOT_PRECOMMANDS
 
-# set dgrid3d 20,20,1
-# set cntrparam levels incremental 0.2,0.05,1.2
-# set contours
-# 
-# set table 'val.cont'
-# splot ".data$$" u 1:2:3 w l
-# unset table
-
-# set multiplot
+set grid front
+unset grid
 
 plot \
-'.data$$' u 1:2:3 notitle with points pt 5 ps 2.0 palette
-
-# , \
-# for [n=1:20] "val.cont" i n u 1:2 w l lt -1 lw 0.5 
-
-# unset multiplot
+'-' u 1:2:3 notitle with points pt 5 ps 2.0 palette
+`cat .data$$`
+	EOF
 
 EOF
 
@@ -335,7 +436,8 @@ EOF
 	then
 		echo "pause -1" >> .plot$$
 	fi
-
+	
+	cat .plot$$
 	gnuplot .plot$$
 	
 	if [ -n "$oDataFile" ]
@@ -349,6 +451,8 @@ EOF
 function main()
 {
 	local iFile=""
+	local targetBlock="0"
+	local blockLocator=""
 	local columns=""
 	local nbars="30,30"
 	local type="freq"
@@ -356,36 +460,46 @@ function main()
 	local oDataFile=""
 	
 	SHOW_PLOT="TRUE"
+	GNUPLOT_PRECOMMANDS=""
 	
-	while getopts "f:c:n:t:d:hs:x" OPTNAME
+	while getopts "f:b:l:c:n:t:d:hs:xp:" OPTNAME
 	do
 		case $OPTNAME in
 			f)
-				iFile=$OPTARG
+				iFile="$OPTARG"
+				;;
+			b)
+				targetBlock="$OPTARG"
+				;;
+			l)
+				blockLocator="$OPTARG"
 				;;
 			c)
-				columns=$OPTARG
+				columns="$OPTARG"
 				;;
 			n)
-				nbars=$OPTARG
+				nbars="$OPTARG"
 				;;
 			t)
-				if [ "$OPTARG" = "freq" -o "$OPTARG" = "counts" ]
+				if [ ""$OPTARG"" = "freq" -o ""$OPTARG"" = "counts" ]
 				then
-					type=$OPTARG
+					type="$OPTARG"
 				else
 					usage
 					exit 0
 				fi
 				;;
 			d)
-				dimensions=$OPTARG
+				dimensions="$OPTARG"
 				;;
 			s)
-				oDataFile=$OPTARG
+				oDataFile="$OPTARG"
 				;;
 			x)
 				SHOW_PLOT="FALSE"
+				;;
+			p)
+				GNUPLOT_PRECOMMANDS="$OPTARG"
 				;;
 			h)
 				usage
@@ -400,6 +514,12 @@ function main()
 		exit 0
 	fi
 	
+	if [ -n "$blockLocator" ]
+	then
+		getBlock $iFile $blockLocator $targetBlock 0 > .tmp$$
+		iFile=.tmp$$
+	fi
+	
 	case $dimensions in
 		1)
 			hist1D $iFile $columns $nbars $type
@@ -412,6 +532,11 @@ function main()
 			exit 0
 			;;
 	esac
+	
+	if [ -n "$blockLocator" ]
+	then
+		rm .tmp$$
+	fi
 }
 
-main $*
+main "$@"

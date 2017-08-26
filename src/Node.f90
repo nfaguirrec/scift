@@ -24,11 +24,13 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 module Node_
+	use String_
 	implicit none
 	private
 	
 	type, public :: Node
 		integer :: id
+		character(100) :: label
 		real(8) :: weight
 		
 		contains
@@ -48,22 +50,28 @@ module Node_
 	!>
 	!! @brief Constructor
 	!!
-	subroutine initDefault( this, id, weight )
+	subroutine initDefault( this, id, label, weight )
 		class(Node) :: this
 		integer, optional :: id
+		character(*), optional :: label
 		real(8), optional :: weight
 		
 		integer :: effId
+		character(100) :: effLabel
 		real(8) :: effWeight
-		
-		effweight = 1.0_8
-		if( present(weight) ) effweight = weight
 		
 		effId = 0
 		if( present(id) ) effId = id
 		
-		this.weight = effweight
+		effLabel = trim(FString_fromInteger(id))
+		if( present(label) ) effLabel = label
+		
+		effWeight = 0.0_8
+		if( present(weight) ) effWeight = weight
+		
 		this.id = effId
+		this.label = effLabel
+		this.weight = effWeight
 	end subroutine initDefault
 	
 	!>
@@ -74,6 +82,7 @@ module Node_
 		class(Node), intent(in) :: other
 		
 		this.id = other.id
+		this.label = other.label
 		this.weight = other.weight
 	end subroutine copy
 
@@ -85,6 +94,8 @@ module Node_
 		class(Node), intent(in) :: other
 		logical :: output
 		
+		write(*,*) "### ERROR ### Node.equal() is not implmented yet"
+		stop
 ! 		output = ( this.sNode == other.sNode .and. this.tNode == other.tNode )
 	end function equal
 	

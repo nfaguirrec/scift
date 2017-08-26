@@ -24,6 +24,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 module Edge_
+	use String_
 	implicit none
 	private
 	
@@ -31,7 +32,10 @@ module Edge_
 		integer :: sNode
 		integer :: tNode
 		integer :: id
+		character(100) :: label
 		real(8) :: weight
+		
+		logical :: directed
 		
 		contains
 			generic :: init => initDefault
@@ -50,26 +54,45 @@ module Edge_
 	!>
 	!! @brief Constructor
 	!!
-	subroutine initDefault( this, sNode, tNode, id, weight )
+	subroutine initDefault( this, sNode, tNode, id, label, weight, directed )
 		class(Edge) :: this
 		integer :: sNode
 		integer :: tNode
 		integer, optional :: id
+		character(*), optional :: label
 		real(8), optional :: weight
+		logical, optional :: directed
 		
 		integer :: effId
+		character(100) :: effLabel
 		real(8) :: effWeight
-		
-		effweight = 1.0_8
-		if( present(weight) ) effweight = weight
+		logical :: effDirected
 		
 		effId = 0
 		if( present(id) ) effId = id
 		
+		effweight = 1.0_8
+		if( present(weight) ) effweight = weight
+		
+		effDirected = .false.
+                if( present(directed) ) effDirected = directed
+                
+                if( effDirected ) then
+			effLabel = trim(FString_fromInteger(sNode))//"-->"//trim(FString_fromInteger(tNode))
+		else
+			if( sNode > tNode ) then
+				effLabel = trim(FString_fromInteger(sNode))//"--"//trim(FString_fromInteger(tNode))
+			else
+				effLabel = trim(FString_fromInteger(tNode))//"--"//trim(FString_fromInteger(sNode))
+			end if
+		end if
+                if( present(label) ) effLabel = label
+		
 		this.sNode = sNode
 		this.tNode = tNode
-		this.weight = effweight
 		this.id = effId
+		this.label = effLabel
+		this.weight = effweight
 	end subroutine initDefault
 	
 	!>
@@ -82,7 +105,9 @@ module Edge_
 		this.sNode = other.sNode
 		this.tNode = other.tNode
 		this.id = other.id
+		this.label = other.label
 		this.weight = other.weight
+		this.directed = other.directed
 	end subroutine copy
 
 	!>

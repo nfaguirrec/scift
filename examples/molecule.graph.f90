@@ -2,6 +2,8 @@
 !! @brief Test program
 !!
 program main
+	use UnitsConverter_
+	use GOptions_
 	use String_
 	use Matrix_
 	use Molecule_
@@ -13,10 +15,14 @@ program main
 	real(8) :: alpha
 	type(Molecule) :: mol
 	type(Matrix) :: D, L, A
+	character(100), allocatable :: nodesSuffixes(:)
+	character(100), allocatable :: effNodesLabels(:)
+	integer :: i
+	type(String) :: oFileDOT
 	
 	if( command_argument_count() < 1 ) then
-		write(*,*) "Usage: molecule.graph file [ alpha ] "
-		write(*,*) "                              1.0    "
+		write(*,*) "Usage: molecule.graph file [ alpha ] [ofileDOT] [nodesSuffixes]"
+		write(*,*) "                              1.0                              "
 		stop
 	end if
 	
@@ -27,25 +33,39 @@ program main
 	call get_command_argument( 2, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) alpha = FString_toReal(sBuffer)
 	
+	call get_command_argument( 3, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) oFileDOT = trim(sBuffer)
+	
+	call get_command_argument( 4, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) call FString_split( trim(sBuffer), nodesSuffixes, "," )
+	
 	call mol.init( iFileName.fstr )
 	call mol.buildGraph( alpha=alpha )
 	
-	call mol.molGraph.show( formatted=.true. )
+	if( allocated(nodesSuffixes) ) then
+		call mol.showGraph( nodesSuffixes=nodesSuffixes )
+	else
+		call mol.showGraph()
+	end if
 	
-	L = mol.molGraph.laplacianMatrix()
-	write(*,*) "Laplacian Matrix = "
-	call L.show( formatted=.true. )
+! 	L = mol.molGraph.laplacianMatrix()
+! 	write(*,*) "Laplacian Matrix = "
+! 	call L.show( formatted=.true. )
+
+! 	D = mol.molGraph.distanceMatrix()
+! 	write(*,*) "Distance Matrix = "
+! 	call D.show( formatted=.true. )
 	
-	write(*,*) ""
-	write(*,*) "Randic = ", mol.molGraph.randicIndex()
-	write(*,*) "Wiener = ", mol.molGraph.wienerIndex()
-	write(*,*) "InverseWiener = ", mol.molGraph.inverseWienerIndex()
-	write(*,*) "Balaban = ", mol.molGraph.balabanIndex()
-	write(*,*) "MolecularTopological = ", mol.molGraph.molecularTopologicalIndex()
-	write(*,*) "Kirchhoff = ", mol.molGraph.kirchhoffIndex()
-	write(*,*) "KirchhoffSum = ", mol.molGraph.kirchhoffSumIndex()
-	write(*,*) "WienerSum = ", mol.molGraph.wienerSumIndex()
-	write(*,*) "JOmega = ", mol.molGraph.JOmegaIndex()
+! 	write(*,*) "nComponents = ", mol.molGraph.nComponents()
+! 	write(*,*) "Randic = ", mol.molGraph.randicIndex()
+! 	write(*,*) "Wiener = ", mol.molGraph.wienerIndex()
+! 	write(*,*) "InverseWiener = ", mol.molGraph.inverseWienerIndex()
+! 	write(*,*) "Balaban = ", mol.molGraph.balabanIndex()
+! 	write(*,*) "MolecularTopological = ", mol.molGraph.molecularTopologicalIndex()
+! 	write(*,*) "Kirchhoff = ", mol.molGraph.kirchhoffIndex()
+! 	write(*,*) "KirchhoffSum = ", mol.molGraph.kirchhoffSumIndex()
+! 	write(*,*) "WienerSum = ", mol.molGraph.wienerSumIndex()
+! 	write(*,*) "JOmega = ", mol.molGraph.JOmegaIndex()
 	
 ! 	write(*,*) "Wiener = ", mol.molGraph.wienerIndex( distanceMatrix=D )
 ! 	write(*,*) "InverseWiener = ", mol.molGraph.inverseWienerIndex( distanceMatrix=D )
@@ -55,5 +75,22 @@ program main
 ! 	write(*,*) "KirchhoffSum = ", mol.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
 ! 	write(*,*) "WienerSum = ", mol.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
 ! 	write(*,*) "JOmega = ", mol.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+	
+	if( allocated(nodesSuffixes) ) then
+		if( .not. oFileDOT.isEmpty() ) then
+			call mol.saveDOT( oFileDOT.fstr, nodesSuffixes=nodesSuffixes )
+		else
+			call mol.saveDOT( nodesSuffixes=nodesSuffixes )
+		end if
+	else
+		if( .not. oFileDOT.isEmpty() ) then
+			call mol.saveDOT( oFileDOT.fstr )
+		else
+			call mol.saveDOT()
+		end if
 
+	end if
+	
+	if( allocated(nodesSuffixes) ) deallocate( nodesSuffixes )
+	
 end program main
