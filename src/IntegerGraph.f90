@@ -169,8 +169,25 @@ module IntegerGraph_
 		class(IntegerGraph), intent(inout) :: this
 		class(IntegerGraph), intent(in) :: other
 		
-		write(*,*) "### ERROR ### IntegerGraph.copyIntegerGraph  is not implemented yet"
-		stop
+		if( allocated(this.name) ) deallocate(this.name)
+		this.name = other.name
+		
+		this.node2Neighbors = other.node2Neighbors
+		this.node2InEdges = other.node2InEdges
+		this.node2OutEdges = other.node2OutEdges
+		
+		this.nodeProperties = other.nodeProperties
+		this.edgeProperties = other.edgeProperties
+		
+		this.directed = other.directed
+		
+		this.sNode = other.sNode
+		
+		if( allocated(this.minDistance) ) deallocate( this.minDistance )
+		allocate( this.minDistance( size(other.minDistance) ) )
+		this.minDistance = other.minDistance
+		
+		this.previous = other.previous
 	end subroutine copyIntegerGraph
 	
 	!>
