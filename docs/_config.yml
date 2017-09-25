@@ -14,4 +14,4 @@ github_username:  jekyll
 markdown: kramdown
 
 gem "github-pages", group: :jekyll_plugins
-theme: jekyll-theme-architect
+theme: jekyll-theme-hacker
