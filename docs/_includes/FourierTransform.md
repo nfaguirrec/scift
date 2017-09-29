@@ -9,7 +9,7 @@ The different options are:
 - Install with [Composer](https://getcomposer.org): `composer require twbs/bootstrap:4.0.0-be
 - Install with [NuGet](https://www.nuget.org): CSS: `Install-Package bootstrap -Pre` Sass: `I
 
-Let's test some inline math $x$, $y$, $x_1$, $y_1$.
+Let's test some inline math \\( 1/x^{2} \\), \\( y \\), $x_1$, $y_1$.
 
 Now a inline math with special character:
 $$
