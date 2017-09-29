@@ -8,4 +8,5 @@ gems:
   - jekyll-paginate
 
 #Others
-markdown: kramdown
+#markdown: kramdown
+markdown: maruku  # For MathJax

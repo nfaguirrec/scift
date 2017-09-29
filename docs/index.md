@@ -1,6 +1,7 @@
 ---
 layout: default
 title: SciFT (Scientific Fortran Tools)
+use_math: true
 ---
 
 <div id="home">
@@ -34,6 +35,7 @@ The complete range of subject areas covered by the library includes:
 
 - [Quick start](#quick-start)
 - [Status](#status)
+- [Fourier Transform](#fourier-transform)
 - [What's included](#whats-included)
 - [Bugs and feature requests](#bugs-and-feature-requests)
 - [Documentation](#documentation)
@@ -81,6 +83,8 @@ Read the [Getting started page](https://getbootstrap.com/getting-started/) for i
 [![NuGet](https://img.shields.io/nuget/vpre/bootstrap.svg)](https://www.nuget.org/packages/bootstrap/absoluteLatest)
 
 [![Selenium Test Status](https://saucelabs.com/browser-matrix/bootstrap.svg)](https://saucelabs.com/u/bootstrap)
+
+{% include FourierTransform.md %}
 
 ## What's included
 
