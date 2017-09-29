@@ -4,7 +4,7 @@ title: SciFT (Scientific Fortran Tools)
 mathjax: true
 ---
 
-<div id="home">
+<div id="news">
   <h1>News</h1>
   <ul class="posts">
     {% for post in site.posts %}
@@ -13,15 +13,18 @@ mathjax: true
   </ul>
 </div>
 
-<!--<div id="home">
-  <h1>News</h1>
-  <ul class="posts">
-    {% for post in site.pages %}
-      <li><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></li>
+<div id="sections">
+  <h1>Sections</h1>
+  <ul class="page">
+    {% for page in site.pages %}
+        {% if page.class == "section" %}
+            <li>&raquo; <a href="{{ site.baseurl }}{{ page.url }}">{{ page.title }}{{ page.relative_directory }}</a></li>
+        {% endif %}
     {% endfor %}
   </ul>
-</div>-->
+</div>
 
+<div id="home-test">{{ page.title }}--{{ page.path }}</div>
 
 # SciFT (Scientific Fortran Tools) En principal
 
