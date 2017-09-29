@@ -1,7 +1,7 @@
 ---
 layout: default
 title: SciFT (Scientific Fortran Tools)
-use_math: true
+mathjax: true
 ---
 
 <div id="home">
