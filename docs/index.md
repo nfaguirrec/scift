@@ -27,6 +27,14 @@ special functions and least-squares fitting.
 - [Authors](#authors)
 - [Copyright and license](#copyright-and-license)
 
+## Quick start
+
+Several quick start options are available:
+
+- [Download the latest release.](https://github.com/nfaguirrec/scift/tarball/master)
+- Clone the repo: `git clone https://github.com/nfaguirrec/scift`
+
+<!-- Read the [Getting started page](https://getbootstrap.com/getting-started/) for information on the framework contents, templates and examples, and more. -->
 The complete range of subject areas covered by the library includes:
 
 <div id="sections">
@@ -38,16 +46,6 @@ The complete range of subject areas covered by the library includes:
     {% endfor %}
   </ul>
 </div>
-
-
-## Quick start
-
-Several quick start options are available:
-
-- [Download the latest release.](https://github.com/twbs/bootstrap/archive/v4.0.0-beta.zip)
-- Clone the repo: `git clone https://github.com/nfaguirrec/scift`
-
-<!-- Read the [Getting started page](https://getbootstrap.com/getting-started/) for information on the framework contents, templates and examples, and more. -->
 
 
 ## Bugs and feature requests
@@ -67,4 +65,4 @@ Bootstrap's documentation, included in this repo in the root directory, is built
 
 ## Copyright and license
 
-Code and documentation copyright 2010-2017 by Nestor F.Aguirre. Code and documentation released under the [MIT License](https://github.com/nfaguirrec/scift/blob/master/LICENSE).
+Code and documentation copyright 2010-2017 by Nestor F.Aguirre. Code and documentation released under the [3-Clause BSD License](https://github.com/nfaguirrec/scift/blob/master/LICENSE).
