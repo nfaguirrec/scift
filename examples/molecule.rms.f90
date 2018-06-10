@@ -77,6 +77,6 @@ program main
 		rms = rms + sum( ( mol1.atoms(i).r - mol2.atoms(i).r )**2 )
 	end do
 	
-	write(*,"(F15.8)") sqrt(rms)/angs
+	write(*,"(F15.8)") sqrt(rms/real(mol1.nAtoms(),8))/angs
 	
 end program main
