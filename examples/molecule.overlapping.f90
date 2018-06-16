@@ -45,9 +45,11 @@ program main
 	character(1000) :: sBuffer
 	type(String) :: iFileNameMol1, iFileNameMol2
 	type(Molecule) :: mol1, mol2
+	real(8) :: alpha
 	
 	if( command_argument_count() < 2 ) then
-		write(*,*) "usage: molecule.overlapping mol1 mol2"
+		write(*,*) "usage: molecule.overlapping mol1 mol2 [ alpha ]"
+		write(*,*) "                                         1.0   "
 		stop
 	end if
 	
@@ -57,10 +59,14 @@ program main
 	call get_command_argument( 2, sBuffer )
 	iFileNameMol2 = sBuffer
 	
+	alpha = 1.0
+	call get_command_argument( 3, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) alpha = FString_toReal(sBuffer)
+	
 	call mol1.init( iFileNameMol1.fstr )
 	call mol2.init( iFileNameMol2.fstr )
 	
-	if( mol1.overlapping( mol2 ) ) then
+	if( mol1.overlapping( mol2, alpha=alpha ) ) then
 		write(*,"(A)") "TRUE"
 	else
 		write(*,"(A)") "FALSE"

@@ -125,6 +125,7 @@ module Molecule_
 			procedure, private :: distortBase
 			procedure :: distort
 			procedure :: overlapping
+			procedure :: atomicOverlapping
 			
 			procedure :: set
 			procedure, private :: extremeAtoms
@@ -887,28 +888,28 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	function overlapping( this, other, overlappingRadius, gamma, radiusType ) result( output )
+	function overlapping( this, other, overlappingRadius, alpha, radiusType ) result( output )
 		class(Molecule) :: this
 		class(Molecule) :: other
 		real(8), optional, intent(in) :: overlappingRadius
-		real(8), optional, intent(in) :: gamma
+		real(8), optional, intent(in) :: alpha
 		integer, optional, intent(in) :: radiusType
 		
 		real(8) :: effOverlappingRadius
-		real(8) :: effGamma
+		real(8) :: effAlpha
 		
 		real(8) :: rVec1(3), rVec2(3)
 		integer :: i, j
 		logical :: output
 		
-		effGamma = 1.0
-		if( present(gamma) ) effGamma = gamma
+		effAlpha = 1.0
+		if( present(alpha) ) effAlpha = alpha
 		
 		effOverlappingRadius = 0.0
 		if( present(overlappingRadius) ) effOverlappingRadius = overlappingRadius
 		
 ! Testing overlap
-#define OVERLAPPING(i,j) this.atoms(i).radius( type=radiusType )+other.atoms(j).radius( type=radiusType )-effOverlappingRadius > norm2( rVec2-rVec1 )
+#define OVERLAPPING(i,j) effAlpha*(this.atoms(i).radius( type=radiusType )+other.atoms(j).radius( type=radiusType ))-effOverlappingRadius > norm2( rVec2-rVec1 )
 
 		output = .false.
 		
@@ -936,18 +937,68 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	subroutine randomGeometry( this, radius, maxIter, overlappingRadius, gamma, radiusType )
+	function atomicOverlapping( this, overlappingRadius, alpha, radiusType ) result( output )
+		class(Molecule) :: this
+		real(8), optional, intent(in) :: overlappingRadius
+		real(8), optional, intent(in) :: alpha
+		integer, optional, intent(in) :: radiusType
+		
+		real(8) :: effOverlappingRadius
+		real(8) :: effAlpha
+		
+		real(8) :: rVec1(3), rVec2(3)
+		integer :: i, j
+		logical :: output
+		
+		effAlpha = 1.0
+		if( present(alpha) ) effAlpha = alpha
+		
+		effOverlappingRadius = 0.0
+		if( present(overlappingRadius) ) effOverlappingRadius = overlappingRadius
+		
+! Testing overlap
+#define OVERLAPPING(i,j) effAlpha*(this.atoms(i).radius( type=radiusType )+this.atoms(j).radius( type=radiusType ))-effOverlappingRadius > norm2( rVec2-rVec1 )
+
+		output = .false.
+		
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		! Se verifica que a los centros no sobrelapen ni que
+		! se salgan del radio del sistema
+		do i=1,this.nAtoms()
+			rVec1 = this.atoms(i).r
+			
+			do j=1,this.nAtoms()
+				
+				if( i /= j ) then
+					rVec2 = this.atoms(j).r
+					
+					output = OVERLAPPING(i,j)
+					
+					if( output ) exit
+				end if
+			end do
+			
+			if( output ) exit
+		end do
+		
+#undef OVERLAPPING
+	end function atomicOverlapping
+	
+	!>
+	!! @brief
+	!!
+	subroutine randomGeometry( this, radius, maxIter, overlappingRadius, alpha, radiusType )
 		class(Molecule) :: this 
 		real(8), optional, intent(in) :: radius
 		integer, optional, intent(in) :: maxIter
 		real(8), optional, intent(in) :: overlappingRadius
-		real(8), optional, intent(in) :: gamma
+		real(8), optional, intent(in) :: alpha
 		integer, optional, intent(in) :: radiusType
 		
 		integer :: effMaxIter
 		real(8) :: effRadius
 		real(8) :: effOverlappingRadius
-		real(8) :: effGamma
+		real(8) :: effAlpha
 		
 		integer :: nTrials_
 		type(RandomSampler) :: rs
@@ -959,8 +1010,8 @@ module Molecule_
 		effMaxIter = 100000
 		if( present(maxIter) ) effMaxIter = maxIter
 		
-		effGamma = 1.0
-		if( present(gamma) ) effGamma = gamma
+		effAlpha = 1.0
+		if( present(alpha) ) effAlpha = alpha
 		
 		if( present(radius) ) then
 			effRadius = radius
@@ -969,7 +1020,7 @@ module Molecule_
 			do i=1,this.nAtoms()
 				effRadius = effRadius + this.atoms(i).radius( type=radiusType )
 			end do
-			effRadius = effGamma*effRadius
+			effRadius = effAlpha*effRadius
 		end if
 		
 		effOverlappingRadius = 0.0
@@ -1562,8 +1613,8 @@ module Molecule_
 		
 		if( effDebug ) then
 			write(*,*) ""
-			write(*,"(A,<size(this_descrip)>F10.4)")  "  Descrip1 = ", this_descrip
-			write(*,"(A,<size(other_descrip)>F10.4)")  "  Descrip2 = ", other_descrip
+			write(*,"(A,<size(this_descrip)>F15.4)")  "  Descrip1 = ", this_descrip
+			write(*,"(A,<size(other_descrip)>F15.4)")  "  Descrip2 = ", other_descrip
 			write(*,"(A,F10.5)")    "Similarity = ", similarity
 			write(*,"(A,F10.5)")    " Threshold = ", effThr
 			write(*,*)              "    Equal? = ", output
@@ -2169,7 +2220,7 @@ module Molecule_
 		call this.molGraph.init( directed=.false., name=this.name )
 		
 		do i=1,this.nAtoms()
-			call this.molGraph.newNode( label=trim(this.atoms(i).symbol) )
+			call this.molGraph.newNode( label=trim(this.atoms(i).symbol), weight=this.atoms(i).atomicNumber() )
 		end do
 		
 		do i=1,this.nAtoms()

@@ -39,6 +39,7 @@
 !!
 module Atom_
 	use AtomicElementsDB_
+	use UnitsConverter_
 	
 	implicit none
 	private
@@ -241,9 +242,35 @@ module Atom_
 		cutoff = AtomicElementsDB_instance.radius( this.symbol, type=radiusType ) + AtomicElementsDB_instance.radius( other.symbol, type=radiusType )
 		
 		if( dist <= effAlpha*cutoff .and. dist > 0.01_8 ) then
-				output = .true.
+			output = .true.
 		else
+			output = .false.
+		end if
+		
+		if( ( ( trim(this.symbol) == "Th" .and. trim(other.symbol) == "O" ) .or. (trim(this.symbol) == "O" .and. trim(other.symbol) == "Th") ) ) then
+! 			if( dist < 2.7*angs ) then
+			if( dist < 2.8*angs ) then
+				output = .true.
+			else
 				output = .false.
+			end if
+		end if
+		
+		if( trim(this.symbol) == "Th" .and. trim(other.symbol) == "Th" ) then
+			output = .false.
+! 			if( dist < 3.5*angs ) then
+! 				output = .true.
+! 			else
+! 				output = .false.
+! 			end if
+		end if
+		
+		if( trim(this.symbol) == "O" .and. trim(other.symbol) == "O" ) then
+			if( dist < 1.6*angs ) then
+				output = .true.
+			else
+				output = .false.
+			end if
 		end if
 		
 		if( present(distance) ) distance = dist

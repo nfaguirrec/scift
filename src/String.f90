@@ -651,8 +651,8 @@ module String_
 		character(*), intent(in) :: str
 		real(8), allocatable :: output(:)
 		
-		character(10000), allocatable :: tokens(:)
-		character(10000) :: strBuffer
+		character(100000), allocatable :: tokens(:)
+		character(100000) :: strBuffer
 		integer :: i
 		
 		call FString_split( trim(adjustl(str)), tokens, "()[]" )

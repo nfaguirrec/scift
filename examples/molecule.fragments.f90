@@ -50,7 +50,7 @@ program main
 	type(CommandLineParser) :: parser
 	type(String) :: iFileName
 	logical :: saveFragments
-	real(8) :: gamma
+	real(8) :: alpha
 	type(Atom) :: atom1
 	type(Molecule) :: mol, fragment
 	type(StringIntegerMap) :: fragmentsNameMap
@@ -106,11 +106,11 @@ program main
 				write(*,"(I10,A,A)") fragmentsCounter, ")   ", trim(formula.fstr)
 				
 				if( saveFragments ) then
-					gamma = 0.7_8
-					if( fragment.nAtoms() == 2 ) gamma = 2.0_8
-					if( fragment.nAtoms() == 3 ) gamma = 1.0_8
+					alpha = 0.7_8
+					if( fragment.nAtoms() == 2 ) alpha = 2.0_8
+					if( fragment.nAtoms() == 3 ) alpha = 1.0_8
 
-					call fragment.randomGeometry( gamma=gamma )
+					call fragment.randomGeometry( alpha=alpha )
 					call fragment.save( trim(formula.fstr)//".xyz" )
 				end if
 				

@@ -44,6 +44,7 @@ program main
 	use Matrix_
 	use Molecule_
 	use IntegerGraph_
+	use Edge_
 	implicit none
 	
 	character(1000) :: sBuffer
@@ -55,6 +56,7 @@ program main
 	character(100), allocatable :: effNodesLabels(:)
 	integer :: i
 	type(String) :: oFileDOT
+	type(Edge) :: edgeProp
 	
 	if( command_argument_count() < 1 ) then
 		write(*,*) "Usage: molecule.graph file [ alpha ] [ofileDOT] [nodesSuffixes]"
@@ -77,6 +79,13 @@ program main
 	
 	call mol.init( iFileName.fstr )
 	call mol.buildGraph( alpha=alpha )
+	
+! 	do i=1,mol.molGraph.nEdges()
+! 		edgeProp = mol.molGraph.getEdgeProperties(i)
+! ! 		edgeProp.weight = anint(edgeProp.weight*10.0_8**bondPrec)/10.0_8**bondPrec
+! 		edgeProp.weight = 1.0_8
+! 		call mol.molGraph.setEdgeProperties( i, edgeProp )
+! 	end do
 	
 	if( allocated(nodesSuffixes) ) then
 		call mol.showGraph( nodesSuffixes=nodesSuffixes )

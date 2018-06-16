@@ -1,7 +1,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!                                                                                   !!
 !!  This file is part of SciFT project                                               !!
-!!  Copyright (c) 2011-2016 Nestor F. Aguirre (nfaguirrec@gmail.com)                 !!
+!!  Copyright (c) 2016-2016 Nestor F. Aguirre (nfaguirrec@gmail.com)                 !!
 !!                                                                                   !!
 !!  Redistribution and use in source and binary forms, with or without               !!
 !!  modification, are permitted provided that the following conditions are met:      !!
@@ -39,92 +39,47 @@
 !!
 program main
 	use String_
-	use Matrix_
-	use CommandLineParser_
-	use Atom_
 	use Molecule_
 	implicit none
 	
-	type(String) :: iFileName
-	type(CommandLineParser) :: parser
 	character(1000) :: sBuffer
-	type(String) :: strFormula
-	character(10), allocatable :: tokens(:)
-	character(10), allocatable :: tokens2(:)
-	type(Atom) :: atom1
-	type(Molecule) :: mol
-	character(3) :: symb
-	integer :: mult
-	integer :: i, j, nAtoms
-	real(8) :: alpha
+	type(String) :: iFileNameRef, iFileNameFrag
+	type(Molecule), allocatable :: molecules(:)
+	type(Molecule) :: finalMolecule
+	integer :: i, j, k, nAtoms
+	real(8) :: center(3)
 	
-	if( command_argument_count() < 1 ) then
-		write(*,*) "Usage:"
-		write(*,*) "   molecule.random -i xyzfile"
-		write(*,*) "   molecule.random 3H,C,S"
+	if( command_argument_count() < 2 ) then
+		write(*,*) "usage: molecule.merge mol1 mol2 [ mol3 ... moln ]"
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i", def=FString_NULL )
-	if( iFileName /= FString_NULL ) then
-		call mol.init( iFileName.fstr )
-	else
-		call get_command_argument( 1, sBuffer )
-		strFormula = sBuffer
+	allocate( molecules( command_argument_count() ) )
+	
+	nAtoms = 0
+	do i=1,command_argument_count()
+		call get_command_argument( i, sBuffer )
+		call molecules(i).init( sBuffer )
 		
-		nAtoms = 0
-		call strFormula.split( tokens, "," )
-		do i=1,size(tokens)
-			call FString_split( tokens(i), tokens2, "_" )
-			
-			symb = trim(tokens2(1))
-			
-			if( size(tokens2) > 1 ) then
-				mult = FString_toInteger( tokens2(2) )
-			else
-				mult = 1
-			end if
-			
-			do j=1,mult
-				nAtoms = nAtoms + 1
-			end do
-
-			deallocate( tokens2 )
+		if( i>1 ) then
+			center = molecules(i-1).center()
+			call molecules(i).setCenter( [ 0.0_8, 0.0_8, center(3) + 3*molecules(i-1).radius() ] )
+		end if
+		
+		nAtoms = nAtoms + molecules(i).nAtoms()
+	end do
+	
+	call finalMolecule.init( nAtoms )
+	
+	k=1
+	do i=1,size(molecules)
+		do j=1,molecules(i).nAtoms()
+			call finalMolecule.set( k, molecules(i).atoms(j) )
+			k = k + 1
 		end do
-		deallocate( tokens )
-		
-		call mol.init( nAtoms, trim(strFormula.fstr)//" ( Random geometry )" )
-		
-		nAtoms = 1
-		call strFormula.split( tokens, "," )
-		do i=1,size(tokens)
-			call FString_split( tokens(i), tokens2, "_" )
-			
-			symb = trim(tokens2(1))
-			
-			if( size(tokens2) > 1 ) then
-				mult = FString_toInteger( tokens2(2) )
-			else
-				mult = 1
-			end if
-			
-			do j=1,mult
-				call atom1.init( symb )
-				mol.atoms(nAtoms) = atom1
-				
-				nAtoms = nAtoms + 1
-			end do
-
-			deallocate( tokens2 )
-		end do
-		deallocate( tokens )
-	end if
+	end do
 	
-	alpha = 0.7_8
-	if( mol.nAtoms() == 2 ) alpha = 2.0_8
-	if( mol.nAtoms() == 3 ) alpha = 1.0_8
+	call finalMolecule.save()
 	
-	call mol.randomGeometry( alpha=alpha )
-	
-	call mol.save()
+	deallocate( molecules )
 end program main

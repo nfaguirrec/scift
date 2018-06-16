@@ -72,6 +72,9 @@ program main
 	maxValue = parser.getReal( "-max", def=hist.maximum() )
 	nBins = parser.getInteger( "-nbins", def=-1 )
 	
+	write(*,*) "min = ", minValue
+	write(*,*) "max = ", maxValue
+	
 	call hist.build( nBins=nBins, min=minValue, max=maxValue )
 	call hist.density.save( oFileName.fstr )
 end program main

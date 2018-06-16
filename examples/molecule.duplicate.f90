@@ -1,7 +1,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!                                                                                   !!
 !!  This file is part of SciFT project                                               !!
-!!  Copyright (c) 2011-2016 Nestor F. Aguirre (nfaguirrec@gmail.com)                 !!
+!!  Copyright (c) 2017-2017 Nestor F. Aguirre (nfaguirrec@gmail.com)                 !!
 !!                                                                                   !!
 !!  Redistribution and use in source and binary forms, with or without               !!
 !!  modification, are permitted provided that the following conditions are met:      !!
@@ -38,93 +38,107 @@
 !! @brief Test program
 !!
 program main
-	use String_
+	use UnitsConverter_
+	use AtomicElementsDB_
 	use Matrix_
-	use CommandLineParser_
-	use Atom_
 	use Molecule_
+	use String_
+	use IOStream_
 	implicit none
 	
-	type(String) :: iFileName
-	type(CommandLineParser) :: parser
 	character(1000) :: sBuffer
-	type(String) :: strFormula
-	character(10), allocatable :: tokens(:)
-	character(10), allocatable :: tokens2(:)
-	type(Atom) :: atom1
-	type(Molecule) :: mol
-	character(3) :: symb
-	integer :: mult
-	integer :: i, j, nAtoms
-	real(8) :: alpha
+	type(String) :: iFileName
+	type(Molecule), allocatable :: molecules(:)
+	real(8) :: thr, alpha
+	logical :: remove
+	logical :: debug
+	
+	integer :: i, j
+	type(IFStream) :: ifile
+	type(String), allocatable :: fileNames(:)
+	logical, allocatable :: removed(:)
+	real(8), allocatable :: energies(:)
+	integer :: equal
+	character(1000), allocatable :: tokens(:)
 	
 	if( command_argument_count() < 1 ) then
-		write(*,*) "Usage:"
-		write(*,*) "   molecule.random -i xyzfile"
-		write(*,*) "   molecule.random 3H,C,S"
+		write(*,*) "Usage: molecule.duplicate file [remove] [ debug ] [ thr ] [alpha]"
+		write(*,*) "                                 false    false     0.90    1.1  "
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i", def=FString_NULL )
-	if( iFileName /= FString_NULL ) then
-		call mol.init( iFileName.fstr )
-	else
-		call get_command_argument( 1, sBuffer )
-		strFormula = sBuffer
+	call get_command_argument( 1, sBuffer )
+	iFileName = sBuffer
+	
+	remove = .false.
+	call get_command_argument( 2, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) remove = FString_toLogical( sBuffer )
+	
+	debug = .false.
+	call get_command_argument( 3, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) debug = FString_toLogical( sBuffer )
+	
+	thr = 0.90_8
+	call get_command_argument( 4, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) thr = FString_toReal(sBuffer)
+	
+	alpha = 1.1_8
+	call get_command_argument( 5, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) alpha = FString_toReal(sBuffer)
+	
+	write(*,"(A,L)") "Remove files = ", remove
+	write(*,"(A,F10.3)") "Similarity threshold = ", thr
+	write(*,"(A,F10.3)") "Bond tolerance scale factor = ", alpha
+	write(*,*) ""
+	
+	call ifile.init( iFileName.fstr )
+	
+	allocate( molecules(ifile.numberOfLines) )
+	allocate( fileNames(ifile.numberOfLines) )
+	allocate( energies(ifile.numberOfLines) )
+	allocate( removed(ifile.numberOfLines) )
+	
+	removed = .false.
+	
+	do i=1,ifile.numberOfLines
+		fileNames(i) = trim(ifile.readLine())
+		call molecules(i).init( fileNames(i).fstr )
+		call FString_split( molecules(i).name, tokens, " " )
 		
-		nAtoms = 0
-		call strFormula.split( tokens, "," )
-		do i=1,size(tokens)
-			call FString_split( tokens(i), tokens2, "_" )
+		! @todo Cerificar que todas las moleculas tienen la energia definida. De lo contrario toca volver al esquema basico
+		energies(i) = FString_toReal( trim(tokens(3)) )
+	end do
+	
+	do i=1,size(molecules)-1
+		if( .not. removed(i) ) then
 			
-			symb = trim(tokens2(1))
-			
-			if( size(tokens2) > 1 ) then
-				mult = FString_toInteger( tokens2(2) )
-			else
-				mult = 1
-			end if
-			
-			do j=1,mult
-				nAtoms = nAtoms + 1
-			end do
-
-			deallocate( tokens2 )
-		end do
-		deallocate( tokens )
-		
-		call mol.init( nAtoms, trim(strFormula.fstr)//" ( Random geometry )" )
-		
-		nAtoms = 1
-		call strFormula.split( tokens, "," )
-		do i=1,size(tokens)
-			call FString_split( tokens(i), tokens2, "_" )
-			
-			symb = trim(tokens2(1))
-			
-			if( size(tokens2) > 1 ) then
-				mult = FString_toInteger( tokens2(2) )
-			else
-				mult = 1
-			end if
-			
-			do j=1,mult
-				call atom1.init( symb )
-				mol.atoms(nAtoms) = atom1
+			do j=i+1,size(molecules)
 				
-				nAtoms = nAtoms + 1
+				if( .not. removed(j)  .and. abs( energies(i)-energies(j) ) <= 1.0_8*eV ) then
+! 					write(*,"(A)") "      Comparing "//trim(fileNames(i).fstr)//" <-> "//trim(fileNames(j).fstr)//" >>>> dE="//adjustl(trim((FString_fromReal(abs( energies(i)-energies(j) ), "(F10.5)"))))
+					
+					equal = 0
+					if( molecules(i).compareFormula( molecules(j), debug=debug ) ) equal = equal + 1					
+					if( molecules(i).compareGeometry( molecules(j), useMassWeight=.true., thr=thr, debug=debug ) ) equal = equal + 1
+					if( molecules(i).compareConnectivity( molecules(j), alpha=alpha, thr=thr, debug=debug ) ) equal = equal + 1
+					
+					if( equal == 3 ) then
+						write(*,*) "      --> Remove "//trim(fileNames(j).fstr)
+						removed(j) = .true.
+						
+						if( remove ) then
+							call system( "[ -f "//trim(fileNames(j).fstr)//" ] && rm "//trim(fileNames(j).fstr) )
+						end if
+					end if
+				end if
+				
 			end do
-
-			deallocate( tokens2 )
-		end do
-		deallocate( tokens )
-	end if
+			
+		end if
+	end do
 	
-	alpha = 0.7_8
-	if( mol.nAtoms() == 2 ) alpha = 2.0_8
-	if( mol.nAtoms() == 3 ) alpha = 1.0_8
-	
-	call mol.randomGeometry( alpha=alpha )
-	
-	call mol.save()
+	deallocate( molecules )
+	deallocate( fileNames )
+	deallocate( energies )
+	deallocate( removed )
 end program main
