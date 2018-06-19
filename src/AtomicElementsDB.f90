@@ -455,7 +455,9 @@ module AtomicElementsDB_
 		
 ! 		write(*,*) "22 ", atomicDB.mass( 22 )
 ! 		write(*,*) "79 ", atomicDB.covalentRadius( 79 )
-		write(*,*) "mass    Ti = ", atomicDB.atomicMass( " Ti " )/angs
+		write(*,*) "mass    Ti = ", atomicDB.atomicMass( " Ti " )/amu
+		write(*,*) "cradius Ti = ", atomicDB.covalentRadius( " Ti " )/angs
+		write(*,*) "cradius  O = ", atomicDB.covalentRadius( " O " )/angs
 		write(*,*) "cradius Re = ", atomicDB.covalentRadius( " Re" )/angs
 		write(*,*) "cradius Au = ", atomicDB.covalentRadius( "Au" )/angs
 		

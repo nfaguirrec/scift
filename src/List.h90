@@ -136,7 +136,7 @@
 		
 		contains
 			generic :: init => initList
-			generic :: assignment(=) => copyList
+			generic :: assignment(=) => copyList  !@todo ifort version >= 2.015. Does not allow to overwrite this method
 			generic :: operator(==) => equal
 			generic :: operator(/=) => nequal
 			
@@ -816,7 +816,7 @@
 	!!
 	function fArray( this ) result( output )
 		class(List), intent(in) :: this
-		__CLASS_ITEMLIST__, allocatable :: output(:)
+		__TYPE_ITEMLIST__, allocatable :: output(:)
 		
 		integer :: i
 		class(ListIterator), pointer :: iter
