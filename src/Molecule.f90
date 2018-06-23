@@ -1707,7 +1707,6 @@ module Molecule_
 		output(12) = Math_skewness( distance )
 		
 		if( effUseIm ) then
-			write(*,*) "Entro"
 			call this.buildInertiaTensor( Im, unitaryMasses=.true. )
 			call Im.eigen( eValues=diagUIm )
 			

@@ -52,6 +52,10 @@ program main
 	real(8) :: thr, alpha
 	logical :: remove
 	logical :: debug
+	logical :: useMassWeight
+	logical :: useIm
+	logical :: useNodeWeights
+	logical :: useEdgeWeights
 	
 	integer :: i, j
 	type(IFStream) :: ifile
@@ -62,8 +66,8 @@ program main
 	character(1000), allocatable :: tokens(:)
 	
 	if( command_argument_count() < 1 ) then
-		write(*,*) "Usage: molecule.duplicate file [remove] [ debug ] [ thr ] [alpha]"
-		write(*,*) "                                 false    false     0.90    1.1  "
+		write(*,"(A)") "Usage: molecule.duplicate file [remove] [ debug ] [ thr ] [alpha] [useMassWeight] [useIm] [useNodeWeights] [useEdgeWeights]"
+		write(*,"(A)") "                                false     false     0.92    1.1        true        true        true              true      "
 		stop
 	end if
 	
@@ -86,9 +90,29 @@ program main
 	call get_command_argument( 5, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) alpha = FString_toReal(sBuffer)
 	
+	useMassWeight = .true.
+	call get_command_argument( 6, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) useMassWeight = FString_toLogical(sBuffer)
+	
+	useIm = .true.
+	call get_command_argument( 7, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) useIm = FString_toLogical(sBuffer)
+	
+	useNodeWeights = .true.
+	call get_command_argument( 8, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) useNodeWeights = FString_toLogical(sBuffer)
+	
+	useEdgeWeights = .true.
+	call get_command_argument( 9, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) useEdgeWeights = FString_toLogical(sBuffer)
+	
 	write(*,"(A,L)") "Remove files = ", remove
 	write(*,"(A,F10.3)") "Similarity threshold = ", thr
 	write(*,"(A,F10.3)") "Bond tolerance scale factor = ", alpha
+	write(*,"(A,L)")     "Use Mass Weights = ", useMassWeight
+	write(*,"(A,L)")     "Use Im = ", useIm
+	write(*,"(A,L)")     "Use Node Weights = ", useNodeWeights
+	write(*,"(A,L)")     "Use Edge Weights = ", useEdgeWeights
 	write(*,*) ""
 	
 	call ifile.init( iFileName.fstr )
@@ -119,8 +143,8 @@ program main
 					
 					equal = 0
 					if( molecules(i).compareFormula( molecules(j), debug=debug ) ) equal = equal + 1					
-					if( molecules(i).compareGeometry( molecules(j), useMassWeight=.true., thr=thr, debug=debug ) ) equal = equal + 1
-					if( molecules(i).compareConnectivity( molecules(j), alpha=alpha, thr=thr, debug=debug ) ) equal = equal + 1
+					if( molecules(i).compareGeometry( molecules(j), useMassWeight=useMassWeight, useIm=useIm, thr=thr, debug=debug ) ) equal = equal + 1
+					if( molecules(i).compareConnectivity( molecules(j), alpha=alpha, thr=thr, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights, debug=debug ) ) equal = equal + 1
 					
 					if( equal == 3 ) then
 						write(*,*) "      --> Remove "//trim(fileNames(j).fstr)
