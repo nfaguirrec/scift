@@ -1471,10 +1471,11 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	function compareGeometry( this, other, useMassWeight, thr, debug ) result( output )
+	function compareGeometry( this, other, useMassWeight, useIm, thr, debug ) result( output )
 		class(Molecule), intent(in) :: this
 		class(Molecule), intent(in) :: other
 		logical, optional :: useMassWeight
+		logical, optional :: useIm
 		real(8), optional, intent(in) :: thr
 		logical, optional, intent(in) :: debug
 		logical :: output
@@ -1499,8 +1500,8 @@ module Molecule_
 		if( .not. effThis.axesChosen ) call effThis.orient()
 		if( .not. effOther.axesChosen ) call effOther.orient()
 		
-		this_descrip = effThis.ballesterDescriptors( useMassWeight=useMassWeight )
-		other_descrip = effOther.ballesterDescriptors( useMassWeight=useMassWeight )
+		this_descrip = effThis.ballesterDescriptors( useMassWeight=useMassWeight, useIm=useIm )
+		other_descrip = effOther.ballesterDescriptors( useMassWeight=useMassWeight, useIm=useIm )
 		
 		! Jaccard similarity index
 ! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
@@ -1528,12 +1529,14 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	function compareConnectivity( this, other, alpha, thr, debug ) result( output )
+	function compareConnectivity( this, other, alpha, thr, useNodeWeights, useEdgeWeights, debug ) result( output )
 		class(Molecule), intent(in) :: this
 		class(Molecule), intent(in) :: other
 		real(8), optional, intent(in) :: alpha
 		real(8), optional, intent(in) :: thr
 		logical, optional :: debug
+		logical, optional :: useNodeWeights
+		logical, optional :: useEdgeWeights
 		logical :: output
 		
 		real(8):: effAlpha
@@ -1553,7 +1556,7 @@ module Molecule_
 		effDebug = .false.
 		if( present(debug) ) effDebug = debug
 		
-		call this.buildGraph( alpha=effAlpha )
+		call this.buildGraph( alpha=effAlpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
 		
 		A = this.molGraph.adjacencyMatrix()
 		D = this.molGraph.distanceMatrix()
@@ -1576,7 +1579,7 @@ module Molecule_
 			this_descrip(9) = this.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
 		end if
 		
-		call other.buildGraph( alpha=effAlpha )
+		call other.buildGraph( alpha=effAlpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
 		
 		A = other.molGraph.adjacencyMatrix()
 		D = other.molGraph.distanceMatrix()
@@ -1627,12 +1630,14 @@ module Molecule_
 	!!             Proc. R. Soc. A (2007) 463, 1307–1321
 	!!             doi:10.1098/rspa.2007.1823
 	!!
-	function ballesterDescriptors( this, useMassWeight ) result( output )
+	function ballesterDescriptors( this, useMassWeight, useIm ) result( output )
 		class(Molecule), intent(in) :: this
 		logical, optional :: useMassWeight
+		logical, optional :: useIm
 		real(8) :: output(15)
 		
 		logical :: effUseMassWeight
+		logical :: effUseIm
 		
 		real(8), allocatable :: distance(:)
 		integer :: i, id_min(1), id_max(1)
@@ -1642,6 +1647,9 @@ module Molecule_
 		
 		effUseMassWeight = .false.
 		if( present(useMassWeight) ) effUseMassWeight = useMassWeight
+		
+		useIm = .true.
+		if( present(useIm) ) effUseIm = useIm
 		
 		if( effUseMassWeight ) then
 			allocate( wi(this.nAtoms()) )
@@ -1696,16 +1704,18 @@ module Molecule_
 		output(11) = Math_stdev( distance )
 		output(12) = Math_skewness( distance )
 		
-		call this.buildInertiaTensor( Im, unitaryMasses=.true. )
-		call Im.eigen( eValues=diagUIm )
-		
-		output(13) = diagUIm(1)!/maxval(diagUIm)
-		output(14) = diagUIm(2)!/maxval(diagUIm)
-		output(15) = diagUIm(3)!/maxval(diagUIm)
+		if( effUseIm ) then
+			call this.buildInertiaTensor( Im, unitaryMasses=.true. )
+			call Im.eigen( eValues=diagUIm )
+			
+			output(13) = diagUIm(1)!/maxval(diagUIm)
+			output(14) = diagUIm(2)!/maxval(diagUIm)
+			output(15) = diagUIm(3)!/maxval(diagUIm)
+		end if
 		
 		deallocate( distance )
 		if( effUseMassWeight ) deallocate( wi )
-		deallocate( diagUIm )
+		if( allocated(diagUIm) ) deallocate( diagUIm )
 	end function ballesterDescriptors
 	
 	!>
@@ -2210,23 +2220,42 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	subroutine buildGraph( this, alpha )
+	subroutine buildGraph( this, alpha, useNodeWeights, useEdgeWeights )
 		class(Molecule) :: this
 		real(8), optional :: alpha
+		logical, optional :: useNodeWeights
+		logical, optional :: useEdgeWeights
+		
+		logical :: effUseNodeWeights
+		logical :: effUseEdgeWeights
 		
 		integer :: i, j
 		real(8) :: dij
 		
+		effUseNodeWeights = .true.
+		if( present(useNodeWeights) ) effUseNodeWeights = useNodeWeights
+		
+		effUseEdgeWeights = .true.
+		if( present(useEdgeWeights) ) effUseEdgeWeights = useEdgeWeights
+		
 		call this.molGraph.init( directed=.false., name=this.name )
 		
 		do i=1,this.nAtoms()
-			call this.molGraph.newNode( label=trim(this.atoms(i).symbol), weight=this.atoms(i).atomicNumber() )
+			if( effUseNodeWeights ) then
+				call this.molGraph.newNode( label=trim(this.atoms(i).symbol), weight=this.atoms(i).atomicNumber() )
+			else
+				call this.molGraph.newNode( label=trim(this.atoms(i).symbol) )
+			end if
 		end do
 		
 		do i=1,this.nAtoms()
 			do j=1,this.nAtoms()
 				if( i/=j .and. this.atoms(i).isConnectedWith( this.atoms(j), alpha=alpha, distance=dij ) ) then
-					call this.molGraph.newEdge( i, j, weight=dij )
+					if( effUseEdgeWeights ) then
+						call this.molGraph.newEdge( i, j, weight=dij )
+					else
+						call this.molGraph.newEdge( i, j )
+					end if
 				end if
 			end do
 		end do

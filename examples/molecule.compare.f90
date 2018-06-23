@@ -52,6 +52,10 @@ program main
 	type(Matrix) :: I1, I2, Idiff, Iaver
 	real(8) :: value
 	logical :: debug
+	logical :: useMassWeight
+	logical :: useIm
+	logical :: useNodeWeights
+	logical :: useEdgeWeights
 	
 	integer :: i
 	real(8) :: averMass, linearR, maxI
@@ -59,8 +63,8 @@ program main
 	real(8) :: Ivalue(3)
 	
 	if( command_argument_count() < 2 ) then
-		write(*,*) "Usage: molecule.compare file1 file2 [ debug ] [ thr ] [alpha]"
-		write(*,*) "                                      false     0.92    1.1  "
+		write(*,*) "Usage: molecule.compare file1 file2 [ debug ] [ thr ] [alpha] [useMassWeight] [useIm] [useNodeWeights] [useEdgeWeights]"
+		write(*,*) "                                      false     0.92    1.1        true        true        true              true      "
 		stop
 	end if
 	
@@ -82,8 +86,28 @@ program main
 	call get_command_argument( 5, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) alpha = FString_toReal(sBuffer)
 	
+	useMassWeight = .true.
+	call get_command_argument( 6, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) useMassWeight = FString_toReal(sBuffer)
+	
+	useIm = .true.
+	call get_command_argument( 7, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) useIm = FString_toReal(sBuffer)
+	
+	useNodeWeights = .true.
+	call get_command_argument( 8, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) useNodeWeights = FString_toReal(sBuffer)
+	
+	useEdgeWeights = .true.
+	call get_command_argument( 9, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) useEdgeWeights = FString_toReal(sBuffer)
+	
 	write(*,"(A,F10.3)") "Similarity threshold = ", thr
 	write(*,"(A,F10.3)") "Bond tolerance scale factor = ", alpha
+	write(*,"(A,L)")     "Use Mass Weights = ", useMassWeight
+	write(*,"(A,L)")     "Use Im = ", useIm
+	write(*,"(A,L)")     "Use Node Weights = ", useNodeWeights
+	write(*,"(A,L)")     "Use Edge Weights = ", useEdgeWeights
 	
 	call mol1.init( iFileName1.fstr )
 	call mol2.init( iFileName2.fstr )
@@ -96,14 +120,14 @@ program main
 	end if
 	
 	write(*,"(A)", advance="no") "Geometry ... "
-	if( mol1.compareGeometry( mol2, useMassWeight=.true., thr=thr, debug=debug ) ) then
+	if( mol1.compareGeometry( mol2, useMassWeight=useMassWeight, useIm=useIm, thr=thr, debug=debug ) ) then
 		write(*,*) "OK"
 	else
 		write(*,*) "Failed"
 	end if
 	
 	write(*,"(A)", advance="no") "Connectivity ... "
-	if( mol1.compareConnectivity( mol2, alpha=alpha, thr=thr, debug=debug ) ) then
+	if( mol1.compareConnectivity( mol2, alpha=alpha, thr=thr, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights, debug=debug ) ) then
 		write(*,*) "OK"
 	else
 		write(*,*) "Failed"
