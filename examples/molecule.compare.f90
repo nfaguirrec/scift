@@ -63,8 +63,8 @@ program main
 	real(8) :: Ivalue(3)
 	
 	if( command_argument_count() < 2 ) then
-		write(*,*) "Usage: molecule.compare file1 file2 [ debug ] [ thr ] [alpha] [useMassWeight] [useIm] [useNodeWeights] [useEdgeWeights]"
-		write(*,*) "                                      false     0.92    1.1        true        true        true              true      "
+		write(*,"(A)") "Usage: molecule.compare file1 file2 [ debug ] [ thr ] [alpha] [useMassWeight] [useIm] [useNodeWeights] [useEdgeWeights]"
+		write(*,"(A)") "                                      false     0.92    1.1        true        true        true              true      "
 		stop
 	end if
 	
@@ -88,19 +88,19 @@ program main
 	
 	useMassWeight = .true.
 	call get_command_argument( 6, sBuffer )
-	if( len_trim(sBuffer) /= 0 ) useMassWeight = FString_toReal(sBuffer)
+	if( len_trim(sBuffer) /= 0 ) useMassWeight = FString_toLogical(sBuffer)
 	
 	useIm = .true.
 	call get_command_argument( 7, sBuffer )
-	if( len_trim(sBuffer) /= 0 ) useIm = FString_toReal(sBuffer)
+	if( len_trim(sBuffer) /= 0 ) useIm = FString_toLogical(sBuffer)
 	
 	useNodeWeights = .true.
 	call get_command_argument( 8, sBuffer )
-	if( len_trim(sBuffer) /= 0 ) useNodeWeights = FString_toReal(sBuffer)
+	if( len_trim(sBuffer) /= 0 ) useNodeWeights = FString_toLogical(sBuffer)
 	
 	useEdgeWeights = .true.
 	call get_command_argument( 9, sBuffer )
-	if( len_trim(sBuffer) /= 0 ) useEdgeWeights = FString_toReal(sBuffer)
+	if( len_trim(sBuffer) /= 0 ) useEdgeWeights = FString_toLogical(sBuffer)
 	
 	write(*,"(A,F10.3)") "Similarity threshold = ", thr
 	write(*,"(A,F10.3)") "Bond tolerance scale factor = ", alpha
@@ -108,6 +108,7 @@ program main
 	write(*,"(A,L)")     "Use Im = ", useIm
 	write(*,"(A,L)")     "Use Node Weights = ", useNodeWeights
 	write(*,"(A,L)")     "Use Edge Weights = ", useEdgeWeights
+	write(*,*) ""
 	
 	call mol1.init( iFileName1.fstr )
 	call mol2.init( iFileName2.fstr )

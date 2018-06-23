@@ -1645,10 +1645,12 @@ module Molecule_
 		type(Matrix) :: Im
 		real(8), allocatable :: diagUIm(:)
 		
+		output = 0.0
+		
 		effUseMassWeight = .false.
 		if( present(useMassWeight) ) effUseMassWeight = useMassWeight
 		
-		useIm = .true.
+		effUseIm = .true.
 		if( present(useIm) ) effUseIm = useIm
 		
 		if( effUseMassWeight ) then
@@ -1705,6 +1707,7 @@ module Molecule_
 		output(12) = Math_skewness( distance )
 		
 		if( effUseIm ) then
+			write(*,*) "Entro"
 			call this.buildInertiaTensor( Im, unitaryMasses=.true. )
 			call Im.eigen( eValues=diagUIm )
 			
