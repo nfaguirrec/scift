@@ -147,7 +147,7 @@ program main
 					if( molecules(i).compareConnectivity( molecules(j), alpha=alpha, thr=thr, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights, debug=debug ) ) equal = equal + 1
 					
 					if( equal == 3 ) then
-						sBuffer = FString_fromReal(abs( energies(i)-energies(j) ), "(F10.5)")
+						sBuffer = FString_fromReal(abs( energies(i)-energies(j) )/eV, "(F10.3)")
 						
 						write(*,"(A)",advance="no") "      "//trim(fileNames(i).fstr)//"  "//trim(fileNames(j).fstr)//" ("// &
 													trim(adjustl(adjustr(trim(sBuffer))))// &
