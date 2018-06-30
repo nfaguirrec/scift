@@ -210,4 +210,6 @@ write(*,*) "JOmega               = ", mygraph.JOmegaIndex()
 
 ### Utils
 
+# Authors
+* Nestor F. Aguirre ( nfaguirrec@gmail.com )
 
