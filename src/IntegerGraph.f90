@@ -58,6 +58,7 @@ module IntegerGraph_
         !!
         integer, public, parameter :: GML  = 1
         integer, public, parameter :: DOT  = 2
+        integer, public, parameter :: DAT  = 3
 	
 	public :: &
 		IntegerGraph_test
@@ -86,6 +87,7 @@ module IntegerGraph_
 		generic :: operator(==) => equalIntegerGraph
 		
 		procedure :: initIntegerGraph
+		procedure :: initFromDATLine
 		procedure :: copyIntegerGraph
 		procedure :: equalIntegerGraph
 		final :: destroyIntegerGraph
@@ -93,6 +95,7 @@ module IntegerGraph_
 		
 		procedure :: show
 		procedure :: str
+		procedure :: toDATString
 		procedure :: nNodes
 		procedure :: nEdges
 		procedure :: isDirected
@@ -115,6 +118,7 @@ module IntegerGraph_
 		procedure :: save
 		procedure, private :: saveGML
 		procedure, private :: saveDOT
+		procedure, private :: saveDAT
 		procedure :: computeDijkstraPaths
 		procedure :: distance
 		procedure :: shortestPath
@@ -169,6 +173,83 @@ module IntegerGraph_
 		
 		if( present(complete) ) call this.makeComplete( n=complete )
 	end subroutine initIntegerGraph
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine initFromDATLine( this, DATLine )
+		class(IntegerGraph) :: this
+		character(*), intent(in) :: DATLine
+		
+		integer :: i, j
+		character(1000), allocatable :: tokens(:)
+		character(1000), allocatable :: tokens2(:)
+		character(1000), allocatable :: tokens3(:)
+		character(1000), allocatable :: tokens4(:)
+		character(1000) :: label
+		real(8) :: weight
+		integer :: s, t
+		
+		call this.clear()
+		
+		call FString_split( DATLine, tokens, ";" )
+		
+		do i=1,size(tokens)
+			call FString_split( trim(tokens(i)), tokens2, "[]" )
+			
+			if( FString_count( trim(tokens2(1)), "--", wholeWords=.true. ) == 0 ) then
+! 				write(*,*) "NODE-->", trim(tokens(i))
+				
+				call FString_split( trim(tokens2(2)), tokens3, "," )
+				
+				do j=1,size(tokens3)
+					call FString_split( trim(tokens3(j)), tokens4, "=" )
+					
+					select case( trim(tokens4(1)) )
+						case( "label" )
+! 							write(*,*) "   label-->", trim(tokens4(2))
+							label = trim(tokens4(2))
+						case( "weight" )
+! 							write(*,*) "   weight-->", trim(tokens4(2))
+							weight = FString_toReal(trim(tokens4(2)))
+					end select
+				end do
+				
+				call this.newNode( label, weight )
+			else
+! 				write(*,*) "EDGE-->", trim(tokens(i))
+				
+				call FString_split( trim(tokens2(1)), tokens3, "--" )
+! 				write(*,*) "   source-->", trim(tokens3(1))
+! 				write(*,*) "   target-->", trim(tokens3(2))
+				
+				s = FString_toInteger( trim(tokens3(1)) )
+				t = FString_toInteger( trim(tokens3(2)) )
+				
+				call FString_split( trim(tokens2(2)), tokens3, "," )
+				
+				do j=1,size(tokens3)
+					call FString_split( trim(tokens3(j)), tokens4, "=" )
+					
+					select case( trim(tokens4(1)) )
+						case( "label" )
+! 							write(*,*) "   label-->", trim(tokens4(2))
+							label = trim(tokens4(2))
+						case( "weight" )
+! 							write(*,*) "   weight-->", trim(tokens4(2))
+							weight = FString_toReal(trim(tokens4(2)))
+					end select
+				end do
+				
+				call this.newEdge( s, t, label, weight )
+			end if
+		end do
+		
+		if( allocated(tokens) ) deallocate(tokens)
+		if( allocated(tokens2) ) deallocate(tokens2)
+		if( allocated(tokens3) ) deallocate(tokens3)
+		if( allocated(tokens4) ) deallocate(tokens4)
+	end subroutine initFromDATLine
 	
 	!>
 	!! @brief Copy constructor
@@ -517,6 +598,103 @@ module IntegerGraph_
 		
 		ivec => null()
 	end function str
+	
+	!>
+	!! @brief
+	!!
+	function toDATString( this, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors ) result( output )
+		class(IntegerGraph) :: this
+		character(*), optional, intent(in) :: name
+		character(*), optional, intent(in) :: nodesLabels(:)
+		real(8), optional, intent(in) :: nodePropertiesUnits
+		real(8), optional, intent(in) :: edgePropertiesUnits
+		character(*), optional, intent(in) :: nodesColors(:)
+		character(:), allocatable :: output
+		
+		character(100) :: effName
+		real(8) :: effNodePropertiesUnits
+		real(8) :: effEdgePropertiesUnits
+		
+		integer :: i, j, loc, idNode
+		integer :: effUnit
+		character(100) :: colorOptions
+		
+		output = ""
+		
+		effName = "mygraph"
+		if( present(name) ) effName = name
+		
+		effNodePropertiesUnits = 1.0_8
+		if( present(nodePropertiesUnits) ) effNodePropertiesUnits = nodePropertiesUnits
+		
+		effEdgePropertiesUnits = 1.0_8
+		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
+		
+! 		if( this.isDirected() ) then
+! 			write(effUnit,"(A)") "digraph "//trim(effName)//" {"
+! 		else
+! 			write(effUnit,"(A)") "graph "//trim(effName)//" {"
+! 		end if
+		
+		do i=1,this.nNodes()
+! 			write(effUnit,"(A)") "   "//trim(FString_fromInteger(i))//" [shape=box]"
+			output = output//trim(FString_fromInteger(i))
+
+! 			colorOptions = ""
+! 			if( present(nodesColors) ) then
+! 				colorOptions = " style = filled, fillcolor = "//char(34)//"#"//trim(nodesColors(i))//char(34)
+! 			end if
+			
+			if( present(nodesLabels) ) then
+! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//char(34)//trim(colorOptions)//"]"
+
+				output = output//"[label="//trim(nodesLabels(i))//"("//trim(this.nodeProperties.data(i).label)//")"//trim(colorOptions)//"]"
+! 				write(effUnit,"(A)",advance="no") "[label="//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//trim(colorOptions)//"]"
+			else
+! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this.nodeProperties.data(i).label)//"("//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
+! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(this.nodeProperties.data(i).label)//char(34)//trim(colorOptions)//"],"
+				output = output//"[label="//trim(this.nodeProperties.data(i).label)//",weight="//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,format="(F10.5)")))//"],"
+			end if
+		end do
+		
+		do i=1,this.nEdges()
+			
+			loc = 0
+			if( .not. this.isDirected() .and. i > 1 ) then
+				do j=i-1,1,-1
+					if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
+						this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+						loc = 1
+						exit
+					end if
+				end do
+			end if
+			
+			if( loc == 1 ) cycle
+			
+			idNode = this.edgeProperties.data(i).sNode
+			output = output//trim(FString_fromInteger(idNode))
+			
+			if( this.isDirected() ) then
+				output = output//"->"
+			else
+				output = output//"--"
+			end if
+			
+			idNode = this.edgeProperties.data(i).tNode
+			output = output//trim(FString_fromInteger(idNode))
+			! @todo Hay que poner un parametro que hage swap entre weight y label, para que quede bien el dibujo en dot
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(this.edgeProperties.data(i).label)//char(34)
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.2)")))//char(34)
+
+! 			write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F2.0)")))//char(34)//","
+! 			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.1)")))//"]"
+
+			output = output//"[label="//trim(adjustl(this.edgeProperties.data(i).label))//","
+			output = output//"weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F10.5)")))//"]"//","
+		end do
+		
+	end function toDATString
 	
 	!>
 	!! @brief
@@ -1110,7 +1288,7 @@ module IntegerGraph_
 	!>
 	!! @brief
 	!!
-	subroutine save( this, oFileName, format, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
+	subroutine save( this, oFileName, format, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors, append )
 		class(IntegerGraph) :: this
 		character(*), optional, intent(in) :: oFileName
 		integer, optional, intent(in) :: format
@@ -1119,6 +1297,7 @@ module IntegerGraph_
 		real(8), optional, intent(in) :: nodePropertiesUnits
 		real(8), optional, intent(in) :: edgePropertiesUnits
 		character(*), optional, intent(in) :: nodesColors(:)
+		logical, optional, intent(in) :: append
 		
 		integer :: effFormat
 		
@@ -1130,6 +1309,8 @@ module IntegerGraph_
 				call this.saveGML( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
 			case( DOT )
 				call this.saveDOT( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
+			case( DAT )
+				call this.saveDAT( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors, append )
 		end select
 	end subroutine save
 	
@@ -1285,6 +1466,115 @@ module IntegerGraph_
 		
 		close(effUnit)
 	end subroutine saveDOT
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveDAT( this, oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors, append )
+		class(IntegerGraph) :: this
+		character(*), optional, intent(in) :: oFileName
+		character(*), optional, intent(in) :: name
+		character(*), optional, intent(in) :: nodesLabels(:)
+		real(8), optional, intent(in) :: nodePropertiesUnits
+		real(8), optional, intent(in) :: edgePropertiesUnits
+		character(*), optional, intent(in) :: nodesColors(:)
+		logical, optional, intent(in) :: append
+		
+		character(100) :: effName
+		real(8) :: effNodePropertiesUnits
+		real(8) :: effEdgePropertiesUnits
+		
+		integer :: i, j, loc, idNode
+		integer :: effUnit
+		character(100) :: colorOptions
+		
+		if( present(oFileName) ) then
+			effUnit = 31
+			
+			if( present(append) .and. append ) then
+				open( unit=effUnit, file=trim(oFileName), status="old", access="append" )
+			else
+				open( unit=effUnit, file=trim(oFileName) )
+			end if
+		else
+			effUnit = 6
+		end if
+		
+		effName = "mygraph"
+		if( present(name) ) effName = name
+		
+		effNodePropertiesUnits = 1.0_8
+		if( present(nodePropertiesUnits) ) effNodePropertiesUnits = nodePropertiesUnits
+		
+		effEdgePropertiesUnits = 1.0_8
+		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
+		
+! 		if( this.isDirected() ) then
+! 			write(effUnit,"(A)") "digraph "//trim(effName)//" {"
+! 		else
+! 			write(effUnit,"(A)") "graph "//trim(effName)//" {"
+! 		end if
+		
+		do i=1,this.nNodes()
+! 			write(effUnit,"(A)") "   "//trim(FString_fromInteger(i))//" [shape=box]"
+			write(effUnit,"(A)",advance="no") trim(FString_fromInteger(i))
+
+! 			colorOptions = ""
+! 			if( present(nodesColors) ) then
+! 				colorOptions = " style = filled, fillcolor = "//char(34)//"#"//trim(nodesColors(i))//char(34)
+! 			end if
+			
+			if( present(nodesLabels) ) then
+! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//char(34)//trim(colorOptions)//"]"
+
+				write(effUnit,"(A)",advance="no") "[label="//trim(nodesLabels(i))//"("//trim(this.nodeProperties.data(i).label)//")"//trim(colorOptions)//"]"
+! 				write(effUnit,"(A)",advance="no") "[label="//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//trim(colorOptions)//"]"
+			else
+! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this.nodeProperties.data(i).label)//"("//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
+! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(this.nodeProperties.data(i).label)//char(34)//trim(colorOptions)//"],"
+				write(effUnit,"(A)",advance="no") "[label="//trim(this.nodeProperties.data(i).label)//",weight="//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,format="(F10.5)")))//"],"
+			end if
+		end do
+		
+		do i=1,this.nEdges()
+			
+			loc = 0
+			if( .not. this.isDirected() .and. i > 1 ) then
+				do j=i-1,1,-1
+					if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
+						this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+						loc = 1
+						exit
+					end if
+				end do
+			end if
+			
+			if( loc == 1 ) cycle
+			
+			idNode = this.edgeProperties.data(i).sNode
+			write(effUnit,"(A)",advance="no") trim(FString_fromInteger(idNode))
+			
+			if( this.isDirected() ) then
+				write(effUnit,"(A)",advance="no") "->"
+			else
+				write(effUnit,"(A)",advance="no") "--"
+			end if
+			
+			idNode = this.edgeProperties.data(i).tNode
+			write(effUnit,"(A)",advance="no") trim(FString_fromInteger(idNode))
+			! @todo Hay que poner un parametro que hage swap entre weight y label, para que quede bien el dibujo en dot
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(this.edgeProperties.data(i).label)//char(34)
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.2)")))//char(34)
+
+! 			write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F2.0)")))//char(34)//","
+! 			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.1)")))//"]"
+
+			write(effUnit,"(A)",advance="no") "[label="//trim(adjustl(this.edgeProperties.data(i).label))//","
+			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F10.5)")))//"]"//","
+		end do
+		
+		close(effUnit)
+	end subroutine saveDAT
 	
 	!>
 	!! @brief Breadth First Search
@@ -2326,6 +2616,15 @@ module IntegerGraph_
 		write(*,*) ">>>>> inducedSubgraph [1,3,4]"
 		mysubgraph = mygraph.inducedSubgraph( [1,3,4] )
 		call mysubgraph.show( formatted=.true. )
+		
+! 		call mysubgraph.save( "salida.gml", format=GML )
+! 		call mysubgraph.save( "salida.dot", format=DOT )
+! 		call mysubgraph.save( "salida.dat", format=DAT )
+! 		call mysubgraph.save( "salida.dat", format=DAT, append=.true. )
+		
+		call mysubgraph.initFromDATLine( "1[label=1.a,weight=1.00000];2[label=3.a,weight=3.00000];3[label=4.a,weight=4.00000];1--2[label=3.a--1.a,weight=1.30000];2--3[label=4.a--3.a,weight=3.40000];" )
+		call mysubgraph.show( formatted=.true. )
+		write(*,"(A)") mysubgraph.toDATString()
 		
 	end subroutine IntegerGraph_test
 
