@@ -100,9 +100,9 @@ program test
 	implicit none
 	
 ! 	call IOStream_test()
-	call String_test()
-	call Atom_test()
-	call AtomicElementsDB_test()
+! 	call String_test()
+! 	call Atom_test()
+! 	call AtomicElementsDB_test()
 ! 	call Molecule_test()
 ! 	call RNFunction_test()
 !  	call CNFunction_test()
@@ -130,7 +130,7 @@ program test
 ! 	call StringRealPairList_test()
 ! 	call StringRealMap_test()
 ! 	call Edge_test()
-! 	call IntegerGraph_test()
+	call IntegerGraph_test()
 ! 	call IVector_test()
 ! 	call RVector_test()
 ! 	call Matrix_test()
