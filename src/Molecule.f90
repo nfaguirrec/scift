@@ -806,7 +806,7 @@ module Molecule_
 		end if
 		
 		write(fileUnit,*) this.nAtoms()
-		write(fileUnit,*) trim(this.name)
+		write(fileUnit,"(A)") trim(this.name)
 		
 		do i=1,this.nAtoms()
 			write(fileUnit,"(A5,3F20.8)") this.atoms(i).symbol, this.atoms(i).x/effUnits, this.atoms(i).y/effUnits, this.atoms(i).z/effUnits
