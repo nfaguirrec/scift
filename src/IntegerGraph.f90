@@ -177,9 +177,14 @@ module IntegerGraph_
 	!>
 	!! @brief Constructor
 	!!
-	subroutine initFromDATLine( this, DATLine )
+	subroutine initFromDATLine( this, DATLine, nodePropertiesUnits, edgePropertiesUnits )
 		class(IntegerGraph) :: this
 		character(*), intent(in) :: DATLine
+		real(8), optional, intent(in) :: nodePropertiesUnits
+		real(8), optional, intent(in) :: edgePropertiesUnits
+		
+		real(8) :: effNodePropertiesUnits
+		real(8) :: effEdgePropertiesUnits
 		
 		integer :: i, j
 		character(1000), allocatable :: tokens(:)
@@ -189,6 +194,12 @@ module IntegerGraph_
 		character(1000) :: label
 		real(8) :: weight
 		integer :: s, t
+		
+		effNodePropertiesUnits = 1.0_8
+		if( present(nodePropertiesUnits) ) effNodePropertiesUnits = nodePropertiesUnits
+		
+		effEdgePropertiesUnits = 1.0_8
+		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
 		
 		call this.clear()
 		
@@ -215,7 +226,7 @@ module IntegerGraph_
 					end select
 				end do
 				
-				call this.newNode( label, weight )
+				call this.newNode( label, weight*effNodePropertiesUnits )
 			else
 ! 				write(*,*) "EDGE-->", trim(tokens(i))
 				
@@ -241,7 +252,7 @@ module IntegerGraph_
 					end select
 				end do
 				
-				call this.newEdge( s, t, label, weight )
+				call this.newEdge( s, t, label, weight*effEdgePropertiesUnits )
 			end if
 		end do
 		
@@ -653,7 +664,7 @@ module IntegerGraph_
 			else
 ! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this.nodeProperties.data(i).label)//"("//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
 ! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(this.nodeProperties.data(i).label)//char(34)//trim(colorOptions)//"],"
-				output = output//"[label="//trim(this.nodeProperties.data(i).label)//",weight="//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,format="(F10.5)")))//"],"
+				output = output//"[label="//trim(this.nodeProperties.data(i).label)//",weight="//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,format="(F10.5)")))//"];"
 			end if
 		end do
 		
@@ -691,7 +702,7 @@ module IntegerGraph_
 ! 			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.1)")))//"]"
 
 			output = output//"[label="//trim(adjustl(this.edgeProperties.data(i).label))//","
-			output = output//"weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F10.5)")))//"]"//","
+			output = output//"weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F10.5)")))//"]"//";"
 		end do
 		
 	end function toDATString
