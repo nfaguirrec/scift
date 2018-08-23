@@ -65,7 +65,7 @@ module Molecule_
 	
 	public :: &
 		Molecule_test
-	
+		
 	type, public :: Molecule
 		character(:), allocatable :: name
 		type(Atom), allocatable :: atoms(:)
@@ -213,7 +213,7 @@ module Molecule_
 		integer :: i
 		integer :: effFormat
 		
-		character(100) :: sBuffer
+		character(1000) :: sBuffer
 		character(:), allocatable :: extension 
 		
 		effFormat = AUTO_FORMAT

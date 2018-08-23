@@ -234,6 +234,7 @@ module Atom_
 		
 		real(8) :: dist, cutoff
 		real(8) :: effAlpha
+		integer :: i, loc
 		
 		effAlpha = 1.0_8
 		if( present(alpha) ) effAlpha = alpha
@@ -241,32 +242,27 @@ module Atom_
 		dist = sqrt(sum((this.r - other.r)**2))
 		cutoff = AtomicElementsDB_instance.radius( this.symbol, type=radiusType ) + AtomicElementsDB_instance.radius( other.symbol, type=radiusType )
 		
-		if( dist <= effAlpha*cutoff .and. dist > 0.01_8 ) then
-			output = .true.
-		else
-			output = .false.
-		end if
-		
-		if( ( ( trim(this.symbol) == "Th" .and. trim(other.symbol) == "O" ) .or. (trim(this.symbol) == "O" .and. trim(other.symbol) == "Th") ) ) then
-! 			if( dist < 2.7*angs ) then
-			if( dist < 2.8*angs ) then
-				output = .true.
-			else
-				output = .false.
+		if( allocated(AtomicElementsDB_instance.specialPairs) ) then
+			loc = -1
+			do i=1,size(AtomicElementsDB_instance.specialPairs)
+				if( ( trim(this.symbol) == AtomicElementsDB_instance.specialPairs(i).symbol1 &
+						.and. trim(other.symbol) == AtomicElementsDB_instance.specialPairs(i).symbol2 ) &
+					.or. ( trim(this.symbol) == AtomicElementsDB_instance.specialPairs(i).symbol2 &
+						.and. trim(other.symbol) == AtomicElementsDB_instance.specialPairs(i).symbol1 ) ) then
+						loc = i
+						exit
+				end if
+			end do
+			
+			if( loc /= -1 ) then
+				if( dist < AtomicElementsDB_instance.specialPairs(i).bondCutoff ) then
+					output = .true.
+				else
+					output = .false.
+				end if
 			end if
-		end if
-		
-		if( trim(this.symbol) == "Th" .and. trim(other.symbol) == "Th" ) then
-			output = .false.
-! 			if( dist < 3.5*angs ) then
-! 				output = .true.
-! 			else
-! 				output = .false.
-! 			end if
-		end if
-		
-		if( trim(this.symbol) == "O" .and. trim(other.symbol) == "O" ) then
-			if( dist < 1.6*angs ) then
+		else
+			if( dist <= effAlpha*cutoff .and. dist > 0.01_8 ) then
 				output = .true.
 			else
 				output = .false.
