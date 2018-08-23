@@ -59,7 +59,7 @@ module IOStream_
 	!! @brief Base class
 	!!
 	type, abstract, public :: FStream
-		character(255) :: name = NULL_FILENAME
+		character(1000) :: name = NULL_FILENAME
 		character(100) :: extension = ""
 		integer :: unit = 0
 		character(10) :: status = NULL_FILENAME

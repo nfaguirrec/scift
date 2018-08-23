@@ -41,12 +41,13 @@ module AtomicElementsDB_
 	use GOptions_
 	use UnitsConverter_
 	use String_
+	use SpecialAtomsPair_
 	implicit none
 	private
 	
 	public :: &
 		AtomicElementsDB_test
-	
+		
 	integer, public, parameter :: AtomicElementsDB_nElems = 103
 	
 	character(2), parameter :: UPPERCASE_SYMBOLS(AtomicElementsDB_nElems) = [ &
@@ -185,8 +186,11 @@ module AtomicElementsDB_
 		]
 		
 	type, public :: AtomicElementsDB
+	
+		type(SpecialAtomsPair), allocatable :: specialPairs(:)
 		
 		contains
+			final :: destroyAtomicElementsDB
 			procedure :: nElements
 			procedure :: atomicNumber
 			procedure :: atomicMass
@@ -196,6 +200,7 @@ module AtomicElementsDB_
 			procedure, private :: VanDerWaalsRadius
 			procedure :: color
 			procedure :: symbol
+			procedure :: setSpecialAtomPairs
 	end type AtomicElementsDB
 	
 	type(AtomicElementsDB), public :: AtomicElementsDB_instance
@@ -220,6 +225,15 @@ module AtomicElementsDB_
 			if (k > 0) ucStr(j:j) = uc(k:k)
 		end do
 	end subroutine upper
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyAtomicElementsDB( this )
+		type(AtomicElementsDB) :: this
+		
+		if( allocated( this.specialPairs ) ) deallocate( this.specialPairs )
+	end subroutine destroyAtomicElementsDB
 
 	!>
 	!! @brief
@@ -408,6 +422,35 @@ module AtomicElementsDB_
 			S = LOWERCASE_SYMBOLS(atomicNumber)
 		end if
 	end function symbol
+	
+	!>
+	!! @brief
+	!!
+	subroutine setSpecialAtomPairs( this, specialPairs )
+		class(AtomicElementsDB) :: this
+		type(SpecialAtomsPair), allocatable, intent(in) :: specialPairs(:)
+		
+		integer :: i
+		
+		if( allocated( this.specialPairs ) ) deallocate( this.specialPairs )
+		allocate( this.specialPairs( size(specialPairs) ) )
+		this.specialPairs = specialPairs
+		
+		write(6,"(A)") ""
+		write(6,"(A)") "---------------------"
+		write(6,"(A)") " Special Atom Pairs  "
+		write(6,"(A)") "---------------------"
+		write(6,"(A)") ""
+		write(6,"(A10,A10,2A15)") "symbol1", "symbol2", "bondCutoff(A)", "dbondCutoff(A)"
+		write(6,"(A10,A10,2A15)") "-------", "-------", "-------------", "--------------"
+		do i=1,size(specialPairs)
+			write(6,"(A10,A10,2F15.5)") trim(specialPairs(i).symbol1), trim(specialPairs(i).symbol2), &
+				specialPairs(i).bondCutoff/angs, specialPairs(i).doubleBondCutoff/angs
+		end do
+		write(6,"(A)") ""
+		
+	end subroutine setSpecialAtomPairs
+
 	
 	!>
 	!! @test Testing the AtomicElementsDB class
