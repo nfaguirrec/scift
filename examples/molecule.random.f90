@@ -124,7 +124,7 @@ program main
 	if( mol.nAtoms() == 2 ) alpha = 2.0_8
 	if( mol.nAtoms() == 3 ) alpha = 1.0_8
 	
-	call mol.randomGeometry( alpha=alpha )
+	call mol.randomGeometry( overlappingRadius=0.6_8, alpha=alpha )
 	
 	call mol.save()
 end program main

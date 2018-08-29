@@ -337,7 +337,7 @@ module RandomSampler_
 		if( .not. present(A) ) then
 			call random_number( sample )
 			
-			do i=1,size(sample,dim=1)
+			do i=1,nDim
 				sample(i,:) = this.range(i,1) + sample(i,:)*abs(this.range(i,2)-this.range(i,1))
 			end do
 		else

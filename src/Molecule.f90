@@ -1007,7 +1007,7 @@ module Molecule_
 		integer :: i, j, n
 		logical :: overlap
 		
-		effMaxIter = 100000
+		effMaxIter = 1e8
 		if( present(maxIter) ) effMaxIter = maxIter
 		
 		effAlpha = 1.0
@@ -1085,22 +1085,25 @@ module Molecule_
 				if( overlap ) exit
 			end do
 			
-			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			! Se verifica que a ajustar el centro de masas el sistema
-			! no se salga del volumen de simulación
-			cm = 0.0_8
-			do i=1,this.nAtoms()
-				cm = cm + this.atoms(i).mass()*RVEC_XYZ(i)
-			end do
-			cm = cm/this.mass()
+			if( .not. overlap ) then
+				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				! Se verifica que a ajustar el centro de masas el sistema
+				! no se salga del volumen de simulación
+				cm = 0.0_8
+				do i=1,this.nAtoms()
+					cm = cm + this.atoms(i).mass()*RVEC_XYZ(i)
+				end do
+				cm = cm/this.mass()
+				
+				do i=1,this.nAtoms()
+					if( norm2(RVEC_XYZ(i)-cm) > effRadius ) then
+						overlap = .true.
+					end if
+				end do
+				
+				if( .not. overlap ) exit
+			end if
 			
-			do i=1,this.nAtoms()
-				if( norm2(RVEC_XYZ(i)-cm) > effRadius ) then
-					overlap = .true.
-				end if
-			end do
-			
-			if( .not. overlap ) exit
 			nTrials_ = nTrials_ + 1
 		end do
 		
@@ -1294,7 +1297,7 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	subroutine distort( this, radius, method, maxIter, overlappingRadius, radiusType, useMassWeight, alpha, thr )
+	subroutine distort( this, radius, method, maxIter, overlappingRadius, radiusType, useMassWeight, alpha, thr, keepConnectivity )
 		class(Molecule) :: this
 		real(8), optional, intent(in) :: radius
 		integer, optional, intent(in) :: method
@@ -1304,22 +1307,33 @@ module Molecule_
 		logical, optional, intent(in) :: useMassWeight
 		real(8), optional, intent(in) :: alpha
 		real(8), optional, intent(in) :: thr
+		logical, optional, intent(in) :: keepConnectivity
 		
 		integer :: effMaxIter
+		logical :: effKeepConnectivity
 		
 		type(Molecule) :: distorted
 		integer :: i
+		logical :: test
 		
 		effMaxIter = 100000
 		if( present(maxIter) ) effMaxIter = maxIter
+		
+		effKeepConnectivity = .true.
+		if( present(keepConnectivity) ) effKeepConnectivity = keepConnectivity
 		
 		do i=1,effMaxIter
 			distorted = this
 
 			call distorted.distortBase( radius, method, maxIter=effMaxIter, overlappingRadius=overlappingRadius, radiusType=radiusType )
 			
-			if( .not. distorted.compareGeometry( this, useMassWeight=useMassWeight, thr=thr ) &
-				.and. distorted.compareConnectivity( this, alpha=alpha, thr=thr ) ) exit
+			test = .not. distorted.compareGeometry( this, useMassWeight=useMassWeight, thr=thr )
+			
+			if( effKeepConnectivity  ) then
+				test = test .and. distorted.compareConnectivity( this, alpha=alpha, thr=thr )
+			end if
+			
+			if( test ) exit
 		end do
 		
 		if( i == effMaxIter ) then

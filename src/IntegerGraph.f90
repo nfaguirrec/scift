@@ -2150,7 +2150,7 @@ module IntegerGraph_
 		if( present(checkLabels) ) effCheckLabels = checkLabels
 		
 		if( this.nNodes() /= other.nNodes() .or. this.nEdges() /= other.nEdges() ) then
-			output = 0.0_8
+			output = .false.
 			return
 		end if
 		
@@ -2168,7 +2168,7 @@ module IntegerGraph_
 			end do
 			
 			if( labelsMapThis.size() /= labelsMapOther.size() ) then
-				output = 0.0_8
+				output = .false.
 				return
 			end if
 			
@@ -2177,7 +2177,7 @@ module IntegerGraph_
 				labelB = labelsMapOther.keyFromPos(i)
 				
 				if( trim(labelA.fstr) /= trim(labelB.fstr) .or. labelsMapThis.atFromPos(i) /= labelsMapOther.atFromPos(i) ) then
-					output = 0.0_8
+					output = .false.
 					return
 				end if
 			end do
