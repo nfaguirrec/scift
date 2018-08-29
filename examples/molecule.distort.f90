@@ -52,10 +52,11 @@ program main
 	real(8) :: overlapping
 	real(8) :: alpha
 	real(8) :: symthr
+	logical :: keepConnectivity
 	
 	if( command_argument_count() < 1 ) then
-		write(*,"(A)") "Usage: molecule.distort file [ radius ] [ overlapping ] [ alpha ] [ symthr ] [ FIXED_DISTORSION | RANDOM_DISTORSION ]"
-		write(*,"(A)") "                                0.1           0.15         1.1       0.92               RANDOM_DISTORSION"
+		write(*,"(A)") "Usage: molecule.distort file [ radius ] [ overlapping ] [ alpha ] [ symthr ] [ FIXED_DISTORSION | RANDOM_DISTORSION ] keepConnectivity"
+		write(*,"(A)") "                                0.1           0.15         1.1       0.92               RANDOM_DISTORSION                     T       " 
 		stop
 	end if
 	
@@ -92,7 +93,11 @@ program main
 		end select
 	end if
 	
+	keepConnectivity = .true.
+	call get_command_argument( 7, sBuffer )
+	if( len_trim(sBuffer) /= 0 ) keepConnectivity = FString_toLogical(sBuffer)
+	
 	call mol.init( iFileName.fstr )
-	call mol.distort( radius=radius, method=method, overlappingRadius=overlapping, useMassWeight=.true., alpha=alpha, thr=symthr )
+	call mol.distort( radius=radius, method=method, overlappingRadius=overlapping, useMassWeight=.true., alpha=alpha, thr=symthr, keepConnectivity=keepConnectivity )
 	call mol.save()
 end program main
