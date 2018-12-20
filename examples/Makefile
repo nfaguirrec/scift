@@ -4,7 +4,7 @@ FCFLAGS = -static -static-intel -static-libgcc -mkl -traceback -w -I. -fpp -g -I
 LDFLAGS = -L../src -lscift
 TLIB = 
 
-all:  $(TLIB) boundStates histogram molecule.atomicOverlapping molecule.chemicalFormula molecule.compare molecule.distort molecule.duplicate molecule.fragments molecule.fv molecule.graph molecule.inertia molecule.isConnected molecule.isFragmentOf molecule.mass molecule.merge molecule.minMult molecule.move molecule.orient molecule.overlapping molecule.radius molecule.random molecule.rms molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.convolution n1df.cumulative n1df.derivative n1df.diagH n1df.evaluate n1df.filter n1df.fourier n1df.fourierFilter n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper 
+all:  $(TLIB) boundStates histogram molecule.angles molecule.atomicOverlapping molecule.chemicalFormula molecule.compare molecule.distort molecule.duplicate molecule.fragments molecule.fv molecule.graph molecule.inertia molecule.isConnected molecule.isFragmentOf molecule.mass molecule.merge molecule.minMult molecule.move molecule.orient molecule.overlapping molecule.radius molecule.random molecule.rms molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.convolution n1df.cumulative n1df.derivative n1df.diagH n1df.evaluate n1df.filter n1df.fourier n1df.fourierFilter n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper 
 
 boundStates: boundStates.f90  
 	fmake
@@ -15,6 +15,11 @@ histogram: histogram.f90
 	fmake
 	echo -n 'Building histogram.f90 '
 	time -f "(%E)" $(FC) $(FCFLAGS) histogram.f90  -o histogram $(LDFLAGS)
+
+molecule.angles: molecule.angles.f90  
+	fmake
+	echo -n 'Building molecule.angles.f90 '
+	time -f "(%E)" $(FC) $(FCFLAGS) molecule.angles.f90  -o molecule.angles $(LDFLAGS)
 
 molecule.atomicOverlapping: molecule.atomicOverlapping.f90  
 	fmake
@@ -272,10 +277,10 @@ n3df.oper: n3df.oper.f90
 	time -f "(%E)" $(FC) $(FCFLAGS) n3df.oper.f90  -o n3df.oper $(LDFLAGS)
 
 clean:
-	rm -f *.o *.mod *~ .deps boundStates histogram molecule.atomicOverlapping molecule.chemicalFormula molecule.compare molecule.distort molecule.duplicate molecule.fragments molecule.fv molecule.graph molecule.inertia molecule.isConnected molecule.isFragmentOf molecule.mass molecule.merge molecule.minMult molecule.move molecule.orient molecule.overlapping molecule.radius molecule.random molecule.rms molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.convolution n1df.cumulative n1df.derivative n1df.diagH n1df.evaluate n1df.filter n1df.fourier n1df.fourierFilter n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
+	rm -f *.o *.mod *~ .deps boundStates histogram molecule.angles molecule.atomicOverlapping molecule.chemicalFormula molecule.compare molecule.distort molecule.duplicate molecule.fragments molecule.fv molecule.graph molecule.inertia molecule.isConnected molecule.isFragmentOf molecule.mass molecule.merge molecule.minMult molecule.move molecule.orient molecule.overlapping molecule.radius molecule.random molecule.rms molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.convolution n1df.cumulative n1df.derivative n1df.diagH n1df.evaluate n1df.filter n1df.fourier n1df.fourierFilter n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
 
 distclean:
-	rm -f *.o *.mod *~ .deps Makefile boundStates histogram molecule.atomicOverlapping molecule.chemicalFormula molecule.compare molecule.distort molecule.duplicate molecule.fragments molecule.fv molecule.graph molecule.inertia molecule.isConnected molecule.isFragmentOf molecule.mass molecule.merge molecule.minMult molecule.move molecule.orient molecule.overlapping molecule.radius molecule.random molecule.rms molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.convolution n1df.cumulative n1df.derivative n1df.diagH n1df.evaluate n1df.filter n1df.fourier n1df.fourierFilter n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
+	rm -f *.o *.mod *~ .deps Makefile boundStates histogram molecule.angles molecule.atomicOverlapping molecule.chemicalFormula molecule.compare molecule.distort molecule.duplicate molecule.fragments molecule.fv molecule.graph molecule.inertia molecule.isConnected molecule.isFragmentOf molecule.mass molecule.merge molecule.minMult molecule.move molecule.orient molecule.overlapping molecule.radius molecule.random molecule.rms molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.convolution n1df.cumulative n1df.derivative n1df.diagH n1df.evaluate n1df.filter n1df.fourier n1df.fourierFilter n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper  2> /dev/null
 
 Makefile: .deps
 	fmake
