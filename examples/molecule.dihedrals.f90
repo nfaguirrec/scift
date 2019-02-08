@@ -53,14 +53,14 @@ program main
 	type(String) :: oFileDOT
 	
 	type(IntegerGraph) :: molGraph
-	type(IntegerVector) :: iNeighborsA, iNeighborsB
-	integer :: i, j, k
+	type(IntegerVector) :: iNeighborsA, iNeighborsB, iNeighborsC
+	integer :: i, j, k, l
 	integer :: hashKey
 	type(IntegerVector) :: hashKeys
 	
 	if( command_argument_count() < 1 ) then
-		write(*,*) "Usage: molecule.angles file [ alpha ]"
-		write(*,*) "                               1.0                              "
+		write(*,*) "Usage: molecule.dihedrals file [ alpha ]"
+		write(*,*) "                                  1.0   "
 		stop
 	end if
 	
@@ -89,18 +89,26 @@ program main
 				
 				do k=1,molGraph.nNodes()
 					if( iNeighborsB.contains(k) .and. k/=i ) then
-					
-						hashKey = i*molGraph.nNodes()**0 + j*molGraph.nNodes()**1 + k*molGraph.nNodes()**2
-						
-						if( .not. hashKeys.contains(hashKey) ) then
+						iNeighborsC = molGraph.neighbors(k)
+				
+						do l=1,molGraph.nNodes()
+							if( iNeighborsC.contains(l) .and. l/=i .and. l/=j ) then
 							
-							write(*,"(A,3I5,F10.2)") trim(mol.atoms(i).symbol)//"--"//trim(mol.atoms(j).symbol)//"--"//trim(mol.atoms(k).symbol), i, j, k, mol.angle( mol.atoms(i), mol.atoms(j), mol.atoms(k) )/deg
-							
-							call hashKeys.append( hashKey )
-							
-							hashKey = k*molGraph.nNodes()**0 + j*molGraph.nNodes()**1 + i*molGraph.nNodes()**2
-							call hashKeys.append( hashKey )
-						end if
+								hashKey = i*molGraph.nNodes()**0 + j*molGraph.nNodes()**1 + k*molGraph.nNodes()**2 + l*molGraph.nNodes()**3
+								
+								if( .not. hashKeys.contains(hashKey) ) then
+									
+									write(*,"(A,4I5,F10.2)") trim(mol.atoms(i).symbol)//"--"//trim(mol.atoms(j).symbol)//"--"//trim(mol.atoms(k).symbol)//"--"//trim(mol.atoms(l).symbol), &
+																i, j, k, l, mol.dihedral( mol.atoms(i), mol.atoms(j), mol.atoms(k), mol.atoms(l) )/deg
+									
+									call hashKeys.append( hashKey )
+									
+									hashKey = l*molGraph.nNodes()**0 + k*molGraph.nNodes()**1 + j*molGraph.nNodes()**2 + i*molGraph.nNodes()**3
+									call hashKeys.append( hashKey )
+								end if
+								
+							end if
+						end do
 						
 					end if
 				end do
