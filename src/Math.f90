@@ -1,7 +1,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!                                                                                   !!
 !!  This file is part of SciFT project                                               !!
-!!  Copyright (c) 2011-2014 Nestor F. Aguirre (nfaguirrec@gmail.com)                 !!
+!!  Copyright (c) 2011-2019 Nestor F. Aguirre (nfaguirrec@gmail.com)                 !!
 !!                                                                                   !!
 !!  Redistribution and use in source and binary forms, with or without               !!
 !!  modification, are permitted provided that the following conditions are met:      !!
@@ -54,6 +54,8 @@ module Math_
 		Math_sort, &
 		Math_fact, &
 		Math_comb, &
+		Math_combinationsNumber, &
+		Math_combinations, &
 		Math_multisetNumber, &
 		Math_multisets, &
 		Math_isOdd, &
@@ -98,9 +100,11 @@ module Math_
 		end function prototypeMultisetConstraint
 	end interface
 	
+	integer, allocatable :: kCombChosen(:)
+	integer(8) :: kCombIterator = -1
+	
 	integer, allocatable :: kMultiCombChosen(:)
 	integer(8) :: kMultiCombIterator = -1
-	logical :: kMultiCombFirstTime = .true.
 	
 	integer, allocatable :: ids(:)
 	procedure(prototypeMultisetConstraint), pointer, private :: MSConstraint !<- This is neccesary only for Math_multisets
@@ -479,6 +483,74 @@ module Math_
 	end function Math_comb
 	
 	!>
+	!! @brief Number of combinations with repetitions (same that Math_comb)
+	!!
+	function Math_combinationsNumber( nElems, sGroups ) result ( output )
+		integer, intent(in) :: nElems
+		integer, intent(in) :: sGroups
+		integer(8) :: output
+		
+		output = Math_comb( nElems, sGroups )
+	end function Math_combinationsNumber
+	
+	!>
+	!! @brief Builds the combinations without repetitions
+	!!
+	!! @param[in] nElems Number of elements
+	!! @param[in] sGroups size of the groups
+	!! @param[out] items final groups
+	!!
+	!! example: if S={1,2,3,4,5} then the combination of these elements in groups of three elements are
+	!!     1)   1 2 3
+	!!     2)   1 2 4
+	!!     3)   1 2 5
+	!!     4)   1 3 4
+	!!     5)   1 3 5
+	!!     6)   1 4 5
+	!!     7)   2 3 4
+	!!     8)   2 3 5
+	!!     9)   2 4 5
+	!!    10)   3 4 5
+	subroutine Math_combinations( nElems, sGroups, items )
+		integer, intent(in) :: nElems
+		integer, intent(in) :: sGroups
+		integer, allocatable, intent(inout) :: items(:,:)
+		
+		if( allocated(items) ) deallocate( items )
+		allocate( items( Math_comb(nElems,sGroups), sGroups ) )
+		
+		allocate( kCombChosen(sGroups) )
+		
+		kCombIterator=1
+		call combinationsBase( nElems, sGroups, items, 1 )
+		kCombIterator=-1
+		
+		deallocate( kCombChosen )
+	end subroutine Math_combinations
+	
+	!>
+	!! @brief Internal function
+	!!
+	recursive subroutine combinationsBase( nElems, sGroups, items, m )
+		integer, intent (in) :: nElems, sGroups
+		integer, allocatable, intent(inout) :: items(:,:)
+		integer, intent (in) :: m
+		integer :: n
+		
+		if( m > sGroups ) then
+			items(kCombIterator,:) = kCombChosen
+			kCombIterator = kCombIterator+1
+		else
+			do n=1, nElems
+				if( (m == 1) .or. (n > kCombChosen(m - 1)) ) then
+					kCombChosen( m ) = n
+					call combinationsBase( nElems, sGroups, items, m + 1 )
+				end if
+			end do
+		end if
+	end subroutine combinationsBase
+	
+	!>
 	!! @brief Number of combinations with repetitions
 	!!
 	!! The number of ways to sample sGroups elements from a set of nElems elements allowing for duplicates
@@ -486,7 +558,7 @@ module Math_
 	function Math_multisetNumber( nElems, sGroups ) result ( output )
 		integer, intent(in) :: nElems
 		integer, intent(in) :: sGroups
-		integer :: output
+		integer(8) :: output
 		
 		output = Math_comb( nElems+sGroups-1, sGroups )
 	end function Math_multisetNumber

@@ -1787,10 +1787,24 @@ module Molecule_
 		class(Atom), intent(in) :: atom4
 		real(8) :: output
 		
-		write(6,*) "### ERROR ### Molecule.dihedral(). Function not implemented yet"
-		stop
+		real(8) :: q1(3), q2(3), q3(3)
+		real(8) :: n1(3), n2(3)
+		real(8) :: u1(3), u2(3), u3(3)
 		
-		output = 0.0_8
+		q1 = atom2.r-atom1.r
+		q2 = atom3.r-atom2.r
+		q3 = atom4.r-atom3.r
+		
+		n1 = Math_crossProduct( q1, q2 )
+		n1 = n1/norm2(n1)
+		n2 = Math_crossProduct( q2, q3 )
+		n2 = n2/norm2(n2)
+		
+		u1 = n2
+		u3 = q2/norm2(q2)
+		u2 = Math_crossProduct( u3, u1 )
+		
+		output = -atan2( Math_dotProduct(n1,u2), Math_dotProduct(n1,u1) )
 	end function dihedral
 	
 	!>
