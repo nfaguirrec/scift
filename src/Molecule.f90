@@ -1485,13 +1485,14 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	function compareGeometry( this, other, useMassWeight, useIm, thr, debug ) result( output )
+	function compareGeometry( this, other, useMassWeight, useIm, thr, debug, similarity ) result( output )
 		class(Molecule), intent(in) :: this
 		class(Molecule), intent(in) :: other
 		logical, optional :: useMassWeight
 		logical, optional :: useIm
 		real(8), optional, intent(in) :: thr
 		logical, optional, intent(in) :: debug
+		real(8), optional, intent(out) :: similarity
 		logical :: output
 		
 		real(8):: effThr
@@ -1500,7 +1501,6 @@ module Molecule_
 		type(Molecule) :: effOther
 		
 		real(8) :: this_descrip(15), other_descrip(15)
-		real(8) :: similarity
 		
 		effDebug = .false.
 		if( present(debug) ) effDebug = debug
@@ -1543,7 +1543,7 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	function compareConnectivity( this, other, alpha, thr, useNodeWeights, useEdgeWeights, debug ) result( output )
+	function compareConnectivity( this, other, alpha, thr, useNodeWeights, useEdgeWeights, debug, similarity ) result( output )
 		class(Molecule), intent(in) :: this
 		class(Molecule), intent(in) :: other
 		real(8), optional, intent(in) :: alpha
@@ -1551,6 +1551,7 @@ module Molecule_
 		logical, optional :: debug
 		logical, optional :: useNodeWeights
 		logical, optional :: useEdgeWeights
+		real(8), optional, intent(out) :: similarity
 		logical :: output
 		
 		real(8):: effAlpha
@@ -1558,7 +1559,6 @@ module Molecule_
 		logical :: effDebug
 		
 		real(8) :: this_descrip(9), other_descrip(9)
-		real(8) :: similarity
 		type(Matrix) :: A, D, L, Omega
 		
 		effAlpha = 1.0_8
