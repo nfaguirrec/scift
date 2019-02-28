@@ -3,17 +3,19 @@
 format=$1 # xyz or rxyz
 targetDir=$2
 referenceDir=$3
-filter=$4 # i.e. H--C--H
-bondScale=$5
+bondScale=$4
+labels=$5 # "FALSE"
+filter=$6 # i.e. H--C--H
 
 [ -z "$bondScale" ] && bondScale=1.1
+[ -z "$labels" ] && labels="FALSE"
 
 cat /dev/null > output-$$
 
 for f in `ls $targetDir | grep -E ".$format$"`
 do
 	molecule.angles $referenceDir/$f $bondScale | grep "$filter" > fileRef-$$
-	molecule.angles $targetDir/$f $bondScale | grep "$filter" > file-$$
+	molecule.angles $targetDir/$f $bondScale | grep "$filter" | awk '{print $0,"'$f'"}' > file-$$
 	
 	nAngles1=`cat fileRef-$$ | wc -l`
 	nAngles2=`cat file-$$ | wc -l`
@@ -112,6 +114,26 @@ SDR=`gawk '
 		print sqrt(stdev/n)
 	}
 	' output2-$$`
+	
+MAE=`gawk '
+	BEGIN{
+		i=0
+	}
+	{$0!~/[[:blank:]]*$/}{
+		y[i] = $5
+		f[i] = $10
+		i+=1
+	}
+	END{
+		n = i
+		
+		aver = 0.0
+		for( i=0; i<n; i++ ) aver += y[i]-f[i]
+		aver = aver/n
+		
+		print aver
+	}
+	' output2-$$`
 
 cat > plot-$$.gnuplot << EOF
 set terminal qt size 1024,768 font ",18" enhanced
@@ -119,12 +141,13 @@ set terminal qt size 1024,768 font ",18" enhanced
 set size square
 set key inside left top
 
-set xlabel "Angle REFERENCE `echo $filter | sed 's/--/-/g'` (deg.)"
+set xlabel "Angle `echo $filter | sed 's/--/-/g'` (deg.) REFERENCE"
 set ylabel "Angle `echo $filter | sed 's/--/-/g'` (deg.)"
 
 R2=$R2
 SDR=$SDR
 RMSE=$RMSE
+MAE=$MAE
 
 margin = 0.05*($maxEff-($minEff))
 
@@ -133,8 +156,9 @@ if( "labels-$labels" eq "labels-TRUE" ){
 		x w l t sprintf(" R^2 = %.5f",R2) lc rgb "white", \\
 		x w l t sprintf("RMSE = %.5f",RMSE) lc rgb "white", \\
 		x w l t sprintf(" SDR = %.5f",SDR) lc rgb "white", \\
+		x w l t sprintf(" MAE = %.5f",MAE) lc rgb "white", \\
 		"output2-$$" u 5:10 notitle w p ps 1.0 pt 7 lc rgb "red", \\
-		"output2-$$" u 5:10:1 notitle w labels left font ",9", \\
+		"output2-$$" u 5:10:(stringcolumn(11)."(".stringcolumn(1).":".stringcolumn(2).",".stringcolumn(3).",".stringcolumn(4).")") notitle w labels left font ",9", \\
 		for [i=1:10] x+i*0.1*abs($maxValueRef-($minValueRef)) notitle w l lt 0 lw 0.8 lc rgb "black", \\
 		for [i=1:10] x-i*0.1*abs($maxValueRef-($minValueRef)) notitle w l lt 0 lw 0.8 lc rgb "black", \\
 		x notitle w l lw 1.5 lc rgb "blue"
@@ -143,6 +167,7 @@ if( "labels-$labels" eq "labels-TRUE" ){
 		x w l t sprintf("R^2 = %.5f",R2) lc rgb "white", \\
 		x w l t sprintf("RMSE = %.5f",RMSE) lc rgb "white", \\
 		x w l t sprintf("SDR = %.5f",SDR) lc rgb "white", \\
+		x w l t sprintf(" MAE = %.5f",MAE) lc rgb "white", \\
 		"output2-$$" u 5:10 notitle w p ps 1.0 pt 7 lc rgb "red", \\
 		for [i=1:10] x+i*0.1*abs($maxValueRef-($minValueRef)) notitle w l lt 0 lw 0.8 lc rgb "black", \\
 		for [i=1:10] x-i*0.1*abs($maxValueRef-($minValueRef)) notitle w l lt 0 lw 0.8 lc rgb "black", \\
@@ -154,6 +179,9 @@ EOF
 
 cat plot-$$.gnuplot
 gnuplot plot-$$.gnuplot
+
+echo "histogram.sh -f output3-$$ -c 1 -p \"set size 1.0,0.5; set encoding iso_8859_1; set xlabel 'Angle Error (deg.)'; set linetype 1 lc rgb 'red'\""
+echo ""
 
 gawk '{ print ($10-$5) }' output2-$$ > output3-$$
 histogram.sh -f output3-$$ -c 1 -p \
