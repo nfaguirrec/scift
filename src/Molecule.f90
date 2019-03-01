@@ -1499,6 +1499,7 @@ module Molecule_
 		logical :: effDebug
 		type(Molecule) :: effThis
 		type(Molecule) :: effOther
+		real(8) :: effSimilarity
 		
 		real(8) :: this_descrip(15), other_descrip(15)
 		
@@ -1520,24 +1521,26 @@ module Molecule_
 		! Jaccard similarity index
 ! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
 ! 		other_descrip = other_descrip + abs(minval(other_descrip))
-! 		similarity = sum( min(this_descrip,other_descrip) )
-! 		similarity = similarity/sum( max(this_descrip,other_descrip) )
+! 		effSimilarity = sum( min(this_descrip,other_descrip) )
+! 		effSimilarity = effSimilarity/sum( max(this_descrip,other_descrip) )
 		
 		! Native Ballester similarity index
-		similarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
+		effSimilarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
 		
 		output = .false.
-		if( similarity > effThr  ) output = .true.
+		if( effSimilarity > effThr  ) output = .true.
 		
 		if( effDebug ) then
 			write(*,*) ""
 			write(*,"(A,<size(this_descrip)>F10.4)")  "  Descrip1 = ", this_descrip
 			write(*,"(A,<size(other_descrip)>F10.4)")  "  Descrip2 = ", other_descrip
-			write(*,"(A,F10.5)")    "Similarity = ", similarity
+			write(*,"(A,F10.5)")    "Similarity = ", effSimilarity
 			write(*,"(A,F10.5)")    " Threshold = ", effThr
 			write(*,*)              "    Equal? = ", output
 			write(*,*) ""
 		end if
+		
+		if( present(similarity) ) similarity = effSimilarity
 	end function compareGeometry
 	
 	!>
@@ -1557,6 +1560,7 @@ module Molecule_
 		real(8):: effAlpha
 		real(8):: effThr
 		logical :: effDebug
+		real(8) :: effSimilarity
 		
 		real(8) :: this_descrip(9), other_descrip(9)
 		type(Matrix) :: A, D, L, Omega
@@ -1619,24 +1623,26 @@ module Molecule_
 		! Jaccard similarity index
 ! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
 ! 		other_descrip = other_descrip + abs(minval(other_descrip))
-! 		similarity = sum( min(this_descrip,other_descrip) )
-! 		similarity = similarity/sum( max(this_descrip,other_descrip) )
+! 		effSimilarity = sum( min(this_descrip,other_descrip) )
+! 		effSimilarity = effSimilarity/sum( max(this_descrip,other_descrip) )
 		
 		! Native Ballester similarity index
-		similarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
+		effSimilarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
 		
 		output = .false.
-		if( similarity > effThr ) output = .true.
+		if( effSimilarity > effThr ) output = .true.
 		
 		if( effDebug ) then
 			write(*,*) ""
 			write(*,"(A,<size(this_descrip)>F15.4)")  "  Descrip1 = ", this_descrip
 			write(*,"(A,<size(other_descrip)>F15.4)")  "  Descrip2 = ", other_descrip
-			write(*,"(A,F10.5)")    "Similarity = ", similarity
+			write(*,"(A,F10.5)")    "Similarity = ", effSimilarity
 			write(*,"(A,F10.5)")    " Threshold = ", effThr
 			write(*,*)              "    Equal? = ", output
 			write(*,*) ""
 		end if
+		
+		if( present(similarity) ) similarity = effSimilarity
 	end function compareConnectivity
 	
 	!>
