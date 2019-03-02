@@ -1485,22 +1485,23 @@ module Molecule_
 	!>
 	!! @brief
 	!!
-	function compareGeometry( this, other, useMassWeight, useIm, thr, debug ) result( output )
+	function compareGeometry( this, other, useMassWeight, useIm, thr, debug, similarity ) result( output )
 		class(Molecule), intent(in) :: this
 		class(Molecule), intent(in) :: other
 		logical, optional :: useMassWeight
 		logical, optional :: useIm
 		real(8), optional, intent(in) :: thr
 		logical, optional, intent(in) :: debug
+		real(8), optional, intent(out) :: similarity
 		logical :: output
 		
 		real(8):: effThr
 		logical :: effDebug
 		type(Molecule) :: effThis
 		type(Molecule) :: effOther
+		real(8) :: effSimilarity
 		
 		real(8) :: this_descrip(15), other_descrip(15)
-		real(8) :: similarity
 		
 		effDebug = .false.
 		if( present(debug) ) effDebug = debug
@@ -1520,30 +1521,32 @@ module Molecule_
 		! Jaccard similarity index
 ! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
 ! 		other_descrip = other_descrip + abs(minval(other_descrip))
-! 		similarity = sum( min(this_descrip,other_descrip) )
-! 		similarity = similarity/sum( max(this_descrip,other_descrip) )
+! 		effSimilarity = sum( min(this_descrip,other_descrip) )
+! 		effSimilarity = effSimilarity/sum( max(this_descrip,other_descrip) )
 		
 		! Native Ballester similarity index
-		similarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
+		effSimilarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
 		
 		output = .false.
-		if( similarity > effThr  ) output = .true.
+		if( effSimilarity > effThr  ) output = .true.
 		
 		if( effDebug ) then
 			write(*,*) ""
 			write(*,"(A,<size(this_descrip)>F10.4)")  "  Descrip1 = ", this_descrip
 			write(*,"(A,<size(other_descrip)>F10.4)")  "  Descrip2 = ", other_descrip
-			write(*,"(A,F10.5)")    "Similarity = ", similarity
+			write(*,"(A,F10.5)")    "Similarity = ", effSimilarity
 			write(*,"(A,F10.5)")    " Threshold = ", effThr
 			write(*,*)              "    Equal? = ", output
 			write(*,*) ""
 		end if
+		
+		if( present(similarity) ) similarity = effSimilarity
 	end function compareGeometry
 	
 	!>
 	!! @brief
 	!!
-	function compareConnectivity( this, other, alpha, thr, useNodeWeights, useEdgeWeights, debug ) result( output )
+	function compareConnectivity( this, other, alpha, thr, useNodeWeights, useEdgeWeights, debug, similarity ) result( output )
 		class(Molecule), intent(in) :: this
 		class(Molecule), intent(in) :: other
 		real(8), optional, intent(in) :: alpha
@@ -1551,14 +1554,15 @@ module Molecule_
 		logical, optional :: debug
 		logical, optional :: useNodeWeights
 		logical, optional :: useEdgeWeights
+		real(8), optional, intent(out) :: similarity
 		logical :: output
 		
 		real(8):: effAlpha
 		real(8):: effThr
 		logical :: effDebug
+		real(8) :: effSimilarity
 		
 		real(8) :: this_descrip(9), other_descrip(9)
-		real(8) :: similarity
 		type(Matrix) :: A, D, L, Omega
 		
 		effAlpha = 1.0_8
@@ -1619,24 +1623,26 @@ module Molecule_
 		! Jaccard similarity index
 ! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
 ! 		other_descrip = other_descrip + abs(minval(other_descrip))
-! 		similarity = sum( min(this_descrip,other_descrip) )
-! 		similarity = similarity/sum( max(this_descrip,other_descrip) )
+! 		effSimilarity = sum( min(this_descrip,other_descrip) )
+! 		effSimilarity = effSimilarity/sum( max(this_descrip,other_descrip) )
 		
 		! Native Ballester similarity index
-		similarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
+		effSimilarity = 1.0_8/( 1.0_8+abs(sum( this_descrip-other_descrip ))/real(size(this_descrip),8) )
 		
 		output = .false.
-		if( similarity > effThr ) output = .true.
+		if( effSimilarity > effThr ) output = .true.
 		
 		if( effDebug ) then
 			write(*,*) ""
 			write(*,"(A,<size(this_descrip)>F15.4)")  "  Descrip1 = ", this_descrip
 			write(*,"(A,<size(other_descrip)>F15.4)")  "  Descrip2 = ", other_descrip
-			write(*,"(A,F10.5)")    "Similarity = ", similarity
+			write(*,"(A,F10.5)")    "Similarity = ", effSimilarity
 			write(*,"(A,F10.5)")    " Threshold = ", effThr
 			write(*,*)              "    Equal? = ", output
 			write(*,*) ""
 		end if
+		
+		if( present(similarity) ) similarity = effSimilarity
 	end function compareConnectivity
 	
 	!>

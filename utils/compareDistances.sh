@@ -3,18 +3,19 @@
 format=$1 # xyz or rxyz
 targetDir=$2
 referenceDir=$3
-filter=$4 # i.e. H--C
-bondScale=$5
-labels="FALSE"
+bondScale=$4
+labels=$5 # "FALSE"
+filter=$6 # i.e. H--C
 
 [ -z "$bondScale" ] && bondScale=1.1
+[ -z "$labels" ] && labels="FALSE"
 
 cat /dev/null > output-$$
 
 for f in `ls $targetDir | grep -E ".$format$"`
 do
 	molecule.distances $referenceDir/$f $bondScale | grep "$filter" > fileRef-$$
-	molecule.distances $targetDir/$f $bondScale | grep "$filter" > file-$$
+	molecule.distances $targetDir/$f $bondScale | grep "$filter" | awk '{print $0,"'$f'"}' > file-$$
 	
 	nBonds1=`cat fileRef-$$ | wc -l`
 	nBonds2=`cat file-$$ | wc -l`
@@ -116,6 +117,26 @@ SDR=`gawk '
 	}
 	' output2-$$`
 	
+MAE=`gawk '
+	BEGIN{
+		i=0
+	}
+	{$0!~/[[:blank:]]*$/}{
+		y[i] = $4
+		f[i] = $8
+		i+=1
+	}
+	END{
+		n = i
+		
+		aver = 0.0
+		for( i=0; i<n; i++ ) aver += y[i]-f[i]
+		aver = aver/n
+		
+		print aver
+	}
+	' output2-$$`
+	
 cat > plot-$$.gnuplot << EOF
 set terminal qt size 1024,768 font ",18" enhanced
 set encoding iso_8859_1
@@ -123,12 +144,13 @@ set encoding iso_8859_1
 set size square
 set key inside left top
 
-set xlabel "Bond Distance REFERENCE `echo $filter | sed 's/--/-/g'` (\305)"
+set xlabel "Bond Distance `echo $filter | sed 's/--/-/g'` (\305) REFERENCE"
 set ylabel "Bond Distance `echo $filter | sed 's/--/-/g'` (\305)"
 
 R2=$R2
 SDR=$SDR
 RMSE=$RMSE
+MAE=$MAE
 
 margin = 0.05*($maxEff-($minEff))
 
@@ -137,8 +159,9 @@ if( "labels-$labels" eq "labels-TRUE" ){
 		x w l t sprintf(" R^2 = %.5f",R2) lc rgb "white", \\
 		x w l t sprintf("RMSE = %.5f",RMSE) lc rgb "white", \\
 		x w l t sprintf(" SDR = %.5f",SDR) lc rgb "white", \\
+		x w l t sprintf(" MAE = %.5f",MAE) lc rgb "white", \\
 		"output2-$$" u 4:8 notitle w p ps 1.0 pt 7 lc rgb "red", \\
-		"output2-$$" u 4:8:1 notitle w labels left font ",9", \\
+		"output2-$$" u 4:8:(stringcolumn(9)."(".stringcolumn(1).":".stringcolumn(2).",".stringcolumn(3).")") notitle w labels left font ",9", \\
 		for [i=1:10] x+i*0.1*abs($maxValueRef-($minValueRef)) notitle w l lt 0 lw 0.8 lc rgb "black", \\
 		for [i=1:10] x-i*0.1*abs($maxValueRef-($minValueRef)) notitle w l lt 0 lw 0.8 lc rgb "black", \\
 		x notitle w l lw 1.5 lc rgb "blue"
@@ -147,6 +170,7 @@ if( "labels-$labels" eq "labels-TRUE" ){
 		x w l t sprintf("R^2 = %.5f",R2) lc rgb "white", \\
 		x w l t sprintf("RMSE = %.5f",RMSE) lc rgb "white", \\
 		x w l t sprintf("SDR = %.5f",SDR) lc rgb "white", \\
+		x w l t sprintf(" MAE = %.5f",MAE) lc rgb "white", \\
 		"output2-$$" u 4:8 notitle w p ps 1.0 pt 7 lc rgb "red", \\
 		for [i=1:10] x+i*0.1*abs($maxValueRef-($minValueRef)) notitle w l lt 0 lw 0.8 lc rgb "black", \\
 		for [i=1:10] x-i*0.1*abs($maxValueRef-($minValueRef)) notitle w l lt 0 lw 0.8 lc rgb "black", \\
@@ -160,6 +184,10 @@ cat plot-$$.gnuplot
 gnuplot plot-$$.gnuplot
 
 gawk '{ print ($8-$4) }' output2-$$ > output3-$$
+
+echo "histogram.sh -f output3-$$ -c 1 -p \"set size 1.0,0.5; set encoding iso_8859_1; set xlabel 'Bond Distance Error (\305)'; set linetype 1 lc rgb 'red'\""
+echo ""
+
 histogram.sh -f output3-$$ -c 1 -p \
 "
 set size 1.0,0.5
