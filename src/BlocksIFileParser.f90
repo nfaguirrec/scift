@@ -678,7 +678,7 @@ module BlocksIFileParser_
 		character(1000), allocatable :: tokens(:)
 		integer :: i
 		
-		call this.getBlock( item, tableBuffer, ignoreVars=.true. )
+		call this.getBlock( item, tableBuffer, ignoreVars=.false. )
 		
 		if( allocated(this.varName) ) deallocate(this.varName)
 		allocate( this.varName( size(tableBuffer) ) )
