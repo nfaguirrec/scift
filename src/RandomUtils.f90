@@ -170,6 +170,11 @@ module RandomUtils_
 		real(8), intent(in) :: range(2)
 		real(8) :: output
 		
+		if( range(2) < range(1) ) then
+				write(6,"(A)") "### ERROR ### RandomUtils_rUniform: Range error range(2) < range(1) "
+				stop
+		end if
+		
 		call RandomUtils_init()
 		call random_number( output )
 		
@@ -187,6 +192,11 @@ module RandomUtils_
 		integer :: output
 		
 		real(8) :: rBuffer
+		
+		if( range(2) < range(1) ) then
+				write(6,"(A)") "### ERROR ### RandomUtils_rUniform: Range error range(2) < range(1) "
+				stop
+		end if
 		
 		call RandomUtils_init()
 		call random_number( rBuffer )
