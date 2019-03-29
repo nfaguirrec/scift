@@ -130,13 +130,13 @@ program main
 	
 	removed = .false.
 	
-	write(*,"(A)",advance="no")  "Loading molecules "
+	write(6,"(A)",advance="no")  "Loading molecules "
 	call flush(6)
 	
 	do i=1,ifile.numberOfLines
 		
 		if( mod(i,int(ifile.numberOfLines/10.0_8)) == 0 ) then
-			write(*,"(A)",advance="no") "."
+			write(6,"(A)",advance="no") "."
 			call flush(6)
 		end if
 		
@@ -149,20 +149,20 @@ program main
 		
 	end do
 	
-	write(*,"(A)") " OK"
+	write(6,"(A)") " OK"
 	call flush(6)
 	
 	allocate( cFormula(size(molecules)) )
 	allocate( gDescriptors(15,size(molecules)) )
 	allocate( cDescriptors( 9,size(molecules)) )
 	
-	write(*,"(A)",advance="no")  "Calculating descriptors "
+	write(6,"(A)",advance="no")  "Calculating descriptors "
 	call flush(6)
 	
 	do i=1,size(molecules)
 	
 		if( mod(i,int(ifile.numberOfLines/10.0_8)) == 0 ) then
-			write(*,"(A)",advance="no") "."
+			write(6,"(A)",advance="no") "."
 			call flush(6)
 		end if
 	
@@ -172,8 +172,8 @@ program main
 		
 	end do
 	
-	write(*,"(A)") " OK"
-	write(*,*) ""
+	write(6,"(A)") " OK"
+	write(6,*) ""
 	call flush(6)
 	
 	do i=1,size(molecules)-1
