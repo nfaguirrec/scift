@@ -57,6 +57,12 @@ program main
 	logical :: useNodeWeights
 	logical :: useEdgeWeights
 	
+	character(100), allocatable :: cFormula(:)
+	real(8), allocatable :: gDescriptors(:,:)
+	real(8), allocatable :: cDescriptors(:,:)
+	real(8) :: gSimilarity
+	real(8) :: cSimilarity
+
 	integer :: i, j
 	type(IFStream) :: ifile
 	type(String), allocatable :: fileNames(:)
@@ -133,6 +139,16 @@ program main
 		energies(i) = FString_toReal( trim(tokens(3)) )
 	end do
 	
+	allocate( cFormula(size(molecules)) )
+	allocate( gDescriptors(15,size(molecules)) )
+	allocate( cDescriptors( 9,size(molecules)) )
+	
+	do i=1,size(molecules)
+		cFormula(i) = molecules(i).chemicalFormula()
+		gDescriptors(:,i) = molecules(i).ballesterDescriptors( useMassWeight=useMassWeight, useIm=useIm )
+		cDescriptors(:,i) = molecules(i).connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
+	end do
+	
 	do i=1,size(molecules)-1
 		if( .not. removed(i) ) then
 			
@@ -141,10 +157,29 @@ program main
 				if( .not. removed(j)  .and. abs( energies(i)-energies(j) ) <= 1.0_8*eV ) then
 ! 					write(*,"(A)") "      Comparing "//trim(fileNames(i).fstr)//" <-> "//trim(fileNames(j).fstr)//" >>>> dE="//adjustl(trim((FString_fromReal(abs( energies(i)-energies(j) ), "(F10.5)"))))
 					
+					gSimilarity = 1.0_8/( 1.0_8+abs(sum( gDescriptors(:,i)-gDescriptors(:,j) ))/real(size(gDescriptors(:,i)),8) )
+					cSimilarity = 1.0_8/( 1.0_8+abs(sum( cDescriptors(:,i)-cDescriptors(:,j) ))/real(size(cDescriptors(:,i)),8) )
+					
+					if( debug ) then
+						write(*,*) ""
+						write(*,"(A,<size(gDescriptors)>F15.4)")  " gDescrip1 = ", gDescriptors(:,i)
+						write(*,"(A,<size(gDescriptors)>F15.4)")  " gDescrip2 = ", gDescriptors(:,j)
+						write(*,"(A,F10.5)")    "Similarity = ", gSimilarity
+						write(*,"(A,F10.5)")    " Threshold = ", thr
+						write(*,*)              "    Equal? = ", gSimilarity > thr
+						write(*,*) ""
+						write(*,"(A,<size(cDescriptors)>F15.4)")  " cDescrip1 = ", cDescriptors(:,i)
+						write(*,"(A,<size(cDescriptors)>F15.4)")  " cDescrip2 = ", cDescriptors(:,j)
+						write(*,"(A,F10.5)")    "Similarity = ", cSimilarity
+						write(*,"(A,F10.5)")    " Threshold = ", thr
+						write(*,*)              "    Equal? = ", cSimilarity > thr
+						write(*,*) ""
+					end if
+					
 					equal = 0
-					if( molecules(i).compareFormula( molecules(j), debug=debug ) ) equal = equal + 1					
-					if( molecules(i).compareGeometry( molecules(j), useMassWeight=useMassWeight, useIm=useIm, thr=thr, debug=debug ) ) equal = equal + 1
-					if( molecules(i).compareConnectivity( molecules(j), alpha=alpha, thr=thr, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights, debug=debug ) ) equal = equal + 1
+					if( trim(cFormula(i)) == trim(cFormula(j)) ) equal = equal + 1					
+					if( gSimilarity > thr ) equal = equal + 1
+					if( cSimilarity > thr ) equal = equal + 1
 					
 					if( equal == 3 ) then
 						sBuffer = FString_fromReal(abs( energies(i)-energies(j) )/eV, "(F10.3)")
@@ -167,7 +202,10 @@ program main
 			
 		end if
 	end do
-	
+
+	deallocate( cFormula )
+	deallocate( gDescriptors )
+	deallocate( cDescriptors )
 	deallocate( molecules )
 	deallocate( fileNames )
 	deallocate( energies )
