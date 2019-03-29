@@ -131,11 +131,13 @@ program main
 	removed = .false.
 	
 	write(*,"(A)",advance="no")  "Loading molecules "
+	call flush(6)
 	
 	do i=1,ifile.numberOfLines
 		
 		if( mod(i,int(ifile.numberOfLines/10.0_8)) == 0 ) then
 			write(*,"(A)",advance="no") "."
+			call flush(6)
 		end if
 		
 		fileNames(i) = trim(ifile.readLine())
@@ -148,17 +150,20 @@ program main
 	end do
 	
 	write(*,"(A)") " OK"
+	call flush(6)
 	
 	allocate( cFormula(size(molecules)) )
 	allocate( gDescriptors(15,size(molecules)) )
 	allocate( cDescriptors( 9,size(molecules)) )
 	
 	write(*,"(A)",advance="no")  "Calculating descriptors "
+	call flush(6)
 	
 	do i=1,size(molecules)
 	
 		if( mod(i,int(ifile.numberOfLines/10.0_8)) == 0 ) then
 			write(*,"(A)",advance="no") "."
+			call flush(6)
 		end if
 	
 		cFormula(i) = molecules(i).chemicalFormula()
@@ -169,6 +174,7 @@ program main
 	
 	write(*,"(A)") " OK"
 	write(*,*) ""
+	call flush(6)
 	
 	do i=1,size(molecules)-1
 		if( .not. removed(i) ) then
