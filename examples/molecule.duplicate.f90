@@ -130,24 +130,45 @@ program main
 	
 	removed = .false.
 	
+	write(*,"(A)",advance="no")  "Loading molecules "
+	
 	do i=1,ifile.numberOfLines
+		
+		if( mod(i,int(ifile.numberOfLines/10.0_8)) == 0 ) then
+			write(*,"(A)",advance="no") "."
+		end if
+		
 		fileNames(i) = trim(ifile.readLine())
 		call molecules(i).init( fileNames(i).fstr )
 		call FString_split( molecules(i).name, tokens, " " )
 		
 		! @todo Cerificar que todas las moleculas tienen la energia definida. De lo contrario toca volver al esquema basico
 		energies(i) = FString_toReal( trim(tokens(3)) )
+		
 	end do
+	
+	write(*,"(A)") " OK"
 	
 	allocate( cFormula(size(molecules)) )
 	allocate( gDescriptors(15,size(molecules)) )
 	allocate( cDescriptors( 9,size(molecules)) )
 	
+	write(*,"(A)",advance="no")  "Calculating descriptors "
+	
 	do i=1,size(molecules)
+	
+		if( mod(i,int(ifile.numberOfLines/10.0_8)) == 0 ) then
+			write(*,"(A)",advance="no") "."
+		end if
+	
 		cFormula(i) = molecules(i).chemicalFormula()
 		gDescriptors(:,i) = molecules(i).ballesterDescriptors( useMassWeight=useMassWeight, useIm=useIm )
 		cDescriptors(:,i) = molecules(i).connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
+		
 	end do
+	
+	write(*,"(A)") " OK"
+	write(*,*) ""
 	
 	do i=1,size(molecules)-1
 		if( .not. removed(i) ) then
