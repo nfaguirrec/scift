@@ -1,8 +1,6 @@
-# SciFT (Scientific Fortran Tools)
+## SciFT (Scientific Fortran Tools)
 
-The Scientific Fortran Tools (SciFT) is a numerical library for fortran programmers.
-The library provides a wide range of mathematical routines such as random number generators,
-special functions and least-squares fitting.
+The Scientific Fortran Tools (SciFT) is a library specially oriented to scientific purposes for Fortran programmers. The library provides a wide range of mathematical routines such as random number generators, special functions, and high-level classes to manipulate strings, files parsing, matrices, grid-based numerical functions, data structures (lists, vectors, maps, graphs), and molecules.
 
 The complete range of subject areas covered by the library includes:
 
@@ -31,7 +29,7 @@ SciFT is known to work on GNU/Linux. However, it should work on any POSIX-compli
 - **[SciFT (Scientific Fortran Tools)](https://github.com/nfaguirrec/scift)**<br>
   The Scientific Fortran Tools (SciFT) is a numerical library for fortran programmers.
 
-**Recommended Dependencies:**
+<!---**Recommended Dependencies:**--->
 
 ## Compiling SciFT
 
@@ -56,7 +54,8 @@ The following should be the content of the scift directory if previous steps wer
 ```
 $ cd scift
 $ ls
-docs  doxyfile  examples  LICENSE  LICENSE.FortranParser  Makefile  README.md  SCIFTvars.sh  src  utils  VERSION
+docs      examples  LICENSE.FortranParser  README.md     src    VERSION
+doxyfile  LICENSE   Makefile               SCIFTvars.sh  utils
 ```
 
 Enter in the scift directory (`cd scift`) and modify the Makefile file (`src/Makefile`) if necessary.
