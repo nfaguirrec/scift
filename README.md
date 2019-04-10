@@ -4,7 +4,6 @@ The Scientific Fortran Tools (SciFT) is a library specially oriented to scientif
 
 The complete range of subject areas covered by the library includes:
 
-## Data Structures
 * [Molecules](#molecules)
 * [Numerical Functions](#numerical-functions)
 * [Data Structures](#data-structures)
