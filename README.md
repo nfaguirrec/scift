@@ -75,7 +75,7 @@ source <PATH_TO_M3C>/SCIFTvars.sh
 
 **class StringIntegerMap**
 
-The following block (`test.f90`) is an example of how to use the class Map (equivalent to map<std:string, int> in C++):
+The following block (`test.f90`) is an example of how to use the class Map (equivalent to map<string, int> in C++):
 
 ```fortran
 program test
