@@ -170,17 +170,17 @@ program test
 	
 	write(*,*) ""
 	write(*,*) "A ="
-	call A.show( 6, formatted=.true. )
+	call A.show( formatted=.true. )
 	
 	call A.eigen( eVecs=B, eVals=C )
 	
 	write(*,*) ""
 	write(*,*) "eigenvectors ="
-	call B.show( 6, formatted=.true. )
+	call B.show( formatted=.true. )
 	
 	write(*,*) ""
 	write(*,*) "eigenvalues ="
-	call C.show( 6, formatted=.true. )
+	call C.show( formatted=.true. )
 end program test
 ```
 
