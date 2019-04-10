@@ -53,6 +53,7 @@ Enter in the scift directory (`cd scift`) and modify the Makefile file (`src/Mak
 
 To build the code just type make inside the main directory as follows:
 ```
+$ source SCIFTvars.sh
 $ make
 Building dependencies for Atom.f90 ... OK
 Building dependencies for AtomicElementsDB.f90 ... OK
