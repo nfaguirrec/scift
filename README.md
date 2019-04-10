@@ -83,3 +83,6 @@ source <PATH_TO_M3C>/SCIFTvars.sh
 # Authors
 * Nestor F. Aguirre ( nfaguirrec@gmail.com )
 
+## Citing
+
+[![DOI](https://zenodo.org/badge/81277582.svg)](https://zenodo.org/badge/latestdoi/81277582)
