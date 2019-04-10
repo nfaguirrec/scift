@@ -129,10 +129,8 @@ program test
 	type(Molecule) :: mol
 	
 	call mol.init( 2, name="Hydrogen molecule" )
-	call atm.init( "H", 0.0_8, 0.0_8, 0.3561_8*angs )
-	mol.atoms(1) = atm
-	call atm.init( "H", 0.0_8, 0.0_8,-0.3561_8*angs )
-	mol.atoms(2) = atm
+	call atm.init( "H", 0.0_8, 0.0_8, 0.3561_8*angs ); mol.atoms(1) = atm
+	call atm.init( "H", 0.0_8, 0.0_8,-0.3561_8*angs ); mol.atoms(2) = atm
 	
 	call mol.rotate( alpha=45.0*deg, beta=45.0*deg, gamma=0.0*deg )
 	
