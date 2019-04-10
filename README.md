@@ -128,7 +128,7 @@ program test
 	type(Atom) :: atm
 	type(Molecule) :: mol
 	
-	call mol.init( 2, name="Hydrogen H2" )
+	call mol.init( 2, name="Hydrogen molecule" )
 	call atm.init( "H", 0.0_8, 0.0_8, 0.3561_8*angs )
 	mol.atoms(1) = atm
 	call atm.init( "H", 0.0_8, 0.0_8,-0.3561_8*angs )
@@ -145,7 +145,7 @@ It is compiled and executed as follows (notice it requires the MKL library):
 $ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift -mkl
 $ ./test 
            2
-Hydrogen H2
+Hydrogen molecule
   H            0.17805000         -0.25180072          0.17805000
   H           -0.17805000          0.25180072         -0.17805000
 ```
