@@ -73,7 +73,7 @@ source <PATH_TO_M3C>/SCIFTvars.sh
 
 ## Usage
 
-### class StringIntegerMap
+**class StringIntegerMap**
 
 The following block (`test.f90`) is an example of how to use the class Map (equivalent to map<std:string, int> in C++):
 
@@ -114,7 +114,7 @@ $ ./test
           Marie        22
 ```
 
-### class Molecule
+**class Molecule**
 
 The following block (`test.f90`) is an example of how to use the class Molecule. It creates a hydrogen molecule, rotates it, and then show it on screen in the XYZ format:
 
@@ -148,7 +148,7 @@ Hydrogen molecule
   H           -0.17805000          0.25180072         -0.17805000
 ```
 
-### class Matrix
+**class Matrix**
 
 The following block (`test.f90`) is an example of how to use the class Matrix. It creates the matrix, diagonalizes it, and then show the results in a nice format.
 
