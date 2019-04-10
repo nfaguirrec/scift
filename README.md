@@ -80,7 +80,7 @@ The basic environmental variables that SciFT needs can be loaded just adding the
 source <PATH_TO_M3C>/SCIFTvars.sh
 ```
 
-# Authors
+## Authors
 * Nestor F. Aguirre ( nfaguirrec@gmail.com )
 
 ## Citing
