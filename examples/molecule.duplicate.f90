@@ -145,8 +145,9 @@ program main
 					if( molecules(i).compareFormula( molecules(j), debug=debug ) ) equal = equal + 1					
 					if( molecules(i).compareGeometry( molecules(j), useMassWeight=useMassWeight, useIm=useIm, thr=thr, debug=debug ) ) equal = equal + 1
 					if( molecules(i).compareConnectivity( molecules(j), alpha=alpha, thr=thr, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights, debug=debug ) ) equal = equal + 1
+					if( abs(energies(i)-energies(j)) < 0.1_8*eV ) equal = equal + 1
 					
-					if( equal == 3 ) then
+					if( equal == 4 ) then
 						sBuffer = FString_fromReal(abs( energies(i)-energies(j) )/eV, "(F10.3)")
 						
 						write(*,"(A)",advance="no") "      "//trim(fileNames(i).fstr)//"  "//trim(fileNames(j).fstr)//" ("// &
