@@ -1,215 +1,222 @@
-# SciFT (Scientific Fortran Tools)
+## SciFT (Scientific Fortran Tools)
 
-The Scientific Fortran Tools (SciFT) is a numerical library for fortran programmers.
-The library provides a wide range of mathematical routines such as random number generators,
-special functions and least-squares fitting.
+The Scientific Fortran Tools (SciFT) is a library specially oriented to scientific purposes for Fortran programmers. The library provides a wide range of mathematical routines such as random number generators, special functions, and high-level classes to manipulate strings, files parsing, matrices, grid-based numerical functions, data structures (lists, vectors, maps, graphs), and molecules.
 
-The complete range of subject areas covered by the library includes:
+## Prerequisites
 
-## Data Structures
-* [Molecules](#molecules)
-* [Numerical Functions](#numerical-functions)
-* [Data Structures](#data-structures)
-* [Histograms](#histograms)
-* [Utils](#utils)
+**System Requirements:**
 
-### Molecules
-```fortran
-use Molecule_
-use Atom_
-use Matrix_
+SciFT is known to work on GNU/Linux. However, it should work on any POSIX-compliant system.
 
-type(Molecule) :: mol
-type(Atom) :: atom
-type(Matrix) :: Im
+**Dependencies:**
 
-call mol.init( 2 )
-call atom.init( " H", 0.0_8, 0.0_8, 0.3561_8 )
-mol.atoms(1) = atom
-call atom.init( " H", 0.0_8, 0.0_8,-0.3561_8 )
-mol.atoms(2) = atom
+- **[GNU Bash](https://www.gnu.org/software/bash/)**
 
-call mol.show( formatted=.true. )
+- **[GNU Awk (gawk)](https://www.gnu.org/software/gawk/)** (version >= 4.0)
 
-write(*,*) ""
-write(*,*) "Testing load procedures"
-write(*,*) "======================="
-call mol.load( "data/formats/XYZ", format=XYZ )
-call mol.show( formatted=.true. )
+- **[Intel® Fortran Compiler](https://software.intel.com/en-us/fortran-compilers)** (version >= 14.0.3)<br>
+  SciFT has not been tested with any other compiler.
 
-write(*,*) ""
-write(*,*) "Testing properties"
-write(*,*) "=================="
-write(*,*) "mol.massNumber() = ", mol.massNumber()
-write(*,*) "mol.chemicalFormula() = ", mol.chemicalFormula()
+- **[Intel® Math Kernel Library (Intel® MKL)](https://software.intel.com/en-us/mkl)**<br>
+  SciFT has not been tested with any other math library.
 
-write(*,*) ""
-write(*,*) "Testing center of molecule"
-write(*,*) "=========================="
-call mol.show(formatted=.true.)
-write(*,"(A,3F10.5)") "mol.center = ", mol.center()
-call mol.setCenter( [-2.0_8, 1.0_8, 2.0_8] )
-write(*,"(A,3F10.5)") "mol.geomCenter = ", mol.center()
+<!---**Recommended Dependencies:**--->
 
-write(*,*) ""
-write(*,*) "Testing rotation of molecule"
-write(*,*) "============================"
-call mol.init( "data/formats/XYZ", format=XYZ )
-call mol.rotate( alpha=45.0_8*deg, beta=45.0_8*deg, gamma=0.0_8*deg, debug=.true. )
+## Compiling SciFT
 
-write(*,*) ""
-write(*,*) "Inertia tensor"
-write(*,*) "=============="
-Im = mol.inertiaTensor()
-call Im.show( formatted=.true. )
-
+Download the .zip file from this page and extract the files,
 ```
-### Numerical Functions
-```fortran
-function funcTest( x ) result( output )
-        real(8), intent(in) :: x
-        real(8) :: output
-        
-        output = exp(-0.44*x)*sin(x)**2.0_8
-end function funcTest
+$ unzip scift-master.zip 
+Archive:  scift-master.zip
+3e330bbcb711cb2275ef1ce06aa021de764662f2
+   creating: scift-master/
+  inflating: scift-master/LICENSE    
+  inflating: scift-master/LICENSE.FortranParser  
+  inflating: scift-master/Makefile
+...
+
+$ mv scift-master scift
+```
+or clone the repository using git
+```
+$ git clone https://github.com/nfaguirrec/scift.git
+```
+The following should be the content of the scift directory if previous steps were successful:
+```
+$ cd scift
+$ ls
+docs      examples  LICENSE.FortranParser  README.md     src    VERSION
+doxyfile  LICENSE   Makefile               SCIFTvars.sh  utils
 ```
 
-```fortran
-use Grid_
-use RNFunction_
+Enter in the scift directory (`cd scift`) and modify the Makefile file (`src/Makefile`) if necessary.
 
-type(Grid) :: xGrid, xGrid2
-type(RNFunction) :: nFunc
-
-call xGrid.init( 1.0_8, 10.0_8, 21 )
-
-write(*,*) ""
-write(*,*) "Testing from function"
-write(*,*) "====================="
-call nFunc.fromFunction( xGrid, func=funcTest )
-call nFunc.show()
-
-write(*,*) "Testing interpolation"
-write(*,*) "====================="
-call xGrid2.init( -2.0_8, 13.0_8, 41 )
-nFunc2 = nFunc.interpolate( xGrid2 )
-call nFunc.show()
+To build the code just type make inside the main directory as follows:
 ```
-### Data Structures
-
-```fortran
-type(RealList) :: mylist
-class(RealListIterator), pointer :: iter
-
-call mylist.init()
-
-call mylist.append( 8.0_8 )
-call mylist.append( [ 1.0_8, 2.0_8] )
-call mylist.prepend( 2.0_8 )
-
-iter => mylist.begin
-iter => iter.next
-iter => iter.next
-call mylist.insert( iter, 1.0_8 )
-
-call mylist.erase( mylist.begin )
-
-iter => mylist.begin
-do while( associated(iter) )
-		write(*,*) iter.data
-		iter => iter.next
-end do
+$ source SCIFTvars.sh
+$ make
+Building dependencies for Atom.f90 ... OK
+Building dependencies for AtomicElementsDB.f90 ... OK
+Building dependencies for BlocksIFileParser.f90 ... OK
+...
+Building n3df.eval.f90 (0:00.79)
+Building n3df.func.f90 (0:00.63)
+Building n3df.oper.f90 (0:00.67)
 ```
 
+## Installing SciFT
+
+The basic environmental variables that SciFT needs can be loaded just adding the following command anywhere in the ~/.bashrc file:
+
+```
+source <PATH_TO_M3C>/SCIFTvars.sh
+```
+
+## Usage
+
+**class StringIntegerMap**
+
+The following block (`test.f90`) is an example of how to use the class Map (equivalent to map<string, int> in C++):
+
 ```fortran
-type(String) :: str
-type(StringIntegerPair) :: pair
-type(StringIntegerMap) :: mymap
-class(StringIntegerMapIterator), pointer :: iter
-
-call mymap.init()
-
-str = "mystr1"
-call mymap.insert( str, 45 )
-str = "mystr2"
-call mymap.insert( str, 3 )
-str = "mystr3"
-call mymap.insert( str, 8 )
-str = "mystr4"
-call mymap.insert( str, 9 )
-
-! mymap = { "mystr1":45, "mystr2":3, "mystr3":8, "mystr4":8 }
-
-str = "mystr2"
-call mymap.erase( str )
-
-! mymap = { "mystr1":45, "mystr3":8, "mystr4":8 }
-
-str = "mystr3"
-call mymap.set( str, 56 )
-
-! mymap = { "mystr1":45, "mystr3":56, "mystr4":8 }
-
-iter => mymap.begin
-do while( associated(iter) )
-	pair = this.pair( iter )
-	write(*,*) pair.first.fstr, pair.second
+program test
+	use String_
+	use StringIntegerPair_
+	use StringIntegerMap_
+	implicit none
 	
-	iter => iter.next
-end do
-
-! "mystr1"  45
-! "mystr3"  56
-! "mystr4"   8
+	type(String) :: str
+	type(StringIntegerPair) :: pair
+	type(StringIntegerMap) :: mymap
+	class(StringIntegerMapIterator), pointer :: iter
+	
+	call mymap.init()
+	
+	str = "John" ; call mymap.insert( str, 27 )
+	str = "Marie"; call mymap.insert( str, 22 )
+	str = "Luna" ; call mymap.insert( str, 24 )
+	
+	iter => mymap.begin
+	do while( associated(iter) )
+		pair = mymap.pair( iter )
+		write(*,"(A15,I10)") pair.first.fstr, pair.second
+		
+		iter => iter.next
+	end do
+end program test
 ```
+It is compiled an executed as follows:
+
+```
+$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ./test 
+           John        27
+           Luna        24
+          Marie        22
+```
+
+**class Molecule**
+
+The following block (`test.f90`) is an example of how to use the class Molecule. It creates a hydrogen molecule, rotates it, and then show it on screen in the XYZ format:
 
 ```fortran
-use Graph_
-
-type(IntegerGraph) :: mygraph
-
-call mygraph.init( directed=.false. )
-
-!-------------
-!     (1)     
-!      |      
-!     (2)     
-!    /   \    
-!  (3)   (4)  
-!    \   /    
-!     (5)
-!-------------
-
-call mygraph.newNode()
-call mygraph.newNode()
-call mygraph.newNode()
-call mygraph.newNode()
-call mygraph.newNode()
-
-call mygraph.newEdges( 1, [2] )
-call mygraph.newEdges( 2, [1,3,4] )
-call mygraph.newEdges( 3, [2,5] )
-call mygraph.newEdges( 4, [2,5] )
-call mygraph.newEdges( 5, [3,4] )
-
-write(*,*) ""
-write(*,*) "Topological Indices"
-write(*,*) "-------------------"
-write(*,*) "Randic               = ", mygraph.randicIndex()
-write(*,*) "Wiener               = ", mygraph.wienerIndex()
-write(*,*) "Wiener               = ", mygraph.inverseWienerIndex()
-write(*,*) "Balaban              = ", mygraph.balabanIndex()
-write(*,*) "MolecularTopological = ", mygraph.molecularTopologicalIndex()
-write(*,*) "Kirchhoff            = ", mygraph.kirchhoffIndex()
-write(*,*) "KirchhoffSum         = ", mygraph.kirchhoffSumIndex()
-write(*,*) "wienerSum            = ", mygraph.wienerSumIndex()
-write(*,*) "JOmega               = ", mygraph.JOmegaIndex()
+program test
+	use UnitsConverter_
+	use Atom_
+	use Molecule_
+	implicit none
+	
+	type(Atom) :: atm
+	type(Molecule) :: mol
+	
+	call mol.init( 2, name="Hydrogen molecule" )
+	call atm.init( "H", 0.0_8, 0.0_8, 0.3561_8*angs ); mol.atoms(1) = atm
+	call atm.init( "H", 0.0_8, 0.0_8,-0.3561_8*angs ); mol.atoms(2) = atm
+	
+	call mol.rotate( alpha=45.0*deg, beta=45.0*deg, gamma=0.0*deg )
+	
+	call mol.save()
+end program test
+```
+It is compiled and executed as follows (notice it requires the MKL library):
 
 ```
-### Histograms
+$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift -mkl
+$ ./test 
+           2
+Hydrogen molecule
+  H            0.17805000         -0.25180072          0.17805000
+  H           -0.17805000          0.25180072         -0.17805000
+```
 
-### Utils
+**class Matrix**
 
-# Authors
+The following block (`test.f90`) is an example of how to use the class Matrix. It creates the matrix, diagonalizes it, and then show the results in a nice format.
+
+```fortran
+program test
+	use Matrix_
+	implicit none
+	
+	type(Matrix) :: A, B, C
+	
+	call A.init(5,5)
+	A.data(1,:) = [  1.96,  -6.49,  -0.47,  -7.20,  -0.65 ]
+	A.data(2,:) = [ -6.49,   3.80,  -6.39,   1.50,  -6.34 ]
+	A.data(3,:) = [ -0.47,  -6.39,   4.17,  -1.51,   2.67 ]
+	A.data(4,:) = [ -7.20,   1.50,  -1.51,   5.70,   1.80 ]
+	A.data(5,:) = [ -0.65,  -6.34,   2.67,   1.80,  -7.10 ]
+	
+	write(*,*) ""
+	write(*,*) "A ="
+	call A.show( formatted=.true. )
+	
+	call A.eigen( eVecs=B, eVals=C )
+	
+	write(*,*) ""
+	write(*,*) "eigenvectors ="
+	call B.show( formatted=.true. )
+	
+	write(*,*) ""
+	write(*,*) "eigenvalues ="
+	call C.show( formatted=.true. )
+end program test
+```
+
+It is compiled and executed as follows (notice it requires the MKL library):
+
+```
+$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift -mkl
+$ ./test 
+ 
+ A =
+                1           2           3           4           5
+    1    1.960000   -6.490000   -0.470000   -7.200000   -0.650000
+    2   -6.490000    3.800000   -6.390000    1.500000   -6.340000
+    3   -0.470000   -6.390000    4.170000   -1.510000    2.670000
+    4   -7.200000    1.500000   -1.510000    5.700000    1.800000
+    5   -0.650000   -6.340000    2.670000    1.800000   -7.100000
+ 
+ eigenvectors =
+                1           2           3           4           5
+    1   -0.298067   -0.607513   -0.402620   -0.374481    0.489637
+    2   -0.507798   -0.287968    0.406586   -0.357169   -0.605255
+    3   -0.081606   -0.384320    0.659966    0.500764    0.399148
+    4   -0.003589   -0.446730   -0.455290    0.620365   -0.456375
+    5   -0.804130    0.448032   -0.172458    0.310768    0.162248
+ 
+ eigenvalues =
+                 1            2            3            4            5
+    1   -11.065575     0.000000     0.000000     0.000000     0.000000
+    2     0.000000    -6.228747     0.000000     0.000000     0.000000
+    3     0.000000     0.000000     0.864028     0.000000     0.000000
+    4     0.000000     0.000000     0.000000     8.865457     0.000000
+    5     0.000000     0.000000     0.000000     0.000000    16.094837
+```
+
+## Authors
 * Nestor F. Aguirre ( nfaguirrec@gmail.com )
 
+## Citing
+
+[![DOI](https://zenodo.org/badge/81277582.svg)](https://zenodo.org/badge/latestdoi/81277582)

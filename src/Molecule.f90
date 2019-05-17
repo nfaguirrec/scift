@@ -137,6 +137,7 @@ module Molecule_
 			procedure :: compareFormula
 			procedure :: compareGeometry
 			procedure :: compareConnectivity
+			procedure :: connectivityDescriptors
 			procedure :: ballesterDescriptors
 			procedure :: isFragmentOf
 			
@@ -1571,54 +1572,11 @@ module Molecule_
 		effThr = 0.92_8
 		if( present(thr) ) effThr = thr
 		
-		effDebug = .false.
-		if( present(debug) ) effDebug = debug
+		effDebug = .true.
+! 		if( present(debug) ) effDebug = debug
 		
-		call this.buildGraph( alpha=effAlpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
-		
-		A = this.molGraph.adjacencyMatrix()
-		D = this.molGraph.distanceMatrix()
-		L = this.molGraph.laplacianMatrix()
-		
-		this_descrip(1) = this.molGraph.randicIndex()
-		this_descrip(2) = this.molGraph.wienerIndex( distanceMatrix=D )
-		this_descrip(3) = this.molGraph.inverseWienerIndex( distanceMatrix=D )
-		this_descrip(4) = this.molGraph.balabanIndex( distanceMatrix=D )
-		this_descrip(5) = this.molGraph.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
-		
-		if( other.molGraph.nComponents( laplacianMatrix=L ) > 1 ) then
-			this_descrip(6:9) = 0.0_8
-		else
-			Omega = this.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
-			
-			this_descrip(6) = this.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
-			this_descrip(7) = this.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-			this_descrip(8) = this.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-			this_descrip(9) = this.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-		end if
-		
-		call other.buildGraph( alpha=effAlpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
-		
-		A = other.molGraph.adjacencyMatrix()
-		D = other.molGraph.distanceMatrix()
-		L = other.molGraph.laplacianMatrix()
-		
-		other_descrip(1) = other.molGraph.randicIndex()
-		other_descrip(2) = other.molGraph.wienerIndex( distanceMatrix=D )
-		other_descrip(3) = other.molGraph.inverseWienerIndex( distanceMatrix=D )
-		other_descrip(4) = other.molGraph.balabanIndex( distanceMatrix=D )
-		other_descrip(5) = other.molGraph.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
-		
-		if( other.molGraph.nComponents( laplacianMatrix=L ) > 1 ) then
-			other_descrip(6:9) = 1000.0_8
-		else
-			Omega = other.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
-			
-			other_descrip(6) = other.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
-			other_descrip(7) = other.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-			other_descrip(8) = other.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-			other_descrip(9) = other.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-		end if
+		this_descrip = this.connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
+		other_descrip = other.connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
 		
 		! Jaccard similarity index
 ! 		this_descrip  =  this_descrip + abs(minval(this_descrip))
@@ -1644,6 +1602,47 @@ module Molecule_
 		
 		if( present(similarity) ) similarity = effSimilarity
 	end function compareConnectivity
+	
+	!>
+	!! @brief
+	!!
+	function connectivityDescriptors( this, alpha, useNodeWeights, useEdgeWeights ) result( output )
+		class(Molecule), intent(in) :: this
+		real(8), optional, intent(in) :: alpha
+		logical, optional :: useNodeWeights
+		logical, optional :: useEdgeWeights
+		real(8) :: output(9)
+		
+		real(8):: effAlpha
+		
+		type(Matrix) :: A, D, L, Omega
+		
+		effAlpha = 1.0_8
+		if( present(alpha) ) effAlpha = alpha
+		
+		call this.buildGraph( alpha=effAlpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
+		
+		A = this.molGraph.adjacencyMatrix()
+		D = this.molGraph.distanceMatrix()
+		L = this.molGraph.laplacianMatrix()
+		
+		output(1) = this.molGraph.randicIndex()
+		output(2) = this.molGraph.wienerIndex( distanceMatrix=D )
+		output(3) = this.molGraph.inverseWienerIndex( distanceMatrix=D )
+		output(4) = this.molGraph.balabanIndex( distanceMatrix=D )
+		output(5) = this.molGraph.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
+		
+		if( this.molGraph.nComponents( laplacianMatrix=L ) > 1 ) then
+			output(6:9) = 0.0_8
+		else
+			Omega = this.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
+			
+			output(6) = this.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
+			output(7) = this.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			output(8) = this.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			output(9) = this.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+		end if
+	end function connectivityDescriptors
 	
 	!>
 	!! @brief see. Pedro J. Ballester and W. Graham Richards
