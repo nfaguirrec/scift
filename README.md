@@ -85,7 +85,6 @@ program test
 	type(String) :: str1, str2
 	integer :: int1
 	character(100), allocatable :: tokens(:)
-	character(:), allocatable :: fstr
 	integer :: i
 	
 	str1 = "Hello"
@@ -120,6 +119,47 @@ $ ./test
  Hello string fortran-string
  Hello fortran fortran-string
  HELLO FORTRAN FORTRAN-STRING
+```
+
+**class RealList**
+
+The following block (`test.f90`) is an example of how to use the class List (equivalent to list<double> in C++):
+
+```fortran
+program test
+	use RealList_
+
+	type(RealList) :: mylist
+	class(RealListIterator), pointer :: iter
+	
+	call mylist.init()
+	
+	call mylist.append( 8.0_8 )
+	call mylist.append( 5.0_8 )
+	call mylist.append( 1.0_8 )
+	call mylist.prepend( 0.0_8 )
+	call mylist.append( [ 10.0_8, 11.0_8, 12.0_8 ] )
+	
+	iter => mylist.begin
+	iter => iter.next
+	
+	call mylist.insert( iter, 3.0_8 )
+	
+	iter => mylist.begin
+	do while( associated(iter) )
+		write(*,"(A,F6.3)", advance="no") " --> ", iter.data
+		
+		iter => iter.next
+	end do
+	write(*,*)
+end program test
+```
+It is compiled an executed as follows:
+
+```
+$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ./test 
+ -->  0.000 -->  8.000 -->  3.000 -->  5.000 -->  1.000 --> 10.000 --> 11.000 --> 12.000
 ```
 
 **class StringIntegerMap**
