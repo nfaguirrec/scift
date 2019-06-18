@@ -211,7 +211,7 @@ The following block (`test.f90`) is an example of how to use the class Graph (eq
 program test
 	use IntegerGraph_
 	
-	type(IntegerGraph) :: mygraph, mysubgraph
+	type(IntegerGraph) :: mygraph
 	call mygraph.init( directed=.false. )
 	
 	!        (1)    
