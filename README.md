@@ -203,6 +203,45 @@ $ ./test
           Marie        22
 ```
 
+**class IntegerGraph**
+
+The following block (`test.f90`) is an example of how to use the class Graph (equivalent to GTL:graph in C++):
+
+```fortran
+program test
+	use IntegerGraph_
+	
+	type(IntegerGraph) :: mygraph, mysubgraph
+	call mygraph.init( directed=.false. )
+	
+	!        (1)    
+	!         |     
+	!        (2)    
+	!       /   \   
+	!     (3)   (4) 
+	!       \   /   
+	!        (5)
+	
+	call mygraph.newNodes( 5 )
+	
+	call mygraph.newEdges( 1, [2] )
+	call mygraph.newEdges( 2, [1,3,4] )
+	call mygraph.newEdges( 3, [2,5] )
+	call mygraph.newEdges( 4, [2,5] )
+	call mygraph.newEdges( 5, [3,4] )
+	
+	call mygraph.computeDijkstraPaths( 1 )
+	write(*,*) "distance from 1 to 5 = ", mygraph.distance(5)
+end program test
+```
+It is compiled an executed as follows (notice it requires the MKL library):
+
+```
+$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift -mkl
+$ ./test 
+ distance from 1 to 5 =    3.00000000000000
+```
+
 **class Molecule**
 
 The following block (`test.f90`) is an example of how to use the class Molecule. It creates a hydrogen molecule, rotates it, and then show it on screen in the XYZ format:
