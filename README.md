@@ -74,6 +74,54 @@ source <PATH_TO_SCIFT>/SCIFTvars.sh
 
 ## Usage
 
+**class String**
+
+The following block (`test.f90`) is an example of how to use the class String:
+
+```fortran
+program test
+	use String_
+
+	type(String) :: str1, str2
+	integer :: int1
+	character(100), allocatable :: tokens(:)
+	character(:), allocatable :: fstr
+	integer :: i
+	
+	str1 = "Hello"
+	
+	str2 = str1+":fortran-string"
+	write(*,*) trim(str2.fstr)
+	
+	call str2.split( tokens, ":-" )
+	do i=1,size(tokens)
+		write(*,*) i, "    ", trim(tokens(i))
+	end do
+	
+	call str2.replace( ":", " string " )
+	write(*,*) trim(str2.fstr)
+	
+	call str2.replace( "string", "fortran", wholeWords=.true. )
+	write(*,*) trim(str2.fstr)
+	
+	str1 = str2.toUpper()
+	write(*,*) trim(str1.fstr)
+end program test
+```
+It is compiled an executed as follows:
+
+```
+$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ./test 
+ Hello:fortran-string
+           1     Hello
+           2     fortran
+           3     string
+ Hello string fortran-string
+ Hello fortran fortran-string
+ HELLO FORTRAN FORTRAN-STRING
+```
+
 **class StringIntegerMap**
 
 The following block (`test.f90`) is an example of how to use the class Map (equivalent to map<string, int> in C++):
