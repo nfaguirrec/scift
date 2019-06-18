@@ -69,7 +69,7 @@ Building n3df.oper.f90 (0:00.67)
 The basic environmental variables that SciFT needs can be loaded just adding the following command anywhere in the ~/.bashrc file:
 
 ```
-source <PATH_TO_M3C>/SCIFTvars.sh
+source <PATH_TO_SCIFT>/SCIFTvars.sh
 ```
 
 ## Usage
