@@ -74,6 +74,8 @@ source <PATH_TO_SCIFT>/SCIFTvars.sh
 
 ## Usage
 
+The following are some examples of how to use some important classes available in SciFT
+
 **class String**
 
 The following block (`test.f90`) is an example of how to use the class String:
