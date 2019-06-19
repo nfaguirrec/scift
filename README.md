@@ -182,9 +182,9 @@ program test
 	
 	call mymap.init()
 	
-	str = "John" ; call mymap.insert( str, 27 )
-	str = "Marie"; call mymap.insert( str, 22 )
-	str = "Luna" ; call mymap.insert( str, 24 )
+	call mymap.insert( String("John"), 27 )
+	call mymap.insert( String("Marie"), 22 )
+	call mymap.insert( String("Luna"), 24 )
 	
 	iter => mymap.begin
 	do while( associated(iter) )
