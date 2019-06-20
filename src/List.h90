@@ -145,10 +145,12 @@
 			final :: destroyList
 			procedure :: equal
 			procedure :: nequal
+#ifndef ListBasicInterface
 			procedure :: str
 			procedure :: show
 			procedure :: save
 			procedure :: toFStream
+#endif
 			generic :: size => ssize
 			procedure, private :: ssize
 			procedure :: isEmpty
@@ -243,7 +245,7 @@
 		
 		call this.clear()
 	end subroutine destroyList
-	
+
 	!>
 	!! @brief
 	!!
@@ -262,7 +264,7 @@
 			iter1 => iter1.next
 			iter2 => iter2.next
 			
-			if( iter1.data /= iter2.data ) then
+			if( .not. iter1.data == iter2.data ) then
 				output = .false.
 				return
 			end if
@@ -282,6 +284,7 @@
 		output = .not. ( this == other )
 	end function nequal
 	
+#ifndef ListBasicInterface
 	!>
 	!! @brief Show 
 	!!
@@ -302,7 +305,7 @@
 		effunit = 6
 		if( present(unit) ) effunit = unit
 		
-! 		write(effunit,"(a)") trim(str(this,effFormatted))
+		write(effunit,"(a)") trim(str(this,effFormatted))
 	end subroutine show
 	
 	!>
@@ -324,6 +327,7 @@
 			call toFStream( this )
 		end if
 	end subroutine save
+#endif
 	
 	!>
 	!! @brief Returns the number of items in the list
@@ -758,6 +762,8 @@
 		__TYPE_ITEMLIST__, intent(in) :: value
 		integer, optional, intent(in) :: from
 		integer :: output
+		
+		stop "### ERROR ### List.lastPointerOf() function is not implemented yet"
 		
 ! 		integer :: effFrom
 ! 		
