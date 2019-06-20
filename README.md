@@ -205,7 +205,6 @@ program test
 	
 	type(MyList) :: list
 	class(MyListIterator), pointer :: iter
-	type(MyData) :: item
 	
 	call list.init()
 	
