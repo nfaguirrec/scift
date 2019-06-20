@@ -164,6 +164,78 @@ $ ./test
  -->  0.000 -->  8.000 -->  3.000 -->  5.000 -->  1.000 --> 10.000 --> 11.000 --> 12.000
 ```
 
+**class List (containing user-defined objects)**
+
+The following block (`test.f90`) is an example of how to specialize and use the class List to contain MyData objects. Notice that the class MyData must have defined the == operator (equivalent to list<MyData> in C++):
+
+```fortran
+module MyList_
+	implicit none
+	
+	type :: MyData
+		integer :: id
+		character(2) :: name
+		
+		contains
+			generic :: operator(==) => MyData_eq
+			procedure :: MyData_eq
+	end type MyData
+	
+#define List MyList
+#define ListBasicInterface
+#define ListIterator MyListIterator
+#define __CLASS_ITEMLIST__ class(MyData)
+#define __TYPE_ITEMLIST__ type(MyData)
+#include "List.h90"
+#undef List
+#undef ListIterator
+#undef __CLASS_ITEMLIST__
+#undef __TYPE_ITEMLIST__
+
+	function MyData_eq( this, other ) result( output )
+		class(MyData), intent(in) :: this, other
+		logical :: output
+		
+		output = ( this.id == other.id .and. this.name == other.name )
+	end function MyData_eq
+end module MyList_
+
+program test
+	use MyList_
+	
+	type(MyList) :: list
+	class(MyListIterator), pointer :: iter
+	type(MyData) :: item
+	
+	call list.init()
+	
+	call list.append( MyData(1,"a") )
+	call list.append( MyData(5,"b") )
+	call list.prepend( MyData(0,"c") )
+	call list.append( [ MyData(0,"d"), MyData(1,"e"), MyData(2,"f") ] )
+	
+	iter => list.begin
+	iter => iter.next
+	
+	call list.insert( iter, MyData(3,"g") )
+	
+	iter => list.begin
+	do while( associated(iter) )
+		write(*,"(A,I2,A3,A)", advance="no") " --> (", iter.data.id, iter.data.name, ")"
+		
+		iter => iter.next
+	end do
+	write(*,*)
+end program test
+```
+It is compiled an executed as follows:
+
+```
+$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ./test 
+ --> ( 0 c ) --> ( 1 a ) --> ( 3 g ) --> ( 5 b ) --> ( 0 d ) --> ( 1 e ) --> ( 2 f )
+```
+
 **class StringIntegerMap**
 
 The following block (`test.f90`) is an example of how to use the class Map (equivalent to map<string, int> in C++):
