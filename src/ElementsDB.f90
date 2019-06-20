@@ -38,6 +38,7 @@
 !! @brief
 !!
 module ElementsDB_
+	use String_
 	use UnitsConverter_
 	
 	implicit none
@@ -293,11 +294,11 @@ module ElementsDB_
 		character(255) :: upperSymb
 		character(255) :: upperSymbInt
 		
-		call upper( symbol, upperSymb )
+		upperSymb = FString_toUpper( symbol )
 		
 		atomicMass = -1.0_8
 		do atomicNumber=1,this.nElements()
-			call upper( this.elements(atomicNumber).symbol, upperSymbInt )
+			upperSymbInt = FString_toUpper( this.elements(atomicNumber).symbol )
 			if( trim(adjustl(upperSymb)) == trim(adjustl(upperSymbInt)) ) then
 				atomicMass = this.elements( atomicNumber ).isotopes( this.elements( atomicNumber ).mostStableIsotopeMassNumber ).atomicMass*amu
 				exit
