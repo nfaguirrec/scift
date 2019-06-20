@@ -125,7 +125,7 @@ $ ./test
 
 **class RealList**
 
-The following block (`test.f90`) is an example of how to use the class List (equivalent to list<double> in C++):
+The following block (`test.f90`) is an example of how to use the class List (equivalent to list< double > in C++):
 
 ```fortran
 program test
@@ -166,7 +166,7 @@ $ ./test
 
 **class List (containing user-defined objects)**
 
-The following block (`test.f90`) is an example of how to specialize and use the class List to contain MyData objects. Notice that the class MyData must have defined the == operator (equivalent to list<MyData> in C++):
+The following block (`test.f90`) is an example of how to specialize and use the class List to contain MyData objects. Notice that the class MyData must have defined the == operator (equivalent to list< MyData > in C++):
 
 ```fortran
 module MyList_
@@ -205,7 +205,6 @@ program test
 	
 	type(MyList) :: list
 	class(MyListIterator), pointer :: iter
-	type(MyData) :: item
 	
 	call list.init()
 	
