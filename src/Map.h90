@@ -54,10 +54,12 @@
 			procedure :: initDefault
 			procedure :: copyList
 			final :: destroyMap
+#ifndef MapBasicInterface
 			procedure :: str
 			procedure :: show
 			procedure :: save
 			procedure :: toFStream
+#endif
 			procedure :: size
 			procedure :: isEmpty
 			procedure, private :: privateFind
@@ -118,6 +120,7 @@
 		call this.clear()
 	end subroutine destroyMap
 	
+#ifndef MapBasicInterface
 	!>
 	!! @brief Show 
 	!!
@@ -156,6 +159,7 @@
 			call this.toFStream()
 		end if
 	end subroutine save
+#endif
 	
 	!>
 	!! @brief
