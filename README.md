@@ -153,7 +153,6 @@ program test
 		
 		iter => iter.next
 	end do
-	write(*,*)
 end program test
 ```
 It is compiled an executed as follows:
