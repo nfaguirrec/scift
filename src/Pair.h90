@@ -54,8 +54,10 @@
 			final :: destroyPair
 			procedure :: equal
 			procedure :: nequal
+#ifndef PairBasicInterface
 			procedure :: str
 			procedure :: show
+#endif
 			
 			__ADD_METHODS__
 	end type Pair
@@ -118,6 +120,7 @@
 		
 	end subroutine destroyPair
 	
+#ifndef PairBasicInterface
 	!>
 	!! @brief Show 
 	!!
@@ -137,4 +140,6 @@
 		
 		write(effunit,"(a)") trim(str(this,effFormatted))
 	end subroutine show
+#endif
+
 #endif
