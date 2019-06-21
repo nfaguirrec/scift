@@ -153,7 +153,6 @@ program test
 		
 		iter => iter.next
 	end do
-	write(*,*)
 end program test
 ```
 It is compiled an executed as follows:
@@ -169,10 +168,11 @@ $ ./test
 The following block (`test.f90`) is an example of how to specialize and use the class List to contain MyData objects. Notice that the class MyData must have defined the == operator (equivalent to list< MyData > in C++):
 
 ```fortran
-module MyList_
+module MyData_
 	implicit none
+	private
 	
-	type :: MyData
+	type, public :: MyData
 		integer :: id
 		character(2) :: name
 		
@@ -181,6 +181,20 @@ module MyList_
 			procedure :: MyData_eq
 	end type MyData
 	
+	contains
+	
+	function MyData_eq( this, other ) result( output )
+		class(MyData), intent(in) :: this, other
+		logical :: output
+		
+		output = ( this.id == other.id .and. this.name == other.name )
+	end function MyData_eq
+end module MyData_
+
+module MyList_
+	use MyData_
+	implicit none
+	
 #define List MyList
 #define ListBasicInterface
 #define ListIterator MyListIterator
@@ -188,19 +202,15 @@ module MyList_
 #define __TYPE_ITEMLIST__ type(MyData)
 #include "List.h90"
 #undef List
+#undef ListBasicInterface
 #undef ListIterator
 #undef __CLASS_ITEMLIST__
 #undef __TYPE_ITEMLIST__
 
-	function MyData_eq( this, other ) result( output )
-		class(MyData), intent(in) :: this, other
-		logical :: output
-		
-		output = ( this.id == other.id .and. this.name == other.name )
-	end function MyData_eq
 end module MyList_
 
 program test
+	use MyData_
 	use MyList_
 	
 	type(MyList) :: list
@@ -224,13 +234,12 @@ program test
 		
 		iter => iter.next
 	end do
-	write(*,*)
 end program test
 ```
-It is compiled an executed as follows:
+It is compiled an executed as follows (notice it requires the Fortran preprocessor, -fpp):
 
 ```
-$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ifort -fpp test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
 $ ./test 
  --> ( 0 c ) --> ( 1 a ) --> ( 3 g ) --> ( 5 b ) --> ( 0 d ) --> ( 1 e ) --> ( 2 f )
 ```
@@ -246,7 +255,6 @@ program test
 	use StringIntegerMap_
 	implicit none
 	
-	type(String) :: str
 	type(StringIntegerPair) :: pair
 	type(StringIntegerMap) :: mymap
 	class(StringIntegerMapIterator), pointer :: iter
@@ -260,7 +268,7 @@ program test
 	iter => mymap.begin
 	do while( associated(iter) )
 		pair = mymap.pair( iter )
-		write(*,"(A15,I10)") pair.first.fstr, pair.second
+		write(*,"(A15,A,I2)") pair.first.fstr, " --> ", pair.second
 		
 		iter => iter.next
 	end do
@@ -271,9 +279,153 @@ It is compiled an executed as follows:
 ```
 $ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
 $ ./test 
-           John        27
-           Luna        24
-          Marie        22
+           John --> 27
+           Luna --> 24
+          Marie --> 22
+```
+
+**class Map (containing user-defined objects)**
+
+The following block (`test.f90`) is an example of how to specialize and use the class Map to contain String keys and MyData values. Notice that the class MyData must have defined the == operator (equivalent to map< string, MyData > in C++):
+
+```fortran
+module MyData_
+	implicit none
+	private
+	
+	type, public :: MyData
+		integer :: id
+		character(2) :: name
+		
+		contains
+			generic :: operator(==) => MyData_eq
+			procedure :: MyData_eq
+	end type MyData
+	
+	contains
+	
+	function MyData_eq( this, other ) result( output )
+		class(MyData), intent(in) :: this, other
+		logical :: output
+		
+		output = ( this.id == other.id .and. this.name == other.name )
+	end function MyData_eq
+end module MyData_
+
+module MyPair_
+	use String_
+	use MyData_
+	implicit none
+	private
+	
+#define Pair MyPair
+#define PairBasicInterface
+#define __CLASS_ITEMFIRST__ class(String)
+#define __TYPE_ITEMFIRST__  type(String)
+#define __CLASS_ITEMSECOND__ class(MyData)
+#define __TYPE_ITEMSECOND__  type(MyData)
+#define __ADD_ATTRIBUTES__
+#define __ADD_METHODS__
+#include "Pair.h90"
+#undef Pair
+#undef PairBasicInterface
+#undef __CLASS_ITEMFIRST__
+#undef __TYPE_ITEMFIRST__
+#undef __CLASS_ITEMSECOND__
+#undef __TYPE_ITEMSECOND__
+#undef __ADD_ATTRIBUTES__
+#undef __ADD_METHODS__
+	
+end module MyPair_
+
+module MyPairList_
+	use String_
+	use MyPair_
+	implicit none
+	private
+	
+#define List MyPairList
+#define ListBasicInterface
+#define ListIterator MyPairListIterator
+#define __CLASS_ITEMLIST__ class(MyPair)
+#define __TYPE_ITEMLIST__ type(MyPair)
+#include "List.h90"
+#undef List
+#undef ListBasicInterface
+#undef ListIterator
+#undef __CLASS_ITEMLIST__
+#undef __TYPE_ITEMLIST__
+
+end module MyPairList_
+
+module MyMap_
+	use IOStream_
+	use String_
+	use MyData_
+	use MyPair_
+	use MyPairList_, MyMapIterator => MyPairListIterator
+	implicit none
+	private
+	
+	public :: MyMapIterator
+	
+#define Map MyMap
+#define MapBasicInterface
+#define __CLASS_MAPITERATOR__  class(MyMapIterator)
+#define __TYPE_MAPLIST__       type(MyPairList)
+#define __TYPE_MAPPAIR__       type(MyPair)
+#define __CLASS_MAPPAIR__      class(MyPair)
+#define __CLASS_MAPVALUE__     class(MyData)
+#define __TYPE_MAPVALUE__     type(MyData)
+#define __ADD_METHODS__
+#include "Map.h90"
+#undef Map
+#undef MapBasicInterface
+#undef __CLASS_MAPITERATOR__
+#undef __TYPE_MAPLIST__
+#undef __TYPE_MAPPAIR__
+#undef __CLASS_MAPPAIR__
+#undef __CLASS_MAPVALUE__
+#undef __TYPE_MAPVALUE__
+#undef __ADD_METHODS__
+	
+end module MyMap_
+
+program test
+	use String_
+	use MyData_
+	use MyPair_
+	use MyPairList_
+	use MyMap_
+	
+	type(MyMap) :: mmap
+	class(MyMapIterator), pointer :: iter
+	type(MyPair) :: pair
+	
+	call mmap.init()
+	
+	call mmap.insert( String("John"),  MyData(1,"a") )
+	call mmap.insert( String("Marie"), MyData(2,"b") )
+	call mmap.insert( String("Luna"),  MyData(3,"c") )
+	
+	iter => mmap.begin
+	do while( associated(iter) )
+			pair = mmap.pair( iter )
+			write(*,"(A15,A,I2,A3,A)") pair.first.fstr, &
+				" --> (", pair.second.id, pair.second.name, ")"
+				
+			iter => iter.next
+	end do
+end program test
+```
+It is compiled an executed as follows (notice it requires the Fortran preprocessor, -fpp):
+
+```
+$ ifort -fpp test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ./test 
+           John --> ( 1 a )
+           Luna --> ( 3 c )
+          Marie --> ( 2 b )
 ```
 
 **class IntegerGraph**
