@@ -227,10 +227,10 @@ program test
 	write(*,*)
 end program test
 ```
-It is compiled an executed as follows:
+It is compiled an executed as follows (notice it requires the Fortran preprocessor, -fpp):
 
 ```
-$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ifort -fpp test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
 $ ./test 
  --> ( 0 c ) --> ( 1 a ) --> ( 3 g ) --> ( 5 b ) --> ( 0 d ) --> ( 1 e ) --> ( 2 f )
 ```
