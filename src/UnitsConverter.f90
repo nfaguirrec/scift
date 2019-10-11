@@ -93,7 +93,8 @@ module UnitsConverter_
 	private
 	
 	public :: &
-		sUnit
+		sUnit, &
+		UnitsConverter_test
 	
 	! -----------------
 	! Esto no esta implementado
@@ -205,5 +206,25 @@ module UnitsConverter_
 		
 		output = 1.0_8
 	end function sUnit
+	
+	!>
+	!! @brief Test method
+	!!
+	subroutine UnitsConverter_test()
+! 		write(*,*) "         Lenght = ", 0.528e-8*cm
+! 		write(*,*) "       Velocity = ", 2.18e8*cm/sec
+		write(*,*) "         Energy = ", 27.21*eV
+! 		write(*,*) "           Time = ", 24.2*asec
+		write(*,*) "           Mass = ", 9.10938188e-31*kg
+! 		write(*,*) "      Frequency = ", 4.13e16/sec
+! 		write(*,*) " Electric field = ", 5.14e9*Volt/cm
+! 		write(*,*) " Magnetic field = ", 2.35e5*Tesla
+! 		write(*,*) "      Frequency = ", 6.6e-7*eV/GHz
+! 		write(*,*) "Laser Intensity = ", 3.51e16*Wcm2
+		write(*,*) ""
+		write(*,*) "Lennard Jones units (argon)"
+! 		write(*,*) "     Temperature = ", 120*K/LJ_T
+! 		write(*,*) "Angular momentum = ", 0.02944*LJ_j
+	end subroutine UnitsConverter_test
 	
 end module UnitsConverter_

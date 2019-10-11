@@ -322,17 +322,39 @@ module GOptions_
 	!>
 	!! @brief
 	!!
-	subroutine GOptions_doYouWantToContinue()
+	subroutine GOptions_doYouWantToContinue( assumeYes, assumeNo )
+		logical, intent(in), optional :: assumeYes
+		logical, intent(in), optional :: assumeNo
+		
+		logical :: assumeYesEff
+		logical :: assumeNoEff
+		
 		character :: cBuffer
+		
+		assumeYesEff = .false.
+		if( present(assumeYes) ) assumeYesEff = assumeYes
+		
+		assumeNoEff = .false.
+		if( present(assumeNo) ) assumeNoEff = assumeNo
 		
 		write(*,*) ""
 		write(*,"(A)", advance="no") "Do you want to continue [y/n] ? "
+		
+		if( assumeYesEff ) then
+			write(*,*) "y"
+			return
+		else if( assumeNoEff ) then
+			write(*,*) "n"
+			stop
+		end if
+		
 		cBuffer = ""
 		do while ( cBuffer /= "y" .and. cBuffer /= "n" )
 			read(*,*) cBuffer
 		end do
+		
+		write(*,*) trim(cBuffer)
 		if( cBuffer == 'n' ) stop
-		write(*,*) ""
 	end subroutine GOptions_doYouWantToContinue
 	
 	!>

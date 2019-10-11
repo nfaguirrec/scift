@@ -1188,6 +1188,7 @@ module FourierTransform3D_
 		call xyzGrid.show()
 		call xyzGrid.save()
 		
+		return
 		call GOptions_doYouWantToContinue()
 		
 ! 		write(*,*) "-------------------------------------------"

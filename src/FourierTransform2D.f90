@@ -1164,6 +1164,7 @@ module FourierTransform2D_
 		call xyGrid.show()
 		call xyGrid.save()
 		
+		return
 		call GOptions_doYouWantToContinue()
 		
 ! 		write(*,*) "-------------------------------------------"
