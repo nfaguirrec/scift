@@ -161,32 +161,32 @@ module FourierTransform3D_
 		
 		integer :: nx, ny, nz
 		
-		if( associated(this.iFunc) ) nullify(this.iFunc)
-		this.iFunc => iFunc
-		this.nPoints = iFunc.nPoints() ! << Hay que cambiar para hacer la transformada de algunos puntos
+		if( associated(this%iFunc) ) nullify(this%iFunc)
+		this%iFunc => iFunc
+		this%nPoints = iFunc%nPoints() ! << Hay que cambiar para hacer la transformada de algunos puntos
 		
-		nx = this.nPoints(1)
-		ny = this.nPoints(2)
-		nz = this.nPoints(3)
+		nx = this%nPoints(1)
+		ny = this%nPoints(2)
+		nz = this%nPoints(3)
 		
 		effDomain = FourierTransform_SPATIAL_DOMAIN
 		if( present(domain) ) effDomain = domain
 		
-		if( present(oFunc) ) call GOptions_error( "oFunc parameter is not implamented yet", "FourierTransform3D.init()" )
+		if( present(oFunc) ) call GOptions_error( "oFunc parameter is not implamented yet", "FourierTransform3D%init()" )
 		
-		call dfftw_plan_dft_3d( this.planF, nx, ny, nz, this.iFunc.fArray, this.iFunc.fArray, FFTW_FORWARD, FFTW_ESTIMATE )
-		call dfftw_plan_dft_3d( this.planB, nx, ny, nz, this.iFunc.fArray, this.iFunc.fArray, FFTW_BACKWARD, FFTW_ESTIMATE )
+		call dfftw_plan_dft_3d( this%planF, nx, ny, nz, this%iFunc%fArray, this%iFunc%fArray, FFTW_FORWARD, FFTW_ESTIMATE )
+		call dfftw_plan_dft_3d( this%planB, nx, ny, nz, this%iFunc%fArray, this%iFunc%fArray, FFTW_BACKWARD, FFTW_ESTIMATE )
 			
 		if( effDomain == FourierTransform_SPATIAL_DOMAIN ) then
 			
-			this.x = this.iFunc.xyzGrid ! << Hay que cambiar para hacer la transformada de algunos puntos
-			this.omega = FourierTransform3D_omegaGrid( this.x )
+			this%x = this%iFunc%xyzGrid ! << Hay que cambiar para hacer la transformada de algunos puntos
+			this%omega = FourierTransform3D_omegaGrid( this%x )
 			
 		else if( effDomain == FourierTransform_FREQUENCY_DOMAIN ) then
 			
-			call GOptions_warning( "FourierTransform_FREQUENCY_DOMAIN have not been tested yet", "FourierTransform.init()" )
-			this.omega = this.iFunc.xyzGrid ! << Hay que cambiar para hacer la transformada de algunos puntos
-			this.x = FourierTransform3D_xyzGrid( this.omega )
+			call GOptions_warning( "FourierTransform_FREQUENCY_DOMAIN have not been tested yet", "FourierTransform%init()" )
+			this%omega = this%iFunc%xyzGrid ! << Hay que cambiar para hacer la transformada de algunos puntos
+			this%x = FourierTransform3D_xyzGrid( this%omega )
 			
 		end if
 	end subroutine init
@@ -199,12 +199,12 @@ module FourierTransform3D_
 		
 		! Si los activo el programa produce:
 		! 	forrtl: error (76): Abort trap signal
-! 		call dfftw_destroy_plan( this.planF )
-! 		call dfftw_destroy_plan( this.planB )
+! 		call dfftw_destroy_plan( this%planF )
+! 		call dfftw_destroy_plan( this%planB )
 		
-		nullify(this.iFunc)
+		nullify(this%iFunc)
 		
-		this.nPoints = -1
+		this%nPoints = -1
 	end subroutine destroy
 	
 	!>
@@ -222,23 +222,23 @@ module FourierTransform3D_
 		output = trim(output)//"<FourierTransform3D:"
 		
 ! 		output = trim(output)//"min="
-! 		fmt = int(log10(this.min+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+! 		fmt = int(log10(this%min+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%min
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",max="
-! 		fmt = int(log10(this.max+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.max
+! 		fmt = int(log10(this%max+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%max
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",h="
-! 		fmt = int(log10(this.h+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.h
+! 		fmt = int(log10(this%h+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%h
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",size="
-! 		fmt = int(log10(float(this.size+1)))+1
-! 		write(strBuffer, "(i<fmt>)") this.size
+! 		fmt = int(log10(float(this%size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this%size
 ! 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -259,7 +259,7 @@ module FourierTransform3D_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -282,14 +282,14 @@ module FourierTransform3D_
 		
 		if( sgn == FourierTransform_FORWARD ) then
 		
-			call dfftw_execute( this.planF )
+			call dfftw_execute( this%planF )
 			
 			if( effSync ) then
-				this.iFunc.xyzGrid = this.omega
+				this%iFunc%xyzGrid = this%omega
 				
 				if( effShift ) then
-					call FourierTransform3D_phase( this.iFunc )
-					call FourierTransform3D_shift( this.iFunc )
+					call FourierTransform3D_phase( this%iFunc )
+					call FourierTransform3D_shift( this%iFunc )
 				end if
 			end if
 			
@@ -297,18 +297,18 @@ module FourierTransform3D_
 		
 			if( effSync ) then
 				if( effShift ) then
-					call FourierTransform3D_ishift( this.iFunc )
-					call FourierTransform3D_phase( this.iFunc )
+					call FourierTransform3D_ishift( this%iFunc )
+					call FourierTransform3D_phase( this%iFunc )
 				end if
 			end if
 			
-			call dfftw_execute( this.planB )
+			call dfftw_execute( this%planB )
 			
 			if( effSync ) then
-				this.iFunc.xyzGrid = this.x
+				this%iFunc%xyzGrid = this%x
 			end if
 			
-			this.iFunc = this.iFunc/real(this.nPoints(1)*this.nPoints(2)*this.nPoints(3),8)
+			this%iFunc = this%iFunc/real(this%nPoints(1)*this%nPoints(2)*this%nPoints(3),8)
 			
 		else
 			call GOptions_error( "Bad value for sgn", "FourierTransform3D.execute()" )
@@ -327,7 +327,7 @@ module FourierTransform3D_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = FourierTransform_omegaGrid( n(i), h(i), order=order )
+			output%component(i) = FourierTransform_omegaGrid( n(i), h(i), order=order )
 		end do
 	end function FourierTransform3D_omegaGridFromData
 	
@@ -339,7 +339,7 @@ module FourierTransform3D_
 		integer, optional, intent(in) :: order
 		type(Grid3D) :: output
 		
-		output = FourierTransform3D_omegaGridFromData( xyzGrid.nPointsVec(), xyzGrid.stepSize(), order=order )
+		output = FourierTransform3D_omegaGridFromData( xyzGrid%nPointsVec(), xyzGrid%stepSize(), order=order )
 	end function FourierTransform3D_omegaGridFromXGrid
 	
 	!>
@@ -354,7 +354,7 @@ module FourierTransform3D_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = FourierTransform_xGrid( n(i), h(i), order=order )
+			output%component(i) = FourierTransform_xGrid( n(i), h(i), order=order )
 		end do
 	end function FourierTransform3D_xyzGridFromData
 	
@@ -369,9 +369,9 @@ module FourierTransform3D_
 		real(8) :: dx(3)
 		
 		! dx = 2*pi/n/dp
-		dx = 2.0_8*MATH_PI/real(omegaGrid.nPoints(),8)/omegaGrid.stepSize()
+		dx = 2.0_8*MATH_PI/real(omegaGrid%nPoints(),8)/omegaGrid%stepSize()
 		
-		output = FourierTransform3D_xyzGridFromData( omegaGrid.nPoints(), dx, order=order )
+		output = FourierTransform3D_xyzGridFromData( omegaGrid%nPoints(), dx, order=order )
 	end function FourierTransform3D_xyzGridFromOmegaGrid
 	
 	!>
@@ -519,7 +519,7 @@ module FourierTransform3D_
 		
 		integer :: i
 		
-		if( iFunc.isEquallyspaced() ) then
+		if( iFunc%isEquallyspaced() ) then
 			call GOptions_warning( &
 				"Grid should not be equally spaced", &
 				"FourierTransform3D_phase_RNFunction3D()" &
@@ -529,28 +529,28 @@ module FourierTransform3D_
 		if( present(oFunc) ) then
 			oFunc = iFunc
 			
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_phase( oFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_phase( oFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_phase( oFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_phase( oFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_phase( oFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_phase( oFunc%fArray(:,:,i) )
 			end do
 		else
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_phase( iFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_phase( iFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_phase( iFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_phase( iFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_phase( iFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_phase( iFunc%fArray(:,:,i) )
 			end do
 		end if
 	end subroutine FourierTransform3D_phase_RNFunction3D
@@ -564,7 +564,7 @@ module FourierTransform3D_
 		
 		integer :: i
 		
-		if( iFunc.isEquallyspaced() ) then
+		if( iFunc%isEquallyspaced() ) then
 			call GOptions_warning( &
 				"Grid should not be equally spaced", &
 				"FourierTransform3D_phase_CNFunction3D()" &
@@ -574,28 +574,28 @@ module FourierTransform3D_
 		if( present(oFunc) ) then
 			oFunc = iFunc
 			
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_phase( oFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_phase( oFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_phase( oFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_phase( oFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_phase( oFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_phase( oFunc%fArray(:,:,i) )
 			end do
 		else
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_phase( iFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_phase( iFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_phase( iFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_phase( iFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_phase( iFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_phase( iFunc%fArray(:,:,i) )
 			end do
 		end if
 	end subroutine FourierTransform3D_phase_CNFunction3D
@@ -607,7 +607,7 @@ module FourierTransform3D_
 		class(CNFunction3D) :: iFunc
 		class(CNFunction3D), optional :: oFunc
 		
-! 		if( .not. iFunc.isEquallyspaced() ) then
+! 		if( .not. iFunc%isEquallyspaced() ) then
 ! 			call GOptions_warning( &
 ! 				"Grid should be equally spaced", &
 ! 				"FourierTransform3D_ishift_Grid()" &
@@ -617,9 +617,9 @@ module FourierTransform3D_
 ! 		if( present(oFunc) ) then
 ! 			oFunc = iFunc
 ! 			
-! 			call FourierTransform3D_iphase_complexArray( oFunc.yArray )
+! 			call FourierTransform3D_iphase_complexArray( oFunc%yArray )
 ! 		else
-! 			call FourierTransform3D_iphase_complexArray( iFunc.yArray )
+! 			call FourierTransform3D_iphase_complexArray( iFunc%yArray )
 ! 		end if
 	end subroutine FourierTransform3D_iphase_CNFunction3D
 	
@@ -632,7 +632,7 @@ module FourierTransform3D_
 		
 		integer :: i
 		
-		if( iGrid.isEquallyspaced() ) then
+		if( iGrid%isEquallyspaced() ) then
 			call GOptions_warning( &
 				"Grid should not be equally spaced", &
 				"FourierTransform3D_shift_Grid()" &
@@ -643,11 +643,11 @@ module FourierTransform3D_
 			oGrid = iGrid
 			
 			do i=1,3
-				call FourierTransform_shift( oGrid.component(i) )
+				call FourierTransform_shift( oGrid%component(i) )
 			end do
 		else
 			do i=1,3
-				call FourierTransform_shift( iGrid.component(i) )
+				call FourierTransform_shift( iGrid%component(i) )
 			end do
 		end if
 		
@@ -662,7 +662,7 @@ module FourierTransform3D_
 		
 		integer :: i
 		
-		if( .not. iGrid.isEquallyspaced() ) then
+		if( .not. iGrid%isEquallyspaced() ) then
 			call GOptions_warning( &
 				"Grid should be equally spaced", &
 				"FourierTransform3D_ishift_Grid()" &
@@ -673,11 +673,11 @@ module FourierTransform3D_
 			oGrid = iGrid
 			
 			do i=1,3
-				call FourierTransform_ishift( oGrid.component(i) )
+				call FourierTransform_ishift( oGrid%component(i) )
 			end do
 		else
 			do i=1,3
-				call FourierTransform_ishift( iGrid.component(i) )
+				call FourierTransform_ishift( iGrid%component(i) )
 			end do
 		end if
 		
@@ -692,7 +692,7 @@ module FourierTransform3D_
 		
 		integer :: i
 		
-		if( iFunc.isEquallyspaced() ) then
+		if( iFunc%isEquallyspaced() ) then
 			call GOptions_warning( &
 				"Grid should not be equally spaced", &
 				"FourierTransform3D_shift_Grid()" &
@@ -702,33 +702,33 @@ module FourierTransform3D_
 		if( present(oFunc) ) then
 			oFunc = iFunc
 			
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_shift( oFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_shift( oFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_shift( oFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_shift( oFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_shift( oFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_shift( oFunc%fArray(:,:,i) )
 			end do
 			
-			call FourierTransform3D_shift( oFunc.xyzGrid )
+			call FourierTransform3D_shift( oFunc%xyzGrid )
 		else
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_shift( iFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_shift( iFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_shift( iFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_shift( iFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_shift( iFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_shift( iFunc%fArray(:,:,i) )
 			end do
 			
-			call FourierTransform3D_shift( iFunc.xyzGrid )
+			call FourierTransform3D_shift( iFunc%xyzGrid )
 		end if
 		
 	end subroutine FourierTransform3D_shift_RNFunction3D
@@ -742,7 +742,7 @@ module FourierTransform3D_
 		
 		integer :: i
 		
-		if( iFunc.isEquallyspaced() ) then
+		if( iFunc%isEquallyspaced() ) then
 			call GOptions_warning( &
 				"Grid should not be equally spaced", &
 				"FourierTransform3D_shift_Grid()" &
@@ -752,33 +752,33 @@ module FourierTransform3D_
 		if( present(oFunc) ) then
 			oFunc = iFunc
 			
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_shift( oFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_shift( oFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_shift( oFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_shift( oFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_shift( oFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_shift( oFunc%fArray(:,:,i) )
 			end do
 			
-			call FourierTransform3D_shift( oFunc.xyzGrid )
+			call FourierTransform3D_shift( oFunc%xyzGrid )
 		else
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_shift( iFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_shift( iFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_shift( iFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_shift( iFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_shift( iFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_shift( iFunc%fArray(:,:,i) )
 			end do
 			
-			call FourierTransform3D_shift( iFunc.xyzGrid )
+			call FourierTransform3D_shift( iFunc%xyzGrid )
 		end if
 		
 	end subroutine FourierTransform3D_shift_CNFunction3D
@@ -792,7 +792,7 @@ module FourierTransform3D_
 		
 		integer :: i
 		
-		if( .not. iFunc.isEquallyspaced() ) then
+		if( .not. iFunc%isEquallyspaced() ) then
 			call GOptions_warning( &
 				"Grid should be equally spaced", &
 				"FourierTransform3D_ishift_Grid()" &
@@ -802,33 +802,33 @@ module FourierTransform3D_
 		if( present(oFunc) ) then
 			oFunc = iFunc
 			
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_ishift( oFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_ishift( oFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_ishift( oFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_ishift( oFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_ishift( oFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_ishift( oFunc%fArray(:,:,i) )
 			end do
 			
-			call FourierTransform3D_ishift( oFunc.xyzGrid )
+			call FourierTransform3D_ishift( oFunc%xyzGrid )
 		else
-			do i=1,iFunc.nPoints(1)
-				call FourierTransform2D_ishift( iFunc.fArray(i,:,:) )
+			do i=1,iFunc%nPoints(1)
+				call FourierTransform2D_ishift( iFunc%fArray(i,:,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(2)
-				call FourierTransform2D_ishift( iFunc.fArray(:,i,:) )
+			do i=1,iFunc%nPoints(2)
+				call FourierTransform2D_ishift( iFunc%fArray(:,i,:) )
 			end do
 			
-			do i=1,iFunc.nPoints(3)
-				call FourierTransform2D_ishift( iFunc.fArray(:,:,i) )
+			do i=1,iFunc%nPoints(3)
+				call FourierTransform2D_ishift( iFunc%fArray(:,:,i) )
 			end do
 			
-			call FourierTransform3D_ishift( iFunc.xyzGrid )
+			call FourierTransform3D_ishift( iFunc%xyzGrid )
 		end if
 		
 	end subroutine FourierTransform3D_ishift_CNFunction3D
@@ -859,9 +859,9 @@ module FourierTransform3D_
 		integer(8) :: plan
 		
 		if( present(oFunc) ) then
-			call dfftw_plan_dft_3d( plan, iFunc.nPoints(1), iFunc.nPoints(2), iFunc.nPoints(3), iFunc.fArray, oFunc.fArray, sgn, FFTW_ESTIMATE )
+			call dfftw_plan_dft_3d( plan, iFunc%nPoints(1), iFunc%nPoints(2), iFunc%nPoints(3), iFunc%fArray, oFunc%fArray, sgn, FFTW_ESTIMATE )
 		else
-			call dfftw_plan_dft_3d( plan, iFunc.nPoints(1), iFunc.nPoints(2), iFunc.nPoints(3), iFunc.fArray, iFunc.fArray, sgn, FFTW_ESTIMATE )
+			call dfftw_plan_dft_3d( plan, iFunc%nPoints(1), iFunc%nPoints(2), iFunc%nPoints(3), iFunc%fArray, iFunc%fArray, sgn, FFTW_ESTIMATE )
 		end if
 	end function FourierTransform3D_plan_CNFunction3D
 	
@@ -959,13 +959,13 @@ module FourierTransform3D_
 		type(Grid3D) :: xyzGrid
 		
 		! @todo Check for checkEquallyspaced
-		n = iFunc.nPoints()
-		dx = iFunc.xyzGrid.stepSize()
+		n = iFunc%nPoints()
+		dx = iFunc%xyzGrid%stepSize()
 		dp = 2.0_8*Math_PI/dx/real(n,8)
 		
 		oFunc = iFunc
-		call FourierTransform3D_dft( iFunc.fArray, oFunc.fArray, sgn=FourierTransform_FORWARD )
-		oFunc.xyzGrid = FourierTransform3D_omegaGrid( n, dx, order=FourierTransform_SORDER )
+		call FourierTransform3D_dft( iFunc%fArray, oFunc%fArray, sgn=FourierTransform_FORWARD )
+		oFunc%xyzGrid = FourierTransform3D_omegaGrid( n, dx, order=FourierTransform_SORDER )
 		
 		call FourierTransform3D_phase( oFunc )
 		call FourierTransform3D_shift( oFunc )
@@ -988,8 +988,8 @@ module FourierTransform3D_
 		integer :: i
 		
 		! @todo Check for checkEquallyspaced
-		n = iFunc.nPoints()
-		dp = iFunc.xyzGrid.stepSize()
+		n = iFunc%nPoints()
+		dp = iFunc%xyzGrid%stepSize()
 		dx = 2.0_8*Math_PI/dp/real(n,8)
 		
 		oFunc = iFunc
@@ -997,8 +997,8 @@ module FourierTransform3D_
 		call FourierTransform3D_ishift( oFunc )
 		call FourierTransform3D_phase( oFunc )
 		
-		call FourierTransform3D_dft( oFunc.fArray, oFunc.fArray, sgn=FourierTransform_BACKWARD )
-		oFunc.xyzGrid = FourierTransform3D_xyzGrid( n, dx, order=FourierTransform_NORDER )
+		call FourierTransform3D_dft( oFunc%fArray, oFunc%fArray, sgn=FourierTransform_BACKWARD )
+		oFunc%xyzGrid = FourierTransform3D_xyzGrid( n, dx, order=FourierTransform_NORDER )
 		
 		oFunc = oFunc*dp(1)*dp(2)*dp(3)/sqrt(2.0_8*Math_PI)**3
 	end function FourierTransform3D_ifft_CNFunction3D
@@ -1021,19 +1021,19 @@ module FourierTransform3D_
 		if( present(sgn) ) effSgn = sgn
 		
 		! @todo Check for checkEquallyspaced
-		n = iFunc.nPoints()
-		dx = iFunc.xyzGrid.stepSize()
+		n = iFunc%nPoints()
+		dx = iFunc%xyzGrid%stepSize()
 		dp = 2.0_8*Math_PI/dx/real(n,8)
 		
 		oFunc = iFunc
-		oFunc.xyzGrid = FourierTransform3D_omegaGrid( n, dx, order=FourierTransform_NORDER )
-		call oFunc.xyzGrid.show()
+		oFunc%xyzGrid = FourierTransform3D_omegaGrid( n, dx, order=FourierTransform_NORDER )
+		call oFunc%xyzGrid%show()
 		
 		do kw=1,n(3); do jw=1,n(2); do iw=1,n(1)
-			oFunc.fArray(iw,jw,kw) = 0.0_8
+			oFunc%fArray(iw,jw,kw) = 0.0_8
 			do kx=1,n(3); do jx=1,n(2); do ix=1,n(1)
-				oFunc.fArray(iw,jw,kw) = oFunc.fArray(iw,jw,kw) &
-					+ iFunc.fArray(ix,jx,kx)*exp( real(effSgn,8)*Math_I*sum( iFunc.xyzGrid.at(ix,jx,kx)*oFunc.xyzGrid.at(iw,jw,kw) ) )
+				oFunc%fArray(iw,jw,kw) = oFunc%fArray(iw,jw,kw) &
+					+ iFunc%fArray(ix,jx,kx)*exp( real(effSgn,8)*Math_I*sum( iFunc%xyzGrid%at(ix,jx,kx)*oFunc%xyzGrid%at(iw,jw,kw) ) )
 			end do; end do; end do
 		end do; end do; end do
 		
@@ -1058,18 +1058,18 @@ module FourierTransform3D_
 		if( present(sgn) ) effSgn = sgn
 		
 		! @todo Check for checkEquallyspaced
-		n = iFunc.nPoints()
-		dp = iFunc.xyzGrid.stepSize()
+		n = iFunc%nPoints()
+		dp = iFunc%xyzGrid%stepSize()
 		dx = 2.0_8*Math_PI/dp/real(n,8)
 		
 		oFunc = iFunc
-		oFunc.xyzGrid = FourierTransform3D_xyzGrid( n, dx, order=FourierTransform_NORDER )
+		oFunc%xyzGrid = FourierTransform3D_xyzGrid( n, dx, order=FourierTransform_NORDER )
 		
 		do kw=1,n(3); do jw=1,n(2); do iw=1,n(1)
-			oFunc.fArray(iw,jw,kw) = 0.0_8
+			oFunc%fArray(iw,jw,kw) = 0.0_8
 			do kx=1,n(3); do jx=1,n(2); do ix=1,n(1)
-				oFunc.fArray(iw,jw,kw) = oFunc.fArray(iw,jw,kw) &
-					+ iFunc.fArray(ix,jx,kx)*exp( real(effSgn,8)*Math_I*sum( iFunc.xyzGrid.at(ix,jx,kx)*oFunc.xyzGrid.at(iw,jw,kw) ) )
+				oFunc%fArray(iw,jw,kw) = oFunc%fArray(iw,jw,kw) &
+					+ iFunc%fArray(ix,jx,kx)*exp( real(effSgn,8)*Math_I*sum( iFunc%xyzGrid%at(ix,jx,kx)*oFunc%xyzGrid%at(iw,jw,kw) ) )
 			end do; end do; end do
 		end do; end do; end do
 		
@@ -1169,24 +1169,24 @@ module FourierTransform3D_
 		write(*,*) "----------------------------------"
 		
 		xyzGrid = FourierTransform3D_omegaGridFromData( [10,11,12], [0.1_8,0.2_8,0.3_8], FourierTransform_NORDER )
-		call xyzGrid.show()
-		call xyzGrid.save()
+		call xyzGrid%show()
+		call xyzGrid%save()
 		
 		xyzGrid = FourierTransform3D_omegaGridFromData( [10,11,12], [0.1_8,0.2_8,0.3_8], FourierTransform_SORDER )
-		call xyzGrid.show()
-		call xyzGrid.save()
+		call xyzGrid%show()
+		call xyzGrid%save()
 		
 		write(*,*) "-------------------------------"
 		write(*,*) " Verifing xy Grid constructors "
 		write(*,*) "-------------------------------"
 		
 		xyzGrid = FourierTransform3D_xyzGridFromData( [10,11,12], [0.1_8,0.2_8,0.3_8], FourierTransform_NORDER )
-		call xyzGrid.show()
-		call xyzGrid.save()
+		call xyzGrid%show()
+		call xyzGrid%save()
 		
 		xyzGrid = FourierTransform3D_xyzGridFromData( [10,11,12], [0.1_8,0.2_8,0.3_8], FourierTransform_SORDER )
-		call xyzGrid.show()
-		call xyzGrid.save()
+		call xyzGrid%show()
+		call xyzGrid%save()
 		
 		return
 		call GOptions_doYouWantToContinue()
@@ -1195,23 +1195,23 @@ module FourierTransform3D_
 ! 		write(*,*) " FourierTransform3D of a gaussian function "
 ! 		write(*,*) "-------------------------------------------"
 ! 		
-! 		call xyzGrid.init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
-! 		call funcA.init( xyzGrid, funcRectangular )
+! 		call xyzGrid%init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
+! 		call funcA%init( xyzGrid, funcRectangular )
 ! 		write(*,"(A)") "input (.func) = "
-! 		call funcA.show()
-! 		call funcA.save( ".func", format=BLKS_FORMAT )
+! 		call funcA%show()
+! 		call funcA%save( ".func", format=BLKS_FORMAT )
 ! 		
 ! 		funcB = FourierTransform3D_fft( funcA )
 ! 		write(*,"(A)") "exact (.Ffunc) = "
-! 		call funcB.show()
-! 		call funcB.save( ".Ffunc", format=BLKS_FORMAT )
+! 		call funcB%show()
+! 		call funcB%save( ".Ffunc", format=BLKS_FORMAT )
 ! 		
-! 		call xyzGrid.init( [-54.677675_8,-67.241507_8], [55.920349_8,68.486720_8], size=[90,110] )
-! 		call funcB.init( xyzGrid, FfuncRectangular )
+! 		call xyzGrid%init( [-54.677675_8,-67.241507_8], [55.920349_8,68.486720_8], size=[90,110] )
+! 		call funcB%init( xyzGrid, FfuncRectangular )
 ! ! 		funcB = FourierTransform3D_nft( funcA )
 ! 		write(*,"(A)") "exact (.Fexact) = "
-! 		call funcB.show()
-! 		call funcB.save( ".Fexact", format=BLKS_FORMAT )
+! 		call funcB%show()
+! 		call funcB%save( ".Fexact", format=BLKS_FORMAT )
 ! 		
 ! ! 		call system( "echo splot \"//achar(34)//".func\"//achar(34)//" u 1:2:3 w l, \"//achar(34)//"\"//achar(34)//" u 1:2:4 w l | gnuplot -p" )
 ! ! 		call system( "echo splot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2:3 w l, \"//achar(34)//"\"//achar(34)//" u 1:2:4 w l | gnuplot -p" )
@@ -1226,23 +1226,23 @@ module FourierTransform3D_
 ! 		write(*,*) " iFourierTransform3D of a gaussian function"
 ! 		write(*,*) "-----------------------------"
 ! 		
-! 		call xyzGrid.init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
-! 		call funcA.init( xyzGrid, funcRectangular )
+! 		call xyzGrid%init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
+! 		call funcA%init( xyzGrid, funcRectangular )
 ! 		funcA = FourierTransform3D_nft( funcA )
 ! 		write(*,"(A)") "input (.Ffunc) = "
-! 		call funcA.show()
-! 		call funcA.save( ".Ffunc", format=BLKS_FORMAT )
+! 		call funcA%show()
+! 		call funcA%save( ".Ffunc", format=BLKS_FORMAT )
 ! 		
 ! 		write(*,"(A)") "iFourierTransform3D (.func) = "
 ! 		funcB = funcA
 ! 		funcB = FourierTransform3D_ifft( funcB )
-! 		call funcB.show()
-! 		call funcB.save( ".func", format=BLKS_FORMAT )
+! 		call funcB%show()
+! 		call funcB%save( ".func", format=BLKS_FORMAT )
 ! 		
 ! 		funcB = FourierTransform3D_inft( funcA )
 ! 		write(*,"(A)") "exact (.exact) = "
-! 		call funcB.show()
-! 		call funcB.save( ".exact", format=BLKS_FORMAT )
+! 		call funcB%show()
+! 		call funcB%save( ".exact", format=BLKS_FORMAT )
 ! 		
 ! ! 		call system( "echo splot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2:3 w l, \"//achar(34)//"\"//achar(34)//" u 1:2:4 w l | gnuplot -p" )
 ! ! 		call system( "echo splot \"//achar(34)//".func\"//achar(34)//" u 1:2:3 w l, \"//achar(34)//"\"//achar(34)//" u 1:2:4 w l | gnuplot -p" )
@@ -1257,22 +1257,22 @@ module FourierTransform3D_
 ! 		write(*,*) " iFourierTransform3D( FourierTransform3D(func) ). CNFunction3D "
 ! 		write(*,*) "-------------------------------"
 ! 		
-! 		call xyzGrid.init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
-! 		call funcA.init( xyzGrid, funcRectangular )
+! 		call xyzGrid%init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
+! 		call funcA%init( xyzGrid, funcRectangular )
 ! 
 ! 		write(*,"(A)") "input (.func) = "
-! 		call funcA.show()
-! 		call funcA.save( ".func", format=BLKS_FORMAT )
+! 		call funcA%show()
+! 		call funcA%save( ".func", format=BLKS_FORMAT )
 ! 		
 ! 		write(*,"(A)") "FourierTransform3D (.Ffunc) = "
 ! 		funcB = FourierTransform3D_fft( funcA )
-! 		call funcB.show()
-! 		call funcB.save( ".Ffunc", format=BLKS_FORMAT )
+! 		call funcB%show()
+! 		call funcB%save( ".Ffunc", format=BLKS_FORMAT )
 ! 		
 ! 		write(*,"(A)") "iFourierTransform3D (.iFFfunc) = "
 ! 		funcA = FourierTransform3D_ifft( funcB )
-! 		call funcA.show()
-! 		call funcA.save( ".iFFfunc", format=BLKS_FORMAT )
+! 		call funcA%show()
+! 		call funcA%save( ".iFFfunc", format=BLKS_FORMAT )
 ! 		
 ! ! 		call system( "echo splot \"//achar(34)//".func\"//achar(34)//" u 1:2:3 w l, \"//achar(34)//"\"//achar(34)//" u 1:2:4 w l | gnuplot -p" )
 ! ! 		call system( "echo splot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2:3 w l, \"//achar(34)//"\"//achar(34)//" u 1:2:4 w l | gnuplot -p" )
@@ -1287,23 +1287,23 @@ module FourierTransform3D_
 ! 		write(*,*) " FourierTransform3D( iFourierTransform3D(Ffunc) ). CNFunction3D "
 ! 		write(*,*) "--------------------------------"
 ! 		
-! 		call xyzGrid.init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
-! 		call funcA.init( xyzGrid, funcRectangular )
+! 		call xyzGrid%init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
+! 		call funcA%init( xyzGrid, funcRectangular )
 ! 		funcA = FourierTransform3D_nft( funcA )
 ! 
 ! 		write(*,"(A)") "input (.Ffunc) = "
-! 		call funcA.show()
-! 		call funcA.save( ".Ffunc", format=BLKS_FORMAT )
+! 		call funcA%show()
+! 		call funcA%save( ".Ffunc", format=BLKS_FORMAT )
 ! 		
 ! 		write(*,"(A)") "iFourierTransform3D (.iFfunc) = "
 ! 		funcA = FourierTransform3D_ifft( funcA )
-! 		call funcA.show()
-! 		call funcA.save( ".iFfunc", format=BLKS_FORMAT )
+! 		call funcA%show()
+! 		call funcA%save( ".iFfunc", format=BLKS_FORMAT )
 ! 		
 ! 		write(*,"(A)") "FourierTransform3D (.FiFfunc) = "
 ! 		funcA = FourierTransform3D_fft( funcA )
-! 		call funcA.show()
-! 		call funcA.save( ".FiFfunc", format=BLKS_FORMAT )
+! 		call funcA%show()
+! 		call funcA%save( ".FiFfunc", format=BLKS_FORMAT )
 ! 		
 ! 		call system( "echo splot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2:3 w l | gnuplot -p" )
 ! 		call system( "echo splot \"//achar(34)//".iFfunc\"//achar(34)//" u 1:2:3 w l | gnuplot -p" )
@@ -1315,33 +1315,33 @@ module FourierTransform3D_
 		write(*,*) " Verifing FourierTransform3D CNFunction3D with plans "
 		write(*,*) "-----------------------------------------------------"
 		
-		call xyzGrid.init( [-2.5_8,-2.5_8,-2.5_8], [2.5_8,2.5_8,2.5_8], size=[90,110,200] )
-		call funcA.init( xyzGrid, funcRectangular )
+		call xyzGrid%init( [-2.5_8,-2.5_8,-2.5_8], [2.5_8,2.5_8,2.5_8], size=[90,110,200] )
+		call funcA%init( xyzGrid, funcRectangular )
 		write(*,"(A)") "input (.func) = "
-		call funcA.show()
-		call funcA.save( "func.cube", format=AUTO_FORMAT )
+		call funcA%show()
+		call funcA%save( "func.cube", format=AUTO_FORMAT )
 		
 		planF = FourierTransform3D_plan( funcA, FourierTransform_FORWARD )
 		planB = FourierTransform3D_plan( funcA, FourierTransform_BACKWARD )
 		
 		write(*,"(A)") "FourierTransform3D (.Ffunc) = "
 		call FourierTransform3D_execute( planF )
-		funcA.xyzGrid = FourierTransform3D_omegaGrid( funcA.xyzGrid, order=FourierTransform_SORDER )
+		funcA%xyzGrid = FourierTransform3D_omegaGrid( funcA%xyzGrid, order=FourierTransform_SORDER )
 ! 		call FourierTransform3D_phase( funcA )
 		call FourierTransform3D_shift( funcA )
-		call funcA.show()
-! 		call funcA.save( ".Ffunc", format=BLKS_FORMAT )
-		call funcA.save( "Ffunc.cube", format=AUTO_FORMAT )
-		call funcA.save( "Ffunc.n3df", format=AUTO_FORMAT )
+		call funcA%show()
+! 		call funcA%save( ".Ffunc", format=BLKS_FORMAT )
+		call funcA%save( "Ffunc.cube", format=AUTO_FORMAT )
+		call funcA%save( "Ffunc.n3df", format=AUTO_FORMAT )
 		stop
 		write(*,"(A)") "iFourierTransform3D (.iFFfunc) = "
 		call FourierTransform3D_ishift( funcA )
 		call FourierTransform3D_phase( funcA )
 		call FourierTransform3D_execute( planB )
-		funcA.xyzGrid = FourierTransform3D_xyzGrid( funcA.xyzGrid, order=FourierTransform_NORDER )
-		funcA = funcA/real( funcA.nPoints(1)*funcA.nPoints(2), 8 )
-		call funcA.show()
-		call funcA.save( ".iFFfunc", format=BLKS_FORMAT )
+		funcA%xyzGrid = FourierTransform3D_xyzGrid( funcA%xyzGrid, order=FourierTransform_NORDER )
+		funcA = funcA/real( funcA%nPoints(1)*funcA%nPoints(2), 8 )
+		call funcA%show()
+		call funcA%save( ".iFFfunc", format=BLKS_FORMAT )
 		
 		call system( "echo splot \"//achar(34)//".func\"//achar(34)//" u 1:2:3 w l | gnuplot -p" )
 		call system( "echo splot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2:3 w l | gnuplot -p" )
@@ -1356,21 +1356,21 @@ module FourierTransform3D_
 ! 		write(*,*) " iFourierTransform3D( FourierTransform3D(func) ). CNFunction3D with plans"
 ! 		write(*,*) "------------------------------------------"
 ! 		
-! 		call xyzGrid.init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
-! 		call funcA.init( xyzGrid, funcRectangular )
+! 		call xyzGrid%init( [-2.5_8,-2.5_8], [2.5_8,2.5_8], size=[90,110] )
+! 		call funcA%init( xyzGrid, funcRectangular )
 ! 		write(*,"(A)") "input (.func) = "
-! 		call funcA.show()
-! 		call funcA.save( ".func", format=BLKS_FORMAT )
+! 		call funcA%show()
+! 		call funcA%save( ".func", format=BLKS_FORMAT )
 ! 		
 ! 		planF = FourierTransform3D_plan( funcA, FourierTransform_FORWARD )
 ! 		planB = FourierTransform3D_plan( funcA, FourierTransform_BACKWARD )
 ! 		
 ! 		call FourierTransform3D_execute( planF )
 ! 		call FourierTransform3D_execute( planB )
-! 		funcA = funcA/real( funcA.nPoints(1)*funcA.nPoints(2), 8 )
+! 		funcA = funcA/real( funcA%nPoints(1)*funcA%nPoints(2), 8 )
 ! 		
-! 		call funcA.show()
-! 		call funcA.save( ".iFFfunc", format=BLKS_FORMAT )
+! 		call funcA%show()
+! 		call funcA%save( ".iFFfunc", format=BLKS_FORMAT )
 ! 		
 ! 		call system( "echo splot \"//achar(34)//".func\"//achar(34)//" u 1:2:3 w l | gnuplot -p" )
 ! 		call system( "echo splot \"//achar(34)//".iFFfunc\"//achar(34)//" u 1:2:3 w l | gnuplot -p" )
@@ -1384,23 +1384,23 @@ module FourierTransform3D_
 		write(*,*) " Verifing FourierTransform3D CNFunction3D oriented object"
 		write(*,*) "-----------------------------------------"
 		
-		call xyzGrid.init( [-2.5_8,-2.5_8,-2.5_8], [2.5_8,2.5_8,2.5_8], size=[90,110,130] )
-		call funcA.init( xyzGrid, funcRectangular )
+		call xyzGrid%init( [-2.5_8,-2.5_8,-2.5_8], [2.5_8,2.5_8,2.5_8], size=[90,110,130] )
+		call funcA%init( xyzGrid, funcRectangular )
 		write(*,"(A)") "input (.func) = "
-		call funcA.show()
-		call funcA.save( ".func", format=BLKS_FORMAT )
+		call funcA%show()
+		call funcA%save( ".func", format=BLKS_FORMAT )
 		
-		call fft.init( funcA, FourierTransform_SPATIAL_DOMAIN )
+		call fft%init( funcA, FourierTransform_SPATIAL_DOMAIN )
 		
 		call fft.execute( FourierTransform_FORWARD, sync=.true., shift=.true. )
 		write(*,"(A)") "FourierTransform3D (.Ffunc) = "
-		call funcA.show()
-		call funcA.save( ".Ffunc", format=BLKS_FORMAT )
+		call funcA%show()
+		call funcA%save( ".Ffunc", format=BLKS_FORMAT )
 		
 		call fft.execute( FourierTransform_BACKWARD, sync=.true., shift=.true. )
 		write(*,"(A)") "iFourierTransform3D (.iFFfunc) = "
-		call funcA.show()
-		call funcA.save( ".iFFfunc", format=BLKS_FORMAT )
+		call funcA%show()
+		call funcA%save( ".iFFfunc", format=BLKS_FORMAT )
 		
 		call system( "echo splot \"//achar(34)//".func\"//achar(34)//" u 1:2:3 w l | gnuplot -p" )
 		call system( "echo splot \"//achar(34)//".Ffunc\"//achar(34)//" u 1:2:3 w l | gnuplot -p" )
@@ -1412,30 +1412,30 @@ module FourierTransform3D_
 ! 		write(*,*) " Second derivative via FourierTransform3D with plans"
 ! 		write(*,*) "--------------------------------------"
 ! 		
-! 		call xyzGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+! 		call xyzGrid%init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
 ! 		omegaGrid = FourierTransform3D_omegaGrid( xyzGrid )
-! 		call funcA.init( xyzGrid, funcTest )
+! 		call funcA%init( xyzGrid, funcTest )
 ! 		write(*,"(A)") "input (.func) = "
-! 		call funcA.show()
-! 		call funcA.save(".func")
+! 		call funcA%show()
+! 		call funcA%save(".func")
 ! 		
 ! 		planF = FourierTransform3D_plan( funcA, FourierTransform3D_FORWARD )
 ! 		planB = FourierTransform3D_plan( funcA, FourierTransform3D_BACKWARD )
 ! 		
 ! 		call FourierTransform3D_execute( planF )
 ! 		
-! 		funcA.yArray = ( Math_I*fft.omega )**2*funcA.yArray
+! 		funcA%yArray = ( Math_I*fft.omega )**2*funcA%yArray
 ! 		
 ! 		write(*,"(A)") "iFourierTransform3D (.dfunc) = "
 ! 		call FourierTransform3D_execute( planB )
-! 		funcA = funcA/real( funcA.nPoints(), 8 )
-! 		call funcA.show()
-! 		call funcA.save(".dfunc")
+! 		funcA = funcA/real( funcA%nPoints(), 8 )
+! 		call funcA%show()
+! 		call funcA%save(".dfunc")
 ! 		
-! 		call funcB.init( xyzGrid, d2funcTest )
+! 		call funcB%init( xyzGrid, d2funcTest )
 ! 		write(*,"(A)") "exact (.exact) = "
-! 		call funcB.show()
-! 		call funcB.save(".exact")
+! 		call funcB%show()
+! 		call funcB%save(".exact")
 ! 		
 ! ! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
 ! ! 		call system( "echo plot \"//achar(34)//".dfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
@@ -1450,28 +1450,28 @@ module FourierTransform3D_
 ! 		write(*,*) " Second derivative via FourierTransform3D CNFunction3D oriented object"
 ! 		write(*,*) "------------------------------------------------------"
 ! 		
-! 		call xyzGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
-! 		call funcA.init( xyzGrid, funcTest )
+! 		call xyzGrid%init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+! 		call funcA%init( xyzGrid, funcTest )
 ! 		write(*,"(A)") "input (.func) = "
-! 		call funcA.show()
-! 		call funcA.save(".func")
+! 		call funcA%show()
+! 		call funcA%save(".func")
 ! 		
-! 		call fft.init( funcA, FourierTransform_SPATIAL_DOMAIN )
+! 		call fft%init( funcA, FourierTransform_SPATIAL_DOMAIN )
 ! 		
 ! 		call fft.execute( FourierTransform3D_FORWARD )
 ! 		
-! 		funcA.yArray = ( Math_I*fft.omega )**2*funcA.yArray
+! 		funcA%yArray = ( Math_I*fft.omega )**2*funcA%yArray
 ! 		
 ! 		call fft.execute( FourierTransform3D_BACKWARD )
 ! 		
 ! 		write(*,"(A)") "iFourierTransform3D (.dfunc) = "
-! 		call funcA.show()
-! 		call funcA.save(".dfunc")
+! 		call funcA%show()
+! 		call funcA%save(".dfunc")
 ! 		
-! 		call funcB.init( xyzGrid, d2funcTest )
+! 		call funcB%init( xyzGrid, d2funcTest )
 ! 		write(*,"(A)") "exact (.exact) = "
-! 		call funcB.show()
-! 		call funcB.save(".exact")
+! 		call funcB%show()
+! 		call funcB%save(".exact")
 ! 		
 ! ! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
 ! ! 		call system( "echo plot \"//achar(34)//".dfunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
@@ -1483,24 +1483,24 @@ module FourierTransform3D_
 ! 		write(*,*) " Spectrum "
 ! 		write(*,*) "----------"
 ! 		
-! ! 		call xyzGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
-! 		call xyzGrid.init( -15.0_8, 15.0_8, 1001 )
-! 		call funcA.init( xyzGrid, funcTest )
+! ! 		call xyzGrid%init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+! 		call xyzGrid%init( -15.0_8, 15.0_8, 1001 )
+! 		call funcA%init( xyzGrid, funcTest )
 ! 		write(*,"(A)") "input (.func) = "
-! 		call funcA.show()
-! 		call funcA.save(".func")
+! 		call funcA%show()
+! 		call funcA%save(".func")
 ! 		
 ! 		aSpectrum = FourierTransform3D_powerSpectrum( funcA )
 ! 		
 ! 		write(*,"(A)") "aspec (.asfunc) = "
-! 		call aSpectrum.show()
-! 		call aSpectrum.save(".asfunc")
+! 		call aSpectrum%show()
+! 		call aSpectrum%save(".asfunc")
 ! 		
 ! 		pSpectrum = FourierTransform3D_phaseSpectrum( funcA )
 ! 		
 ! 		write(*,"(A)") "pspec (.psfunc) = "
-! 		call pSpectrum.show()
-! 		call pSpectrum.save(".psfunc")
+! 		call pSpectrum%show()
+! 		call pSpectrum%save(".psfunc")
 ! 		
 ! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
 ! 		call system( "echo plot \"//achar(34)//".asfunc\"//achar(34)//" u 1:2 w l lw 1.5 | gnuplot -p" )
@@ -1512,23 +1512,23 @@ module FourierTransform3D_
 ! 		write(*,*) " Filtering by amplitude. FourierTransform3D CNFunction3D oriented object"
 ! 		write(*,*) "--------------------------------------------------------"
 ! 		
-! 		call xyzGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
-! 		call funcA.init( xyzGrid, funcTestWithNoise )
+! 		call xyzGrid%init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+! 		call funcA%init( xyzGrid, funcTestWithNoise )
 ! 		write(*,"(A)") "input (.func) = "
-! 		call funcA.show()
-! 		call funcA.save(".func")
+! 		call funcA%show()
+! 		call funcA%save(".func")
 ! 		
-! 		call fft.init( funcA, FourierTransform_SPATIAL_DOMAIN )
+! 		call fft%init( funcA, FourierTransform_SPATIAL_DOMAIN )
 ! 		
 ! 		call fft.execute( FourierTransform3D_FORWARD )
 ! 		
-! 		where( abs( funcA.yArray ) <= 20.0_8 ) funcA.yArray = 0.0_8
+! 		where( abs( funcA%yArray ) <= 20.0_8 ) funcA%yArray = 0.0_8
 ! 		
 ! 		call fft.execute( FourierTransform3D_BACKWARD )
 ! 		
 ! 		write(*,"(A)") "iFourierTransform3D (.ffunc) = "
-! 		call funcA.show()
-! 		call funcA.save(".ffunc")
+! 		call funcA%show()
+! 		call funcA%save(".ffunc")
 ! 		
 ! ! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
 ! ! 		call system( "echo plot \"//achar(34)//".ffunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
@@ -1539,27 +1539,27 @@ module FourierTransform3D_
 ! 		write(*,*) " Filtering by frequency. FourierTransform3D CNFunction3D oriented object"
 ! 		write(*,*) "--------------------------------------------------------"
 ! 		
-! 		call xyzGrid.init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
-! 		call funcA.init( xyzGrid, funcTestWithNoise )
+! 		call xyzGrid%init( -3.0_8*Math_PI, 3.0_8*Math_PI, 1001 )
+! 		call funcA%init( xyzGrid, funcTestWithNoise )
 ! 		write(*,"(A)") "input (.func) = "
-! 		call funcA.show()
-! 		call funcA.save(".func")
+! 		call funcA%show()
+! 		call funcA%save(".func")
 ! 		
-! 		call fft.init( funcA, FourierTransform_SPATIAL_DOMAIN )
+! 		call fft%init( funcA, FourierTransform_SPATIAL_DOMAIN )
 ! 		
 ! 		call fft.execute( FourierTransform3D_FORWARD )
 ! 		
-! 		do i=1,funcA.nPoints()
+! 		do i=1,funcA%nPoints()
 ! 			if( abs( fft.omega(i) ) > 10.0_8 ) then
-! 				funcA.yArray(i) = 0.0_8
+! 				funcA%yArray(i) = 0.0_8
 ! 			end if
 ! 		end do
 ! 		
 ! 		call fft.execute( FourierTransform3D_BACKWARD )
 ! 		
 ! 		write(*,"(A)") "iFourierTransform3D (.ffunc) = "
-! 		call funcA.show()
-! 		call funcA.save(".ffunc")
+! 		call funcA%show()
+! 		call funcA%save(".ffunc")
 ! 		
 ! ! 		call system( "echo plot \"//achar(34)//".func\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )
 ! ! 		call system( "echo plot \"//achar(34)//".ffunc\"//achar(34)//" u 1:2 w l lw 1.5, \"//achar(34)//"\"//achar(34)//" u 1:3 w l lw 1.5 | gnuplot -p" )

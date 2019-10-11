@@ -107,9 +107,9 @@ module CNFunction3D_
 #define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<CNFunction3D:"
-			output = trim(output)//trim(this.xyzGrid.str())
-! 			ITEMI( "min=", this.min )
-			ITEMI( ",size=", this.size() )
+			output = trim(output)//trim(this%xyzGrid%str())
+! 			ITEMI( "min=", this%min )
+			ITEMI( ",size=", this%size() )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -123,8 +123,8 @@ module CNFunction3D_
 
 			LINE("CNFunction3D")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -149,7 +149,7 @@ module CNFunction3D_
 			unitEff = IO_STDOUT
 		end if
 		
-		write(*,*) "### ERROR ### CNFunction3D.toFStream is no implemented yet"
+		write(*,*) "### ERROR ### CNFunction3D%toFStream is no implemented yet"
 		stop
 	end subroutine toFStream
 
@@ -255,31 +255,31 @@ module CNFunction3D_
 		write(*,*) "Testing constructors"
 		write(*,*) "----------------------------"
 		
-		write(*,*) "> func.init( xVec, yVec, zVec, fArray )"
-		call func.init( xVec, yVec, zVec, fArray )
-		call func.show()
+		write(*,*) "> func%init( xVec, yVec, zVec, fArray )"
+		call func%init( xVec, yVec, zVec, fArray )
+		call func%show()
 		write(*,*) ""
 		
-		write(*,*) "> func.init( xyzGrid, fArray )"
-		call xyzGrid.init( xVec, yVec, zVec )
-		call func.init( xyzGrid, fArray )
-		call func.show()
+		write(*,*) "> func%init( xyzGrid, fArray )"
+		call xyzGrid%init( xVec, yVec, zVec )
+		call func%init( xyzGrid, fArray )
+		call func%show()
 		write(*,*) ""
 		
-		write(*,*) "> func.init( 'data/formats/complex-N3DF', format=N3DF_FORMAT )"
-		call func.init( "data/formats/complex-N3DF", format=N3DF_FORMAT )
-		call func.show()
+		write(*,*) "> func%init( 'data/formats/complex-N3DF', format=N3DF_FORMAT )"
+		call func%init( "data/formats/complex-N3DF", format=N3DF_FORMAT )
+		call func%show()
 		write(*,*) ""
 		
-		write(*,*) "> func.init( 'data/formats/CUBE', format=CUBE_FORMAT )"
-		call func.init( "data/formats/CUBE", format=CUBE_FORMAT )
-		call func.show()
+		write(*,*) "> func%init( 'data/formats/CUBE', format=CUBE_FORMAT )"
+		call func%init( "data/formats/CUBE", format=CUBE_FORMAT )
+		call func%show()
 		write(*,*) ""
 		
-		write(*,*) "> func.init( xyzGrid, funcTest )"
-		call xyzGrid.init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[200,200,200] )
-		call func.init( xyzGrid, funcTest )
-		call func.show()
+		write(*,*) "> func%init( xyzGrid, funcTest )"
+		call xyzGrid%init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[200,200,200] )
+		call func%init( xyzGrid, funcTest )
+		call func%show()
 		write(*,*) ""
 		
 		write(*,*) ""
@@ -288,36 +288,36 @@ module CNFunction3D_
 		write(*,*) "----------------------------"
 		
 		func2 = func
-		call func2.show()
+		call func2%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
 		write(*,*) "Testing I/O methods"
 		write(*,*) "----------------------------"
 		
-		write(*,*) "> func.save( 'salida.cube', format=CUBE_FORMAT )"
-		call func.save( "salida.cube", format=CUBE_FORMAT )
+		write(*,*) "> func%save( 'salida.cube', format=CUBE_FORMAT )"
+		call func%save( "salida.cube", format=CUBE_FORMAT )
 		write(*,*) ""
 		
-		write(*,*) "> func.save( 'salida.rcube', format=RCUBE_FORMAT )"
-		call func.save( "salida.rcube", format=RCUBE_FORMAT )
+		write(*,*) "> func%save( 'salida%rcube', format=RCUBE_FORMAT )"
+		call func%save( "salida%rcube", format=RCUBE_FORMAT )
 		write(*,*) ""
 		
-		write(*,*) "> func.save( 'salida.icube', format=ICUBE_FORMAT )"
-		call func.save( "salida.icube", format=ICUBE_FORMAT )
+		write(*,*) "> func%save( 'salida.icube', format=ICUBE_FORMAT )"
+		call func%save( "salida.icube", format=ICUBE_FORMAT )
 		write(*,*) ""
 		
-		write(*,*) "> func.save( 'salida.n3df', format=N3DF_FORMAT )"
-		call func.save( "salida.n3df", format=N3DF_FORMAT )
+		write(*,*) "> func%save( 'salida.n3df', format=N3DF_FORMAT )"
+		call func%save( "salida.n3df", format=N3DF_FORMAT )
 		write(*,*) ""
 		
 ! 		call func.load( "salida.cube", format=CUBE_FORMAT )
-! 		call func.save( "salida2.cube", format=CUBE_FORMAT )
-! 		call func.show()
+! 		call func%save( "salida2.cube", format=CUBE_FORMAT )
+! 		call func%show()
 ! 		
 ! 		call func.load( "salida.n3df", format=N3DF_FORMAT )
-! 		call func.save( "salida3.cube", format=CUBE_FORMAT )
-! 		call func.show()
+! 		call func%save( "salida3.cube", format=CUBE_FORMAT )
+! 		call func%show()
 	end subroutine CNFunction3D_test
 	
 	subroutine kernel( k, ny, nx, fArray )
@@ -352,14 +352,14 @@ module CNFunction3D_
 		integer :: nCopy
 		real(8) :: ssum
 		
-		call sTime.init()
+		call sTime%init()
 		
-		nx = parser.getInteger( "-n", def=500 )
+		nx = parser%getInteger( "-n", def=500 )
 		ny = nx
 		nz = nx
 		
-		call xyzGrid.init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[nx,ny,nz] )
-		call func.init( xyzGrid, funcTest )
+		call xyzGrid%init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[nx,ny,nz] )
+		call func%init( xyzGrid, funcTest )
 		
 		write(*,"(A1,A9,2A10)") "#", "nThreads", "strategy", "time"
 		write(*,"(A1,A9,2A10)") "#", "--------", "--------", "----"
@@ -378,7 +378,7 @@ module CNFunction3D_
 							!$omp parallel
 							!$omp do
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -387,7 +387,7 @@ module CNFunction3D_
 							!$omp parallel private(k,j,i)
 							!$omp do
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -396,7 +396,7 @@ module CNFunction3D_
 							!$omp parallel private(k,j,i)
 							!$omp do
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -405,7 +405,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -414,7 +414,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(dynamic,1)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -423,7 +423,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(dynamic,1)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -432,7 +432,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(dynamic,2)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -441,7 +441,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(static,1)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -450,7 +450,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(static,2)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -459,7 +459,7 @@ module CNFunction3D_
 							!$omp parallel default(shared) private(k,j,i)
 							!$omp do schedule(static)
 								do k=1,nz; do j=1,ny; do i=1,nx
-										func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+										func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -468,7 +468,7 @@ module CNFunction3D_
 							!$omp parallel default(shared) private(k,j,i)
 							!$omp do schedule(static)
 								do k=1,nz
-									call kernel( k, ny, nx, func.fArray )
+									call kernel( k, ny, nx, func%fArray )
 								end do
 							!$omp end do nowait
 							!$omp end parallel

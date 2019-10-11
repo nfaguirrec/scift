@@ -86,8 +86,8 @@ module IntegerList_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<IntegerList:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -101,8 +101,8 @@ module IntegerList_
 ! 
 ! 			LINE("List")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -131,9 +131,9 @@ module IntegerList_
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
-			write(unitEff,"(I15)") iter.data
+			write(unitEff,"(I15)") iter%data
 			
 			iter => iter.next
 		end do
@@ -143,9 +143,9 @@ module IntegerList_
 		type(IntegerList) :: mylist
 		class(IntegerListIterator), pointer :: iter
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,"(I2,A)", advance="no") iter.data, "  --> "
+			write(*,"(I2,A)", advance="no") iter%data, "  --> "
 			
 			iter => iter.next
 		end do
@@ -159,20 +159,20 @@ module IntegerList_
 		type(IntegerList) :: mylist
 		class(IntegerListIterator), pointer :: iter
 		
-		call mylist.init()
+		call mylist%init()
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for append method"
 		write(*,*) "-------------------------"
 		
-		write(*,*) "call mylist.append( 8 )"
-		write(*,*) "call mylist.append( 5 )"
-		write(*,*) "call mylist.append( 1 )"
+		write(*,*) "call mylist%append( 8 )"
+		write(*,*) "call mylist%append( 5 )"
+		write(*,*) "call mylist%append( 1 )"
 		write(*,*)
 		
-		call mylist.append( 8 )
-		call mylist.append( 5 )
-		call mylist.append( 1 )
+		call mylist%append( 8 )
+		call mylist%append( 5 )
+		call mylist%append( 1 )
 		
 		call showMyList( mylist )
 		
@@ -195,13 +195,13 @@ module IntegerList_
 ! 		write(*,*) "Testing for insert method"
 ! 		write(*,*) "-------------------------"
 ! 		
-! 		write(*,*) "iter => mylist.begin"
+! 		write(*,*) "iter => mylist%begin"
 ! 		write(*,*) "iter => iter.next"
 ! 		write(*,*) "iter => iter.next"
 ! 		write(*,*) "call mylist.insert( iter, 1 )"
 ! 		write(*,*)
 ! 		
-! 		iter => mylist.begin
+! 		iter => mylist%begin
 ! 		iter => iter.next
 ! 		iter => iter.next
 ! 		
@@ -226,47 +226,47 @@ module IntegerList_
 		write(*,*) "Testing for erase method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "iter => mylist.begin"
+		write(*,*) "iter => mylist%begin"
 		write(*,*) "iter => iter.next"
-		write(*,*) "call mylist.erase( iter )"
+		write(*,*) "call mylist%erase( iter )"
 		write(*,*)
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		iter => iter.next
 		
-		call mylist.erase( iter )
+		call mylist%erase( iter )
 		call showMyList( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist.erase( mylist.begin )"
+		write(*,*) "call mylist%erase( mylist%begin )"
 		write(*,*)
 		
-		call mylist.erase( mylist.begin )
+		call mylist%erase( mylist%begin )
 		call showMyList( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist.erase( mylist.end )"
+		write(*,*) "call mylist%erase( mylist.end )"
 		write(*,*)
-		call mylist.erase( mylist.end )
+		call mylist%erase( mylist.end )
 		call showMyList( mylist )
 		
 		write(*,*) "------------------------"
 		write(*,*) "Testing for clear method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "call mylist.clear()"
+		write(*,*) "call mylist%clear()"
 		write(*,*)
-		call mylist.clear()
+		call mylist%clear()
 		call showMyList( mylist )
 
-		write(*,*) "call mylist.append( 1 )"
-		write(*,*) "call mylist.append( 2 )"
-		write(*,*) "call mylist.append( 3 )"
+		write(*,*) "call mylist%append( 1 )"
+		write(*,*) "call mylist%append( 2 )"
+		write(*,*) "call mylist%append( 3 )"
 		write(*,*)
 		
-		call mylist.append( 1 )
-		call mylist.append( 2 )
-		call mylist.append( 3 )
+		call mylist%append( 1 )
+		call mylist%append( 2 )
+		call mylist%append( 3 )
 		call showMyList( mylist )
 
 	end subroutine IntegerList_test

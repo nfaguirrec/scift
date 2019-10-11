@@ -152,24 +152,24 @@ module Matrix_
 		integer, intent(in) :: nCols
 		real(8), optional, intent(in) :: val
 		
-		this.nRows = nRows
-		this.nCols = nCols
+		this%nRows = nRows
+		this%nCols = nCols
 		
-		if( this.nRows == this.nCols ) then
-			this.type = SQUARE_MATRIX
-		else if( this.nCols == 1 ) then
-			this.type = COLUMN_MATRIX
-		else if( this.nRows == 1 ) then
-			this.type = ROW_MATRIX
+		if( this%nRows == this%nCols ) then
+			this%type = SQUARE_MATRIX
+		else if( this%nCols == 1 ) then
+			this%type = COLUMN_MATRIX
+		else if( this%nRows == 1 ) then
+			this%type = ROW_MATRIX
 		else
-			this.type = UNKNOWN_MATRIX
+			this%type = UNKNOWN_MATRIX
 		end if
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(nRows,nCols) )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(nRows,nCols) )
 		
-		this.data = 0.0_8
-		if( present(val) ) this.data = val
+		this%data = 0.0_8
+		if( present(val) ) this%data = val
 	end subroutine initDefaultMatrix
 
 	!>
@@ -179,8 +179,8 @@ module Matrix_
 		class(Matrix) :: this
 		real(8), intent(in) :: arr(:,:)
 		
-		call this.initDefaultMatrix( size(arr,dim=1), size(arr,dim=2) )
-		this.data = arr
+		call this%initDefaultMatrix( size(arr,dim=1), size(arr,dim=2) )
+		this%data = arr
 	end subroutine fromArray
 	
 	!>
@@ -192,10 +192,10 @@ module Matrix_
 		
 		integer :: i
 		
-		call this.initDefaultMatrix( size(arr), size(arr) )
+		call this%initDefaultMatrix( size(arr), size(arr) )
 		
 		do i=1,size(arr)
-			this.data(i,i) = arr(i)
+			this%data(i,i) = arr(i)
 		end do
 	end subroutine fromArrayDiag
 	
@@ -209,10 +209,10 @@ module Matrix_
 		
 		integer i, j
 		
-		call this.initDefaultMatrix( nRows, nCols )
+		call this%initDefaultMatrix( nRows, nCols )
 		
-		do i=1,this.nRows
-			this.data(i,i) = 1.0_8
+		do i=1,this%nRows
+			this%data(i,i) = 1.0_8
 		end do
 	end subroutine identity
 	
@@ -232,22 +232,22 @@ module Matrix_
 		effSymmetric = .false.
 		if( present(symmetric) ) effSymmetric = symmetric
 		
-		call this.initDefaultMatrix( nRows, nCols )
+		call this%initDefaultMatrix( nRows, nCols )
 		
 		call RandomUtils_init()
 		
 		if( effSymmetric ) then
 			do i=1,nRows
 				do j=i,nCols
-					call random_number( this.data(i,j) )
-					this.data(j,i) = this.data(i,j)
+					call random_number( this%data(i,j) )
+					this%data(j,i) = this%data(i,j)
 				end do
 			end do
 			! @todo Hay que implementar el type como bits para que la matriz pueda ser simétrica y cuadrada por ejemplo
 		else
 			do i=1,nRows
 				do j=1,nCols
-					call random_number( this.data(i,j) )
+					call random_number( this%data(i,j) )
 				end do
 			end do
 		end if
@@ -263,12 +263,12 @@ module Matrix_
 		real(8), optional, intent(in) :: values(:)
 		
 		if( present(val) ) then
-			call this.initDefaultMatrix( nElems, 1, val )
+			call this%initDefaultMatrix( nElems, 1, val )
 		else if( present(values) ) then
-			call this.initDefaultMatrix( nElems, 1 )
-			this.data(:,1) = values(1:nElems)
+			call this%initDefaultMatrix( nElems, 1 )
+			this%data(:,1) = values(1:nElems)
 		else
-			call this.initDefaultMatrix( nElems, 1 )
+			call this%initDefaultMatrix( nElems, 1 )
 		end if
 	end subroutine columnVector
 	
@@ -282,12 +282,12 @@ module Matrix_
 		real(8), optional, intent(in) :: values(:)
 		
 		if( present(val) ) then
-			call this.initDefaultMatrix( 1, nElems, val )
+			call this%initDefaultMatrix( 1, nElems, val )
 		else if( present(values) ) then
-			call this.initDefaultMatrix( 1, nElems )
-			this.data(1,:) = values(1:nElems)
+			call this%initDefaultMatrix( 1, nElems )
+			this%data(1,:) = values(1:nElems)
 		else
-			call this.initDefaultMatrix( 1, nElems )
+			call this%initDefaultMatrix( 1, nElems )
 		end if
 	end subroutine rowVector
 	
@@ -298,14 +298,14 @@ module Matrix_
 		class(Matrix), intent(inout) :: this
 		class(Matrix), intent(in) :: other
 		
-		this.nRows = other.nRows
-		this.nCols = other.nCols
+		this%nRows = other.nRows
+		this%nCols = other.nCols
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(other.nRows,other.nCols) )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(other.nRows,other.nCols) )
 		
-		this.data = other.data
-		this.type = other.type
+		this%data = other%data
+		this%type = other.type
 	end subroutine copyMatrix
 	
 	!>
@@ -314,9 +314,9 @@ module Matrix_
 	subroutine destroyMatrix( this )
 		type(Matrix) :: this
 		
-		this.nRows = 0
-		this.nCols = 0
-		if( allocated(this.data) ) deallocate(this.data)
+		this%nRows = 0
+		this%nCols = 0
+		if( allocated(this%data) ) deallocate(this%data)
 	end subroutine destroyMatrix
 	
 	!>
@@ -334,19 +334,19 @@ module Matrix_
 		real(8), allocatable :: workSpace(:)
 		integer :: i, ssize, info
 		
-		if( this.type /= SQUARE_MATRIX ) then
+		if( this%type /= SQUARE_MATRIX ) then
 			write(*,*) "### ERROR ### Matrix.eigen: matrix not square"
 			stop
 		end if
 		
-		ssize = this.nRows
+		ssize = this%nRows
 		eVecsBuffer = this
 		
 		allocate( eValuesBuffer(ssize) )
 		allocate( workSpace( 3*ssize-1 ) )
 		
 		! Compute the eigen values and eigen vectors using the upper elements of the symmetric matrix
-		call dsyev( 'V', 'L', ssize, eVecsBuffer.data, ssize, eValuesBuffer, workSpace, 3*ssize-1, info )
+		call dsyev( 'V', 'L', ssize, eVecsBuffer%data, ssize, eValuesBuffer, workSpace, 3*ssize-1, info )
 		
 		! Utilizando el método dsyev con ( 'V', 'U', ... ) me ha dado problemas para diagonalizar esta matrix
 		! 
@@ -378,9 +378,9 @@ module Matrix_
 		end if
 		
 		if( present(eVals) ) then
-			call eVals.init( ssize, ssize, 0.0_8 )
+			call eVals%init( ssize, ssize, 0.0_8 )
 			do i=1,ssize
-				call eVals.set( i, i, eValuesBuffer(i) )
+				call eVals%set( i, i, eValuesBuffer(i) )
 			end do
 		end if
 		
@@ -400,12 +400,12 @@ module Matrix_
 ! 		real(8), allocatable :: workSpace(:)
 ! 		integer :: ssize, info
 ! 		
-! 		if( this.type /= SQUARE_MATRIX ) then
+! 		if( this%type /= SQUARE_MATRIX ) then
 ! 			write(*,*) "### ERROR ### Matrix.eigen: matrix not square"
 ! 			stop
 ! 		end if
 ! 		
-! 		ssize = this.nRows
+! 		ssize = this%nRows
 ! 		eVecs = this
 ! 		
 ! 		if( allocated(eVals) ) deallocate(eVals)
@@ -414,7 +414,7 @@ module Matrix_
 ! 		allocate( workSpace( 3*ssize-1 ) )
 ! 		
 ! 		! Compute the eigen values and eigen vectors using the upper elements of the symmetric matrix
-! 		call dsyev( 'V', 'U', ssize, eVecs.data, ssize, eVals, workSpace, 3*ssize-1, info )
+! 		call dsyev( 'V', 'U', ssize, eVecs%data, ssize, eVals, workSpace, 3*ssize-1, info )
 ! 		
 ! 		if ( info /= 0 ) then
 ! 			write(*,*) "### ERROR ### Matrix.eigen: values matrix failed"
@@ -438,12 +438,12 @@ module Matrix_
 		real(8), allocatable :: workSpace(:)
 		integer :: i, ssize, info
 		
-		if( this.type /= SQUARE_MATRIX ) then
+		if( this%type /= SQUARE_MATRIX ) then
 			write(*,*) "### ERROR ### Matrix.eigenNotSorted: matrix not square"
 			stop
 		end if
 		
-		ssize = this.nRows
+		ssize = this%nRows
 		copyMat = this
 		eVecsBufferR = this
 		eVecsBufferL = this
@@ -452,7 +452,7 @@ module Matrix_
 		allocate( eValuesBufferL(ssize) )
 		allocate( workSpace( 4*ssize ) )
 		
-		call dgeev( 'N', 'V', ssize, copyMat.data, ssize, eValuesBufferR, eValuesBufferL, eVecsBufferL.data, ssize, eVecsBufferR.data, ssize, workSpace, 4*ssize, info )
+		call dgeev( 'N', 'V', ssize, copyMat%data, ssize, eValuesBufferR, eValuesBufferL, eVecsBufferL%data, ssize, eVecsBufferR%data, ssize, workSpace, 4*ssize, info )
 		
 		if ( info /= 0 ) then
 			write(*,*) "### ERROR ### Matrix.eigenNotSorted: values matrix failed"
@@ -465,9 +465,9 @@ module Matrix_
 		end if
 		
 		if( present(eVals) ) then
-			call eVals.init( ssize, ssize, 0.0_8 )
+			call eVals%init( ssize, ssize, 0.0_8 )
 			do i=1,ssize
-				call eVals.set( i, i, eValuesBufferR(i) )
+				call eVals%set( i, i, eValuesBufferR(i) )
 			end do
 		end if
 		
@@ -493,18 +493,18 @@ module Matrix_
 		integer :: i, ssize, info
 		real(8) :: trace
 		
-		if( this.type /= SQUARE_MATRIX ) then
+		if( this%type /= SQUARE_MATRIX ) then
 			write(*,*) "### ERROR ### Matrix.inverse: This operation only is defined for square matrices"
 			stop
 		end if
 		
-		ssize = this.nRows
+		ssize = this%nRows
 		
 		if( ssize == 2 ) then
-			inv = this.inverse2x2()
+			inv = this%inverse2x2()
 			return
 		else if( ssize == 3 ) then
-			inv = this.inverse3x3()
+			inv = this%inverse3x3()
 			return
 		end if
 		
@@ -513,22 +513,22 @@ module Matrix_
 		allocate( pivotInd( ssize ) )
 		
 		!! Factorizacion LU
-		call dgetrf( ssize, ssize, inv.data, ssize, pivotInd, info )
+		call dgetrf( ssize, ssize, inv%data, ssize, pivotInd, info )
 		if ( info /= 0 ) then
 			write(*,*) "### ERROR ### Matrix.inverse: Get Matrix LU factorization failed"
 			write(*,*) "A = "
-			call this.show( formatted=.true. )
+			call this%show( formatted=.true. )
 			stop
 		end if
 		
 		allocate( workSpace( ssize ) )
 		
 		!! Invierte la matriz
-		call dgetri( ssize, inv.data, ssize, pivotInd, workSpace, ssize, info )
+		call dgetri( ssize, inv%data, ssize, pivotInd, workSpace, ssize, info )
 		if ( info /= 0 ) then
 			write(*,*) "### ERROR ### Matrix.inverse: Get Inverse Matrix failed"
 			write(*,*) "A = "
-			call this.show( formatted=.true. )
+			call this%show( formatted=.true. )
 			stop
 		end if
 		
@@ -559,37 +559,37 @@ module Matrix_
 		type(Matrix) :: I
 		real(8) :: detA
 		
-		if( this.isDiagonal() ) then
-			call inv.init( 2, 2, val=0.0_8 )
+		if( this%isDiagonal() ) then
+			call inv%init( 2, 2, val=0.0_8 )
 			
-			inv.data(1,1) = 1.0_8/this.data(1,1)
-			inv.data(2,2) = 1.0_8/this.data(2,2)
+			inv%data(1,1) = 1.0_8/this%data(1,1)
+			inv%data(2,2) = 1.0_8/this%data(2,2)
 			
 			return
 		end if
 		
-		detA = this.determinant2x2()
+		detA = this%determinant2x2()
 		
 		if( abs(detA) < 1d-16 ) then
 			write(*,*) "### WARNING ### Matrix.inverse2x2: Singular matrix detected ( detA < 1e-16 )"
 			write(*,*) "                It will try to fix by Tikhonov regularization ( lambda = 1d-3 )"
-			call I.identity( 2, 2 )
+			call I%identity( 2, 2 )
 			this = this + I*1d-3  ! Tikhonov regularization
 		end if
 		
 		if( abs(detA) < 1d-16 ) then
 			write(*,*) "### ERROR ### Matrix.inverse2x2: Singular matrix detected ( detA < 1e-16 )"
 			write(*,*) "A = "
-			call this.show( formatted=.true. )
+			call this%show( formatted=.true. )
 			write(*,*) ""
 			write(*,*) "det(A) = ", detA
 			stop
 		end if
 		
-		call inv.init( 2, 2 )
+		call inv%init( 2, 2 )
 		
-#define a(i,j) this.data(i,j)
-#define b(i,j) inv.data(i,j)
+#define a(i,j) this%data(i,j)
+#define b(i,j) inv%data(i,j)
 		b(1,1) =  a(2,2)
 		b(1,2) = -a(1,2)
 		b(2,1) = -a(2,1)
@@ -611,38 +611,38 @@ module Matrix_
 		type(Matrix) :: I
 		real(8) :: detA
 		
-		if( this.isDiagonal() ) then
-			call inv.init( 3, 3, val=0.0_8 )
+		if( this%isDiagonal() ) then
+			call inv%init( 3, 3, val=0.0_8 )
 			
-			inv.data(1,1) = 1.0_8/this.data(1,1)
-			inv.data(2,2) = 1.0_8/this.data(2,2)
-			inv.data(3,3) = 1.0_8/this.data(3,3)
+			inv%data(1,1) = 1.0_8/this%data(1,1)
+			inv%data(2,2) = 1.0_8/this%data(2,2)
+			inv%data(3,3) = 1.0_8/this%data(3,3)
 			
 			return
 		end if
 		
-		detA = this.determinant3x3()
+		detA = this%determinant3x3()
 		
 		if( abs(detA) < 1d-16 ) then
 			write(*,*) "### WARNING ### Matrix.inverse3x3: Singular matrix detected ( detA < 1e-16 )"
 			write(*,*) "                It will try to fix by Tikhonov regularization ( lambda = 1d-3 )"
-			call I.identity( 3, 3 )
+			call I%identity( 3, 3 )
 			this = this + I*1d-3  ! Tikhonov regularization
 		end if
 		
 		if( abs(detA) < 1d-16 ) then
 			write(*,*) "### ERROR ### Matrix.inverse3x3: Singular matrix detected ( detA < 1e-16 )"
 			write(*,*) "A = "
-			call this.show( formatted=.true. )
+			call this%show( formatted=.true. )
 			write(*,*) ""
 			write(*,*) "det(A) = ", detA
 			stop
 		end if
 		
-		call inv.init( 3, 3 )
+		call inv%init( 3, 3 )
 		
-#define a(i,j) this.data(i,j)
-#define b(i,j) inv.data(i,j)
+#define a(i,j) this%data(i,j)
+#define b(i,j) inv%data(i,j)
 		b(1,1) = a(2,2)*a(3,3) - a(2,3)*a(3,2)
 		b(1,2) = a(1,3)*a(3,2) - a(1,2)*a(3,3)
 		b(1,3) = a(1,2)*a(2,3) - a(1,3)*a(2,2)
@@ -667,12 +667,12 @@ module Matrix_
 		
 		integer :: ssize
 		
-		ssize = this.nRows
+		ssize = this%nRows
 		
 		if( ssize == 2 ) then
-			det= this.determinant2x2()
+			det= this%determinant2x2()
 		else if( ssize == 3 ) then
-			det = this.determinant3x3()
+			det = this%determinant3x3()
 		else
 			write(*,*) "### ERROR ### Matrix.determinant() size>3 is not implemented yet"
 			stop
@@ -687,7 +687,7 @@ module Matrix_
 		class(Matrix), intent(in) :: this
 		real(8) :: output
 		
-#define a(i,j) this.data(i,j)
+#define a(i,j) this%data(i,j)
 		output = a(1,1)*a(2,2)-a(1,2)*a(2,1)
 #undef a
 	end function determinant2x2
@@ -700,7 +700,7 @@ module Matrix_
 		class(Matrix), intent(in) :: this
 		real(8) :: output
 		
-#define a(i,j) this.data(i,j)
+#define a(i,j) this%data(i,j)
 		output=a(1,1)*a(2,2)*a(3,3) &
 			  +a(2,1)*a(3,2)*a(1,3) &
 			  +a(3,1)*a(1,2)*a(2,3) &
@@ -740,8 +740,8 @@ module Matrix_
 ! 		integer :: j
 ! 		
 ! 		!! Determina variables y parametros requeridos para el calculo
-! 		numberOfRows = size( this.values, DIM=1 )
-! 		numberOfColumns = size( this.values, DIM=1 )
+! 		numberOfRows = size( this%values, DIM=1 )
+! 		numberOfColumns = size( this%values, DIM=1 )
 ! 		
 ! 		call Matrix_copyConstructor( output, this )
 ! 		
@@ -812,8 +812,8 @@ module Matrix_
 		integer :: i
 		
 		output = 0.0_8
-		do i=1,this.nCols
-			output = output + this.data( i, i )
+		do i=1,this%nCols
+			output = output + this%data( i, i )
 		end do
 	end function trace
 	
@@ -825,7 +825,7 @@ module Matrix_
 		
 		type(Matrix) :: U
 		
-		U = this.transpose()*this
+		U = this%transpose()*this
 		norm2 = sqrt( U.trace() )
 	end function norm2
 	
@@ -838,26 +838,26 @@ module Matrix_
 		
 		integer :: i
 		
-		select case( this.type )
+		select case( this%type )
 			case( COLUMN_MATRIX )
-				call diag.init( this.nRows, this.nRows )
+				call diag%init( this%nRows, this%nRows )
 				
-				do i=1,this.nRows
-					call diag.set( i, i, this.get(i,1) )
+				do i=1,this%nRows
+					call diag%set( i, i, this%get(i,1) )
 				end do
 				
 			case( ROW_MATRIX )
-				call diag.init( this.nCols, this.nCols )
+				call diag%init( this%nCols, this%nCols )
 				
-				do i=1,this.nCols
-					call diag.set( i, i, this.get(1,i) )
+				do i=1,this%nCols
+					call diag%set( i, i, this%get(1,i) )
 				end do
 				
 			case( SQUARE_MATRIX )
-				call diag.init( this.nCols, this.nCols )
+				call diag%init( this%nCols, this%nCols )
 				
-				do i=1,this.nCols
-					call diag.set( i, i, this.get(i,i) )
+				do i=1,this%nCols
+					call diag%set( i, i, this%get(i,i) )
 				end do
 				
 			case default
@@ -872,8 +872,8 @@ module Matrix_
 		class(Matrix), intent(in) :: this
 		type(Matrix) :: output
 		
-		call output.init( this.nCols, this.nRows )
-		output.data = transpose( this.data )
+		call output%init( this%nCols, this%nRows )
+		output%data = transpose( this%data )
 	end function trans
 
 	!>
@@ -921,8 +921,8 @@ module Matrix_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<Matrix:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef ITEMS
 #undef ITEMI
 #undef ITEMR
@@ -936,18 +936,18 @@ module Matrix_
 ! 			LINE("Matrix")
 ! 			LINE("---------")
 ! 			LINE("")
-! 			maxIPart = RFMT( maxval( this.data, mask=( this.data .lt. Math_Inf .and. .not. IEEE_IS_NAN(this.data) ) ) )
-			maxIPart = min( RFMT( maxval( this.data, mask=( IEEE_IS_FINITE(this.data) ) ) ), 15 )
+! 			maxIPart = RFMT( maxval( this%data, mask=( this%data .lt. Math_Inf .and. .not. IEEE_IS_NAN(this%data) ) ) )
+			maxIPart = min( RFMT( maxval( this%data, mask=( IEEE_IS_FINITE(this%data) ) ) ), 15 )
 			
-			do k=1, ceiling( (this.nCols*1.0)/(ncolEff*1.0) )
+			do k=1, ceiling( (this%nCols*1.0)/(ncolEff*1.0) )
 			
 				lowerLimit = ncolEff*(k-1)+1
 				upperLimit = ncolEff*k
 				auxColNum = ncolEff
 				
-				if ( upperLimit > this.nCols ) then
-					auxColNum =  ncolEff-upperLimit+this.nCols
-					upperLimit = this.nCols
+				if ( upperLimit > this%nCols ) then
+					auxColNum =  ncolEff-upperLimit+this%nCols
+					upperLimit = this%nCols
 				end if
 				
 				if( k /= 1 ) then
@@ -961,7 +961,7 @@ module Matrix_
 ! 				else
 ! 					if( tmpFlags /= WITHOUT_KEYS ) then
 ! 						if( tmpFlags == WITH_COLUMN_KEYS .or. tmpFlags == WITH_BOTH_KEYS ) then
-! 							write(fstr,"(I5,<upper>F10.4)") i, ( this.data(i,k), k=ncolEff*(j-1)+1,upper )
+! 							write(fstr,"(I5,<upper>F10.4)") i, ( this%data(i,k), k=ncolEff*(j-1)+1,upper )
 							write (fstr,"(5X,<auxColNum>I<maxIPart+5+effPrecision>)") ( i,i=lowerLimit,upperLimit )
 							output = trim(output)//trim(fstr)//new_line('')
 ! 						end if
@@ -973,39 +973,39 @@ module Matrix_
 ! 				if( present( rowKeys ) ) then
 ! 				
 ! 					if( tmpFlags == WITH_ROW_KEYS .or. tmpFlags == WITH_BOTH_KEYS ) then
-! 						write (6,"(A18,<auxColNum>F15.6)") ( rowKeys(i), ( this.values(i,j), j=lowerLimit,upperLimit ), i = 1, this.nRows )
+! 						write (6,"(A18,<auxColNum>F15.6)") ( rowKeys(i), ( this%values(i,j), j=lowerLimit,upperLimit ), i = 1, this%nRows )
 ! 					else
-! 						write (6,"(5X,<auxColNum>F15.6)") ( ( this.values(i,j), j=lowerLimit,upperLimit ), i = 1, this.nRows )
+! 						write (6,"(5X,<auxColNum>F15.6)") ( ( this%values(i,j), j=lowerLimit,upperLimit ), i = 1, this%nRows )
 ! 					end if
 ! 					
 ! 				else
 ! 					if( tmpFlags /= WITHOUT_KEYS ) then
 					
 ! 						if( ( tmpFlags == WITH_ROW_KEYS .or. tmpFlags == WITH_BOTH_KEYS ) .and. tmpFlags /= WITHOUT_KEYS ) then
-					do i=1,this.nRows
-						write (fstr,"(I5,<auxColNum>F<maxIPart+5+effPrecision>.<effPrecision>)") i, ( this.data(i,j), j=lowerLimit,upperLimit )
+					do i=1,this%nRows
+						write (fstr,"(I5,<auxColNum>F<maxIPart+5+effPrecision>.<effPrecision>)") i, ( this%data(i,j), j=lowerLimit,upperLimit )
 						
-						if( i /= this.nRows ) then
+						if( i /= this%nRows ) then
 							output = trim(output)//trim(fstr)//new_line('')
 						else
 							output = trim(output)//trim(fstr)
 						end if
 					end do
-! 							write (fstr,"(I5,<auxColNum>F15.6)") ( i, ( this.data(i,j), j=lowerLimit,upperLimit ), i=1,this.nRows )
+! 							write (fstr,"(I5,<auxColNum>F15.6)") ( i, ( this%data(i,j), j=lowerLimit,upperLimit ), i=1,this%nRows )
 ! 							output = trim(output)//trim(fstr)//new_line('')
 ! 						else
-! 							write (6,"(5X,<auxColNum>F15.6)") ( ( this.values(i,j), j=lowerLimit,upperLimit ), i = 1, this.nRows )
+! 							write (6,"(5X,<auxColNum>F15.6)") ( ( this%values(i,j), j=lowerLimit,upperLimit ), i = 1, this%nRows )
 ! 						end if
 						
 ! 					else
 ! 					
-! 						write (fstr,"(5X,<auxColNum>F15.6)") ( ( this.data(i,j), j=lowerLimit,upperLimit ), i=1,this.nRows )
+! 						write (fstr,"(5X,<auxColNum>F15.6)") ( ( this%data(i,j), j=lowerLimit,upperLimit ), i=1,this%nRows )
 ! 						output = trim(output)//trim(fstr)//new_line('')
 ! 
 ! 					end if
 ! 				end if
 				
-				if( k /= ceiling( (this.nCols*1.0)/(ncolEff*1.0) ) ) then
+				if( k /= ceiling( (this%nCols*1.0)/(ncolEff*1.0) ) ) then
 					LINE("")
 				end if
 				
@@ -1048,7 +1048,7 @@ module Matrix_
 		integer, intent(in) :: i, j
 		real(8), intent(in) :: value
 		
-		this.data(i,j) = value
+		this%data(i,j) = value
 	end subroutine set
 	
 	!>
@@ -1059,7 +1059,7 @@ module Matrix_
 		integer, intent(in) :: i, j
 		real(8) :: output
 		
-		output = this.data(i,j)
+		output = this%data(i,j)
 	end function get
 	
 	!>
@@ -1070,8 +1070,8 @@ module Matrix_
 		integer, intent(in) :: i
 		type(Matrix) :: output
 		
-		call output.init( this.nRows, 1 )
-		output.data(:,1) = this.data(:,i)
+		call output%init( this%nRows, 1 )
+		output%data(:,1) = this%data(:,i)
 	end function column
 	
 	!>
@@ -1082,8 +1082,8 @@ module Matrix_
 		integer, intent(in) :: i
 		type(Matrix) :: output
 		
-		call output.init( 1, this.nCols )
-		output.data(1,:) = this.data(i,:)
+		call output%init( 1, this%nCols )
+		output%data(1,:) = this%data(i,:)
 	end function row
 	
 	!>
@@ -1101,7 +1101,7 @@ module Matrix_
 		effTol = 1d-16
 		if( present(tol) ) effTol = tol
 		
-		if( sum( this.data )/size(this.data) > effTol ) then
+		if( sum( this%data )/size(this%data) > effTol ) then
 			output = .false.
 		else
 			output = .true.
@@ -1123,9 +1123,9 @@ module Matrix_
 		effTol = 1d-16
 		if( present(tol) ) effTol = tol
 		
-		do i=1,this.nRows
-			do j=i+1,this.nCols
-				if( abs(this.data(i,j)) > effTol .or. abs(this.data(j,i)) > effTol ) then
+		do i=1,this%nRows
+			do j=i+1,this%nCols
+				if( abs(this%data(i,j)) > effTol .or. abs(this%data(j,i)) > effTol ) then
 					output = .false.
 					return
 				end if
@@ -1143,13 +1143,13 @@ module Matrix_
 		class(Matrix), intent(in) :: other
 		type(Matrix) :: output
 		
-		if( this.nCols /= other.nCols .or. this.nRows /= other.nRows ) then
-			write(*,*) "## ERROR ## Matrix.rAddition: The matrices have not the same size"
+		if( this%nCols /= other.nCols .or. this%nRows /= other.nRows ) then
+			write(*,*) "## ERROR ## Matrix%rAddition: The matrices have not the same size"
 			stop
 		end if
 		
 		call output.copyMatrix( this )
-		output.data = this.data + other.data
+		output%data = this%data + other%data
 	end function rAddition
 	
 	!>
@@ -1161,7 +1161,7 @@ module Matrix_
 		type(Matrix) :: output
 		
 		call output.copyMatrix( this )
-		output.data = this.data + constant
+		output%data = this%data + constant
 	end function rAdditionByReal
 	
 	!>
@@ -1172,13 +1172,13 @@ module Matrix_
 		class(Matrix), intent(in) :: other
 		type(Matrix) :: output
 		
-		if( this.nCols /= other.nCols .or. this.nRows /= other.nRows ) then
-			write(*,*) "## ERROR ## Matrix.rSubtraction: The matrices have not the same size"
+		if( this%nCols /= other.nCols .or. this%nRows /= other.nRows ) then
+			write(*,*) "## ERROR ## Matrix%rSubtraction: The matrices have not the same size"
 			stop
 		end if
 		
 		call output.copyMatrix( this )
-		output.data = this.data - other.data
+		output%data = this%data - other%data
 	end function rSubtraction
 	
 	!>
@@ -1190,7 +1190,7 @@ module Matrix_
 		type(Matrix) :: output
 		
 		call output.copyMatrix( this )
-		output.data = this.data - constant
+		output%data = this%data - constant
 	end function rSubtractionByReal
 	
 	!>
@@ -1201,13 +1201,13 @@ module Matrix_
 		class(Matrix), intent(in) :: other
 		type(Matrix) :: output
 		
-		if( this.nCols /= other.nRows ) then
-			write(*,*) "## ERROR ## Matrix.rMultiplication: matrices with incompatible sizes"
+		if( this%nCols /= other.nRows ) then
+			write(*,*) "## ERROR ## Matrix%rMultiplication: matrices with incompatible sizes"
 			stop
 		end if
 		
-		call output.init( this.nRows, other.nCols )
-		output.data = matmul( this.data, other.data )
+		call output%init( this%nRows, other.nCols )
+		output%data = matmul( this%data, other%data )
 	end function rMultiplication
 	
 	!>
@@ -1219,7 +1219,7 @@ module Matrix_
 		type(Matrix) :: output
 		
 		call output.copyMatrix( this )
-		output.data = this.data*constant
+		output%data = this%data*constant
 	end function rMultiplicationByReal
 	
 	!>
@@ -1230,13 +1230,13 @@ module Matrix_
 		class(Matrix), intent(in) :: other
 		type(Matrix) :: output
 		
-		if( this.nCols /= other.nCols .or. this.nRows /= other.nRows ) then
-			write(*,*) "## ERROR ## Matrix.rDivision: The matrices have not the same size"
+		if( this%nCols /= other.nCols .or. this%nRows /= other.nRows ) then
+			write(*,*) "## ERROR ## Matrix%rDivision: The matrices have not the same size"
 			stop
 		end if
 		
 		output = other.inverse()
-		output.data = matmul( this.data, output.data )
+		output%data = matmul( this%data, output%data )
 	end function rDivision
 	
 	!>
@@ -1248,7 +1248,7 @@ module Matrix_
 		type(Matrix) :: output
 		
 		call output.copyMatrix( this )
-		output.data = this.data/constant
+		output%data = this%data/constant
 	end function rDivisionByReal
 	
 	!>
@@ -1259,7 +1259,7 @@ module Matrix_
 		class(Matrix), intent(in) :: other
 		type(Matrix) :: output
 		
-		write(*,*) "## ERROR ## Matrix.rExponentiation is not implemented"
+		write(*,*) "## ERROR ## Matrix%rExponentiation is not implemented"
 		stop
 	end function rExponentiation
 	
@@ -1271,7 +1271,7 @@ module Matrix_
 		real(8), intent(in) :: constant
 		type(Matrix) :: output
 		
-		write(*,*) "## ERROR ## Matrix.rExponentiation is not implemented"
+		write(*,*) "## ERROR ## Matrix%rExponentiation is not implemented"
 		stop
 	end function rExponentiationByReal
 	
@@ -1298,7 +1298,7 @@ module Matrix_
 ! 		nsize = size(M,dim=1)
 
 		! Number of different elements in the matrix
-! 		if( this.isSymmetric() ) then
+! 		if( this%isSymmetric() ) then
 ! 			effSize = nsize*(nsize+1)/2
 ! 		else
 ! 			effSize = nsize
@@ -1306,16 +1306,16 @@ module Matrix_
 		! @todo hay que programar el type de la matriz en bits para que esta pueda ser
 		!       a la vez simetrica y cuadrada
 		
-		effSize = this.nCols*(this.nCols+1)/2 ! <== Esto es para una matriz cuadrada simetrica
+		effSize = this%nCols*(this%nCols+1)/2 ! <== Esto es para una matriz cuadrada simetrica
 		allocate( Ml(effSize) )
 		
 		! + Esto es para una matriz cuadrada simetrica
 		! |
 		! v
 		n=1
-		do i=1,this.nCols
-			do j=i,this.nRows
-				Ml(n) = this.data(i,j)
+		do i=1,this%nCols
+			do j=i,this%nRows
+				Ml(n) = this%data(i,j)
 				n=n+1
 			end do
 		end do
@@ -1358,12 +1358,12 @@ module Matrix_
 		type(Matrix) :: u
 		integer :: i
 		
-		if( this.type == COLUMN_MATRIX ) then
+		if( this%type == COLUMN_MATRIX ) then
 			Vprime = this
 			
 			do i=1,axes.nCols
 				u = axes.column(i)
-				call Vprime.set( i, 1, Matrix_get( this.transpose()*u, 1, 1 )/u.norm2() )
+				call Vprime%set( i, 1, Matrix_get( this%transpose()*u, 1, 1 )/u.norm2() )
 			end do
 		else
 			write(*,*) "### ERROR ### The Matrix.projectionOntoNewAxes method is only implemented for column matrices"
@@ -1415,8 +1415,8 @@ module Matrix_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<Matrix:"
-! 			ITEMI( "min=", fArray.min )
-! 			ITEMR( ",size=", fArray.size )
+! 			ITEMI( "min=", fArray%min )
+! 			ITEMR( ",size=", fArray%size )
 #undef ITEMS
 #undef ITEMI
 #undef ITEMR
@@ -1520,7 +1520,7 @@ module Matrix_
 		type(Matrix) , intent(in) :: M
 		integer :: i, j
 		
-		Matrix_get = M.data(i,j)
+		Matrix_get = M%data(i,j)
 	end function Matrix_get
 	
 	!>
@@ -1562,7 +1562,7 @@ module Matrix_
 		type(Matrix) :: output
 		
 		call output.copyMatrix( M )
-		output.data = M.data*constant
+		output%data = M%data*constant
 	end function Matrix_lMultiplicationByReal
 	
 	!>
@@ -1577,106 +1577,106 @@ module Matrix_
 		write(*,*) "==================="
 		write(*,*) "Initialization of a matrix 12x12 with all values equal to 1.0"
 		write(*,*) ""
-		call A.init( 12, 12, 1.0_8 )
-		call A.show( 6, .true. )
+		call A%init( 12, 12, 1.0_8 )
+		call A%show( 6, .true. )
 		write(*,*) ""
 		write(*,*) "Initialization of a matrix 12x12 with random values"
 		write(*,*) ""
-		call B.random( 12, 12, symmetric=.true. )
-		call B.show( 6, .true. )
+		call B%random( 12, 12, symmetric=.true. )
+		call B%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "Initialization with elements Inf"
 		write(*,*) ""
-		call B.random( 4, 4, symmetric=.true. )
-		B.data(1,1) = Math_Inf
-		B.data(2,2) = Math_Inf
-		call B.show( 6, .true. )
+		call B%random( 4, 4, symmetric=.true. )
+		B%data(1,1) = Math_Inf
+		B%data(2,2) = Math_Inf
+		call B%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "Initialization with elements NaN"
 		write(*,*) ""
-		call B.random( 4, 4, symmetric=.true. )
-		B.data(1,1) = Math_Inf
-		B.data(2,2) = Math_NAN
-		call B.show( 6, .true. )
+		call B%random( 4, 4, symmetric=.true. )
+		B%data(1,1) = Math_Inf
+		B%data(2,2) = Math_NAN
+		call B%show( 6, .true. )
 		
-! 		call A.init( 12, 12, 1.0_8 )
-! 		call A.show( 6, .true. )
+! 		call A%init( 12, 12, 1.0_8 )
+! 		call A%show( 6, .true. )
 ! 		write(*,*) ""
 ! 		write(*,*) "Initialization of a matrix 12x12 with random values"
 ! 		write(*,*) ""
-! 		call B.random( 12, 12, symmetric=.true. )
-! 		call B.show( 6, .true. )
+! 		call B%random( 12, 12, symmetric=.true. )
+! 		call B%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "Testing inverse"
 		write(*,*) "==============="
 		write(*,*) ""
 		write(*,*) "B ="
-		call B.show( 6, .true. )
+		call B%show( 6, .true. )
 		C = B.inverse()
 		write(*,*) ""
 		write(*,*) "B^{-1} ="
-		call C.show( 6, .true. )
+		call C%show( 6, .true. )
 		A = B*C
 		write(*,*) ""
 		write(*,*) "B*B^{-1} ="
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "Testing inverse for small matrices"
 		write(*,*) "=================================="
 		write(*,*) ""
 		write(*,*) "B ="
-		call B.init(3,3)
-		B.data(1,:) = [ -0.76675, 0.00000, -0.64195 ]
-		B.data(2,:) = [  0.00000, 1.00000,  0.00000 ]
-		B.data(3,:) = [  0.64195, 0.00000, -0.76675 ]
-		call B.show( 6, .true. )
+		call B%init(3,3)
+		B%data(1,:) = [ -0.76675, 0.00000, -0.64195 ]
+		B%data(2,:) = [  0.00000, 1.00000,  0.00000 ]
+		B%data(3,:) = [  0.64195, 0.00000, -0.76675 ]
+		call B%show( 6, .true. )
 		C = B.inverse()
 		write(*,*) ""
 		write(*,*) "B^{-1} ="
-		call C.show( 6, .true. )
+		call C%show( 6, .true. )
 		A = B*C
 		write(*,*) ""
 		write(*,*) "B*B^{-1} ="
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "B ="
-		call B.init(2,2)
-		B.data(1,:) = [ -0.76675, -0.84195 ]
-		B.data(2,:) = [  0.64195, -2.76675 ]
-		call B.show( 6, .true. )
+		call B%init(2,2)
+		B%data(1,:) = [ -0.76675, -0.84195 ]
+		B%data(2,:) = [  0.64195, -2.76675 ]
+		call B%show( 6, .true. )
 		C = B.inverse()
 		write(*,*) ""
 		write(*,*) "B^{-1} ="
-		call C.show( 6, .true. )
+		call C%show( 6, .true. )
 		A = B*C
 		write(*,*) ""
 		write(*,*) "B*B^{-1} ="
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "Approximately singular matrix "
 		write(*,*) "B ="
-		call B.init(3,3)
-		B.data(1,:) = [  63534.983702,     97467.773498,    -54790.146796 ]
-		B.data(2,:) = [  97467.773498,    212028.341745,     27139.351856 ]
-		B.data(3,:) = [ -54790.146796,     27139.351856,    245051.310679 ]
+		call B%init(3,3)
+		B%data(1,:) = [  63534.983702,     97467.773498,    -54790.146796 ]
+		B%data(2,:) = [  97467.773498,    212028.341745,     27139.351856 ]
+		B%data(3,:) = [ -54790.146796,     27139.351856,    245051.310679 ]
 		write(*,*) ""
 		write(*,*) "det(B) =", B.determinant3x3()
 		write(*,*) ""
-		call B.show( 6, .true. )
+		call B%show( 6, .true. )
 		C = B.inverse()
 		write(*,*) ""
 		write(*,*) "B^{-1} ="
-		call C.show( 6, .true. )
+		call C%show( 6, .true. )
 		A = B*C
 		write(*,*) ""
 		write(*,*) "B*B^{-1} ="
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "Testing operators"
@@ -1684,25 +1684,25 @@ module Matrix_
 		write(*,*) ""
 		A = A*2.0_8
 		write(*,*) "A*2.0 ="
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
-		call B.random( 12, 12, symmetric=.true. )
+		call B%random( 12, 12, symmetric=.true. )
 		write(*,*) ""
 		write(*,*) "B ="
-		call B.show( 6, .true. )
+		call B%show( 6, .true. )
 		A = B/B
 		write(*,*) ""
 		write(*,*) "B/B ="
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "Testing linearization"
 		write(*,*) "====================="
 		write(*,*) ""
-		call A.random( 3, 3, symmetric=.true. )
+		call A%random( 3, 3, symmetric=.true. )
 		write(*,*) ""
 		write(*,*) "A ="
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		call A.linearize( lA )
 		write(*,*) ""
 		write(*,*) "linearize(A) ="
@@ -1736,12 +1736,12 @@ module Matrix_
 		! *  -0.80   0.45   0.17   0.31   0.16
 		!-----------------------------------------------------------------------------
 		
-		call A.init(5,5)
-		A.data(1,:) = [  1.96,  -6.49,  -0.47,  -7.20,  -0.65 ]
-		A.data(2,:) = [ -6.49,   3.80,  -6.39,   1.50,  -6.34 ]
-		A.data(3,:) = [ -0.47,  -6.39,   4.17,  -1.51,   2.67 ]
-		A.data(4,:) = [ -7.20,   1.50,  -1.51,   5.70,   1.80 ]
-		A.data(5,:) = [ -0.65,  -6.34,   2.67,   1.80,  -7.10 ]
+		call A%init(5,5)
+		A%data(1,:) = [  1.96,  -6.49,  -0.47,  -7.20,  -0.65 ]
+		A%data(2,:) = [ -6.49,   3.80,  -6.39,   1.50,  -6.34 ]
+		A%data(3,:) = [ -0.47,  -6.39,   4.17,  -1.51,   2.67 ]
+		A%data(4,:) = [ -7.20,   1.50,  -1.51,   5.70,   1.80 ]
+		A%data(5,:) = [ -0.65,  -6.34,   2.67,   1.80,  -7.10 ]
 		
 		write(*,*) ""
 		write(*,*) " Sorted"
@@ -1749,17 +1749,17 @@ module Matrix_
 		
 		write(*,*) ""
 		write(*,*) "A ="
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		call A.eigen( eVecs=B, eVals=C )
 		
 		write(*,*) ""
 		write(*,*) "eigenvectors ="
-		call B.show( 6, .true. )
+		call B%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "eigenvalues ="
-		call C.show( 6, .true. )
+		call C%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) " Not sorted"
@@ -1767,17 +1767,17 @@ module Matrix_
 		
 		write(*,*) ""
 		write(*,*) "A ="
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		call A.eigenNotSorted( eVecs=B, eVals=C )
 		
 		write(*,*) ""
 		write(*,*) "eigenvectors ="
-		call B.show( 6, .true. )
+		call B%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "eigenvalues ="
-		call C.show( 6, .true. )
+		call C%show( 6, .true. )
 		
 		write(*,*) ""
 		write(*,*) "Testing projection for column vectors"
@@ -1785,37 +1785,37 @@ module Matrix_
 		call A.columnVector( 3, values=[0.5_8,0.7071_8,0.5_8] )
 		write(*,*) ""
 		write(*,*) "A = "
-		call A.show( formatted=.true. )
+		call A%show( formatted=.true. )
 		
 		! These axis are equivalent to a rotation with alpha=45º and beta=45º
-		call B.init(3,3)
-		B.data(1,:) = [  0.5000, 0.5000, -0.7071 ]
-		B.data(2,:) = [ -0.7071, 0.7071,  0.0000 ]
-		B.data(3,:) = [  0.5000, 0.5000,  0.7071 ]
+		call B%init(3,3)
+		B%data(1,:) = [  0.5000, 0.5000, -0.7071 ]
+		B%data(2,:) = [ -0.7071, 0.7071,  0.0000 ]
+		B%data(3,:) = [  0.5000, 0.5000,  0.7071 ]
 		
 		write(*,*) ""
 		write(*,*) "axes = "
-		call B.show( formatted=.true. )
+		call B%show( formatted=.true. )
 		
 		C = A.projectionOntoNewAxes( B )
 		
 		write(*,*) ""
 		write(*,*) "projection = "
-		call C.show( formatted=.true. )
+		call C%show( formatted=.true. )
 		
 		write(*,*) ""
 		write(*,*) "Testing info methods"
 		write(*,*) "===================="
-		call A.random( 3, 3, symmetric=.true. )
+		call A%random( 3, 3, symmetric=.true. )
 		write(*,*) ""
 		write(*,*) "A = "
-		call A.show( formatted=.true. )
+		call A%show( formatted=.true. )
 		write(*,*) "A.isDiagonal() = ", A.isDiagonal()
 		
-		call A.init( 3, 3, val=1d-12 )
+		call A%init( 3, 3, val=1d-12 )
 		write(*,*) ""
 		write(*,*) "A = "
-		call A.show( formatted=.true. )
+		call A%show( formatted=.true. )
 		write(*,*) "A.isZero() = ", A.isZero()
 		write(*,*) "A.isZero( tol=1d-12 ) = ", A.isZero( tol=1d-12 )
 		
@@ -1845,8 +1845,8 @@ end module Matrix_
 ! 			tmpFlags = flags
 ! 		end if
 ! 		
-! 		rows = size( this.values, DIM=1 )
-! 		columns = size( this.values, DIM=2 )
+! 		rows = size( this%values, DIM=1 )
+! 		columns = size( this%values, DIM=2 )
 ! 				
 ! 		if( present( rowKeys ) ) then
 ! 			if( size( rowKeys ) < rows ) then
@@ -1898,23 +1898,23 @@ end module Matrix_
 ! 			if( present( rowKeys ) ) then
 ! 			
 ! 				if( tmpFlags == WITH_ROW_KEYS .or. tmpFlags == WITH_BOTH_KEYS ) then
-! 					write (6,"(A18,<auxColNum>F15.6)") ( rowKeys(i), ( this.values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
+! 					write (6,"(A18,<auxColNum>F15.6)") ( rowKeys(i), ( this%values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
 ! 				else
-! 					write (6,"(5X,<auxColNum>F15.6)") ( ( this.values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
+! 					write (6,"(5X,<auxColNum>F15.6)") ( ( this%values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
 ! 				end if
 ! 				
 ! 			else
 ! 				if( tmpFlags /= WITHOUT_KEYS ) then
 ! 				
 ! 					if( ( tmpFlags == WITH_ROW_KEYS .or. tmpFlags == WITH_BOTH_KEYS ) .and. tmpFlags /= WITHOUT_KEYS ) then
-! 						write (6,"(I5,<auxColNum>F15.6)") ( i, ( this.values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
+! 						write (6,"(I5,<auxColNum>F15.6)") ( i, ( this%values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
 ! 					else
-! 						write (6,"(5X,<auxColNum>F15.6)") ( ( this.values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
+! 						write (6,"(5X,<auxColNum>F15.6)") ( ( this%values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
 ! 					end if
 ! 					
 ! 				else
 ! 				
-! 					write (6,"(5X,<auxColNum>F15.6)") ( ( this.values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
+! 					write (6,"(5X,<auxColNum>F15.6)") ( ( this%values(i,j), j=lowerLimit,upperLimit ), i = 1, rows )
 ! 
 ! 				end if
 ! 			end if

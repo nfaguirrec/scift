@@ -93,8 +93,8 @@ module IntegerHyperList_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<IntegerHyperList:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -108,8 +108,8 @@ module IntegerHyperList_
 ! 
 ! 			LINE("List")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -138,9 +138,9 @@ module IntegerHyperList_
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-! 		iter => this.begin
+! 		iter => this%begin
 ! 		do while ( associated(iter) )
-! 			write(unitEff,"(I15)") iter.data
+! 			write(unitEff,"(I15)") iter%data
 ! 			
 ! 			iter => iter.next
 ! 		end do
@@ -150,9 +150,9 @@ module IntegerHyperList_
 		type(IntegerList) :: mylist
 		class(IntegerListIterator), pointer :: iter
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,"(I2,A)", advance="no") iter.data, "  --> "
+			write(*,"(I2,A)", advance="no") iter%data, "  --> "
 			
 			iter => iter.next
 		end do
@@ -167,13 +167,13 @@ module IntegerHyperList_
 		integer :: i
 		
 		i = 1
-		iter => myhlist.begin
+		iter => myhlist%begin
 		do while( associated(iter) )
-			mylist => iter.data
+			mylist => iter%data
 			
 			write(*,"(I2,A)", advance="no") i, " : "
 			call showMyList( mylist )
-! 			write(*,"(I2,A)", advance="no") iter.data, "  --> "
+! 			write(*,"(I2,A)", advance="no") iter%data, "  --> "
 			
 			iter => iter.next
 			i = i + 1
@@ -195,23 +195,23 @@ module IntegerHyperList_
 		
 		integer :: i
 		
-		call hilist.init()
+		call hilist%init()
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for append method"
 		write(*,*) "-------------------------"
 		
-		write(*,*) "call hilist.append( [1,1,1] )"
-		write(*,*) "call hilist.append( [2,2,2,2] )"
-		write(*,*) "call hilist.append( [1,1] )"
+		write(*,*) "call hilist%append( [1,1,1] )"
+		write(*,*) "call hilist%append( [2,2,2,2] )"
+		write(*,*) "call hilist%append( [1,1] )"
 		write(*,*)
 		
-		call ilist.init( 3, value=1 )
-		call hilist.append( ilist )
-		call ilist.init( 4, value=2 )
-		call hilist.append( ilist )
-		call ilist.init( 2, value=1 )
-		call hilist.append( ilist )
+		call ilist%init( 3, value=1 )
+		call hilist%append( ilist )
+		call ilist%init( 4, value=2 )
+		call hilist%append( ilist )
+		call ilist%init( 2, value=1 )
+		call hilist%append( ilist )
 		
 		call showMyHList( hilist )
 		
@@ -224,11 +224,11 @@ module IntegerHyperList_
 		write(*,*) "call hilist.prepend( [8,8,8] )"
 		write(*,*)
 		
-		call ilist.init( 2, value=4 )
+		call ilist%init( 2, value=4 )
 		call hilist.prepend( ilist )
-		call ilist.init( 4, value=5 )
+		call ilist%init( 4, value=5 )
 		call hilist.prepend( ilist )
-		call ilist.init( 3, value=8 )
+		call ilist%init( 3, value=8 )
 		call hilist.prepend( ilist )
 		
 		call showMyHList( hilist )
@@ -237,17 +237,17 @@ module IntegerHyperList_
 		write(*,*) "Testing for insert method"
 		write(*,*) "-------------------------"
 		
-		write(*,*) "iter => hilist.begin"
+		write(*,*) "iter => hilist%begin"
 		write(*,*) "iter => iter.next"
 		write(*,*) "iter => iter.next"
 		write(*,*) "call hilist.insert( iter, [9, 9, 9] )"
 		write(*,*)
 		
-		iter => hilist.begin
+		iter => hilist%begin
 		iter => iter.next
 		iter => iter.next
 		
-		call ilist.init( 3, value=9 )
+		call ilist%init( 3, value=9 )
 		
 		call hilist.insert( iter, ilist )
 		call showMyHList( hilist )
@@ -256,7 +256,7 @@ module IntegerHyperList_
 		write(*,*) "call hilist.insert( iter, [8, 8, 8, 8] )"
 		write(*,*)
 		
-		call ilist.init( 4, value=8 )
+		call ilist%init( 4, value=8 )
 		
 		call hilist.insert( iter, ilist )
 		call showMyHList( hilist )
@@ -265,7 +265,7 @@ module IntegerHyperList_
 		write(*,*) "call hilist.insert( hilist.end, [7, 7] )"
 		write(*,*)
 				
-		call ilist.init( 2, value=7 )
+		call ilist%init( 2, value=7 )
 		
 		call hilist.insert( hilist.end, ilist )
 		call showMyHList( hilist )
@@ -274,43 +274,43 @@ module IntegerHyperList_
 		write(*,*) "Testing for erase method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "call hilist.erase( 2 )"
+		write(*,*) "call hilist%erase( 2 )"
 		write(*,*)
 		
-		call hilist.erase( 2 )
+		call hilist%erase( 2 )
 		call showMyHList( hilist )
 
-		write(*,*) "iter => hilist.begin"
+		write(*,*) "iter => hilist%begin"
 		write(*,*) "iter => iter.next"
-		write(*,*) "call hilist.erase( iter )"
+		write(*,*) "call hilist%erase( iter )"
 		write(*,*)
 		
-		iter => hilist.begin
+		iter => hilist%begin
 		iter => iter.next
 		
-		call hilist.erase( iter )
+		call hilist%erase( iter )
 		call showMyHList( hilist )
 		
 		write(*,*)
-		write(*,*) "call hilist.erase( hilist.begin )"
+		write(*,*) "call hilist%erase( hilist%begin )"
 		write(*,*)
 		
-		call hilist.erase( hilist.begin )
+		call hilist%erase( hilist%begin )
 		call showMyHList( hilist )
 		
 		write(*,*)
-		write(*,*) "call hilist.erase( hilist.end )"
+		write(*,*) "call hilist%erase( hilist.end )"
 		write(*,*)
-		call hilist.erase( hilist.end )
+		call hilist%erase( hilist.end )
 		call showMyHList( hilist )
 		
 		write(*,*) "------------------------"
 		write(*,*) "Testing for clear method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "call hilist.clear()"
+		write(*,*) "call hilist%clear()"
 		write(*,*)
-		call hilist.clear()
+		call hilist%clear()
 		call showMyHList( hilist )
 
 	end subroutine IntegerHyperList_test

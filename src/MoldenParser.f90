@@ -78,7 +78,7 @@ module MoldenParser_
 		class(MoldenParser), intent(out) :: this
 		class(MoldenParser), intent(in) :: other
 
-		this.val = other.val
+		this%val = other.val
 	end subroutine copyMoldenParser
 	
 	!>
@@ -109,7 +109,7 @@ module MoldenParser_
 		
 ! 		type(StringList) :: geometryBlock
 		
-		buffer = ifile.readLine()
+		buffer = ifile%readLine()
 		
 		if( buffer /= "[Molden Format]" ) then
 			write(*,*) "### ERROR ### bad format in MOLDEN file"
@@ -119,7 +119,7 @@ module MoldenParser_
 		advance = .true.
 		do while( .not. ifile.eof() )
 			if( advance ) then
-				buffer = ifile.readLine()
+				buffer = ifile%readLine()
 				call buffer.split( tokens, " " )
 				advance = .true.
 			end if
@@ -143,7 +143,7 @@ module MoldenParser_
 				end if
 				
 				do while( .not. ifile.eof() )
-					buffer = ifile.readLine()
+					buffer = ifile%readLine()
 					call buffer.split( tokens, " " )
 					
 					if( index( tokens(1), "[" ) == 1 ) then
@@ -159,7 +159,7 @@ module MoldenParser_
 			!-----------------------------------
 			else if( tokens(1) == "[FREQ]" ) then
 				do while( .not. ifile.eof() )
-					buffer = ifile.readLine()
+					buffer = ifile%readLine()
 					call buffer.split( tokens, " " )
 					
 					if( index( tokens(1), "[" ) == 1 ) then
@@ -172,7 +172,7 @@ module MoldenParser_
 			end if
 			
 			if( .not. advance ) then
-				buffer = ifile.readLine()
+				buffer = ifile%readLine()
 				call buffer.split( tokens, " " )
 			end if
 		end do
@@ -186,7 +186,7 @@ module MoldenParser_
 		type(MoldenParser) :: parser
 		
 ! 		call parser.load( "data/formats/MOLDEN" )
-! 		call parser.getBlock( "[FREQ]" )
+! 		call parser%getBlock( "[FREQ]" )
 	end subroutine MoldenParser_test
 	
 end module MoldenParser_

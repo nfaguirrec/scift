@@ -86,7 +86,7 @@ module Atom_
 	!!
 	!! @code
 	!!	type(Atom) :: atm
-	!!	call atm.init( " He", 0.156_8, 1.456_8, 0.725_8 )
+	!!	call atm%init( " He", 0.156_8, 1.456_8, 0.725_8 )
 	!! @endcode
 	!!
 	subroutine initDefault( this, symbol, x, y, z )
@@ -97,16 +97,16 @@ module Atom_
 		real(8), optional, intent(in) :: y
 		real(8), optional, intent(in) :: z
 		
-		this.symbol = "X"
-		if( present(symbol) ) this.symbol = adjustl(trim(symbol))
+		this%symbol = "X"
+		if( present(symbol) ) this%symbol = adjustl(trim(symbol))
 		
-		if( present(x) ) this.r(1) = x
-		if( present(y) ) this.r(2) = y
-		if( present(z) ) this.r(3) = z
+		if( present(x) ) this%r(1) = x
+		if( present(y) ) this%r(2) = y
+		if( present(z) ) this%r(3) = z
 		
-		this.x => this.r(1)
-		this.y => this.r(2)
-		this.z => this.r(3)
+		this%x => this%r(1)
+		this%y => this%r(2)
+		this%z => this%r(3)
 	end subroutine initDefault
 	
 	!>
@@ -120,13 +120,13 @@ module Atom_
 		class(Atom), target, intent(inout) :: this
 		class(Atom), intent(in) :: other
 		
-		this.symbol = other.symbol
+		this%symbol = other%symbol
 		
-		this.r = other.r
+		this%r = other%r
 		
-		this.x => this.r(1)
-		this.y => this.r(2)
-		this.z => this.r(3)
+		this%x => this%r(1)
+		this%y => this%r(2)
+		this%z => this%r(3)
 	end subroutine copyAtom
 	
 	!>
@@ -135,9 +135,9 @@ module Atom_
 	subroutine destroyAtom( this )
 		type(Atom) :: this
 		
-		if( associated(this.x) ) nullify(this.x)
-		if( associated(this.y) ) nullify(this.y)
-		if( associated(this.z) ) nullify(this.z)
+		if( associated(this%x) ) nullify(this%x)
+		if( associated(this%y) ) nullify(this%y)
+		if( associated(this%z) ) nullify(this%z)
 	end subroutine destroyAtom
 	
 	!>
@@ -171,10 +171,10 @@ module Atom_
 #define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
-			ITEMS( "symbol=", this.symbol )
-			ITEMR( ",x=", this.x )
-			ITEMR( ",y=", this.y )
-			ITEMR( ",z=", this.z )
+			ITEMS( "symbol=", this%symbol )
+			ITEMR( ",x=", this%x )
+			ITEMR( ",y=", this%y )
+			ITEMR( ",z=", this%z )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -189,10 +189,10 @@ module Atom_
 
 			LINE("Atom")
 			LINE("----")
-			ITEMS( "symbol  =", this.symbol )
-			ITEMR( "     x  =", this.x )
-			ITEMR( "     y  =", this.y )
-			ITEMR( "     z  =", this.z )
+			ITEMS( "symbol  =", this%symbol )
+			ITEMR( "     x  =", this%x )
+			ITEMR( "     y  =", this%y )
+			ITEMR( "     z  =", this%z )
 #undef LINE
 #undef ITEMS
 #undef ITEMI
@@ -239,23 +239,23 @@ module Atom_
 		effAlpha = 1.0_8
 		if( present(alpha) ) effAlpha = alpha
 		
-		dist = sqrt(sum((this.r - other.r)**2))
-		cutoff = AtomicElementsDB_instance.radius( this.symbol, type=radiusType ) + AtomicElementsDB_instance.radius( other.symbol, type=radiusType )
+		dist = sqrt(sum((this%r - other%r)**2))
+		cutoff = AtomicElementsDB_instance%radius( this%symbol, type=radiusType ) + AtomicElementsDB_instance%radius( other%symbol, type=radiusType )
 		
-		if( allocated(AtomicElementsDB_instance.specialPairs) ) then
+		if( allocated(AtomicElementsDB_instance%specialPairs) ) then
 			loc = -1
-			do i=1,size(AtomicElementsDB_instance.specialPairs)
-				if( ( trim(this.symbol) == AtomicElementsDB_instance.specialPairs(i).symbol1 &
-						.and. trim(other.symbol) == AtomicElementsDB_instance.specialPairs(i).symbol2 ) &
-					.or. ( trim(this.symbol) == AtomicElementsDB_instance.specialPairs(i).symbol2 &
-						.and. trim(other.symbol) == AtomicElementsDB_instance.specialPairs(i).symbol1 ) ) then
+			do i=1,size(AtomicElementsDB_instance%specialPairs)
+				if( ( trim(this%symbol) == AtomicElementsDB_instance%specialPairs(i)%symbol1 &
+						.and. trim(other%symbol) == AtomicElementsDB_instance%specialPairs(i)%symbol2 ) &
+					.or. ( trim(this%symbol) == AtomicElementsDB_instance%specialPairs(i)%symbol2 &
+						.and. trim(other%symbol) == AtomicElementsDB_instance%specialPairs(i)%symbol1 ) ) then
 						loc = i
 						exit
 				end if
 			end do
 			
 			if( loc /= -1 ) then
-				if( dist < AtomicElementsDB_instance.specialPairs(i).bondCutoff ) then
+				if( dist < AtomicElementsDB_instance%specialPairs(i)%bondCutoff ) then
 					output = .true.
 				else
 					output = .false.
@@ -280,7 +280,7 @@ module Atom_
 		integer, optional, intent(in) :: type
 		real(8) :: output
 		
-		output = AtomicElementsDB_instance.radius( this.symbol, type=type )
+		output = AtomicElementsDB_instance%radius( this%symbol, type=type )
 	end function radius
 	
 	!>
@@ -290,7 +290,7 @@ module Atom_
 		class(Atom), intent(in) :: this
 		real(8) :: output
 		
-		output = AtomicElementsDB_instance.atomicMass( this.symbol )
+		output = AtomicElementsDB_instance%atomicMass( this%symbol )
 	end function mass
 	
 	!>
@@ -300,7 +300,7 @@ module Atom_
 		class(Atom), intent(in) :: this
 		real(8) :: output
 		
-		output = AtomicElementsDB_instance.atomicMassNumber( this.symbol )
+		output = AtomicElementsDB_instance%atomicMassNumber( this%symbol )
 	end function massNumber
 	
 	!>
@@ -310,7 +310,7 @@ module Atom_
 		class(Atom), intent(in) :: this
 		real(8) :: output
 		
-		output = AtomicElementsDB_instance.atomicNumber( this.symbol )
+		output = AtomicElementsDB_instance%atomicNumber( this%symbol )
 	end function atomicNumber
 	
 	!>
@@ -320,7 +320,7 @@ module Atom_
 		class(Atom), intent(in) :: this
 		character(6) :: output
 		
-		output = AtomicElementsDB_instance.color( this.symbol )
+		output = AtomicElementsDB_instance%color( this%symbol )
 	end function color
 	
 	!>
@@ -332,46 +332,46 @@ module Atom_
 		type(Atom) :: atom0, atom1
 		character(10) :: buffer
 		
-		call atom0.init()
-		call atom0.show()
+		call atom0%init()
+		call atom0%show()
 		
-		call atom0.init( " He", 0.156_8, 1.456_8, 0.725_8 )
-		call atom0.show()
-		call atom0.show( formatted=.true. )
-		write(*,*) atom0.r
+		call atom0%init( " He", 0.156_8, 1.456_8, 0.725_8 )
+		call atom0%show()
+		call atom0%show( formatted=.true. )
+		write(*,*) atom0%r
 		
 		buffer = "  He  "
-		call atom0.init( trim(buffer), 0.156_8, 1.456_8, 0.725_8 )
-		call atom0.show()
-		call atom0.show( formatted=.true. )
-		write(*,*) atom0.r
+		call atom0%init( trim(buffer), 0.156_8, 1.456_8, 0.725_8 )
+		call atom0%show()
+		call atom0%show( formatted=.true. )
+		write(*,*) atom0%r
 		
 		write(*,*) "Testing copy constructor"
 		write(*,*) "========================"
 		write(*,*) "atom1 = atom0"
 		atom1 = atom0
-		call atom1.show()
-		write(*,*) atom1.r
+		call atom1%show()
+		write(*,*) atom1%r
 		
 		write(*,*) ""
 		write(*,*) "Cambiando r en atom1"
 		write(*,*) "===================="
-		write(*,*) "atom1.r <== [ 2.000_8, 1.000_8, 0.000_8 ]"
-		atom1.r = [ 2.000_8, 1.000_8, 0.000_8 ]
-		write(*,"(A,3F10.5)") "atom1.r     = ", atom1.r
-		write(*,"(A,3F10.5)") "atom1.x,y,z = ", atom1.x, atom1.y, atom1.z
-		write(*,"(A,3F10.5)") "atom0.r     = ", atom0.r
-		write(*,"(A,3F10.5)") "atom0.x,y,z = ", atom0.x, atom0.y, atom0.z
+		write(*,*) "atom1%r <== [ 2.000_8, 1.000_8, 0.000_8 ]"
+		atom1%r = [ 2.000_8, 1.000_8, 0.000_8 ]
+		write(*,"(A,3F10.5)") "atom1%r     = ", atom1%r
+		write(*,"(A,3F10.5)") "atom1%x,y,z = ", atom1%x, atom1%y, atom1%z
+		write(*,"(A,3F10.5)") "atom0%r     = ", atom0%r
+		write(*,"(A,3F10.5)") "atom0%x,y,z = ", atom0%x, atom0%y, atom0%z
 		
 		write(*,*) ""
 		write(*,*) "Cambiando x en atom1"
 		write(*,*) "===================="
-		write(*,*) "atom1.x <== -1.000_8"
-		atom1.x = -1.000_8
-		write(*,"(A,3F10.5)") "atom1.r     = ", atom1.r
-		write(*,"(A,3F10.5)") "atom1.x,y,z = ", atom1.x, atom1.y, atom1.z
-		write(*,"(A,3F10.5)") "atom0.r     = ", atom0.r
-		write(*,"(A,3F10.5)") "atom0.x,y,z = ", atom0.x, atom0.y, atom0.z
+		write(*,*) "atom1%x <== -1.000_8"
+		atom1%x = -1.000_8
+		write(*,"(A,3F10.5)") "atom1%r     = ", atom1%r
+		write(*,"(A,3F10.5)") "atom1%x,y,z = ", atom1%x, atom1%y, atom1%z
+		write(*,"(A,3F10.5)") "atom0%r     = ", atom0%r
+		write(*,"(A,3F10.5)") "atom0%x,y,z = ", atom0%x, atom0%y, atom0%z
 	end subroutine Atom_test
 	
 end module Atom_

@@ -85,7 +85,7 @@ module GaborTransform_
 		class(GaborTransform), intent(inout) :: this
 		class(GaborTransform), intent(in) :: other
 
-		this.val = other.val
+		this%val = other.val
 	end subroutine copyGaborTransform
 	
 	!>
@@ -126,8 +126,8 @@ module GaborTransform_
 #define ITEML(l,v) output = trim(output)//l; write(fstr, "(L3)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<GaborTransform:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef ITEMS
 #undef ITEMI
 #undef ITEMR
@@ -141,8 +141,8 @@ module GaborTransform_
 
 			LINE("GaborTransform")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -184,13 +184,13 @@ module GaborTransform_
 ! 		type(Grid) :: xGrid
 ! 		
 ! 		! @todo Check for checkEquallyspaced
-! 		n = iFunc.nPoints()
-! 		dx = iFunc.xGrid.stepSize
+! 		n = iFunc%nPoints()
+! 		dx = iFunc%xGrid%stepSize
 ! 		dp = 2.0_8*Math_PI/dx/real(n,8)
 ! 		
 ! 		oFunc = iFunc
-! 		call FourierTransform_dft( iFunc.yArray, oFunc.yArray, sgn=FourierTransform_FORWARD )
-! 		oFunc.xGrid = FourierTransform_omegaGrid( n, dx, order=FourierTransform_SORDER )
+! 		call FourierTransform_dft( iFunc%yArray, oFunc%yArray, sgn=FourierTransform_FORWARD )
+! 		oFunc%xGrid = FourierTransform_omegaGrid( n, dx, order=FourierTransform_SORDER )
 ! 		
 ! 		call FourierTransform_phase( oFunc )
 ! 		call FourierTransform_shift( oFunc )
@@ -211,13 +211,13 @@ module GaborTransform_
 ! 		type(Grid) :: xGrid
 ! 		
 ! 		! @todo Check for checkEquallyspaced
-! 		n = iFunc.nPoints()
-! 		dx = iFunc.xGrid.stepSize
+! 		n = iFunc%nPoints()
+! 		dx = iFunc%xGrid%stepSize
 ! 		dp = 2.0_8*Math_PI/dx/real(n,8)
 ! 		
 ! 		oFunc = iFunc
-! 		call FourierTransform_dft( iFunc.yArray, oFunc.yArray, sgn=FourierTransform_FORWARD )
-! 		oFunc.xGrid = FourierTransform_omegaGrid( n, dx, order=FourierTransform_SORDER )
+! 		call FourierTransform_dft( iFunc%yArray, oFunc%yArray, sgn=FourierTransform_FORWARD )
+! 		oFunc%xGrid = FourierTransform_omegaGrid( n, dx, order=FourierTransform_SORDER )
 ! 		
 ! 		call FourierTransform_phase( oFunc )
 ! 		call FourierTransform_shift( oFunc )

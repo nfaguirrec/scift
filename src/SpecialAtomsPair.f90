@@ -73,10 +73,10 @@ module SpecialAtomsPair_
 		real(8), intent(in) :: bondCutoff
 		real(8), intent(in) :: doubleBondCutoff
 		
-		this.symbol1 = symbol1
-		this.symbol2 = symbol2
-		this.bondCutoff = bondCutoff
-		this.doubleBondCutoff = doubleBondCutoff
+		this%symbol1 = symbol1
+		this%symbol2 = symbol2
+		this%bondCutoff = bondCutoff
+		this%doubleBondCutoff = doubleBondCutoff
 	end subroutine initSpecialAtomsPair
 	
 	!>
@@ -86,10 +86,10 @@ module SpecialAtomsPair_
 		class(SpecialAtomsPair), intent(inout) :: this
 		class(SpecialAtomsPair), intent(in) :: other
 
-		this.symbol1 = other.symbol1
-		this.symbol2 = other.symbol2
-		this.bondCutoff = other.bondCutoff
-		this.doubleBondCutoff = other.doubleBondCutoff
+		this%symbol1 = other%symbol1
+		this%symbol2 = other%symbol2
+		this%bondCutoff = other%bondCutoff
+		this%doubleBondCutoff = other.doubleBondCutoff
 	end subroutine copySpecialAtomsPair
 	
 	!>
@@ -130,8 +130,8 @@ module SpecialAtomsPair_
 #define ITEML(l,v) output = trim(output)//l; write(fstr, "(L3)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<SpecialAtomsPair:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef ITEMS
 #undef ITEMI
 #undef ITEMR
@@ -145,8 +145,8 @@ module SpecialAtomsPair_
 
 			LINE("SpecialAtomsPair")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS

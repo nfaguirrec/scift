@@ -81,7 +81,7 @@ module NPotentialEnergyCurve_
 		class(NPotentialEnergyCurve) :: this
 		type(RNFunction), intent(in) :: rawData
 		
-		this.rawData = rawData
+		this%rawData = rawData
 	end subroutine initDefault
 	
 	function parent( this ) result( output )
@@ -89,7 +89,7 @@ module NPotentialEnergyCurve_
 		class(NPotentialEnergyCurve) :: this
 		type(RNFunction) :: output
 		
-		call output.fromGridArray( this.xGrid, this.fArray )
+		call output%fromGridArray( this%xGrid, this%fArray )
 	end function parent
 	
 	subroutine run( this, rGrid, longRangeF, veryShortRangeF )
@@ -103,15 +103,15 @@ module NPotentialEnergyCurve_
 		real(8), allocatable :: y(:)
 		integer :: i
 		
-		call spline.init( this.rawData )
-		allocate( y(rGrid.nPoints) )
+		call spline%init( this%rawData )
+		allocate( y(rGrid%nPoints) )
 		
-		firstRawData = [ this.rawData.xGrid.data(1), this.rawData.fArray(1) ]
-		lastRawData = [ this.rawData.xGrid.data(this.rawData.nPoints()), this.rawData.fArray(this.rawData.nPoints()) ]
+		firstRawData = [ this%rawData%xGrid%data(1), this%rawData%fArray(1) ]
+		lastRawData = [ this%rawData%xGrid%data(this%rawData%nPoints()), this%rawData%fArray(this%rawData%nPoints()) ]
 		
-		do i=1,rGrid.nPoints
+		do i=1,rGrid%nPoints
 		
-			xi = rGrid.data(i)
+			xi = rGrid%data(i)
 			
 			if( xi < firstRawData(1) ) then
 				if( present(veryShortRangeF) ) then
@@ -132,7 +132,7 @@ module NPotentialEnergyCurve_
 			
 		end do
 		
-		call this.fromGridArray( rGrid, y )
+		call this%fromGridArray( rGrid, y )
 	end subroutine run
 	
 	!>
@@ -203,29 +203,29 @@ module NPotentialEnergyCurve_
 		integer :: i
 		real(8) :: rMass = 30.0_8*0.5_8*35.4257_8*amu
 		
-		call rGrid.fromFile( "data/formats/GRID2D" )
-! 		call rGrid.init( 2.5_8, 8.0_8, size=20 )
-		call rGrid.show()
+		call rGrid%fromFile( "data/formats/GRID2D" )
+! 		call rGrid%init( 2.5_8, 8.0_8, size=20 )
+		call rGrid%show()
 		
 		call rawCurve.fromFunction( rGrid, shortRangeDefault )
-		call rawCurve.save("rawCurve")
+		call rawCurve%save("rawCurve")
 		
-		call finalGrid.init( 1.0_8, 1000.0_8, nPoints=100000 )
+		call finalGrid%init( 1.0_8, 1000.0_8, nPoints=100000 )
 		
-		call pECurve.init( rawCurve )
-		call pECurve.run( finalGrid, longRangeDefault, veryShortRangeDefault )
-		call pECurve.show()
-		call pECurve.save("pECurve")
-		call pECurve.setUnits( [angs,cm1] )
+		call pECurve%init( rawCurve )
+		call pECurve%run( finalGrid, longRangeDefault, veryShortRangeDefault )
+		call pECurve%show()
+		call pECurve%save("pECurve")
+		call pECurve%setUnits( [angs,cm1] )
 		
-		call solver.init( pECurve, rMass=rMass )
-		call solver.run()
+		call solver%init( pECurve, rMass=rMass )
+		call solver%run()
 		
 		do i=1,solver.nStates
 				write(*,"(i5,f20.10)") i, solver.eigenValues(i)/cm1
 		end do
 		
-! 		call solver.eigenfunction(1).save( "solverWF1", units=[angs,1.0_8] )
+! 		call solver.eigenfunction(1)%save( "solverWF1", units=[angs,1.0_8] )
 		
 		call solver.destroy()
 	end subroutine NPotentialEnergyCurve_test

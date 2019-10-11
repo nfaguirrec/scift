@@ -98,17 +98,17 @@ module Table_
 			cCommentsEff = "#"
 		end if
 		
-		call ifile.init( fileName )
+		call ifile%init( fileName )
 		
-		allocate( rawData( ifile.numberOfLines, ifile.minNColumns ) )
-		allocate( currentRow(ifile.minNColumns) )
+		allocate( rawData( ifile.numberOfLines, ifile%minNColumns ) )
+		allocate( currentRow(ifile%minNColumns) )
 		
 		nCol = 1
 		do while( .not. ifile.eof() )
-			buffer = ifile.readLine( cCommentsEff )
+			buffer = ifile%readLine( cCommentsEff )
 			call buffer.split( tokens, " " )
 			
-			if( len(trim(buffer.fstr)) > 0 ) then
+			if( len(trim(buffer%fstr)) > 0 ) then
 				nRow = 1
 				do i=1,size(tokens)
 					if( len(trim(tokens(i))) /= 0 ) then
@@ -123,11 +123,11 @@ module Table_
 			end if
 		end do
 		
-		allocate( this.data( nCol-1, nRow-1 ) )
-		this.data = rawData
+		allocate( this%data( nCol-1, nRow-1 ) )
+		this%data = rawData
 		
-		this.nRows = nRow-1
-		this.nCols = nCol-1
+		this%nRows = nRow-1
+		this%nCols = nCol-1
 		
 		deallocate( currentRow )
 		
@@ -166,13 +166,13 @@ module Table_
 		output = trim(output)//"<Table:"
 		
 		output = trim(output)//"nRows="
-		fmt = int(log10(float(this.nRows+1)))+1
-		write(strBuffer, "(i<fmt>)") this.nRows
+		fmt = int(log10(float(this%nRows+1)))+1
+		write(strBuffer, "(i<fmt>)") this%nRows
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//",nCols="
-		fmt = int(log10(float(this.nCols+1)))+1
-		write(strBuffer, "(i<fmt>)") this.nCols
+		fmt = int(log10(float(this%nCols+1)))+1
+		write(strBuffer, "(i<fmt>)") this%nCols
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -212,9 +212,9 @@ module Table_
 			effunit = 6
 		end if
 		
-		do i=1,size(this.data,dim=1)
-			do j=1,size(this.data,dim=2)
-				write(effunit,"(A20)",advance='no') this.data(i,j).fstr
+		do i=1,size(this%data,dim=1)
+			do j=1,size(this%data,dim=2)
+				write(effunit,"(A20)",advance='no') this%data(i,j)%fstr
 			end do
 			write(*,*)
 		end do
@@ -227,9 +227,9 @@ module Table_
 	subroutine Table_test()
 		type(Table) :: table
 		
-		call table.init( "data/formats/TABLE" )
-		call table.show()
-		call table.showContent()
+		call table%init( "data/formats/TABLE" )
+		call table%show()
+		call table%showContent()
 	end subroutine Table_test
 	
 end module Table_

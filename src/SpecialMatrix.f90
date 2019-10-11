@@ -68,7 +68,7 @@ module SpecialMatrix_
 		integer, intent(in) :: nRows, nCols
 		type(Matrix) :: I
 		
-		call I.identity( nRows, nCols )
+		call I%identity( nRows, nCols )
 	end function SpecialMatrix_identity
 	
 	!>
@@ -82,9 +82,9 @@ module SpecialMatrix_
 		type(Matrix) :: U
 		
 		call U.columnVector( 3 )
-		call U.set( 1, 1, sin(theta)*cos(phi) )
-		call U.set( 2, 1, sin(theta)*sin(phi) )
-		call U.set( 3, 1, cos(theta) )
+		call U%set( 1, 1, sin(theta)*cos(phi) )
+		call U%set( 2, 1, sin(theta)*sin(phi) )
+		call U%set( 3, 1, cos(theta) )
 	end function SpecialMatrix_unitaryColumnMatrix
 
 	!>
@@ -94,11 +94,11 @@ module SpecialMatrix_
 		real(8), intent(in) :: theta
 		type(Matrix) :: Rx
 		
-		call Rx.identity( 3, 3 )
-		call Rx.set( 2, 2, cos(theta) )
-		call Rx.set( 2, 3, sin(theta) )
-		call Rx.set( 3, 2,-sin(theta) )
-		call Rx.set( 3, 3, cos(theta) )
+		call Rx%identity( 3, 3 )
+		call Rx%set( 2, 2, cos(theta) )
+		call Rx%set( 2, 3, sin(theta) )
+		call Rx%set( 3, 2,-sin(theta) )
+		call Rx%set( 3, 3, cos(theta) )
 	end function SpecialMatrix_xRotation
 	
 	!>
@@ -108,11 +108,11 @@ module SpecialMatrix_
 		real(8), intent(in) :: theta
 		type(Matrix) :: Ry
 		
-		call Ry.identity( 3, 3 )
-		call Ry.set( 1, 1, cos(theta) )
-		call Ry.set( 1, 3,-sin(theta) )
-		call Ry.set( 3, 1, sin(theta) )
-		call Ry.set( 3, 3, cos(theta) )
+		call Ry%identity( 3, 3 )
+		call Ry%set( 1, 1, cos(theta) )
+		call Ry%set( 1, 3,-sin(theta) )
+		call Ry%set( 3, 1, sin(theta) )
+		call Ry%set( 3, 3, cos(theta) )
 	end function SpecialMatrix_yRotation
 	
 	!>
@@ -122,11 +122,11 @@ module SpecialMatrix_
 		real(8), intent(in) :: theta
 		type(Matrix) :: Rz
 		
-		call Rz.identity( 3, 3 )
-		call Rz.set( 1, 1, cos(theta) )
-		call Rz.set( 1, 2, sin(theta) )
-		call Rz.set( 2, 1,-sin(theta) )
-		call Rz.set( 2, 2, cos(theta) )
+		call Rz%identity( 3, 3 )
+		call Rz%set( 1, 1, cos(theta) )
+		call Rz%set( 1, 2, sin(theta) )
+		call Rz%set( 2, 1,-sin(theta) )
+		call Rz%set( 2, 2, cos(theta) )
 	end function SpecialMatrix_zRotation
 	
 	!>
@@ -252,9 +252,9 @@ module SpecialMatrix_
 		type(Matrix) :: u
 		real(8) :: rThetaPhi(3)
 		
-		call u.columnVector( 3, values=axesBegin.data(:,3) )
+		call u.columnVector( 3, values=axesBegin%data(:,3) )
 		u = u.projectionOntoNewAxes( axesEnd )
-		rThetaPhi = Math_cart2Spher( u.data(:,1) )
+		rThetaPhi = Math_cart2Spher( u%data(:,1) )
 		
 		R = SpecialMatrix_rotation( rThetaPhi(3), rThetaPhi(2), 0.0_8 ) ! Ry(beta)*Rz(alpha)
 		
@@ -263,11 +263,11 @@ module SpecialMatrix_
 			angles(2) = rThetaPhi(2) ! beta
 		end if
 		
-		call u.columnVector( 3, values=axesBegin.data(:,1) )
+		call u.columnVector( 3, values=axesBegin%data(:,1) )
 		u = u.projectionOntoNewAxes( axesEnd )
 		
 		u = R*u
-		rThetaPhi = Math_cart2Spher( u.data(:,1) )
+		rThetaPhi = Math_cart2Spher( u%data(:,1) )
 		
 		R = SpecialMatrix_zRotation( rThetaPhi(3) )*R  ! Rz(gamma)*( Ry(beta)*Rz(alpha) )
 		
@@ -286,56 +286,56 @@ module SpecialMatrix_
 		
 		v1 = SpecialMatrix_unitaryColumnMatrix( 30.0_8*deg, 70.0_8*deg )
 		write(*,*) "V = "
-		call v1.show( 6, .true. )
+		call v1%show( 6, .true. )
 		
 		A = SpecialMatrix_xRotation( Math_PI/2.0_8 )
 		write(*,*) "Rx = "
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
-		write(*,"(A,3F7.2)") "v  = 0.00  0.00  0.00    ", v1.data
+		write(*,"(A,3F7.2)") "v  = 0.00  0.00  0.00    ", v1%data
 		v2 = A*v1
-		write(*,"(A,3F7.2)") "v' = 0.00  0.00  0.00    ", v2.data
+		write(*,"(A,3F7.2)") "v' = 0.00  0.00  0.00    ", v2%data
 		
 		A = SpecialMatrix_rotation( 70.0_8*deg, 30.0_8*deg, 0.0_8*deg, convention="ZYZ" )
 		write(*,*) ""
 		write(*,*) "R = "
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		v2 = A*v1
 		write(*,*) "V' = "
-		call v2.show( 6, .true. )
+		call v2%show( 6, .true. )
 
-		write(*,"(A,3F7.2)") "v  = 0.00  0.00  0.00    ", v1.data
-		write(*,"(A,3F7.2)") "v' = 0.00  0.00  0.00    ", v2.data
+		write(*,"(A,3F7.2)") "v  = 0.00  0.00  0.00    ", v1%data
+		write(*,"(A,3F7.2)") "v' = 0.00  0.00  0.00    ", v2%data
 		
 		A = SpecialMatrix_randomRotation( "ZYZ", alpha, beta, gamma )
 		write(*,*) ""
 		write(*,"(A,3F10.1,A)") "( alpha, beta, gamma ) = (", alpha/deg, beta/deg, gamma/deg, "  ) deg"
 		write(*,*) "R = "
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		v2 = A*v1
 		write(*,*) "V' = "
-		call v2.show( 6, .true. )
+		call v2%show( 6, .true. )
 
-		write(*,"(A,3F7.2)") "v  = 0.00  0.00  0.00    ", v1.data
-		write(*,"(A,3F7.2)") "v' = 0.00  0.00  0.00    ", v2.data
+		write(*,"(A,3F7.2)") "v  = 0.00  0.00  0.00    ", v1%data
+		write(*,"(A,3F7.2)") "v' = 0.00  0.00  0.00    ", v2%data
 		
 ! 		call v1.columnVector( 3, values=[ 1.0_8, 0.0_8, 0.0_8 ] )
 ! 		call v1.columnVector( 3, values=[ 0.0_8, 1.0_8, 0.0_8 ] )
 		call v1.columnVector( 3, values=[ 0.0_8, 0.0_8, 1.0_8 ] )
 		write(*,*) "V = "
-		call v1.show( 6, .true. )
+		call v1%show( 6, .true. )
 		
 ! 		A = SpecialMatrix_rotation( 45.0*deg, 45.0*deg, 45.0*deg )
 		A = SpecialMatrix_rotation(  0.0*deg, 0.0*deg, 45.0*deg )
 		write(*,*) "Rx = "
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
 		v1 = A*v1
 		write(*,*) "V' = "
-		call v1.show( 6, .true. )
-		write(*,"(3F10.5)") v1.data(:,1)
+		call v1%show( 6, .true. )
+		write(*,"(3F10.5)") v1%data(:,1)
 		
 		write(*,*) "-----------------------------------"
 		write(*,*) " Jacobian for a rotation R2 --> R3"
@@ -344,12 +344,12 @@ module SpecialMatrix_
 		write(*,*) ""
 		write(*,"(A,3F10.1,A)") "( alpha, beta, gamma ) = (", alpha/deg, beta/deg, gamma/deg, "  ) deg"
 		write(*,*) "R = "
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		write(*,*) ""
 		write(*,*) "det(R) = ", A.determinant()
-		write(*,*) "det(R_2x3) = ", A.get(1,1)*A.get(2,2)-A.get(1,2)*A.get(2,1) &
-						-( A.get(1,1)*A.get(2,3)-A.get(1,3)*A.get(2,1) ) &
-						+ A.get(1,1)*A.get(2,2)-A.get(1,2)*A.get(2,1)
+		write(*,*) "det(R_2x3) = ", A%get(1,1)*A%get(2,2)-A%get(1,2)*A%get(2,1) &
+						-( A%get(1,1)*A%get(2,3)-A%get(1,3)*A%get(2,1) ) &
+						+ A%get(1,1)*A%get(2,2)-A%get(1,2)*A%get(2,1)
 
 	end subroutine SpecialMatrix_test
 	

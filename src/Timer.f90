@@ -78,10 +78,10 @@ module Timer_
 		class(Timer) :: this
 		character(*), optional, intent(in) :: name
 		
-		this.name = ""
-		if( present(name) ) this.name = name
+		this%name = ""
+		if( present(name) ) this%name = name
 		
-		call this.start()
+		call this%start()
 	end subroutine initDefault
 	
 	!>
@@ -91,10 +91,10 @@ module Timer_
 		class(Timer), intent(out) :: this
 		class(Timer), intent(in) :: other
 		
-		this.name = other.name
-		this.startTime = other.startTime
-		this.sDate = other.sDate
-		this.elapsetTime = other.elapsetTime
+		this%name = other.name
+		this%startTime = other.startTime
+		this%sDate = other.sDate
+		this%elapsetTime = other.elapsetTime
 	end subroutine copyTimer
 	
 	!>
@@ -135,8 +135,8 @@ module Timer_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<Timer:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -150,8 +150,8 @@ module Timer_
 
 			LINE("Timer")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -186,9 +186,9 @@ module Timer_
 	subroutine start( this )
 		class(Timer), intent(inout) :: this
 		
-		this.startTime = DCLOCK()
-		call FDATE(this.sDate)
-		this.elapsetTime = 0.0_8
+		this%startTime = DCLOCK()
+		call FDATE(this%sDate)
+		this%elapsetTime = 0.0_8
 	end subroutine start
 	
 	!>
@@ -202,9 +202,9 @@ module Timer_
 		
 		cTime = DCLOCK()
 		
-		output(1) = int( ( cTime - this.startTime )/3600.0_8 )
-		output(2) = mod( int( ( cTime - this.startTime )/60.0_8 ), 60 )
-		output(3) = mod( int( cTime - this.startTime ), 60 )
+		output(1) = int( ( cTime - this%startTime )/3600.0_8 )
+		output(2) = mod( int( ( cTime - this%startTime )/60.0_8 ), 60 )
+		output(3) = mod( int( cTime - this%startTime ), 60 )
 	end function elapsed
 	
 	!>
@@ -214,7 +214,7 @@ module Timer_
 		class(Timer), intent(in) :: this
 		real(8) :: output
 		
-		output = DCLOCK() - this.startTime
+		output = DCLOCK() - this%startTime
 	end function elapsedSeconds
 	
 	!>
@@ -224,7 +224,7 @@ module Timer_
 		class(Timer), intent(in) :: this
 		real(8) :: output
 		
-		output = ( DCLOCK() - this.startTime )/60.0_8
+		output = ( DCLOCK() - this%startTime )/60.0_8
 	end function elapsedMinutes
 	
 	!>
@@ -234,7 +234,7 @@ module Timer_
 		class(Timer), intent(in) :: this
 		real(8) :: output
 		
-		output = ( DCLOCK() - this.startTime )/3600.0_8
+		output = ( DCLOCK() - this%startTime )/3600.0_8
 	end function elapsedHours
 	
 	!>
@@ -244,7 +244,7 @@ module Timer_
 		class(Timer), intent(in) :: this
 		character(:), allocatable :: output
 		
-		output = this.sDate
+		output = this%sDate
 	end function startDate
 	
 	!>

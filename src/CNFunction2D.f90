@@ -106,10 +106,10 @@ module CNFunction2D_
 #define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<CNFunction2D:"
-			output = trim(output)//trim(this.xyGrid.str())
-! 			ITEMI( "min=", this.min )
-			ITEMI( ",sizex=", this.nPoints(1) )
-			ITEMI( ",sizey=", this.nPoints(2) )
+			output = trim(output)//trim(this%xyGrid%str())
+! 			ITEMI( "min=", this%min )
+			ITEMI( ",sizex=", this%nPoints(1) )
+			ITEMI( ",sizey=", this%nPoints(2) )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -123,8 +123,8 @@ module CNFunction2D_
 
 			LINE("CNFunction2D")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.nPoints )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%nPoints )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -149,7 +149,7 @@ module CNFunction2D_
 			unitEff = IO_STDOUT
 		end if
 		
-		write(*,*) "### ERROR ### CNFunction2D.toFStream is no implemented yet"
+		write(*,*) "### ERROR ### CNFunction2D%toFStream is no implemented yet"
 		stop
 	end subroutine toFStream
 
@@ -210,19 +210,19 @@ module CNFunction2D_
 		write(*,*) "Testing constructors"
 		write(*,*) "----------------------------"
 		
-		call func.init( xVec, yVec, fArray )
-		call func.show()
+		call func%init( xVec, yVec, fArray )
+		call func%show()
 		
-		call xyGrid.fromArray( xVec, yVec )
-		call func.init( xyGrid, fArray )
-		call func.show()
+		call xyGrid%fromArray( xVec, yVec )
+		call func%init( xyGrid, fArray )
+		call func%show()
 		
-		call xyGrid.init( min=[-5.0_8,-5.0_8], max=[5.0_8,5.0_8], size=[100,100] )
-		call func.init( xyGrid, funcTest )
-		call func.show()
+		call xyGrid%init( min=[-5.0_8,-5.0_8], max=[5.0_8,5.0_8], size=[100,100] )
+		call func%init( xyGrid, funcTest )
+		call func%show()
 		
-		call func.init( "data/formats/complex-N2DF", format=N2DF_FORMAT )
-		call func.show()
+		call func%init( "data/formats/complex-N2DF", format=N2DF_FORMAT )
+		call func%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
@@ -230,26 +230,26 @@ module CNFunction2D_
 		write(*,*) "----------------------------"
 		
 		func2 = func
-		call func2.show()
+		call func2%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
 		write(*,*) "Testing I/O methods"
 		write(*,*) "----------------------------"
 		
-		call func.save( "salida.n2df", format=N2DF_FORMAT )
+		call func%save( "salida.n2df", format=N2DF_FORMAT )
 		call func.load( "salida.n2df", format=N2DF_FORMAT )
-		call func.show()
+		call func%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
 		write(*,*) "Testing resize(+3,+2)"
 		write(*,*) "----------------------------"
 		
-		call func.init( xVec, yVec, fArray )
-		call func.show()
-		call func.resize( 3, 2, +1, +1 )
-		call func.show()
+		call func%init( xVec, yVec, fArray )
+		call func%show()
+		call func%resize( 3, 2, +1, +1 )
+		call func%show()
 				
 	end subroutine CNFunction2D_test
 	

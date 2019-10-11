@@ -93,9 +93,9 @@ module RNFunction3D_
 #define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<RNFunction3D:"
-			output = trim(output)//trim(this.xyzGrid.str())
-! 			ITEMI( "min=", this.min )
-			ITEMI( ",size=", this.size() )
+			output = trim(output)//trim(this%xyzGrid%str())
+! 			ITEMI( "min=", this%min )
+			ITEMI( ",size=", this%size() )
 #undef ITEMS
 #undef ITEMI
 #undef ITEMR
@@ -108,8 +108,8 @@ module RNFunction3D_
 
 			LINE("RNFunction3D")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -134,7 +134,7 @@ module RNFunction3D_
 			unitEff = IO_STDOUT
 		end if
 		
-		write(*,*) "### ERROR ### RNFunction3D.toFStream is no implemented yet"
+		write(*,*) "### ERROR ### RNFunction3D%toFStream is no implemented yet"
 		stop
 	end subroutine toFStream
 
@@ -239,22 +239,22 @@ module RNFunction3D_
 		write(*,*) "Testing constructors"
 		write(*,*) "----------------------------"
 		
-		call func.init( xVec, yVec, zVec, fArray )
-		call func.show()
+		call func%init( xVec, yVec, zVec, fArray )
+		call func%show()
 		
-		call xyzGrid.init( xVec, yVec, zVec )
-		call func.init( xyzGrid, fArray )
-		call func.show()
+		call xyzGrid%init( xVec, yVec, zVec )
+		call func%init( xyzGrid, fArray )
+		call func%show()
 		
-		call xyzGrid.init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[50,50,50] )
-		call func.init( xyzGrid, funcTest )
-		call func.show()
+		call xyzGrid%init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[50,50,50] )
+		call func%init( xyzGrid, funcTest )
+		call func%show()
 		
-		call func.init( "data/formats/real-N3DF", format=N3DF_FORMAT )
-		call func.show()
+		call func%init( "data/formats/real-N3DF", format=N3DF_FORMAT )
+		call func%show()
 		
-		call func.init( "data/formats/CUBE", format=CUBE_FORMAT )
-		call func.show()
+		call func%init( "data/formats/CUBE", format=CUBE_FORMAT )
+		call func%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
@@ -262,33 +262,33 @@ module RNFunction3D_
 		write(*,*) "----------------------------"
 		
 		func2 = func
-		call func2.show()
+		call func2%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
 		write(*,*) "Testing I/O methods"
 		write(*,*) "----------------------------"
 		
-		call func.save( "salida.cube", format=CUBE_FORMAT )
-		call func.save( "salida.n3df", format=N3DF_FORMAT )
+		call func%save( "salida.cube", format=CUBE_FORMAT )
+		call func%save( "salida.n3df", format=N3DF_FORMAT )
 		
 		call func.load( "salida.cube", format=CUBE_FORMAT )
-		call func.save( "salida2.cube", format=CUBE_FORMAT )
-		call func.show()
+		call func%save( "salida2.cube", format=CUBE_FORMAT )
+		call func%show()
 		
 		call func.load( "salida.n3df", format=N3DF_FORMAT )
-		call func.save( "salida3.cube", format=CUBE_FORMAT )
-		call func.show()
+		call func%save( "salida3.cube", format=CUBE_FORMAT )
+		call func%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
 		write(*,*) "Testing resize(+3,+2,+1)"
 		write(*,*) "----------------------------"
 		
-		call func.init( xVec, yVec, zVec, fArray )
-		call func.show()
-		call func.resize( 3, 2, 1, +1, +1, +1 )
-		call func.show()
+		call func%init( xVec, yVec, zVec, fArray )
+		call func%show()
+		call func%resize( 3, 2, 1, +1, +1, +1 )
+		call func%show()
 		
 	end subroutine RNFunction3D_test
 	

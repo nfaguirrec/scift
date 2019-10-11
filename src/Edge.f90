@@ -99,11 +99,11 @@ module Edge_
 		end if
                 if( present(label) ) effLabel = label
 		
-		this.sNode = sNode
-		this.tNode = tNode
-		this.id = effId
-		this.label = effLabel
-		this.weight = effweight
+		this%sNode = sNode
+		this%tNode = tNode
+		this%id = effId
+		this%label = effLabel
+		this%weight = effweight
 	end subroutine initDefault
 	
 	!>
@@ -113,12 +113,12 @@ module Edge_
 		class(Edge), intent(inout) :: this
 		class(Edge), intent(in) :: other
 		
-		this.sNode = other.sNode
-		this.tNode = other.tNode
-		this.id = other.id
-		this.label = other.label
-		this.weight = other.weight
-		this.directed = other.directed
+		this%sNode = other%sNode
+		this%tNode = other%tNode
+		this%id = other%id
+		this%label = other%label
+		this%weight = other%weight
+		this%directed = other.directed
 	end subroutine copy
 
 	!>
@@ -129,7 +129,7 @@ module Edge_
 		class(Edge), intent(in) :: other
 		logical :: output
 		
-		output = ( this.sNode == other.sNode .and. this.tNode == other.tNode )
+		output = ( this%sNode == other%sNode .and. this%tNode == other%tNode )
 	end function equal
 	
 	!>

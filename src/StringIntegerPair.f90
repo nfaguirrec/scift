@@ -88,8 +88,8 @@ module StringIntegerPair_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<Pair:"
-			ITEMS( "first=", this.first.fstr )
-			ITEMI( ",second=", this.second )
+			ITEMS( "first=", this%first%fstr )
+			ITEMI( ",second=", this%second )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -103,8 +103,8 @@ module StringIntegerPair_
 ! 
 ! 			LINE("Pair")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -127,19 +127,19 @@ module StringIntegerPair_
 		write(*,*) "Testing for empty constructor"
 		write(*,*) "-----------------------------"
 		
-		write(*,*) "call mypair1.init( str, 3 )"
+		write(*,*) "call mypair1%init( str, 3 )"
 		
 		str = "Hola"
-! 		call mypair1.init( str, 3 )
+! 		call mypair1%init( str, 3 )
 		mypair1 = StringIntegerPair( str, 3 )
-		call mypair1.show()
+		call mypair1%show()
 		
-		write(*,*) "call mypair2.init( str, 4 )"
+		write(*,*) "call mypair2%init( str, 4 )"
 		
 		str = "Entonces"
-! 		call mypair2.init( str, 4 )
+! 		call mypair2%init( str, 4 )
 		mypair1 = StringIntegerPair( str, 4 )
-		call mypair2.show()
+		call mypair2%show()
 		
 		write(*,*) "------------------------------"
 		write(*,*) "Testing for copy constructor"
@@ -148,7 +148,7 @@ module StringIntegerPair_
 		write(*,*) "mypair1 = mypair2"
 		
 		mypair1 = mypair2
-		call mypair1.show()
+		call mypair1%show()
 	end subroutine StringIntegerPair_test
 
 end module StringIntegerPair_

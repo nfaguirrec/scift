@@ -105,7 +105,7 @@ module StringRealHistogramMap_
 		
 			output = trim(output)//"<Map:"
 			
-			ITEMI( "size=", this.size() )
+			ITEMI( "size=", this%size() )
 #undef RFMT
 #undef ITEMR
 #undef ITEMI
@@ -118,8 +118,8 @@ module StringRealHistogramMap_
 ! 
 ! 			LINE("Map")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -149,20 +149,20 @@ module StringRealHistogramMap_
 		end if
 		
 		maxLen = 0
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
-			pair = this.pair( iter )
-			if( len(pair.first.fstr) > maxLen ) maxLen = len(pair.first.fstr)
+			pair = this%pair( iter )
+			if( len(pair%first%fstr) > maxLen ) maxLen = len(pair%first%fstr)
 			
 			iter => iter.next
 		end do
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
-			pair = this.pair( iter )
-			write(unitEff,"(A<maxLen>,F15.7)") pair.first.fstr, pair.second.str()
+			pair = this%pair( iter )
+			write(unitEff,"(A<maxLen>,F15.7)") pair%first%fstr, pair%second%str()
 			
 			iter => iter.next
 		end do
@@ -180,12 +180,12 @@ module StringRealHistogramMap_
 		class(StringRealHistogramMapIterator), pointer :: ptr
 		type(RealHistogram) :: hist
                 
-		if( this.find( key, ptr ) ) then
-			call ptr.data.second.add( array )
+		if( this%find( key, ptr ) ) then
+			call ptr%data%second%add( array )
 		else
-			call hist.init( rule )
-			call hist.add( array )
-			call this.insert( key, hist )
+			call hist%init( rule )
+			call hist%add( array )
+			call this%insert( key, hist )
 		end if
         end subroutine addArray
         
@@ -201,12 +201,12 @@ module StringRealHistogramMap_
 		class(StringRealHistogramMapIterator), pointer :: ptr
 		type(RealHistogram) :: hist
                 
-		if( this.find( key, ptr ) ) then
-			call ptr.data.second.add( value )
+		if( this%find( key, ptr ) ) then
+			call ptr%data%second%add( value )
 		else
-			call hist.init( rule )
-			call hist.add( value )
-			call this.insert( key, hist )
+			call hist%init( rule )
+			call hist%add( value )
+			call this%insert( key, hist )
 		end if
         end subroutine addValue
 	
@@ -219,10 +219,10 @@ module StringRealHistogramMap_
 		class(StringRealHistogramMapIterator), pointer :: iter
 		type(StringRealHistogramPair) :: pair
 		
-		iter => mymap.begin
+		iter => mymap%begin
 		do while( associated(iter) )
-			pair = mymap.pair( iter )
-			write(*,"(I20,A,A15,A)") pair.first.hashKey(), "  ==>  ", pair.first.fstr//", ", pair.second.str()
+			pair = mymap%pair( iter )
+			write(*,"(I20,A,A15,A)") pair%first%hashKey(), "  ==>  ", pair%first%fstr//", ", pair%second%str()
 			
 			iter => iter.next
 		end do
@@ -240,59 +240,59 @@ module StringRealHistogramMap_
 		class(StringRealHistogramMapIterator), pointer :: ptr
 		logical :: loc
 		
-		call mymap.init()
+		call mymap%init()
 		
 		str = "Ademas"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )
 		
 		str = "Amor"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Amor"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Entonces"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Corazon"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Hola"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Conejo"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8, 19.56235_8, 27.82564_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )
 			
-		call mymap.show()
+		call mymap%show()
 		
 ! 		! Entonces -> Amor -> Amor -> Hola -> Ademas -> Conejo
 		
 		write(*,*) "Buscando 'Corazon'"
 		str = "Corazon"
 		if( mymap.find( str, ptr ) ) then
-			pair = mymap.pair( ptr )
-			write(*,*) "   Encontrado asi: ( ", pair.first.fstr, pair.second.str(), " )"
+			pair = mymap%pair( ptr )
+			write(*,*) "   Encontrado asi: ( ", pair%first%fstr, pair%second%str(), " )"
 		else
 			write(*,*) "   No encontrado"
 		end if
@@ -300,64 +300,64 @@ module StringRealHistogramMap_
 		write(*,*) "Buscando 'Corazon '"
 		str = "Corazon "
 		if( mymap.find( str, ptr ) ) then
-			pair = mymap.pair( ptr )
-			write(*,*) "   Encontrado asi: ( ", pair.first.fstr, pair.second.str(), " )"
+			pair = mymap%pair( ptr )
+			write(*,*) "   Encontrado asi: ( ", pair%first%fstr, pair%second%str(), " )"
 		else
 			write(*,*) "   No encontrado"
 		end if
 		
 		write(*,*) "Eliminando a 'Conejo'"
 		str = "Conejo"
-		call mymap.erase( str )
+		call mymap%erase( str )
 		call showMyMap( mymap )
 		
 		write(*,*) "Eliminando a 'Entonces'"
 		str = "Entonces"
-		call mymap.erase( str )
+		call mymap%erase( str )
 		call showMyMap( mymap )
 		
 		write(*,*) "Eliminando a 'Amor'"
 		str = "Amor"
-		call mymap.erase( str )
+		call mymap%erase( str )
 		call showMyMap( mymap )
 		
 		write(*,*) "Limpiando el mapa"
-		call mymap.clear()
+		call mymap%clear()
 		call showMyMap( mymap )
 		
 		write(*,*) "Adicionando nuevas cosas"
 		
 		str = "Ademas"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )
 		
 		str = "Amor"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8, 19.56235_8, 27.82564_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando el elemento Amor a size=2"
 		str = "Amor"
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8, 19.56235_8] )
-		call mymap.set( str, hist )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8, 19.56235_8] )
+		call mymap%set( str, hist )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando un elemento que no existe Hola a size=2"
 		str = "Hola"
-		call mymap.set( str, hist )
+		call mymap%set( str, hist )
 		call showMyMap( mymap )
 		
 		write(*,*) "Limpiando el mapa"
-		call mymap.clear()
+		call mymap%clear()
 		call showMyMap( mymap )
 		
 ! 		write(*,*) "Cambiando un elemento que no existe HHHHHHH a 56"
 ! 		str = "HHHHHHH"
-! 		call mymap.set( str, 56.0_8 )
+! 		call mymap%set( str, 56.0_8 )
 ! 		call showMyMap( mymap )
 ! 		
 ! 		write(*,*) "Insertando un elemento que ya existe HHHHHHH a 60"
@@ -369,22 +369,22 @@ module StringRealHistogramMap_
 		! Test propios de Histgram
 		write(*,*) "Cambiando un elemento que no existe Hola a size=2 y adicionando un valor a hist"
 		str = "Hola"
-		call mymap.set( str, hist )
+		call mymap%set( str, hist )
 		call showMyMap( mymap )
-		hist = mymap.at( str )
-		call hist.add( [0.456_8, 5.9423_8] )
-		call mymap.set( str, hist )
+		hist = mymap%at( str )
+		call hist%add( [0.456_8, 5.9423_8] )
+		call mymap%set( str, hist )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando un elemento por referencia de size=4 a size=6"
 		
 		str = "Hola"
-		call mymap.add( str, [0.456_8, 5.9423_8] )
+		call mymap%add( str, [0.456_8, 5.9423_8] )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando un elemento que no existe Entonces a size=2"
 		str = "Entonces"
-		call mymap.add( str, [0.456_8, 5.9423_8] )
+		call mymap%add( str, [0.456_8, 5.9423_8] )
 		call showMyMap( mymap )
 		
 	end subroutine StringRealHistogramMap_test

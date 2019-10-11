@@ -98,7 +98,7 @@ module StringIntegerMap_
 		
 			output = trim(output)//"<Map:"
 		
-			ITEMI( "size=", this.size() )
+			ITEMI( "size=", this%size() )
 			
 #undef ITEMI
 			output = trim(output)//">"
@@ -110,8 +110,8 @@ module StringIntegerMap_
 ! 
 ! 			LINE("Map")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -141,20 +141,20 @@ module StringIntegerMap_
 		end if
 		
 		maxLen = 0
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
-			pair = this.pair( iter )
-			if( len(pair.first.fstr) > maxLen ) maxLen = len(pair.first.fstr)
+			pair = this%pair( iter )
+			if( len(pair%first%fstr) > maxLen ) maxLen = len(pair%first%fstr)
 			
 			iter => iter.next
 		end do
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
-			pair = this.pair( iter )
-			write(unitEff,"(A<maxLen>,I15)") pair.first.fstr, pair.second
+			pair = this%pair( iter )
+			write(unitEff,"(A<maxLen>,I15)") pair%first%fstr, pair%second
 			
 			iter => iter.next
 		end do
@@ -166,10 +166,10 @@ module StringIntegerMap_
 		class(StringIntegerMapIterator), pointer :: iter
 		type(StringIntegerPair) :: pair
 		
-		iter => mymap.begin
+		iter => mymap%begin
 		do while( associated(iter) )
-			pair = mymap.pair( iter )
-			write(*,"(I20,A15,I5)") pair.first.hashKey(), pair.first.fstr, pair.second
+			pair = mymap%pair( iter )
+			write(*,"(I20,A15,I5)") pair%first%hashKey(), pair%first%fstr, pair%second
 			
 			iter => iter.next
 		end do
@@ -185,7 +185,7 @@ module StringIntegerMap_
 		type(StringIntegerMap) :: mymap
 		class(StringIntegerMapIterator), pointer :: ptr
 		
-		call mymap.init()
+		call mymap%init()
 		
 		str = "Ademas"
 		call mymap.insert( str, 45 )
@@ -211,15 +211,15 @@ module StringIntegerMap_
 		call mymap.insert( str, 24 )
 		call showMyMap( mymap )	
 		
-		call mymap.show()
+		call mymap%show()
 		
 		! Entonces -> Amor -> Amor -> Hola -> Ademas -> Conejo
 		
 		write(*,*) "Buscando 'Corazon'"
 		str = "Corazon"
 		if( mymap.find( str, ptr ) ) then
-			pair = mymap.pair( ptr )
-			write(*,*) "   Encontrado asi: ( ", pair.first.fstr, pair.second, " )"
+			pair = mymap%pair( ptr )
+			write(*,*) "   Encontrado asi: ( ", pair%first%fstr, pair%second, " )"
 		else
 			write(*,*) "   No encontrado"
 		end if
@@ -227,29 +227,29 @@ module StringIntegerMap_
 		write(*,*) "Buscando 'Corazon '"
 		str = "Corazon "
 		if( mymap.find( str, ptr ) ) then
-			pair = mymap.pair( ptr )
-			write(*,*) "   Encontrado asi: ( ", pair.first.fstr, pair.second, " )"
+			pair = mymap%pair( ptr )
+			write(*,*) "   Encontrado asi: ( ", pair%first%fstr, pair%second, " )"
 		else
 			write(*,*) "   No encontrado"
 		end if
 		
 		write(*,*) "Eliminando a 'Conejo'"
 		str = "Conejo"
-		call mymap.erase( str )
+		call mymap%erase( str )
 		call showMyMap( mymap )
 		
 		write(*,*) "Eliminando a 'Entonces'"
 		str = "Entonces"
-		call mymap.erase( str )
+		call mymap%erase( str )
 		call showMyMap( mymap )
 		
 		write(*,*) "Eliminando a 'Amor'"
 		str = "Amor"
-		call mymap.erase( str )
+		call mymap%erase( str )
 		call showMyMap( mymap )
 		
 		write(*,*) "Limpiando el mapa"
-		call mymap.clear()
+		call mymap%clear()
 		call showMyMap( mymap )
 		
 		write(*,*) "Adicionando nuevas cosas"
@@ -264,21 +264,21 @@ module StringIntegerMap_
 		
 		write(*,*) "Cambiando el elemento Amor a 8"
 		str = "Amor"
-		call mymap.set( str, 8 )
+		call mymap%set( str, 8 )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando un elemento que no existe Hola a 56"
 		str = "Hola"
-		call mymap.set( str, 56 )
+		call mymap%set( str, 56 )
 		call showMyMap( mymap )
 		
 		write(*,*) "Limpiando el mapa"
-		call mymap.clear()
+		call mymap%clear()
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando un elemento que no existe HHHHHHH a 56"
 		str = "HHHHHHH"
-		call mymap.set( str, 56 )
+		call mymap%set( str, 56 )
 		call showMyMap( mymap )
 		
 		write(*,*) "Insertando un elemento que ya existe HHHHHHH a 60"

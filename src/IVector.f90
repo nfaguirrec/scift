@@ -55,17 +55,17 @@ module IVector_
 	subroutine IVector_test()
 		type(IVector) :: A, B, C
 		
-		call A.init( 12, 1 )
-		call A.show( 6, .true. )
+		call A%init( 12, 1 )
+		call A%show( 6, .true. )
 		
-		call B.random( 12, type=COLUMN_VECTOR )
-		call B.show( 6, .true. )
+		call B%random( 12, type=COLUMN_VECTOR )
+		call B%show( 6, .true. )
 		
 		A = A*2
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
-		call B.random( 12, type=ROW_VECTOR )
-		call B.show( 6, .true. )
+		call B%random( 12, type=ROW_VECTOR )
+		call B%show( 6, .true. )
 	end subroutine IVector_test
 
 end module IVector_

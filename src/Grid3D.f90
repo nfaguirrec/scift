@@ -136,7 +136,7 @@ module Grid3D_
 		integer :: i
 		
 		do i=1,3
-			call this.component(i).init( min(i), max(i), size(i), stepSize(i) )
+			call this%component(i)%init( min(i), max(i), size(i), stepSize(i) )
 		end do
 	end subroutine initDefault
 	
@@ -149,9 +149,9 @@ module Grid3D_
 		type(Grid), intent(in) :: y
 		type(Grid), intent(in) :: z
 		
-		this.component(1) = x
-		this.component(2) = y
-		this.component(3) = z
+		this%component(1) = x
+		this%component(2) = y
+		this%component(3) = z
 	end subroutine fromComponents
 	
 	!>
@@ -163,9 +163,9 @@ module Grid3D_
 		real(8), intent(in) :: yArray(:)
 		real(8), intent(in) :: zArray(:)
 		
-		call this.component(1).fromArray( xArray )
-		call this.component(2).fromArray( yArray )
-		call this.component(3).fromArray( zArray )
+		call this%component(1)%fromArray( xArray )
+		call this%component(2)%fromArray( yArray )
+		call this%component(3)%fromArray( zArray )
 	end subroutine fromArray
 	
 	!>
@@ -189,7 +189,7 @@ module Grid3D_
 		end if
 		
 		do i=1,3
-			call this.component(i).fromFile( iFileName, columnsEff(i), tol=tol, cComments=cComments )
+			call this%component(i)%fromFile( iFileName, columnsEff(i), tol=tol, cComments=cComments )
 		end do
 	end subroutine fromFile
 	
@@ -203,7 +203,7 @@ module Grid3D_
 		integer :: i
 		
 		do i=1,3
-			this.component(i) = other.component(i)
+			this%component(i) = other%component(i)
 		end do
 	end subroutine copyGrid3D
 	
@@ -225,9 +225,9 @@ module Grid3D_
 		logical :: output
 		
 		output = &
-			this.component(1).isEqualTo( other.component(1), tol ) .and. &
-			this.component(2).isEqualTo( other.component(2), tol ) .and. &
-			this.component(3).isEqualTo( other.component(3), tol )
+			this%component(1)%isEqualTo( other%component(1), tol ) .and. &
+			this%component(2)%isEqualTo( other%component(2), tol ) .and. &
+			this%component(3)%isEqualTo( other%component(3), tol )
 	end function isEqualTo
 	
 	!>
@@ -238,9 +238,9 @@ module Grid3D_
 		logical :: output
 		
 		output = &
-			this.component(1).isEquallyspaced .and. &
-			this.component(2).isEquallyspaced .and. &
-			this.component(3).isEquallyspaced
+			this%component(1)%isEquallyspaced .and. &
+			this%component(2)%isEquallyspaced .and. &
+			this%component(3)%isEquallyspaced
 	end function isEquallyspaced
 	
 	!>
@@ -249,9 +249,9 @@ module Grid3D_
 	subroutine checkEquallyspaced( this )
 		class(Grid3D) :: this
 		
-		call this.component(1).checkEquallyspaced()
-		call this.component(2).checkEquallyspaced()
-		call this.component(3).checkEquallyspaced()
+		call this%component(1)%checkEquallyspaced()
+		call this%component(2)%checkEquallyspaced()
+		call this%component(3)%checkEquallyspaced()
 	end subroutine checkEquallyspaced
 
 	
@@ -265,15 +265,15 @@ module Grid3D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-			this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+			this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i) + other.component(i)
+			output%component(i) = this%component(i) + other%component(i)
 		end do
 	end function addition
 	
@@ -288,7 +288,7 @@ module Grid3D_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i) + constant
+			output%component(i) = this%component(i) + constant
 		end do
 	end function additionFC
 	
@@ -302,15 +302,15 @@ module Grid3D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-			this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+			this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i) - other.component(i)
+			output%component(i) = this%component(i) - other%component(i)
 		end do
 	end function subtraction
 	
@@ -325,7 +325,7 @@ module Grid3D_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i) + constant
+			output%component(i) = this%component(i) + constant
 		end do
 	end function subtractionFC
 	
@@ -339,15 +339,15 @@ module Grid3D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-			this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+			this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i)*other.component(i)
+			output%component(i) = this%component(i)*other%component(i)
 		end do
 	end function multiplication
 	
@@ -362,7 +362,7 @@ module Grid3D_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i)*constant
+			output%component(i) = this%component(i)*constant
 		end do
 	end function multiplicationFC
 	
@@ -376,15 +376,15 @@ module Grid3D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-			this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+			this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i)/other.component(i)
+			output%component(i) = this%component(i)/other%component(i)
 		end do
 	end function division
 	
@@ -399,7 +399,7 @@ module Grid3D_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i)/constant
+			output%component(i) = this%component(i)/constant
 		end do
 	end function divisionFC
 	
@@ -413,15 +413,15 @@ module Grid3D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-			this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+			this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i)**other.component(i)
+			output%component(i) = this%component(i)**other%component(i)
 		end do
 	end function exponentiation
 	
@@ -436,7 +436,7 @@ module Grid3D_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i)**constant
+			output%component(i) = this%component(i)**constant
 		end do
 	end function exponentiationFC
 	
@@ -469,27 +469,27 @@ module Grid3D_
 #define ITEML(l,v) output = trim(output)//l; write(fstr, "(L3)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<Grid3D:"
-			ITEMR( "min=(", this.component(1).min )
-			ITEMR( ";", this.component(2).min )
-			ITEMR( ";", this.component(3).min )
-			ITEMR( "first=(", this.component(1).first() )
-			ITEMR( ";", this.component(2).first() )
-			ITEMR( ";", this.component(3).first() )
-			ITEMR( "),max=(", this.component(1).max )
-			ITEMR( ";", this.component(2).max )
-			ITEMR( ";", this.component(3).max )
-			ITEMR( "),last=(", this.component(1).last() )
-			ITEMR( ";", this.component(2).last() )
-			ITEMR( ";", this.component(3).last() )
-			ITEMI( "),nPoints=(", this.component(1).nPoints )
-			ITEMI( ";", this.component(2).nPoints )
-			ITEMI( ";", this.component(3).nPoints )
-			ITEMR( "),stepSize=(", this.component(1).stepSize )
-			ITEMR( ";", this.component(2).stepSize )
-			ITEMR( ";", this.component(3).stepSize )
-			ITEML( "),isEquallyspaced=(", this.component(1).isEquallyspaced )
-			ITEML( ";", this.component(2).isEquallyspaced )
-			ITEML( ";", this.component(3).isEquallyspaced )
+			ITEMR( "min=(", this%component(1)%min )
+			ITEMR( ";", this%component(2)%min )
+			ITEMR( ";", this%component(3)%min )
+			ITEMR( "first=(", this%component(1)%first() )
+			ITEMR( ";", this%component(2)%first() )
+			ITEMR( ";", this%component(3)%first() )
+			ITEMR( "),max=(", this%component(1)%max )
+			ITEMR( ";", this%component(2)%max )
+			ITEMR( ";", this%component(3)%max )
+			ITEMR( "),last=(", this%component(1)%last() )
+			ITEMR( ";", this%component(2)%last() )
+			ITEMR( ";", this%component(3)%last() )
+			ITEMI( "),nPoints=(", this%component(1)%nPoints )
+			ITEMI( ";", this%component(2)%nPoints )
+			ITEMI( ";", this%component(3)%nPoints )
+			ITEMR( "),stepSize=(", this%component(1)%stepSize )
+			ITEMR( ";", this%component(2)%stepSize )
+			ITEMR( ";", this%component(3)%stepSize )
+			ITEML( "),isEquallyspaced=(", this%component(1)%isEquallyspaced )
+			ITEML( ";", this%component(2)%isEquallyspaced )
+			ITEML( ";", this%component(3)%isEquallyspaced )
 			ITEMS( "", ")" )
 #undef ITEMS
 #undef ITEMI
@@ -504,8 +504,8 @@ module Grid3D_
 
 			LINE("Grid3D")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -546,11 +546,11 @@ module Grid3D_
 		type(OFStream) :: ofile
 		
 		if( present(units) .and. present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile, units )
 			call ofile.close()
 		else if( present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile )
 			call ofile.close()
 		else
@@ -587,7 +587,7 @@ module Grid3D_
 					write( unitEff, "(A)" ) "# Z"
 			end select
 			
-			call this.component(i).toFStream( ofile, units )
+			call this%component(i)%toFStream( ofile, units )
 			write( unitEff, * ) ""
 			write( unitEff, * ) ""
 		end do
@@ -603,7 +603,7 @@ module Grid3D_
 		integer :: i
 		
 		do i=1,3
-			call this.component(i).setUnits( unit )
+			call this%component(i)%setUnits( unit )
 		end do
 	end subroutine setUnits
 	
@@ -615,7 +615,7 @@ module Grid3D_
 		integer, intent(in) :: i
 		integer :: output
 		
-		output = this.component(i).nPoints
+		output = this%component(i)%nPoints
 	end function nPointsInCoord
 	
 	!>
@@ -625,7 +625,7 @@ module Grid3D_
 		class(Grid3D), intent(in) :: this
 		integer :: output(3)
 		
-		output = [ this.component(1).nPoints, this.component(2).nPoints, this.component(3).nPoints ]
+		output = [ this%component(1)%nPoints, this%component(2)%nPoints, this%component(3)%nPoints ]
 	end function nPointsVec
 	
 	!>
@@ -636,7 +636,7 @@ module Grid3D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(i).min
+		output = this%component(i)%min
 	end function minInCoord
 	
 	!>
@@ -646,7 +646,7 @@ module Grid3D_
 		class(Grid3D), intent(in) :: this
 		real(8) :: output(3)
 		
-		output = [ this.component(1).min, this.component(2).min, this.component(3).min ]
+		output = [ this%component(1)%min, this%component(2)%min, this%component(3)%min ]
 	end function minVec
 	
 	!>
@@ -657,7 +657,7 @@ module Grid3D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(i).max
+		output = this%component(i)%max
 	end function maxInCoord
 	
 	!>
@@ -667,7 +667,7 @@ module Grid3D_
 		class(Grid3D), intent(in) :: this
 		real(8) :: output(3)
 		
-		output = [ this.component(1).max, this.component(2).max, this.component(3).max ]
+		output = [ this%component(1)%max, this%component(2)%max, this%component(3)%max ]
 	end function maxVec
 	
 	!>
@@ -678,7 +678,7 @@ module Grid3D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(i).stepSize
+		output = this%component(i)%stepSize
 	end function stepSizeInCoord
 	
 	!>
@@ -688,7 +688,7 @@ module Grid3D_
 		class(Grid3D), intent(in) :: this
 		real(8) :: output(3)
 		
-		output = [ this.component(1).stepSize, this.component(2).stepSize, this.component(3).stepSize ]
+		output = [ this%component(1)%stepSize, this%component(2)%stepSize, this%component(3)%stepSize ]
 	end function stepSizeVec
 	
 	!>
@@ -703,9 +703,9 @@ module Grid3D_
 		integer, intent(in) :: dnx, dny, dnz
 		integer, optional, intent(in) :: dirx, diry, dirz
 		
-		if( dnx > 0 ) call this.component(1).resize( dnx, dirx )
-		if( dny > 0 ) call this.component(2).resize( dny, diry )
-		if( dnz > 0 ) call this.component(3).resize( dnz, dirz )
+		if( dnx > 0 ) call this%component(1)%resize( dnx, dirx )
+		if( dny > 0 ) call this%component(2)%resize( dny, diry )
+		if( dnz > 0 ) call this%component(3)%resize( dnz, dirz )
 	end subroutine resize1
 	
 	!>
@@ -720,7 +720,7 @@ module Grid3D_
 		integer, intent(in) :: dn(3)
 		integer, optional, intent(in) :: dir(3)
 		
-		call this.resize1( dn(1), dn(2), dn(3), dir(1), dir(2), dir(3) )
+		call this%resize1( dn(1), dn(2), dn(3), dir(1), dir(2), dir(3) )
 	end subroutine resize2
 	
 	!>
@@ -731,7 +731,7 @@ module Grid3D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(1).data(i)
+		output = this%component(1)%data(i)
 	end function x
 	
 	!>
@@ -742,7 +742,7 @@ module Grid3D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(2).data(i)
+		output = this%component(2)%data(i)
 	end function y
 	
 	!>
@@ -753,7 +753,7 @@ module Grid3D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(3).data(i)
+		output = this%component(3)%data(i)
 	end function z
 	
 	!>
@@ -765,7 +765,7 @@ module Grid3D_
 		integer, intent(in) :: posInCoord
 		real(8) :: output
 		
-		output = this.component(idCoord).data(posInCoord)
+		output = this%component(idCoord)%data(posInCoord)
 	end function atInCoord
 	
 	!>
@@ -778,7 +778,7 @@ module Grid3D_
 		integer, intent(in) :: k
 		real(8) :: output(3)
 		
-		output = [ this.component(1).data(i), this.component(2).data(j), this.component(3).data(k) ]
+		output = [ this%component(1)%data(i), this%component(2)%data(j), this%component(3)%data(k) ]
 	end function atPoint
 	
 	!>
@@ -790,7 +790,7 @@ module Grid3D_
 			real(8), intent(in) :: value
 			integer :: output
 			
-			output = this.component(idCoord).pos(value)
+			output = this%component(idCoord)%pos(value)
 	end function posInCoord
 	
 	!>
@@ -801,7 +801,7 @@ module Grid3D_
 			real(8), intent(in) :: x, y, z
 			integer :: output(3)
 			
-			output = [ this.component(1).pos(x), this.component(2).pos(y), this.component(3).pos(z) ]
+			output = [ this%component(1)%pos(x), this%component(2)%pos(y), this%component(3)%pos(z) ]
 	end function posPoint
 	
 	!>
@@ -811,7 +811,7 @@ module Grid3D_
 		class(Grid3D), intent(in) :: this
 		real(8) :: output
 		
-		output = this.component(1).stepSize*this.component(2).stepSize*this.component(3).stepSize
+		output = this%component(1)%stepSize*this%component(2)%stepSize*this%component(3)%stepSize
 	end function dV
 	
 	!>
@@ -822,9 +822,9 @@ module Grid3D_
 		integer, intent(in) :: i, j, k
 		real(8), intent(in) :: value(3)
 		
-		call this.component(1).set( i, value(1) )
-		call this.component(2).set( j, value(2) )
-		call this.component(3).set( k, value(3) )
+		call this%component(1)%set( i, value(1) )
+		call this%component(2)%set( j, value(2) )
+		call this%component(3)%set( k, value(3) )
 	end subroutine set
 	
 	!>
@@ -848,8 +848,8 @@ module Grid3D_
 					write(*,*) "Z = "
 			end select
 			
-			do j=1,xyzGrid.nPoints(i)
-				write(*,"(f10.5)", advance="no") xyzGrid.component(i).data(j)
+			do j=1,xyzGrid%nPoints(i)
+				write(*,"(f10.5)", advance="no") xyzGrid%component(i)%data(j)
 				
 				if ( mod(j-1,10) == 9 ) then
 					write(*,"(A)") ""
@@ -872,13 +872,13 @@ module Grid3D_
 		rMax = [ 5.0_8, 5.0_8, 10.0_8]
 		gridSize = [10, 10, 20]
 		
-		call xyzGrid.init( rMin, rMax, gridSize )
+		call xyzGrid%init( rMin, rMax, gridSize )
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
 		write(*,*) "Testing constructor"
 		write(*,*) "----------------------------"
-		call xyzGrid.show()
+		call xyzGrid%show()
 		call showtest( xyzGrid )
 		
 ! 		write(*,*) ""
@@ -887,40 +887,40 @@ module Grid3D_
 ! 		write(*,*) "----------------------------"
 ! 		
 ! 		xyzGrid2 = xyzGrid
-! 		call xyzGrid2.show()
+! 		call xyzGrid2%show()
 ! 		call showtest( xyzGrid2 )
 ! 		
 ! 		write(*,*) ""
 ! 		write(*,*) "----------------------------"
 ! 		write(*,*) "Testing save method"
 ! 		write(*,*) "----------------------------"
-! 		call xyzGrid.save()
+! 		call xyzGrid%save()
 ! 		
 ! 		write(*,*) ""
 ! 		write(*,*) "----------------------------"
 ! 		write(*,*) "Testing operators"
 ! 		write(*,*) "----------------------------"
 ! 		xyzGrid2 = xyzGrid*2.0_8
-! 		call xyzGrid.save()
-! 		call xyzGrid2.save()
+! 		call xyzGrid%save()
+! 		call xyzGrid2%save()
 ! 		
 ! 		xyzGrid2 = xyzGrid*xyzGrid
-! 		call xyzGrid.save()
-! 		call xyzGrid2.save()
+! 		call xyzGrid%save()
+! 		call xyzGrid2%save()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
 		write(*,*) "Testing resize"
 		write(*,*) "----------------------------"
-		call xyzGrid.init( rMin, rMax, gridSize )
-		call xyzGrid.show()
+		call xyzGrid%init( rMin, rMax, gridSize )
+		call xyzGrid%show()
 		call showtest( xyzGrid )
 		
 		write(*,*) "resize (+5,-5,+5)"
 		write(*,*) "-----------------"
 		write(*,*) ""
-		call xyzGrid.resize( 5, 5, 5, +1, -1, +1 )
-		call xyzGrid.show()
+		call xyzGrid%resize( 5, 5, 5, +1, -1, +1 )
+		call xyzGrid%show()
 		call showtest( xyzGrid )
 		
 		write(*,*) ""

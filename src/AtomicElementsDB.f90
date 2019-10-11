@@ -232,7 +232,7 @@ module AtomicElementsDB_
 	subroutine destroyAtomicElementsDB( this )
 		type(AtomicElementsDB) :: this
 		
-		if( allocated( this.specialPairs ) ) deallocate( this.specialPairs )
+		if( allocated( this%specialPairs ) ) deallocate( this%specialPairs )
 	end subroutine destroyAtomicElementsDB
 
 	!>
@@ -328,9 +328,9 @@ module AtomicElementsDB_
 		
 		select case( effType )
 			case( AtomicElementsDB_COVALENT_RADIUS )
-				R = this.covalentRadius( symbol )
+				R = this%covalentRadius( symbol )
 			case( AtomicElementsDB_VANDERWAALS_RADIUS )
-				R = this.VanDerWaalsRadius( symbol )
+				R = this%VanDerWaalsRadius( symbol )
 		end select
 	end function radius
 	
@@ -432,9 +432,9 @@ module AtomicElementsDB_
 		
 		integer :: i
 		
-		if( allocated( this.specialPairs ) ) deallocate( this.specialPairs )
-		allocate( this.specialPairs( size(specialPairs) ) )
-		this.specialPairs = specialPairs
+		if( allocated( this%specialPairs ) ) deallocate( this%specialPairs )
+		allocate( this%specialPairs( size(specialPairs) ) )
+		this%specialPairs = specialPairs
 		
 		write(6,"(A)") ""
 		write(6,"(A)") "---------------------"
@@ -444,8 +444,8 @@ module AtomicElementsDB_
 		write(6,"(A10,A10,2A15)") "symbol1", "symbol2", "bondCutoff(A)", "dbondCutoff(A)"
 		write(6,"(A10,A10,2A15)") "-------", "-------", "-------------", "--------------"
 		do i=1,size(specialPairs)
-			write(6,"(A10,A10,2F15.5)") trim(specialPairs(i).symbol1), trim(specialPairs(i).symbol2), &
-				specialPairs(i).bondCutoff/angs, specialPairs(i).doubleBondCutoff/angs
+			write(6,"(A10,A10,2F15.5)") trim(specialPairs(i)%symbol1), trim(specialPairs(i)%symbol2), &
+				specialPairs(i)%bondCutoff/angs, specialPairs(i).doubleBondCutoff/angs
 		end do
 		write(6,"(A)") ""
 		
@@ -467,38 +467,38 @@ module AtomicElementsDB_
 		write(*,*) "Symbol to atomic number"
 		write(*,*) "-----------------------"
 		call upper( "   Ti ", upperSymb )
-		write(*,*) upperSymb, atomicDB.atomicNumber( upperSymb )
+		write(*,*) upperSymb, atomicDB%atomicNumber( upperSymb )
 		
-		write(*,*) " Ti ", atomicDB.atomicNumber( " Ti " )
-		write(*,*) "TI ", atomicDB.atomicNumber( "TI" )
+		write(*,*) " Ti ", atomicDB%atomicNumber( " Ti " )
+		write(*,*) "TI ", atomicDB%atomicNumber( "TI" )
 		
 		write(*,*) ""
 		write(*,*) "Symbol to atomic mass"
 		write(*,*) "---------------------"
 		call upper( "   Ti ", upperSymb )
-		write(*,*) upperSymb, atomicDB.atomicMass( upperSymb )/amu, " amu"
+		write(*,*) upperSymb, atomicDB%atomicMass( upperSymb )/amu, " amu"
 		
-		write(*,*) " He ", atomicDB.atomicMass( " He " )/amu, " amu"
-		write(*,*) " Ti ", atomicDB.atomicMass( " Ti " )/amu, " amu"
-		write(*,*) "AU ", atomicDB.atomicMass( "AU" )/amu, " amu"
-		write(*,*) "AR ", atomicDB.atomicMass( "AR" )/amu, " amu"
+		write(*,*) " He ", atomicDB%atomicMass( " He " )/amu, " amu"
+		write(*,*) " Ti ", atomicDB%atomicMass( " Ti " )/amu, " amu"
+		write(*,*) "AU ", atomicDB%atomicMass( "AU" )/amu, " amu"
+		write(*,*) "AR ", atomicDB%atomicMass( "AR" )/amu, " amu"
 		
 		write(*,*) ""
 		write(*,*) "Atomic number to symbol"
 		write(*,*) "-----------------------"
 		
-		write(*,*) "22 ", atomicDB.symbol( 22 )
-		write(*,*) "22 ", atomicDB.symbol( 22, .true. )
-		write(*,*) "12 ", atomicDB.symbol( 12 )
-		write(*,*) "79 ", atomicDB.symbol( 79 )
+		write(*,*) "22 ", atomicDB%symbol( 22 )
+		write(*,*) "22 ", atomicDB%symbol( 22, .true. )
+		write(*,*) "12 ", atomicDB%symbol( 12 )
+		write(*,*) "79 ", atomicDB%symbol( 79 )
 		
 		write(*,*) ""
 		write(*,*) "Atomic properties"
 		write(*,*) "-----------------------"
 		
-! 		write(*,*) "22 ", atomicDB.mass( 22 )
+! 		write(*,*) "22 ", atomicDB%mass( 22 )
 ! 		write(*,*) "79 ", atomicDB.covalentRadius( 79 )
-		write(*,*) "mass    Ti = ", atomicDB.atomicMass( " Ti " )/amu
+		write(*,*) "mass    Ti = ", atomicDB%atomicMass( " Ti " )/amu
 		write(*,*) "cradius Ti = ", atomicDB.covalentRadius( " Ti " )/angs
 		write(*,*) "cradius  O = ", atomicDB.covalentRadius( " O " )/angs
 		write(*,*) "cradius Re = ", atomicDB.covalentRadius( " Re" )/angs
@@ -506,7 +506,7 @@ module AtomicElementsDB_
 		
 		write(*,*) "Using the singleton instance"
 		write(*,*) "----------------------------"
-		write(*,*) AtomicElementsDB_instance.symbol(22)
+		write(*,*) AtomicElementsDB_instance%symbol(22)
 		
 ! 		write(*,*)
 ! 		write(*,*) "Testing hash key for atomic labels"
@@ -515,15 +515,15 @@ module AtomicElementsDB_
 ! 		allocate( hashTableList(AtomicElementsDB_instance.nElements()) )
 ! 		hashTableList = -1
 ! 		do i=1,AtomicElementsDB_instance.nElements()
-! 			tmpStr = AtomicElementsDB_instance.symbol( i )
+! 			tmpStr = AtomicElementsDB_instance%symbol( i )
 ! 			
-! 			if( any( hashTableList-tmpStr.hashKey(nBits) == 0 ) ) then
+! 			if( any( hashTableList-tmpStr%hashKey(nBits) == 0 ) ) then
 ! 				write(*,*) "Hashkey replicated"
 ! 				stop
 ! 			end if
 ! 				
-! 			hashTableList(i) = tmpStr.hashKey(nBits)
-! 			write(*,*) i, tmpStr.fstr, " ==> ", tmpStr.hashKey(nBits)
+! 			hashTableList(i) = tmpStr%hashKey(nBits)
+! 			write(*,*) i, tmpStr%fstr, " ==> ", tmpStr%hashKey(nBits)
 ! 		end do
 ! 		write(*,*) "key range = ", minval(hashTableList), maxval(hashTableList)
 	end subroutine AtomicElementsDB_test

@@ -86,8 +86,8 @@ module RealList_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<RealList:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -101,8 +101,8 @@ module RealList_
 ! 
 ! 			LINE("List")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -131,9 +131,9 @@ module RealList_
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
-			write(unitEff,"(F15.7)") iter.data
+			write(unitEff,"(F15.7)") iter%data
 			
 			iter => iter.next
 		end do
@@ -143,9 +143,9 @@ module RealList_
 		type(RealList) :: mylist
 		class(RealListIterator), pointer :: iter
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,"(F5.3,A)", advance="no") iter.data, "  --> "
+			write(*,"(F5.3,A)", advance="no") iter%data, "  --> "
 			
 			iter => iter.next
 		end do
@@ -158,7 +158,7 @@ module RealList_
 		
 		iter => mylist.end
 		do while( associated(iter) )
-			write(*,"(A,F5.3)", advance="no") "  <-- ", iter.data
+			write(*,"(A,F5.3)", advance="no") "  <-- ", iter%data
 			
 			iter => iter.prev
 		end do
@@ -172,20 +172,20 @@ module RealList_
 		type(RealList) :: mylist
 		class(RealListIterator), pointer :: iter
 		
-		call mylist.init()
+		call mylist%init()
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for append method"
 		write(*,*) "-------------------------"
 		
-		write(*,*) "call mylist.append( 8.0 )"
-		write(*,*) "call mylist.append( 5.0 )"
-		write(*,*) "call mylist.append( 1.0 )"
+		write(*,*) "call mylist%append( 8.0 )"
+		write(*,*) "call mylist%append( 5.0 )"
+		write(*,*) "call mylist%append( 1.0 )"
 		write(*,*)
 		
-		call mylist.append( 8.0_8 )
-		call mylist.append( 5.0_8 )
-		call mylist.append( 1.0_8 )
+		call mylist%append( 8.0_8 )
+		call mylist%append( 5.0_8 )
+		call mylist%append( 1.0_8 )
 		
 		call showMyListForward( mylist )
 		
@@ -208,13 +208,13 @@ module RealList_
 		write(*,*) "Testing for insert method"
 		write(*,*) "-------------------------"
 		
-		write(*,*) "iter => mylist.begin"
+		write(*,*) "iter => mylist%begin"
 		write(*,*) "iter => iter.next"
 		write(*,*) "iter => iter.next"
 		write(*,*) "call mylist.insert( iter, 1.0 )"
 		write(*,*)
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		iter => iter.next
 		iter => iter.next
 		
@@ -239,53 +239,53 @@ module RealList_
 		write(*,*) "Testing for erase method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "iter => mylist.begin"
+		write(*,*) "iter => mylist%begin"
 		write(*,*) "iter => iter.next"
-		write(*,*) "call mylist.erase( iter )"
+		write(*,*) "call mylist%erase( iter )"
 		write(*,*)
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		iter => iter.next
 		
-		call mylist.erase( iter )
+		call mylist%erase( iter )
 		call showMyListForward( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist.erase( mylist.begin )"
+		write(*,*) "call mylist%erase( mylist%begin )"
 		write(*,*)
 		
-		call mylist.erase( mylist.begin )
+		call mylist%erase( mylist%begin )
 		call showMyListForward( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist.erase( mylist.end )"
+		write(*,*) "call mylist%erase( mylist.end )"
 		write(*,*)
-		call mylist.erase( mylist.end )
+		call mylist%erase( mylist.end )
 		call showMyListForward( mylist )
 		
 		write(*,*) "------------------------"
 		write(*,*) "Testing for clear method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "call mylist.clear()"
+		write(*,*) "call mylist%clear()"
 		write(*,*)
-		call mylist.clear()
+		call mylist%clear()
 		call showMyListForward( mylist )
 		
-		write(*,*) "call mylist.clear()"
-		write(*,"(A)") "call mylist.append( ( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8], 8 )"
+		write(*,*) "call mylist%clear()"
+		write(*,"(A)") "call mylist%append( ( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8], 8 )"
 		write(*,*)
 		
-		call mylist.clear()
-		call mylist.append( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )
+		call mylist%clear()
+		call mylist%append( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )
 		call showMyListForward( mylist )
 		call showMyListBackward( mylist )
 		
-! 		iter => mylist.begin
+! 		iter => mylist%begin
 ! 		do while( associated(iter) )
-! 			if( iter.data > 1.5_8 .and. iter.data < 3.5_8 ) then
-! 				call mylist.erase( iter )
-! 				iter => mylist.begin
+! 			if( iter%data > 1.5_8 .and. iter%data < 3.5_8 ) then
+! 				call mylist%erase( iter )
+! 				iter => mylist%begin
 ! 			else
 ! 				iter => iter.next
 ! 			end if
@@ -294,38 +294,38 @@ module RealList_
 ! 		call showMyListForward( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist.clear()"
-		write(*,"(X,A)") "call mylist.append( ( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )"
-		call mylist.clear()
-		call mylist.append( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )
-		write(*,*) "call mylist.eraseAllExcept( [1,3,5] )"
-		call mylist.eraseAllExcept( [1,3,5] )
+		write(*,*) "call mylist%clear()"
+		write(*,"(X,A)") "call mylist%append( ( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )"
+		call mylist%clear()
+		call mylist%append( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )
+		write(*,*) "call mylist%eraseAllExcept( [1,3,5] )"
+		call mylist%eraseAllExcept( [1,3,5] )
 		call showMyListForward( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist.clear()"
-		write(*,"(X,A)") "call mylist.append( ( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )"
-		call mylist.clear()
-		call mylist.append( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )
-		write(*,*) "call mylist.eraseAllExceptFirst( 4 )"
-		call mylist.eraseAllExceptFirst( 4 )
+		write(*,*) "call mylist%clear()"
+		write(*,"(X,A)") "call mylist%append( ( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )"
+		call mylist%clear()
+		call mylist%append( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )
+		write(*,*) "call mylist%eraseAllExceptFirst( 4 )"
+		call mylist%eraseAllExceptFirst( 4 )
 		call showMyListForward( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist.clear()"
-		write(*,"(X,A)") "call mylist.append( ( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )"
-		call mylist.clear()
-		call mylist.append( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )
-		write(*,*) "call mylist.eraseAllExceptLast( 4 )"
-		call mylist.eraseAllExceptLast( 4 )
+		write(*,*) "call mylist%clear()"
+		write(*,"(X,A)") "call mylist%append( ( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )"
+		call mylist%clear()
+		call mylist%append( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )
+		write(*,*) "call mylist%eraseAllExceptLast( 4 )"
+		call mylist%eraseAllExceptLast( 4 )
 		call showMyListForward( mylist )
 		
 		write(*,*) "------------------------"
 		write(*,*) "Testing for get methods"
 		write(*,*) "------------------------"
 		
-		write(*,*) "call mylist.at(3) ==>", mylist.at(3)
-		write(*,*) "call mylist.at(1) ==>", mylist.at(1)
+		write(*,*) "call mylist%at(3) ==>", mylist%at(3)
+		write(*,*) "call mylist%at(1) ==>", mylist%at(1)
 		
 	end subroutine RealList_test
 

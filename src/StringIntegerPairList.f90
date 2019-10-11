@@ -88,8 +88,8 @@ module StringIntegerPairList_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<StringIntegerPairList:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -103,8 +103,8 @@ module StringIntegerPairList_
 ! 
 ! 			LINE("List")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -134,10 +134,10 @@ module StringIntegerPairList_
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
-			pair = iter.data
-			write(unitEff,"(A15,I15)") pair.first.fstr, pair.second
+			pair = iter%data
+			write(unitEff,"(A15,I15)") pair%first%fstr, pair%second
 			
 			iter => iter.next
 		end do
@@ -159,12 +159,12 @@ module StringIntegerPairList_
 		write(*,*) "Testing for empty constructor"
 		write(*,*) "-----------------------------"
 		
-		write(*,*) "call mylist.init()"
-		call mylist.init()
+		write(*,*) "call mylist%init()"
+		call mylist%init()
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
+			write(*,*) iter%data%first%fstr, iter%data%second
 			
 			iter => iter.next
 		end do
@@ -173,31 +173,31 @@ module StringIntegerPairList_
 		write(*,*) "Testing for append method"
 		write(*,*) "-------------------------"
 		
-		write(*,*) "call mylist.append( Hello, 3 )"
-		write(*,*) "call mylist.append( class, 2 )"
-		write(*,*) "call mylist.append( string, 6 )"
-		write(*,*) "call mylist.append( list, 9 )"
+		write(*,*) "call mylist%append( Hello, 3 )"
+		write(*,*) "call mylist%append( class, 2 )"
+		write(*,*) "call mylist%append( string, 6 )"
+		write(*,*) "call mylist%append( list, 9 )"
 		write(*,*)
 		
 		str = "Hello"
-		call mypair.init( str, 3 )
-		call mylist.append( mypair )
+		call mypair%init( str, 3 )
+		call mylist%append( mypair )
 		
 		str = "class"
-		call mypair.init( str, 2 )
-		call mylist.append( mypair )
+		call mypair%init( str, 2 )
+		call mylist%append( mypair )
 		
 		str = "string"
-		call mypair.init( str, 6 )
-		call mylist.append( mypair )
+		call mypair%init( str, 6 )
+		call mylist%append( mypair )
 		
 		str = "list"
-		call mypair.init( str, 9 )
-		call mylist.append( mypair )
+		call mypair%init( str, 9 )
+		call mylist%append( mypair )
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
+			write(*,*) iter%data%first%fstr, iter%data%second
 			
 			iter => iter.next
 		end do
@@ -212,51 +212,51 @@ module StringIntegerPairList_
 		write(*,*)
 		
 		str = "day"
-		call mypair.init( str, 3 )
+		call mypair%init( str, 3 )
 		call mylist.prepend( mypair )
 		
 		str = "control"
-		call mypair.init( str, 2 )
+		call mypair%init( str, 2 )
 		call mylist.prepend( mypair )
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
+			write(*,*) iter%data%first%fstr, iter%data%second
 			
 			iter => iter.next
 		end do
 		write(*,*)
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		iter => iter.next
 		
 		write(*,*) "--------------------------"
 		write(*,*) "Testing the access methods"
 		write(*,*) "--------------------------"
 		
-		write(*,*) "mylist.size() = ", mylist.size()
+		write(*,*) "mylist%size() = ", mylist%size()
 		
-		mypair = mylist.at( mylist.begin )
-		write(*,*) "mylist.at( mylist.begin ) = ", mypair.first.fstr, mypair.second
-		mypair = mylist.at( 1 )
-		write(*,*) "mylist.at( 1 ) = ", mypair.first.fstr, mypair.second
+		mypair = mylist%at( mylist%begin )
+		write(*,*) "mylist%at( mylist%begin ) = ", mypair%first%fstr, mypair%second
+		mypair = mylist%at( 1 )
+		write(*,*) "mylist%at( 1 ) = ", mypair%first%fstr, mypair%second
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		iter => iter.next
 		iter => iter.next
 		iterPos => iter
 		iter => iter.next
-		mypair = mylist.at( iterPos )
-		write(*,*) "iter => mylist.begin"
+		mypair = mylist%at( iterPos )
+		write(*,*) "iter => mylist%begin"
 		write(*,*) "iter => iter.next"
 		write(*,*) "iter => iter.next"
 		write(*,*) "iterPos => iter"
-		write(*,*) "mylist.at( iterPos ) = ", mypair.first.fstr, mypair.second
+		write(*,*) "mylist%at( iterPos ) = ", mypair%first%fstr, mypair%second
 		
-		mypair = mylist.at( mylist.end )
-		write(*,*) "mylist.at( mylist.end ) = ", mypair.first.fstr, mypair.second
-		mypair = mylist.at( mylist.size() )
-		write(*,*) "mylist.at( mylist.size() ) = ", mypair.first.fstr, mypair.second
+		mypair = mylist%at( mylist.end )
+		write(*,*) "mylist%at( mylist.end ) = ", mypair%first%fstr, mypair%second
+		mypair = mylist%at( mylist%size() )
+		write(*,*) "mylist%at( mylist%size() ) = ", mypair%first%fstr, mypair%second
 		
 		write(*,*) "--------------------------------"
 		write(*,*) "Testing insert and erase methods"
@@ -265,34 +265,34 @@ module StringIntegerPairList_
 		write(*,*) "call mylist.insert( iterPos, Prueba )"
 		
 		str = "Prueba"
-		call mypair.init( str, 15 )
+		call mypair%init( str, 15 )
 		call mylist.insert( iterPos, mypair )
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
+			write(*,*) iter%data%first%fstr, iter%data%second
 			
 			iter => iter.next
 		end do
 		write(*,*)
 		
-		write(*,*) "iter => mylist.begin"
+		write(*,*) "iter => mylist%begin"
 		write(*,*) "iter => iter.next"
 		write(*,*) "iter => iter.next"
 		write(*,*) "iter => iter.next"
 		write(*,*) "iterPos => iter"
-		write(*,*) "call mylist.erase( iterPos )"
+		write(*,*) "call mylist%erase( iterPos )"
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		iter => iter.next
 		iter => iter.next
 		iter => iter.next
 		iterPos => iter
-		call mylist.erase( iterPos )
+		call mylist%erase( iterPos )
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
+			write(*,*) iter%data%first%fstr, iter%data%second
 			
 			iter => iter.next
 		end do
@@ -302,39 +302,39 @@ module StringIntegerPairList_
 		write(*,*) "Testing clear method"
 		write(*,*) "--------------------"
 		
-		write(*,*) "call mylist.clear()"
+		write(*,*) "call mylist%clear()"
 		
-		call mylist.clear()
+		call mylist%clear()
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
+			write(*,*) iter%data%first%fstr, iter%data%second
 			
 			iter => iter.next
 		end do
 		write(*,*)
 		
-		write(*,*) "call mylist.append( Hello1 aaaaaa )"
-		write(*,*) "call mylist.append( Hello2 bbbbb ccccc )"
+		write(*,*) "call mylist%append( Hello1 aaaaaa )"
+		write(*,*) "call mylist%append( Hello2 bbbbb ccccc )"
 		
 		str = "Hello1 aaaaaa"
-		call mypair.init( str, 21 )
-		call mylist.append( mypair )
+		call mypair%init( str, 21 )
+		call mylist%append( mypair )
 		
 		str = "Hello2 bbbbb ccccc"
-		call mypair.init( str, 31 )
-		call mylist.append( mypair )
+		call mypair%init( str, 31 )
+		call mylist%append( mypair )
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
+			write(*,*) iter%data%first%fstr, iter%data%second
 			
 			iter => iter.next
 		end do
 		write(*,*)
 		
-		write(*,*) "call mylist.clear()"
-		call mylist.clear()
+		write(*,*) "call mylist%clear()"
+		call mylist%clear()
 		
 	end subroutine StringIntegerPairList_test
 

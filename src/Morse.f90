@@ -79,16 +79,16 @@ module Morse_
 		real(8) :: r
 		real(8), allocatable :: V(:)
 		
-		this.De = De
-		this.alpha = alpha
-		this.Re = Re
+		this%De = De
+		this%alpha = alpha
+		this%Re = Re
 		
-		allocate( V(rGrid.nPoints) )
-		do i=1,rGrid.nPoints
-			V(i) = this.evaluate( rGrid.data(i) )
+		allocate( V(rGrid%nPoints) )
+		do i=1,rGrid%nPoints
+			V(i) = this%evaluate( rGrid%data(i) )
 		end do
 		
-		call this.fromGridArray( rGrid, V )
+		call this%fromGridArray( rGrid, V )
 		deallocate( V )
 	end subroutine initDefaultMorse
 		
@@ -109,16 +109,16 @@ module Morse_
 		real(8) :: r
 		real(8), allocatable :: V(:)
 		
-		this.Re = Re
-		this.De = 0.25_8*we**2.0_8/wexe
-		this.alpha = we*sqrt(0.5*rMass/this.De)
+		this%Re = Re
+		this%De = 0.25_8*we**2.0_8/wexe
+		this%alpha = we*sqrt(0.5*rMass/this%De)
 		
-		allocate( V(rGrid.nPoints) )
-		do i=1,rGrid.nPoints
-			V(i) = this.evaluate( rGrid.data(i) )
+		allocate( V(rGrid%nPoints) )
+		do i=1,rGrid%nPoints
+			V(i) = this%evaluate( rGrid%data(i) )
 		end do
 		
-		call this.fromGridArray( rGrid, V )
+		call this%fromGridArray( rGrid, V )
 		deallocate( V )
 	end subroutine fromExp
 	
@@ -138,7 +138,7 @@ module Morse_
 		class(Morse) :: this
 		type(RNFunction) :: output
 		
-		call output.fromGridArray( this.xGrid, this.fArray )
+		call output%fromGridArray( this%xGrid, this%fArray )
 	end function parent
 	
 	!>
@@ -158,18 +158,18 @@ module Morse_
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//"Re="
-		fmt = int(log10(this.Re+1.0))+1
-		write(strBuffer, "(f<fmt+7>.6)") this.Re
+		fmt = int(log10(this%Re+1.0))+1
+		write(strBuffer, "(f<fmt+7>.6)") this%Re
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//",De="
-		fmt = int(log10(this.De+1.0))+1
-		write(strBuffer, "(f<fmt+7>.6)") this.De
+		fmt = int(log10(this%De+1.0))+1
+		write(strBuffer, "(f<fmt+7>.6)") this%De
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//",alpha="
-		fmt = int(log10(this.alpha+1.0))+1
-		write(strBuffer, "(f<fmt+7>.6)") this.alpha
+		fmt = int(log10(this%alpha+1.0))+1
+		write(strBuffer, "(f<fmt+7>.6)") this%alpha
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -192,7 +192,7 @@ module Morse_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -204,8 +204,8 @@ module Morse_
 		real(8), intent(in) :: r
 		real(8) :: output
 		
-		output = this.De*( exp(2.0_8*this.alpha*(this.Re-r)) &
-					- 2.0_8*exp(this.alpha*(this.Re-r)) )
+		output = this%De*( exp(2.0_8*this%alpha*(this%Re-r)) &
+					- 2.0_8*exp(this%alpha*(this%Re-r)) )
 	end function evaluate
 	
 	!>
@@ -221,10 +221,10 @@ module Morse_
 		real(8) :: we
 		real(8) :: wexe
 		
-		we = this.alpha*sqrt(2.0_8*this.De/rMass)
-		wexe = 0.25_8*we**2.0_8/this.De
+		we = this%alpha*sqrt(2.0_8*this%De/rMass)
+		wexe = 0.25_8*we**2.0_8/this%De
 		
-		output = we*(dble(nu)+0.5_8)-wexe*(dble(nu)+0.5_8)**2.0_8-this.De
+		output = we*(dble(nu)+0.5_8)-wexe*(dble(nu)+0.5_8)**2.0_8-this%De
 	end function exactEigenValues
 	
 	!>
@@ -255,12 +255,12 @@ module Morse_
 		wexe = 2.675_8*cm1
 		rMass = 0.5_8*35.4257_8*amu
 		
-		call rGrid.init( 0.5_8, 20.0_8, 10000 )
+		call rGrid%init( 0.5_8, 20.0_8, 10000 )
 		call morse.fromExp( rGrid, Re, we, wexe, rMass )
-		call morse.show()
+		call morse%show()
 		
-		call solver.init( morse.parent(), 10, rMass )
-		call solver.run()
+		call solver%init( morse.parent(), 10, rMass )
+		call solver%run()
 		
 		write(*,"(a5,a20,a20)") "\nu", "exact", "numeric"
 		do i=1,solver.nStates
@@ -269,7 +269,7 @@ module Morse_
 			end if
 		end do
 		
-		call solver.eigenFunctions(7).save( "salida" )
+		call solver%eigenFunctions(7)%save( "salida" )
 		
 		call morse.destroy()
 		call solver.destroy()

@@ -69,10 +69,10 @@ module IntegerVector_
 		class(IntegerVector), intent(in) :: other
 		logical :: output
 		
-! 		this.nItems = other.nItems
-! 		this.resizeIncrement = other.resizeIncrement
+! 		this%nItems = other.nItems
+! 		this%resizeIncrement = other%resizeIncrement
 		
-		output = all( this.data(1:this.size()) == other.data(1:other.size()) )
+		output = all( this%data(1:this%size()) == other%data(1:other%size()) )
 	end function equal
 	
 	!>
@@ -101,19 +101,19 @@ module IntegerVector_
 		
 		if( .not. effFormatted ) then
 			output = trim(output)//"<IntegerVector:("
-			do i=1,this.size()
+			do i=1,this%size()
 				if( i==1 ) then
-					output = trim(output)//trim(FString_fromInteger(this.at(i)))
+					output = trim(output)//trim(FString_fromInteger(this%at(i)))
 				else
-					output = trim(output)//","//trim(FString_fromInteger(this.at(i)))
+					output = trim(output)//","//trim(FString_fromInteger(this%at(i)))
 				end if
 			end do
 			output = trim(output)//")>"
 ! 		else
 ! 			LINE("Vector")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 		end if
 	end function str
@@ -138,9 +138,9 @@ module IntegerVector_
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-! 		iter => this.begin
+! 		iter => this%begin
 ! 		do while ( associated(iter) )
-! 			write(unitEff,"(I15)") iter.data
+! 			write(unitEff,"(I15)") iter%data
 ! 			
 ! 			iter => iter.next
 ! 		end do
@@ -150,17 +150,17 @@ module IntegerVector_
 		type(IntegerVector) :: myvector
 		class(IntegerVectorIterator), pointer :: iter
 		
-! 		iter => myvector.begin
+! 		iter => myvector%begin
 ! 		do while( associated(iter) )
-! 			write(*,"(I2,A)", advance="no") iter.data, "  --> "
+! 			write(*,"(I2,A)", advance="no") iter%data, "  --> "
 ! 			
 ! 			iter => iter.next
 ! 		end do
 		
 		integer :: i
 		
-		do i=1,myvector.size()
-			write(*,"(I2,A)", advance="no") myvector.at(i), "  --> "
+		do i=1,myvector%size()
+			write(*,"(I2,A)", advance="no") myvector%at(i), "  --> "
 		end do
 		
 		write(*,*)
@@ -173,20 +173,20 @@ module IntegerVector_
 		type(IntegerVector) :: myvector
 		class(IntegerVectorIterator), pointer :: iter
 		
-		call myvector.init()
+		call myvector%init()
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for append method"
 		write(*,*) "-------------------------"
 		
-		write(*,*) "call myvector.append( 8 )"
-		write(*,*) "call myvector.append( 5 )"
-		write(*,*) "call myvector.append( 1 )"
+		write(*,*) "call myvector%append( 8 )"
+		write(*,*) "call myvector%append( 5 )"
+		write(*,*) "call myvector%append( 1 )"
 		write(*,*)
 		
-		call myvector.append( 8 )
-		call myvector.append( 5 )
-		call myvector.append( 1 )
+		call myvector%append( 8 )
+		call myvector%append( 5 )
+		call myvector%append( 1 )
 		
 		call showMyVector( myvector )
 		
@@ -209,37 +209,37 @@ module IntegerVector_
 		write(*,*) "Testing for erase method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "call myvector.erase( 1 )"
-		call myvector.erase( 1 )
+		write(*,*) "call myvector%erase( 1 )"
+		call myvector%erase( 1 )
 		call showMyVector( myvector )
 		
-		write(*,*) "call myvector.erase( 2 )"
-		call myvector.erase( 2 )
+		write(*,*) "call myvector%erase( 2 )"
+		call myvector%erase( 2 )
 		call showMyVector( myvector )
 		
-		write(*,*) "call myvector.erase( 3 )"
+		write(*,*) "call myvector%erase( 3 )"
 		write(*,*)
-		call myvector.erase( 3 )
+		call myvector%erase( 3 )
 		call showMyVector( myvector )
 		
-		write(*,*) "call myvector.erase( 1 )"
+		write(*,*) "call myvector%erase( 1 )"
 		write(*,*)
-		call myvector.erase( 1 )
+		call myvector%erase( 1 )
 		call showMyVector( myvector )
 		
-		write(*,*) "call myvector.erase( 1 )"
+		write(*,*) "call myvector%erase( 1 )"
 		write(*,*)
-		call myvector.erase( 1 )
+		call myvector%erase( 1 )
 		call showMyVector( myvector )
 		
-		write(*,*) "call myvector.erase( 1 )"
+		write(*,*) "call myvector%erase( 1 )"
 		write(*,*)
-		call myvector.erase( 1 )
+		call myvector%erase( 1 )
 		call showMyVector( myvector )
 		
-		write(*,*) "call myvector.erase( 1 )"
+		write(*,*) "call myvector%erase( 1 )"
 		write(*,*)
-		call myvector.erase( 1 )
+		call myvector%erase( 1 )
 		call showMyVector( myvector )
 
 ! 		
@@ -247,13 +247,13 @@ module IntegerVector_
 ! 		write(*,*) "Testing for insert method"
 ! 		write(*,*) "-------------------------"
 ! 		
-! 		write(*,*) "iter => myvector.begin"
+! 		write(*,*) "iter => myvector%begin"
 ! 		write(*,*) "iter => iter.next"
 ! 		write(*,*) "iter => iter.next"
 ! 		write(*,*) "call myvector.insert( iter, 1 )"
 ! 		write(*,*)
 ! 		
-! 		iter => myvector.begin
+! 		iter => myvector%begin
 ! 		iter => iter.next
 ! 		iter => iter.next
 ! 		
@@ -278,53 +278,53 @@ module IntegerVector_
 		write(*,*) "Testing for erase method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "call myvector.erase( 2 )"
+		write(*,*) "call myvector%erase( 2 )"
 		write(*,*)
 		
-		call myvector.erase( 2 )
+		call myvector%erase( 2 )
 		call showMyVector( myvector )
 
-! 		write(*,*) "iter => myvector.begin"
+! 		write(*,*) "iter => myvector%begin"
 ! 		write(*,*) "iter => iter.next"
-! 		write(*,*) "call myvector.erase( iter )"
+! 		write(*,*) "call myvector%erase( iter )"
 ! 		write(*,*)
 ! 		
-! 		iter => myvector.begin
+! 		iter => myvector%begin
 ! 		iter => iter.next
 ! 		
-! 		call myvector.erase( iter )
+! 		call myvector%erase( iter )
 ! 		call showMyVector( myvector )
 ! 		
 ! 		write(*,*)
-! 		write(*,*) "call myvector.erase( myvector.begin )"
+! 		write(*,*) "call myvector%erase( myvector%begin )"
 ! 		write(*,*)
 ! 		
-! 		call myvector.erase( myvector.begin )
+! 		call myvector%erase( myvector%begin )
 ! 		call showMyVector( myvector )
 ! 		
 ! 		write(*,*)
-! 		write(*,*) "call myvector.erase( myvector.end )"
+! 		write(*,*) "call myvector%erase( myvector.end )"
 ! 		write(*,*)
-! 		call myvector.erase( myvector.end )
+! 		call myvector%erase( myvector.end )
 ! 		call showMyVector( myvector )
 		
 		write(*,*) "------------------------"
 		write(*,*) "Testing for clear method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "call myvector.clear()"
+		write(*,*) "call myvector%clear()"
 		write(*,*)
-		call myvector.clear()
+		call myvector%clear()
 		call showMyVector( myvector )
 
-		write(*,*) "call myvector.append( 1 )"
-		write(*,*) "call myvector.append( 2 )"
-		write(*,*) "call myvector.append( 3 )"
+		write(*,*) "call myvector%append( 1 )"
+		write(*,*) "call myvector%append( 2 )"
+		write(*,*) "call myvector%append( 3 )"
 		write(*,*)
 		
-		call myvector.append( 1 )
-		call myvector.append( 2 )
-		call myvector.append( 3 )
+		call myvector%append( 1 )
+		call myvector%append( 2 )
+		call myvector%append( 3 )
 		call showMyVector( myvector )
 
 	end subroutine IntegerVector_test

@@ -55,17 +55,17 @@ module RVector_
 	subroutine RVector_test()
 		type(RVector) :: A, B, C
 		
-		call A.init( 12, 1.0_8 )
-		call A.show( 6, .true. )
+		call A%init( 12, 1.0_8 )
+		call A%show( 6, .true. )
 		
-		call B.random( 12, type=COLUMN_VECTOR )
-		call B.show( 6, .true. )
+		call B%random( 12, type=COLUMN_VECTOR )
+		call B%show( 6, .true. )
 		
 		A = A*2.0_8
-		call A.show( 6, .true. )
+		call A%show( 6, .true. )
 		
-		call B.random( 12, type=ROW_VECTOR )
-		call B.show( 6, .true. )
+		call B%random( 12, type=ROW_VECTOR )
+		call B%show( 6, .true. )
 	end subroutine RVector_test
 
 end module RVector_

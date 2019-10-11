@@ -71,12 +71,12 @@ module IntegerHyperVector_
 		class(IntegerHyperVector), intent(in) :: other
 		logical :: output
 		
-! 		this.nItems = other.nItems
-! 		this.resizeIncrement = other.resizeIncrement
+! 		this%nItems = other.nItems
+! 		this%resizeIncrement = other%resizeIncrement
 		
 		write(*,*) "### ERROR ### IntegerHyperVector.equal  is not implemented yet"
 		stop
-! 		output = all( this.data(1:this.size()) == other.data(1:other.size()) )
+! 		output = all( this%data(1:this%size()) == other%data(1:other%size()) )
 	end function equal
 
 	!>
@@ -109,8 +109,8 @@ module IntegerHyperVector_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<IntegerHyperVector:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -124,8 +124,8 @@ module IntegerHyperVector_
 ! 
 ! 			LINE("Vector")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -154,9 +154,9 @@ module IntegerHyperVector_
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-! 		iter => this.begin
+! 		iter => this%begin
 ! 		do while ( associated(iter) )
-! 			write(unitEff,"(I15)") iter.data
+! 			write(unitEff,"(I15)") iter%data
 ! 			
 ! 			iter => iter.next
 ! 		end do
@@ -168,13 +168,13 @@ module IntegerHyperVector_
 		type(IntegerVector), pointer :: ivec
 		integer :: i, j
 		
-		do i=1,myvec.size()
-			ivec => myvec.data(i)
+		do i=1,myvec%size()
+			ivec => myvec%data(i)
 			
 			write(*,"(I2,A)", advance="no") i, ") "
 			
-			do j=1,ivec.size()
-				write(*,"(I2,A)", advance="no") ivec.at(j), " --> "
+			do j=1,ivec%size()
+				write(*,"(I2,A)", advance="no") ivec%at(j), " --> "
 			end do
 			
 			write(*,*)
@@ -196,23 +196,23 @@ module IntegerHyperVector_
 		
 		integer :: i
 		
-		call hvec.init()
+		call hvec%init()
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for append method"
 		write(*,*) "-------------------------"
 		
-		write(*,*) "call hvec.append( [1,1,1] )"
-		write(*,*) "call hvec.append( [2,2,2,2] )"
-		write(*,*) "call hvec.append( [1,1] )"
+		write(*,*) "call hvec%append( [1,1,1] )"
+		write(*,*) "call hvec%append( [2,2,2,2] )"
+		write(*,*) "call hvec%append( [1,1] )"
 		write(*,*)
 		
-		call ivec.init( 3, value=1 )
-		call hvec.append( ivec )
-		call ivec.init( 4, value=2 )
-		call hvec.append( ivec )
-		call ivec.init( 2, value=1 )
-		call hvec.append( ivec )
+		call ivec%init( 3, value=1 )
+		call hvec%append( ivec )
+		call ivec%init( 4, value=2 )
+		call hvec%append( ivec )
+		call ivec%init( 2, value=1 )
+		call hvec%append( ivec )
 		
 		call showMyHVector( hvec )
 		
@@ -225,11 +225,11 @@ module IntegerHyperVector_
 		write(*,*) "call hvec.prepend( [8,8,8] )"
 		write(*,*)
 		
-		call ivec.init( 2, value=4 )
+		call ivec%init( 2, value=4 )
 		call hvec.prepend( ivec )
-		call ivec.init( 4, value=5 )
+		call ivec%init( 4, value=5 )
 		call hvec.prepend( ivec )
-		call ivec.init( 3, value=8 )
+		call ivec%init( 3, value=8 )
 		call hvec.prepend( ivec )
 		
 		call showMyHVector( hvec )
@@ -238,13 +238,13 @@ module IntegerHyperVector_
 ! ! 		write(*,*) "Testing for insert method"
 ! ! 		write(*,*) "-------------------------"
 ! ! 		
-! ! 		write(*,*) "iter => hvec.begin"
+! ! 		write(*,*) "iter => hvec%begin"
 ! ! 		write(*,*) "iter => iter.next"
 ! ! 		write(*,*) "iter => iter.next"
 ! ! 		write(*,*) "call hvec.insert( iter, 1 )"
 ! ! 		write(*,*)
 ! ! 		
-! ! 		iter => hvec.begin
+! ! 		iter => hvec%begin
 ! ! 		iter => iter.next
 ! ! 		iter => iter.next
 ! ! 		
@@ -269,43 +269,43 @@ module IntegerHyperVector_
 ! 		write(*,*) "Testing for erase method"
 ! 		write(*,*) "------------------------"
 ! 		
-! 		write(*,*) "call hvec.erase( 2 )"
+! 		write(*,*) "call hvec%erase( 2 )"
 ! 		write(*,*)
 ! 		
-! 		call hvec.erase( 2 )
+! 		call hvec%erase( 2 )
 ! 		call showMyGraph( hvec )
 ! 
-! ! 		write(*,*) "iter => hvec.begin"
+! ! 		write(*,*) "iter => hvec%begin"
 ! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "call hvec.erase( iter )"
+! ! 		write(*,*) "call hvec%erase( iter )"
 ! ! 		write(*,*)
 ! ! 		
-! ! 		iter => hvec.begin
+! ! 		iter => hvec%begin
 ! ! 		iter => iter.next
 ! ! 		
-! ! 		call hvec.erase( iter )
+! ! 		call hvec%erase( iter )
 ! ! 		call showMyGraph( hvec )
 ! ! 		
 ! ! 		write(*,*)
-! ! 		write(*,*) "call hvec.erase( hvec.begin )"
+! ! 		write(*,*) "call hvec%erase( hvec%begin )"
 ! ! 		write(*,*)
 ! ! 		
-! ! 		call hvec.erase( hvec.begin )
+! ! 		call hvec%erase( hvec%begin )
 ! ! 		call showMyGraph( hvec )
 ! ! 		
 ! ! 		write(*,*)
-! ! 		write(*,*) "call hvec.erase( hvec.end )"
+! ! 		write(*,*) "call hvec%erase( hvec.end )"
 ! ! 		write(*,*)
-! ! 		call hvec.erase( hvec.end )
+! ! 		call hvec%erase( hvec.end )
 ! ! 		call showMyGraph( hvec )
 		
 		write(*,*) "------------------------"
 		write(*,*) "Testing for clear method"
 		write(*,*) "------------------------"
 		
-		write(*,*) "call hvec.clear()"
+		write(*,*) "call hvec%clear()"
 		write(*,*)
-		call hvec.clear()
+		call hvec%clear()
 		call showMyHVector( hvec )
 
 	end subroutine IntegerHyperVector_test

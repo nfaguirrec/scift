@@ -80,9 +80,9 @@ module Node_
 		effWeight = 0.0_8
 		if( present(weight) ) effWeight = weight
 		
-		this.id = effId
-		this.label = effLabel
-		this.weight = effWeight
+		this%id = effId
+		this%label = effLabel
+		this%weight = effWeight
 	end subroutine initDefault
 	
 	!>
@@ -92,9 +92,9 @@ module Node_
 		class(Node), intent(inout) :: this
 		class(Node), intent(in) :: other
 		
-		this.id = other.id
-		this.label = other.label
-		this.weight = other.weight
+		this%id = other%id
+		this%label = other%label
+		this%weight = other%weight
 	end subroutine copy
 
 	!>
@@ -107,7 +107,7 @@ module Node_
 		
 		write(*,*) "### ERROR ### Node.equal() is not implmented yet"
 		stop
-! 		output = ( this.sNode == other.sNode .and. this.tNode == other.tNode )
+! 		output = ( this%sNode == other%sNode .and. this%tNode == other%tNode )
 	end function equal
 	
 	!>

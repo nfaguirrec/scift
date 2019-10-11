@@ -88,20 +88,20 @@ module NPeakFinder_
 		real(8), optional :: tolerance
 		integer, optional :: bandwidth
 		
-		if( associated(this.func) ) nullify(this.func)
-		this.func => func
+		if( associated(this%func) ) nullify(this%func)
+		this%func => func
 		
-		this.method = NPeakFinder_MAX_DIST
-		if( present(method) ) this.method = method
+		this%method = NPeakFinder_MAX_DIST
+		if( present(method) ) this%method = method
 		
-		this.windowSize = 10
-		if( present(windowSize) ) this.windowSize = windowSize
+		this%windowSize = 10
+		if( present(windowSize) ) this%windowSize = windowSize
 		
-		this.tolerance = 0.2
-		if( present(tolerance) ) this.tolerance = tolerance
+		this%tolerance = 0.2
+		if( present(tolerance) ) this%tolerance = tolerance
 		
-		this.bandwidth = 5
-		if( present(bandwidth) ) this.bandwidth = bandwidth
+		this%bandwidth = 5
+		if( present(bandwidth) ) this%bandwidth = bandwidth
 	end subroutine init
 	
 	!>
@@ -110,7 +110,7 @@ module NPeakFinder_
 	subroutine destroy( this )
 		type(NPeakFinder) :: this
 		
-		nullify(this.func)
+		nullify(this%func)
 	end subroutine destroy
 	
 	!>
@@ -128,23 +128,23 @@ module NPeakFinder_
 ! 		output = trim(output)//"<NPeakFinder:"
 ! 		
 ! 		output = trim(output)//"min="
-! 		fmt = int(log10(this.min+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+! 		fmt = int(log10(this%min+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%min
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",max="
-! 		fmt = int(log10(this.max+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.max
+! 		fmt = int(log10(this%max+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%max
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",h="
-! 		fmt = int(log10(this.h+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.h
+! 		fmt = int(log10(this%h+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%h
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",size="
-! 		fmt = int(log10(float(this.size+1)))+1
-! 		write(strBuffer, "(i<fmt>)") this.size
+! 		fmt = int(log10(float(this%size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this%size
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//">"
@@ -165,7 +165,7 @@ module NPeakFinder_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -344,7 +344,7 @@ module NPeakFinder_
 	!!
 	function execute( this, posVec ) result( output )
 		class(NPeakFinder) :: this
-		type(IntegerList), optional :: posVec  ! Peak positions in this.func
+		type(IntegerList), optional :: posVec  ! Peak positions in this%func
 		type(RNFunction) :: output
 		
 		type(IntegerList) :: effPosVec
@@ -357,28 +357,28 @@ module NPeakFinder_
 		real(8), allocatable :: a(:)
 		real(8), allocatable :: x(:), y(:)
 		
-		k = this.windowSize
-		h = this.tolerance
-		w = this.bandwidth
+		k = this%windowSize
+		h = this%tolerance
+		w = this%bandwidth
 		
-		nPoints = this.func.xGrid.nPoints
+		nPoints = this%func%xGrid%nPoints
 		
 		allocate( a(nPoints) )
-		call effPosVec.init()
+		call effPosVec%init()
 		
 		!------------------------------------------------------------
 		! Compute peak function value for each of the N points in T
 		!------------------------------------------------------------
 		do i=1,nPoints
-			select case( this.method )
+			select case( this%method )
 				case( NPeakFinder_MAX_DIST )
-					a(i) = kernelS1(k,i,this.func.fArray)
+					a(i) = kernelS1(k,i,this%func%fArray)
 				case( NPeakFinder_MAX_AVER_NEIG )
-					a(i) = kernelS2(k,i,this.func.fArray)
+					a(i) = kernelS2(k,i,this%func%fArray)
 				case( NPeakFinder_MAX_AVER_NEIG_AVER )
-					a(i) = kernelS3(k,i,this.func.fArray)
+					a(i) = kernelS3(k,i,this%func%fArray)
 				case( NPeakFinder_ENTROPY )
-					a(i) = kernelS4(k,w,i,this.func.fArray)
+					a(i) = kernelS4(k,w,i,this%func%fArray)
 				case default
 					write(*,*) "### ERROR ### PeakFinder.execute. Method XXX is not implemented yet"
 					stop
@@ -398,7 +398,7 @@ module NPeakFinder_
 		!--------------------------------------
 		do i=1,nPoints
 			if( a(i)>0.0_8 .and. (a(i)-m) > h*s ) then
-				call effPosVec.append( i )
+				call effPosVec%append( i )
 			end if
 		end do
 		
@@ -407,12 +407,12 @@ module NPeakFinder_
 		! within distance k of each other
 		!----------------------------------------------
 		i=2
-		do while( i<=effPosVec.size() )
-			if( abs( effPosVec.at(i)-effPosVec.at(i-1) ) <= k ) then
-				if( this.func.at( effPosVec.at(i) ) < this.func.at( effPosVec.at(i-1) ) ) then
-					call effPosVec.erase( i )
+		do while( i<=effPosVec%size() )
+			if( abs( effPosVec%at(i)-effPosVec%at(i-1) ) <= k ) then
+				if( this%func%at( effPosVec%at(i) ) < this%func%at( effPosVec%at(i-1) ) ) then
+					call effPosVec%erase( i )
 				else
-					call effPosVec.erase( i-1 )
+					call effPosVec%erase( i-1 )
 				end if
 				i=2
 			else
@@ -427,15 +427,15 @@ module NPeakFinder_
 			posVec = effPosVec
 		end if
 		
-		allocate( x(effPosVec.size()) )
-		allocate( y(effPosVec.size()) )
+		allocate( x(effPosVec%size()) )
+		allocate( y(effPosVec%size()) )
 		
-		do i=1,effPosVec.size()
-			x(i) = this.func.xGrid.at( effPosVec.at(i) )
-			y(i) = this.func.at( effPosVec.at(i) )
+		do i=1,effPosVec%size()
+			x(i) = this%func%xGrid%at( effPosVec%at(i) )
+			y(i) = this%func%at( effPosVec%at(i) )
 		end do
 		
-		call output.init( x, y )
+		call output%init( x, y )
 		
 		deallocate( x )
 		deallocate( y )
@@ -510,7 +510,7 @@ module NPeakFinder_
 			tn = tn + dt
 		end do
 		
-		call output.init( x, y )
+		call output%init( x, y )
 	end function NPeakFinder_generateSignal
 	
 	!>
@@ -522,11 +522,11 @@ module NPeakFinder_
 		type(NPeakFinder) :: peakFinder
 		
 		func = NPeakFinder_generateSignal( 0.0_8, 100.0_8, 0.1_8, 10, 0.1_8, 50.0_8, 0.1_8, 1.0_8 )
-		call peakFinder.init( func, method=NPeakFinder_MAX_DIST, windowSize=12, tolerance=1.0_8 )
+		call peakFinder%init( func, method=NPeakFinder_MAX_DIST, windowSize=12, tolerance=1.0_8 )
 		
 		peaks = peakFinder.execute()
-		call func.save()
-		call peaks.save()
+		call func%save()
+		call peaks%save()
 	end subroutine NPeakFinder_test
 	
 end module NPeakFinder_

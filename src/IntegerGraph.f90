@@ -155,23 +155,23 @@ module IntegerGraph_
 		integer, optional :: complete
 		character(*), optional, intent(in) :: name
 		
-		if( allocated(this.name) ) deallocate(this.name)
-		this.name = "unknown"
-                if( present(name) ) this.name = name
+		if( allocated(this%name) ) deallocate(this%name)
+		this%name = "unknown"
+                if( present(name) ) this%name = name
 		
-		this.directed = .false.
-		if( present(directed) ) this.directed = directed
+		this%directed = .false.
+		if( present(directed) ) this%directed = directed
 		
-		call this.clear()
+		call this%clear()
 		
-		call this.node2Neighbors.init()
-		call this.node2InEdges.init()
-		call this.node2OutEdges.init()
+		call this%node2Neighbors%init()
+		call this%node2InEdges%init()
+		call this%node2OutEdges%init()
 		
-		call this.nodeProperties.init()
-		call this.edgeProperties.init()
+		call this%nodeProperties%init()
+		call this%edgeProperties%init()
 		
-		if( present(complete) ) call this.makeComplete( n=complete )
+		if( present(complete) ) call this%makeComplete( n=complete )
 	end subroutine initIntegerGraph
 	
 	!>
@@ -201,7 +201,7 @@ module IntegerGraph_
 		effEdgePropertiesUnits = 1.0_8
 		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
 		
-		call this.clear()
+		call this%clear()
 		
 		call FString_split( DATLine, tokens, ";" )
 		
@@ -226,7 +226,7 @@ module IntegerGraph_
 					end select
 				end do
 				
-				call this.newNode( label, weight*effNodePropertiesUnits )
+				call this%newNode( label, weight*effNodePropertiesUnits )
 			else
 ! 				write(*,*) "EDGE-->", trim(tokens(i))
 				
@@ -252,7 +252,7 @@ module IntegerGraph_
 					end select
 				end do
 				
-				call this.newEdge( s, t, label, weight*effEdgePropertiesUnits )
+				call this%newEdge( s, t, label, weight*effEdgePropertiesUnits )
 			end if
 		end do
 		
@@ -269,25 +269,25 @@ module IntegerGraph_
 		class(IntegerGraph), intent(inout) :: this
 		class(IntegerGraph), intent(in) :: other
 		
-		if( allocated(this.name) ) deallocate(this.name)
-		this.name = other.name
+		if( allocated(this%name) ) deallocate(this%name)
+		this%name = other.name
 		
-		this.node2Neighbors = other.node2Neighbors
-		this.node2InEdges = other.node2InEdges
-		this.node2OutEdges = other.node2OutEdges
+		this%node2Neighbors = other.node2Neighbors
+		this%node2InEdges = other.node2InEdges
+		this%node2OutEdges = other.node2OutEdges
 		
-		this.nodeProperties = other.nodeProperties
-		this.edgeProperties = other.edgeProperties
+		this%nodeProperties = other%nodeProperties
+		this%edgeProperties = other.edgeProperties
 		
-		this.directed = other.directed
+		this%directed = other.directed
 		
-		this.sNode = other.sNode
+		this%sNode = other%sNode
 		
-		if( allocated(this.minDistance) ) deallocate( this.minDistance )
-		allocate( this.minDistance( size(other.minDistance) ) )
-		this.minDistance = other.minDistance
+		if( allocated(this%minDistance) ) deallocate( this%minDistance )
+		allocate( this%minDistance( size(other%minDistance) ) )
+		this%minDistance = other%minDistance
 		
-		this.previous = other.previous
+		this%previous = other.previous
 	end subroutine copyIntegerGraph
 	
 	!>
@@ -310,7 +310,7 @@ module IntegerGraph_
 	subroutine destroyIntegerGraph( this )
 		type(IntegerGraph), intent(inout) :: this
 		
-		call this.clear()
+		call this%clear()
 	end subroutine destroyIntegerGraph
 	
 	!>
@@ -319,16 +319,16 @@ module IntegerGraph_
 	subroutine clear( this )
 		class(IntegerGraph), intent(inout) :: this
 		
-		call this.node2Neighbors.clear()
-		call this.node2InEdges.clear()
-		call this.node2OutEdges.clear()
+		call this%node2Neighbors%clear()
+		call this%node2InEdges%clear()
+		call this%node2OutEdges%clear()
 		
-		call this.nodeProperties.clear()
-		call this.edgeProperties.clear()
+		call this%nodeProperties%clear()
+		call this%edgeProperties%clear()
 		
-		this.sNode = -1
-		if( allocated(this.minDistance) ) deallocate(this.minDistance)
-		call this.previous.clear()
+		this%sNode = -1
+		if( allocated(this%minDistance) ) deallocate(this%minDistance)
+		call this%previous%clear()
 	end subroutine clear
 	
 	!>
@@ -347,7 +347,7 @@ module IntegerGraph_
 		effunit = 6
 		if( present(unit) ) effunit = unit
 		
-		write(effunit,"(a)") trim(this.str( formatted=formatted, nodesLabels=nodesLabels, nodePropertiesUnits=nodePropertiesUnits, edgePropertiesUnits=edgePropertiesUnits ))
+		write(effunit,"(a)") trim(this%str( formatted=formatted, nodesLabels=nodesLabels, nodePropertiesUnits=nodePropertiesUnits, edgePropertiesUnits=edgePropertiesUnits ))
 	end subroutine show
 	
 	!>
@@ -384,28 +384,28 @@ module IntegerGraph_
 		
 		if( .not. effFormatted ) then
 			output = trim(output)//"<IntegerGraph:"
-! 			output = trim(output)//"nodes="//trim(FString_fromInteger(this.nNodes()))//","
+! 			output = trim(output)//"nodes="//trim(FString_fromInteger(this%nNodes()))//","
 			
 			output = trim(output)//"nodes={"
-			do i=1,this.nNodes()
-				node => this.nodeProperties.data(i)
+			do i=1,this%nNodes()
+				node => this%nodeProperties%data(i)
 				
-				if( i /= this.nNodes() ) then
-					output = trim(output)//trim(node.label)//","
+				if( i /= this%nNodes() ) then
+					output = trim(output)//trim(node%label)//","
 				else
-					output = trim(output)//trim(node.label)
+					output = trim(output)//trim(node%label)
 				end if
 			end do
 			output = trim(output)//"},"
 			
 			output = trim(output)//"edges={"
-			do i=1,this.nEdges()
+			do i=1,this%nEdges()
 				
 				loc = 0
-				if( .not. this.isDirected() .and. i > 1 ) then
+				if( .not. this%isDirected() .and. i > 1 ) then
 					do j=i-1,1,-1
-						if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
-							this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+						if( this%edgeProperties%data(i)%sNode == this%edgeProperties%data(j)%tNode .and. &
+							this%edgeProperties%data(i)%tNode == this%edgeProperties%data(j)%sNode ) then
 							loc = 1
 							exit
 						end if
@@ -416,14 +416,14 @@ module IntegerGraph_
 				
 				if( i /= 1 ) output = trim(output)//", "
 			
-				edge => this.edgeProperties.data(i)
+				edge => this%edgeProperties%data(i)
 				
-				edgeLabel = edge.label
+				edgeLabel = edge%label
 				if( present(nodesLabels) ) then
-					if( FString_hashKey(trim( nodesLabels(edge.sNode)) ) > FString_hashKey(trim( nodesLabels(edge.tNode)) ) ) then
-						edgeLabel = trim(nodesLabels(edge.sNode))//"--"//trim(nodesLabels(edge.tNode))
+					if( FString_hashKey(trim( nodesLabels(edge%sNode)) ) > FString_hashKey(trim( nodesLabels(edge%tNode)) ) ) then
+						edgeLabel = trim(nodesLabels(edge%sNode))//"--"//trim(nodesLabels(edge%tNode))
 					else
-						edgeLabel = trim(nodesLabels(edge.tNode))//"--"//trim(nodesLabels(edge.sNode))
+						edgeLabel = trim(nodesLabels(edge%tNode))//"--"//trim(nodesLabels(edge%sNode))
 					end if
 				end if
 				
@@ -436,26 +436,26 @@ module IntegerGraph_
 			output = trim(output)//" IntegerGraph  "//new_line('')
 			output = trim(output)//"---------------"//new_line('')
 			output = trim(output)//new_line('')
-			output = trim(output)//"Number of nodes = "//trim(FString_fromInteger(this.nNodes()))//new_line('')
-			output = trim(output)//"Number of edges = "//trim(FString_fromInteger(this.nNodes()))//new_line('')
-			output = trim(output)//"      Directed? = "//trim(FString_fromLogical(this.isDirected()))//new_line('')
+			output = trim(output)//"Number of nodes = "//trim(FString_fromInteger(this%nNodes()))//new_line('')
+			output = trim(output)//"Number of edges = "//trim(FString_fromInteger(this%nNodes()))//new_line('')
+			output = trim(output)//"      Directed? = "//trim(FString_fromLogical(this%isDirected()))//new_line('')
 			output = trim(output)//new_line('')
 			
 			output = trim(output)//"node2Neighbors"//new_line('')
-			do i=1,this.nNodes()
-				ivec => this.node2Neighbors.data(i)
+			do i=1,this%nNodes()
+				ivec => this%node2Neighbors%data(i)
 				
-				if( this.isDirected() ) then
+				if( this%isDirected() ) then
 					output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
 				else
 					output = trim(output)//"   "//trim(FString_fromInteger(i))//" -- "
 				end if
 				
-				do j=1,ivec.size()
-					if( j /= ivec.size() ) then
-						output = trim(output)//" "//trim(FString_fromInteger(ivec.at(j)))//","
+				do j=1,ivec%size()
+					if( j /= ivec%size() ) then
+						output = trim(output)//" "//trim(FString_fromInteger(ivec%at(j)))//","
 					else
-						output = trim(output)//" "//trim(FString_fromInteger(ivec.at(j)))
+						output = trim(output)//" "//trim(FString_fromInteger(ivec%at(j)))
 					end if
 				end do
 				
@@ -464,37 +464,37 @@ module IntegerGraph_
 			
 			output = trim(output)//new_line('')
 			output = trim(output)//"Node properties"//new_line('')
-			do i=1,this.nNodes()
-				node => this.nodeProperties.data(i)
+			do i=1,this%nNodes()
+				node => this%nodeProperties%data(i)
 				
 				output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
 				
 				if( present(nodesLabels) ) then
 					output = trim(output)//" [ "//trim(nodesLabels(i))
 				else
-					output = trim(output)//" [ "//trim(node.label)
+					output = trim(output)//" [ "//trim(node%label)
 				end if
 				
-				output = trim(output)//", "//trim(adjustl(FString_fromReal(node.weight/effNodePropertiesUnits,format="(F10.3)")))
-				output = trim(output)//", "//trim(FString_fromInteger(node.id))
+				output = trim(output)//", "//trim(adjustl(FString_fromReal(node%weight/effNodePropertiesUnits,format="(F10.3)")))
+				output = trim(output)//", "//trim(FString_fromInteger(node%id))
 				output = trim(output)//" ]"//new_line('')
 			end do
 			
-			if( this.isDirected() ) then
+			if( this%isDirected() ) then
 				write(5,*) "@@@ WARNING @@@ nodesLabels is not implemented for directed graphs"
 				
 				output = trim(output)//new_line('')
 				output = trim(output)//"node2InEdges"//new_line('')
-				do i=1,this.nNodes()
-					ivec => this.node2InEdges.data(i)
+				do i=1,this%nNodes()
+					ivec => this%node2InEdges%data(i)
 					output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
 					
-					do j=1,ivec.size()
-! 						if( this.isDirected() .or. ( .not. this.isDirected() .and. mod(ivec.at(j),2) /= 0 ) ) then
-							if( j /= ivec.size() ) then
-								output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))//","
+					do j=1,ivec%size()
+! 						if( this%isDirected() .or. ( .not. this%isDirected() .and. mod(ivec%at(j),2) /= 0 ) ) then
+							if( j /= ivec%size() ) then
+								output = trim(output)//"   "//trim(FString_fromInteger(ivec%at(j)))//","
 							else
-								output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))
+								output = trim(output)//"   "//trim(FString_fromInteger(ivec%at(j)))
 							end if
 ! 						end if
 					end do
@@ -504,16 +504,16 @@ module IntegerGraph_
 				
 				output = trim(output)//new_line('')
 				output = trim(output)//"node2OutEdges"//new_line('')
-				do i=1,this.nNodes()
-					ivec => this.node2OutEdges.data(i)
+				do i=1,this%nNodes()
+					ivec => this%node2OutEdges%data(i)
 					output = trim(output)//"   "//trim(FString_fromInteger(i))//" --> "
 					
-					do j=1,ivec.size()
-! 						if( this.isDirected() .or. ( .not. this.isDirected() .and. mod(ivec.at(j),2) /= 0 ) ) then
-							if( j /= ivec.size() ) then
-								output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))//","
+					do j=1,ivec%size()
+! 						if( this%isDirected() .or. ( .not. this%isDirected() .and. mod(ivec%at(j),2) /= 0 ) ) then
+							if( j /= ivec%size() ) then
+								output = trim(output)//"   "//trim(FString_fromInteger(ivec%at(j)))//","
 							else
-								output = trim(output)//"   "//trim(FString_fromInteger(ivec.at(j)))
+								output = trim(output)//"   "//trim(FString_fromInteger(ivec%at(j)))
 							end if
 ! 						end if
 					end do
@@ -524,13 +524,13 @@ module IntegerGraph_
 			
 			output = trim(output)//new_line('')
 			output = trim(output)//"Edge properties"//new_line('')
-			do i=1,this.nEdges()
+			do i=1,this%nEdges()
 			
 				loc = 0
-				if( .not. this.isDirected() .and. i > 1 ) then
+				if( .not. this%isDirected() .and. i > 1 ) then
 					do j=i-1,1,-1
-						if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
-							this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+						if( this%edgeProperties%data(i)%sNode == this%edgeProperties%data(j)%tNode .and. &
+							this%edgeProperties%data(i)%tNode == this%edgeProperties%data(j)%sNode ) then
 							loc = 1
 							exit
 						end if
@@ -539,55 +539,55 @@ module IntegerGraph_
 				
 				if( loc == 1 ) cycle
 			
-				edge => this.edgeProperties.data(i)
+				edge => this%edgeProperties%data(i)
 				
-				if( this.isDirected() ) then
+				if( this%isDirected() ) then
 					output = trim(output)//"  "//trim(FString_fromInteger(i))//" --> "
 				else
 					output = trim(output)//"  "//trim(FString_fromInteger((i+1)/2))//" --> "
 				end if
 				
-				edgeLabel = edge.label
+				edgeLabel = edge%label
 				if( present(nodesLabels) ) then
-					if( FString_hashKey(trim( nodesLabels(edge.sNode)) ) > FString_hashKey(trim( nodesLabels(edge.tNode)) ) ) then
-						edgeLabel = trim(nodesLabels(edge.sNode))//"--"//trim(nodesLabels(edge.tNode))
+					if( FString_hashKey(trim( nodesLabels(edge%sNode)) ) > FString_hashKey(trim( nodesLabels(edge%tNode)) ) ) then
+						edgeLabel = trim(nodesLabels(edge%sNode))//"--"//trim(nodesLabels(edge%tNode))
 					else
-						edgeLabel = trim(nodesLabels(edge.tNode))//"--"//trim(nodesLabels(edge.sNode))
+						edgeLabel = trim(nodesLabels(edge%tNode))//"--"//trim(nodesLabels(edge%sNode))
 					end if
 				end if
 				
 				output = trim(output)//" [ "
 				
-				if( this.isDirected() ) then
-					output = trim(output)//trim(FString_fromInteger(edge.sNode))
-					output = trim(output)//", "//trim(FString_fromInteger(edge.tNode))
+				if( this%isDirected() ) then
+					output = trim(output)//trim(FString_fromInteger(edge%sNode))
+					output = trim(output)//", "//trim(FString_fromInteger(edge%tNode))
 				else
 					if( present(nodesLabels) ) then
-						if( FString_hashKey(trim( nodesLabels(edge.sNode)) ) > FString_hashKey(trim( nodesLabels(edge.tNode)) ) ) then
-							output = trim(output)//trim(FString_fromInteger(edge.sNode))
-							output = trim(output)//", "//trim(FString_fromInteger(edge.tNode))
+						if( FString_hashKey(trim( nodesLabels(edge%sNode)) ) > FString_hashKey(trim( nodesLabels(edge%tNode)) ) ) then
+							output = trim(output)//trim(FString_fromInteger(edge%sNode))
+							output = trim(output)//", "//trim(FString_fromInteger(edge%tNode))
 						else
-							output = trim(output)//trim(FString_fromInteger(edge.tNode))
-							output = trim(output)//", "//trim(FString_fromInteger(edge.sNode))
+							output = trim(output)//trim(FString_fromInteger(edge%tNode))
+							output = trim(output)//", "//trim(FString_fromInteger(edge%sNode))
 						end if
 					else
-						if( trim(this.nodeProperties.data(edge.sNode).label) == trim(FString_fromInteger(this.nodeProperties.data(edge.sNode).id)) \
-							.and. trim(this.nodeProperties.data(edge.tNode).label) == trim(FString_fromInteger(this.nodeProperties.data(edge.tNode).id)) ) then
+						if( trim(this%nodeProperties%data(edge%sNode)%label) == trim(FString_fromInteger(this%nodeProperties%data(edge%sNode)%id)) \
+							.and. trim(this%nodeProperties%data(edge%tNode)%label) == trim(FString_fromInteger(this%nodeProperties%data(edge%tNode)%id)) ) then
 							
-							if( this.nodeProperties.data(edge.sNode).id > this.nodeProperties.data(edge.tNode).id ) then
-								output = trim(output)//trim(FString_fromInteger(edge.sNode))
-								output = trim(output)//", "//trim(FString_fromInteger(edge.tNode))
+							if( this%nodeProperties%data(edge%sNode)%id > this%nodeProperties%data(edge%tNode)%id ) then
+								output = trim(output)//trim(FString_fromInteger(edge%sNode))
+								output = trim(output)//", "//trim(FString_fromInteger(edge%tNode))
 							else
-								output = trim(output)//trim(FString_fromInteger(edge.tNode))
-								output = trim(output)//", "//trim(FString_fromInteger(edge.sNode))
+								output = trim(output)//trim(FString_fromInteger(edge%tNode))
+								output = trim(output)//", "//trim(FString_fromInteger(edge%sNode))
 							end if
 						else
-							if( FString_hashKey( trim(this.nodeProperties.data(edge.sNode).label) ) > FString_hashKey( trim(this.nodeProperties.data(edge.tNode).label) ) ) then
-								output = trim(output)//trim(FString_fromInteger(edge.sNode))
-								output = trim(output)//", "//trim(FString_fromInteger(edge.tNode))
+							if( FString_hashKey( trim(this%nodeProperties%data(edge%sNode)%label) ) > FString_hashKey( trim(this%nodeProperties%data(edge%tNode)%label) ) ) then
+								output = trim(output)//trim(FString_fromInteger(edge%sNode))
+								output = trim(output)//", "//trim(FString_fromInteger(edge%tNode))
 							else
-								output = trim(output)//trim(FString_fromInteger(edge.tNode))
-								output = trim(output)//", "//trim(FString_fromInteger(edge.sNode))
+								output = trim(output)//trim(FString_fromInteger(edge%tNode))
+								output = trim(output)//", "//trim(FString_fromInteger(edge%sNode))
 							end if
 						end if
 					end if
@@ -595,12 +595,12 @@ module IntegerGraph_
 				
 				
 				output = trim(output)//", "//trim(edgeLabel)
-				output = trim(output)//", "//trim(adjustl(FString_fromReal(edge.weight/effEdgePropertiesUnits,format="(F10.3)")))
+				output = trim(output)//", "//trim(adjustl(FString_fromReal(edge%weight/effEdgePropertiesUnits,format="(F10.3)")))
 				
-				if( this.isDirected() ) then
-					output = trim(output)//", "//trim(FString_fromInteger(edge.id))
+				if( this%isDirected() ) then
+					output = trim(output)//", "//trim(FString_fromInteger(edge%id))
 				else
-					output = trim(output)//", "//trim(FString_fromInteger((edge.id+1)/2))
+					output = trim(output)//", "//trim(FString_fromInteger((edge%id+1)/2))
 				end if
 				
 				output = trim(output)//" ]"//new_line('')
@@ -641,13 +641,13 @@ module IntegerGraph_
 		effEdgePropertiesUnits = 1.0_8
 		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
 		
-! 		if( this.isDirected() ) then
+! 		if( this%isDirected() ) then
 ! 			write(effUnit,"(A)") "digraph "//trim(effName)//" {"
 ! 		else
 ! 			write(effUnit,"(A)") "graph "//trim(effName)//" {"
 ! 		end if
 		
-		do i=1,this.nNodes()
+		do i=1,this%nNodes()
 ! 			write(effUnit,"(A)") "   "//trim(FString_fromInteger(i))//" [shape=box]"
 			output = output//trim(FString_fromInteger(i))
 
@@ -657,24 +657,24 @@ module IntegerGraph_
 ! 			end if
 			
 			if( present(nodesLabels) ) then
-! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//char(34)//trim(colorOptions)//"]"
+! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(nodesLabels(i))//"("//trim(FString_fromReal(this%nodeProperties%data(i)%weight))//")"//char(34)//trim(colorOptions)//"]"
 
-				output = output//"[label="//trim(nodesLabels(i))//"("//trim(this.nodeProperties.data(i).label)//")"//trim(colorOptions)//"]"
-! 				write(effUnit,"(A)",advance="no") "[label="//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//trim(colorOptions)//"]"
+				output = output//"[label="//trim(nodesLabels(i))//"("//trim(this%nodeProperties%data(i)%label)//")"//trim(colorOptions)//"]"
+! 				write(effUnit,"(A)",advance="no") "[label="//trim(nodesLabels(i))//"("//trim(FString_fromReal(this%nodeProperties%data(i)%weight))//")"//trim(colorOptions)//"]"
 			else
-! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this.nodeProperties.data(i).label)//"("//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
-! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(this.nodeProperties.data(i).label)//char(34)//trim(colorOptions)//"],"
-				output = output//"[label="//trim(this.nodeProperties.data(i).label)//",weight="//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,format="(F10.5)")))//"];"
+! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this%nodeProperties%data(i)%label)//"("//trim(adjustl(FString_fromReal(this%nodeProperties%data(i)%weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
+! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(this%nodeProperties%data(i)%label)//char(34)//trim(colorOptions)//"],"
+				output = output//"[label="//trim(this%nodeProperties%data(i)%label)//",weight="//trim(adjustl(FString_fromReal(this%nodeProperties%data(i)%weight,format="(F10.5)")))//"];"
 			end if
 		end do
 		
-		do i=1,this.nEdges()
+		do i=1,this%nEdges()
 			
 			loc = 0
-			if( .not. this.isDirected() .and. i > 1 ) then
+			if( .not. this%isDirected() .and. i > 1 ) then
 				do j=i-1,1,-1
-					if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
-						this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+					if( this%edgeProperties%data(i)%sNode == this%edgeProperties%data(j)%tNode .and. &
+						this%edgeProperties%data(i)%tNode == this%edgeProperties%data(j)%sNode ) then
 						loc = 1
 						exit
 					end if
@@ -683,26 +683,26 @@ module IntegerGraph_
 			
 			if( loc == 1 ) cycle
 			
-			idNode = this.edgeProperties.data(i).sNode
+			idNode = this%edgeProperties%data(i)%sNode
 			output = output//trim(FString_fromInteger(idNode))
 			
-			if( this.isDirected() ) then
+			if( this%isDirected() ) then
 				output = output//"->"
 			else
 				output = output//"--"
 			end if
 			
-			idNode = this.edgeProperties.data(i).tNode
+			idNode = this%edgeProperties%data(i)%tNode
 			output = output//trim(FString_fromInteger(idNode))
 			! @todo Hay que poner un parametro que hage swap entre weight y label, para que quede bien el dibujo en dot
-! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(this.edgeProperties.data(i).label)//char(34)
-! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.2)")))//char(34)
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(this%edgeProperties%data(i)%label)//char(34)
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F5.2)")))//char(34)
 
-! 			write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F2.0)")))//char(34)//","
-! 			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.1)")))//"]"
+! 			write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F2.0)")))//char(34)//","
+! 			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F5.1)")))//"]"
 
-			output = output//"[label="//trim(adjustl(this.edgeProperties.data(i).label))//","
-			output = output//"weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F10.5)")))//"]"//";"
+			output = output//"[label="//trim(adjustl(this%edgeProperties%data(i)%label))//","
+			output = output//"weight="//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F10.5)")))//"]"//";"
 		end do
 		
 	end function toDATString
@@ -714,7 +714,7 @@ module IntegerGraph_
 		class(IntegerGraph), intent(in) :: this
 		integer :: output
 		
-		output = this.nodeProperties.size()
+		output = this%nodeProperties%size()
 	end function nNodes
 	
 	!>
@@ -724,10 +724,10 @@ module IntegerGraph_
 		class(IntegerGraph), intent(in) :: this
 		integer :: output
 		
-! 		if( this.isDirected() ) then
-			output = this.edgeProperties.size()
+! 		if( this%isDirected() ) then
+			output = this%edgeProperties%size()
 ! 		else
-! 			output = ( this.edgeProperties.size() + 1 )/2
+! 			output = ( this%edgeProperties%size() + 1 )/2
 ! 		end if
 	end function nEdges
 	
@@ -738,7 +738,7 @@ module IntegerGraph_
 		class(IntegerGraph), intent(in) :: this
 		logical :: output
 		
-		output = this.directed
+		output = this%directed
 	end function isDirected
 	
 	!>
@@ -754,18 +754,18 @@ module IntegerGraph_
 		type(Matrix) :: L
 		real(8), allocatable :: diagL(:)
 		
-		allocate( diagL(this.nNodes()) )
+		allocate( diagL(this%nNodes()) )
 		
 		if( present(laplacianMatrix) ) then
 			L = laplacianMatrix
 		else
-			L = this.laplacianMatrix()
+			L = this%laplacianMatrix()
 		end if
 		
 		call L.eigen( eValues=diagL )
 		
 		nComp = 0
-		do i=1,this.nNodes()
+		do i=1,this%nNodes()
 			if( abs(diagL(i)) < 1e-5 ) then
 				nComp = nComp + 1
 			end if
@@ -794,10 +794,10 @@ module IntegerGraph_
 		if( present(laplacianMatrix) ) then
 			L = laplacianMatrix
 		else
-			L = this.laplacianMatrix()
+			L = this%laplacianMatrix()
 		end if
 		
-		isConnected = this.isConnected( output, laplacianMatrix )
+		isConnected = this%isConnected( output, laplacianMatrix )
 	end function nComponents
 	
 	!>
@@ -813,14 +813,14 @@ module IntegerGraph_
 		type(Node) :: node
 		type(IntegerVector) :: ivec
 		
-		call ivec.init()
-		call this.node2Neighbors.append( ivec )
-		call this.node2InEdges.append( ivec )
-		call this.node2OutEdges.append( ivec )
+		call ivec%init()
+		call this%node2Neighbors%append( ivec )
+		call this%node2InEdges%append( ivec )
+		call this%node2OutEdges%append( ivec )
 		
-		effId = this.nodeProperties.size()+1
-		call node.init( id=effId, label=label, weight=weight )
-		call this.nodeProperties.append( node )
+		effId = this%nodeProperties%size()+1
+		call node%init( id=effId, label=label, weight=weight )
+		call this%nodeProperties%append( node )
 		
 		if( present(id) ) id = effId
 	end subroutine newNode
@@ -838,19 +838,19 @@ module IntegerGraph_
 		
 		if( present(labels) .and. present(weights) ) then
 			do i=1,n
-				call this.newNode( label=labels(i), weight=weights(i) )
+				call this%newNode( label=labels(i), weight=weights(i) )
 			end do
 		else if( present(labels) ) then
 			do i=1,n
-				call this.newNode( label=labels(i) )
+				call this%newNode( label=labels(i) )
 			end do
 		else if( present(weights) ) then
 			do i=1,n
-				call this.newNode( weight=weights(i) )
+				call this%newNode( weight=weights(i) )
 			end do
 		else
 			do i=1,n
-				call this.newNode()
+				call this%newNode()
 			end do
 		end if
 	end subroutine newNodes
@@ -909,91 +909,91 @@ module IntegerGraph_
 ! 		!        (3)                                 
 !		!
 		
-		call this.node2Neighbors.erase( nodeId ) ! Removes the item in the position nodeId
-		call this.node2InEdges.erase( nodeId )   ! Removes the item in the position nodeId
-		call this.node2OutEdges.erase( nodeId )  ! Removes the item in the position nodeId
-		call this.nodeProperties.erase( nodeId ) ! Removes the item in the position nodeId
+		call this%node2Neighbors%erase( nodeId ) ! Removes the item in the position nodeId
+		call this%node2InEdges%erase( nodeId )   ! Removes the item in the position nodeId
+		call this%node2OutEdges%erase( nodeId )  ! Removes the item in the position nodeId
+		call this%nodeProperties%erase( nodeId ) ! Removes the item in the position nodeId
 		
 		! Updates the ids of the nodes in node2Neighbors
-		do i=1,this.node2Neighbors.size()
-			ivec => this.node2Neighbors.data(i)
-			call ivec.remove( nodeId ) ! Removes the item with the value nodeId
+		do i=1,this%node2Neighbors%size()
+			ivec => this%node2Neighbors%data(i)
+			call ivec%remove( nodeId ) ! Removes the item with the value nodeId
 			
-			do j=1,ivec.size()
-				if( ivec.at(j) > nodeId ) then
-					call ivec.set( j, ivec.at(j)-1 )
+			do j=1,ivec%size()
+				if( ivec%at(j) > nodeId ) then
+					call ivec%set( j, ivec%at(j)-1 )
 				end if
 			end do
 		end do
 		
-		do i=1,this.nodeProperties.size()
-			if( this.nodeProperties.data(i).id > nodeId ) then
-				this.nodeProperties.data(i).id = this.nodeProperties.data(i).id -1
+		do i=1,this%nodeProperties%size()
+			if( this%nodeProperties%data(i)%id > nodeId ) then
+				this%nodeProperties%data(i)%id = this%nodeProperties%data(i)%id -1
 			end if
 		end do
 		
-		do i=1,this.edgeProperties.size()
-			if( this.edgeProperties.data(i).sNode == nodeId .or. this.edgeProperties.data(i).tNode == nodeId ) then
-				call edgesToRemove.append( i )
+		do i=1,this%edgeProperties%size()
+			if( this%edgeProperties%data(i)%sNode == nodeId .or. this%edgeProperties%data(i)%tNode == nodeId ) then
+				call edgesToRemove%append( i )
 			end if
 		end do
 		
 		k=0
-		do i=1,edgesToRemove.size()
-			call this.edgeProperties.erase( edgesToRemove.at(i)-k )
+		do i=1,edgesToRemove%size()
+			call this%edgeProperties%erase( edgesToRemove%at(i)-k )
 			
-			do j=1,this.node2InEdges.size()
-				ivec => this.node2InEdges.data(j)
+			do j=1,this%node2InEdges%size()
+				ivec => this%node2InEdges%data(j)
 				
-				call ivec.remove( edgesToRemove.at(i) )
+				call ivec%remove( edgesToRemove%at(i) )
 			end do
 			
-			do j=1,this.node2OutEdges.size()
-				ivec => this.node2OutEdges.data(j)
+			do j=1,this%node2OutEdges%size()
+				ivec => this%node2OutEdges%data(j)
 				
-				call ivec.remove( edgesToRemove.at(i) )
+				call ivec%remove( edgesToRemove%at(i) )
 			end do
 			
 			k = k+1
 		end do
 		
-		do i=1,this.edgeProperties.size()
-			if( this.edgeProperties.data(i).sNode > nodeId ) then
-				this.edgeProperties.data(i).sNode = this.edgeProperties.data(i).sNode - 1
+		do i=1,this%edgeProperties%size()
+			if( this%edgeProperties%data(i)%sNode > nodeId ) then
+				this%edgeProperties%data(i)%sNode = this%edgeProperties%data(i)%sNode - 1
 			end if
 			
-			if( this.edgeProperties.data(i).tNode > nodeId ) then
-				this.edgeProperties.data(i).tNode = this.edgeProperties.data(i).tNode - 1
+			if( this%edgeProperties%data(i)%tNode > nodeId ) then
+				this%edgeProperties%data(i)%tNode = this%edgeProperties%data(i)%tNode - 1
 			end if
 		end do
 		
 		! Updates the ids of the edges in node2InEdges and node2OutEdges vectors
-		do i=1,edgesToRemove.size()
-			do j=1,this.node2InEdges.size()
-				ivec => this.node2InEdges.data(j)
+		do i=1,edgesToRemove%size()
+			do j=1,this%node2InEdges%size()
+				ivec => this%node2InEdges%data(j)
 				
-				do k=1,ivec.size()
-					if( ivec.at(k) >= edgesToRemove.at(i) ) then
-						call ivec.set( k, ivec.at(k)-1 )
+				do k=1,ivec%size()
+					if( ivec%at(k) >= edgesToRemove%at(i) ) then
+						call ivec%set( k, ivec%at(k)-1 )
 					end if
 				end do
 			end do
 			
-			do j=1,this.node2OutEdges.size()
-				ivec => this.node2OutEdges.data(j)
+			do j=1,this%node2OutEdges%size()
+				ivec => this%node2OutEdges%data(j)
 				
-				do k=1,ivec.size()
-					if( ivec.at(k) >= edgesToRemove.at(i) ) then
-						call ivec.set( k, ivec.at(k)-1 )
+				do k=1,ivec%size()
+					if( ivec%at(k) >= edgesToRemove%at(i) ) then
+						call ivec%set( k, ivec%at(k)-1 )
 					end if
 				end do
 			end do
 		end do
 		
-		do i=1,edgesToRemove.size()
-			do j=1,this.edgeProperties.size()
-				if( this.edgeProperties.data(j).id >= edgesToRemove.at(i) ) then
-					this.edgeProperties.data(j).id = this.edgeProperties.data(j).id - 1
+		do i=1,edgesToRemove%size()
+			do j=1,this%edgeProperties%size()
+				if( this%edgeProperties%data(j)%id >= edgesToRemove%at(i) ) then
+					this%edgeProperties%data(j)%id = this%edgeProperties%data(j)%id - 1
 				end if
 			end do
 		end do
@@ -1010,7 +1010,7 @@ module IntegerGraph_
 		integer :: i
 		
 		do i=1,size(nodeIds)
-			call this.deleteNode( nodeIds(i) )
+			call this%deleteNode( nodeIds(i) )
 		end do
 	end subroutine deleteNodes
 	
@@ -1030,43 +1030,43 @@ module IntegerGraph_
 		type(Edge) :: edge
 		type(IntegerVector), pointer :: ivec1
 		
-		if( this.isDirected() ) then
-			effLabel = trim(this.nodeProperties.data(sNode).label)//"-->"//trim(this.nodeProperties.data(tNode).label)
+		if( this%isDirected() ) then
+			effLabel = trim(this%nodeProperties%data(sNode)%label)//"-->"//trim(this%nodeProperties%data(tNode)%label)
 		else
-			if( trim(this.nodeProperties.data(sNode).label) == trim(FString_fromInteger(this.nodeProperties.data(sNode).id)) \
-				.and. trim(this.nodeProperties.data(tNode).label) == trim(FString_fromInteger(this.nodeProperties.data(tNode).id)) ) then
+			if( trim(this%nodeProperties%data(sNode)%label) == trim(FString_fromInteger(this%nodeProperties%data(sNode)%id)) \
+				.and. trim(this%nodeProperties%data(tNode)%label) == trim(FString_fromInteger(this%nodeProperties%data(tNode)%id)) ) then
 				
-				if( this.nodeProperties.data(sNode).id > this.nodeProperties.data(tNode).id ) then
-					effLabel = trim(this.nodeProperties.data(sNode).label)//"--"//trim(this.nodeProperties.data(tNode).label)
+				if( this%nodeProperties%data(sNode)%id > this%nodeProperties%data(tNode)%id ) then
+					effLabel = trim(this%nodeProperties%data(sNode)%label)//"--"//trim(this%nodeProperties%data(tNode)%label)
 				else
-					effLabel = trim(this.nodeProperties.data(tNode).label)//"--"//trim(this.nodeProperties.data(sNode).label)
+					effLabel = trim(this%nodeProperties%data(tNode)%label)//"--"//trim(this%nodeProperties%data(sNode)%label)
 				end if
 			else
-				if( FString_hashKey( trim(this.nodeProperties.data(sNode).label) ) > FString_hashKey( trim(this.nodeProperties.data(tNode).label) ) ) then
-					effLabel = trim(this.nodeProperties.data(sNode).label)//"--"//trim(this.nodeProperties.data(tNode).label)
+				if( FString_hashKey( trim(this%nodeProperties%data(sNode)%label) ) > FString_hashKey( trim(this%nodeProperties%data(tNode)%label) ) ) then
+					effLabel = trim(this%nodeProperties%data(sNode)%label)//"--"//trim(this%nodeProperties%data(tNode)%label)
 				else
-					effLabel = trim(this.nodeProperties.data(tNode).label)//"--"//trim(this.nodeProperties.data(sNode).label)
+					effLabel = trim(this%nodeProperties%data(tNode)%label)//"--"//trim(this%nodeProperties%data(sNode)%label)
 				end if
 			end if
 		end if
 		if( present(label) ) effLabel = label
 		
 		! Busco en las vecindades
-		ivec1 => this.node2Neighbors.data(sNode)
+		ivec1 => this%node2Neighbors%data(sNode)
 		if( .not. ivec1.contains(tNode) ) then  ! Si no ha sido agregado ...
-			call ivec1.append( tNode )      ! lo adiciono
+			call ivec1%append( tNode )      ! lo adiciono
 			
-			ivec1 => this.node2OutEdges.data(sNode) ! Busco en las aristas salientes de sNode ...
-			effId = this.edgeProperties.size()+1    ! calculo el id que tendra la siguiente arista
-			call ivec1.append( effId )   ! Agrego la nueva arista como una arista saliente de sNode
+			ivec1 => this%node2OutEdges%data(sNode) ! Busco en las aristas salientes de sNode ...
+			effId = this%edgeProperties%size()+1    ! calculo el id que tendra la siguiente arista
+			call ivec1%append( effId )   ! Agrego la nueva arista como una arista saliente de sNode
 			
-			ivec1 => this.node2InEdges.data(tNode) ! Busco en las aristas entrantes de tNode ...
-			effId = this.edgeProperties.size()+1    ! calculo el id que tendra la siguiente arista
-			call ivec1.append( effId )   ! Agrego la nueva arista como una arista entrantes de tNode
+			ivec1 => this%node2InEdges%data(tNode) ! Busco en las aristas entrantes de tNode ...
+			effId = this%edgeProperties%size()+1    ! calculo el id que tendra la siguiente arista
+			call ivec1%append( effId )   ! Agrego la nueva arista como una arista entrantes de tNode
 			
 			! Creo una nueva arista en las propiedades de arista con el id que he calculado
-			call edge.init( sNode, tNode, id=effId, label=effLabel, weight=weight )
-			call this.edgeProperties.append( edge )
+			call edge%init( sNode, tNode, id=effId, label=effLabel, weight=weight )
+			call this%edgeProperties%append( edge )
 			
 			if( present(id) ) id = effId
 		end if
@@ -1084,11 +1084,11 @@ module IntegerGraph_
 		real(8), optional :: weight
 		integer, optional, intent(out) :: id
 		
-		if( this.directed ) then
-			call this.newEdgeBase( sNode, tNode, label, weight, id )
+		if( this%directed ) then
+			call this%newEdgeBase( sNode, tNode, label, weight, id )
 		else
-			call this.newEdgeBase( sNode, tNode, label, weight, id )
-			call this.newEdgeBase( tNode, sNode, label, weight )
+			call this%newEdgeBase( sNode, tNode, label, weight, id )
+			call this%newEdgeBase( tNode, sNode, label, weight )
 		end if
 	end subroutine newEdge
 	
@@ -1106,19 +1106,19 @@ module IntegerGraph_
 		
 		if( present(labels) .and. present(weights) ) then
 			do i=1,size(tNodesVec)
-				call this.newEdge( sNode, tNodesVec(i), label=labels(i), weight=weights(i) )
+				call this%newEdge( sNode, tNodesVec(i), label=labels(i), weight=weights(i) )
 			end do
 		else if( present(labels) ) then
 			do i=1,size(tNodesVec)
-				call this.newEdge( sNode, tNodesVec(i), label=labels(i) )
+				call this%newEdge( sNode, tNodesVec(i), label=labels(i) )
 			end do
 		else if( present(weights) ) then
 			do i=1,size(tNodesVec)
-				call this.newEdge( sNode, tNodesVec(i), weight=weights(i) )
+				call this%newEdge( sNode, tNodesVec(i), weight=weights(i) )
 			end do
 		else
 			do i=1,size(tNodesVec)
-				call this.newEdge( sNode, tNodesVec(i) )
+				call this%newEdge( sNode, tNodesVec(i) )
 			end do
 		end if
 	end subroutine newEdges
@@ -1163,49 +1163,49 @@ module IntegerGraph_
 ! 		!        (5)          
 !		!     
 		
-		call this.edgeProperties.erase( edgeId ) ! Removes the item in the position nodeId
+		call this%edgeProperties%erase( edgeId ) ! Removes the item in the position nodeId
 		
 		! Updates the ids of the edges in edgeProperties
-		do i=1,this.edgeProperties.size()
-			edgei => this.edgeProperties.data(i)
+		do i=1,this%edgeProperties%size()
+			edgei => this%edgeProperties%data(i)
 			
-			if( edgei.id > edgeId ) then
-				edgei.id = edgei.id - 1
+			if( edgei%id > edgeId ) then
+				edgei%id = edgei%id - 1
 			end if
 		end do
 		
 		! Remove the edge from node2InEdges
-		do i=1,this.node2InEdges.size()
-			ivec => this.node2InEdges.data(i)
+		do i=1,this%node2InEdges%size()
+			ivec => this%node2InEdges%data(i)
 			
-			call ivec.remove( edgeId )
+			call ivec%remove( edgeId )
 		end do
 		
 		! Remove the edge from node2OutEdges
-		do i=1,this.node2OutEdges.size()
-			ivec => this.node2OutEdges.data(i)
+		do i=1,this%node2OutEdges%size()
+			ivec => this%node2OutEdges%data(i)
 			
-			call ivec.remove( edgeId )
+			call ivec%remove( edgeId )
 		end do
 		
 		! Updates the edge ids from node2InEdges
-		do i=1,this.node2InEdges.size()
-			ivec => this.node2InEdges.data(i)
+		do i=1,this%node2InEdges%size()
+			ivec => this%node2InEdges%data(i)
 			
-			do j=1,ivec.size()
-				if( ivec.at(j) >= edgeId ) then
-					call ivec.set( j, ivec.at(j)-1 )
+			do j=1,ivec%size()
+				if( ivec%at(j) >= edgeId ) then
+					call ivec%set( j, ivec%at(j)-1 )
 				end if
 			end do
 		end do
 		
 		! Updates the edge ids from node2OutEdges
-		do i=1,this.node2OutEdges.size()
-			ivec => this.node2OutEdges.data(i)
+		do i=1,this%node2OutEdges%size()
+			ivec => this%node2OutEdges%data(i)
 			
-			do j=1,ivec.size()
-				if( ivec.at(j) >= edgeId ) then
-					call ivec.set( j, ivec.at(j)-1 )
+			do j=1,ivec%size()
+				if( ivec%at(j) >= edgeId ) then
+					call ivec%set( j, ivec%at(j)-1 )
 				end if
 			end do
 		end do
@@ -1221,7 +1221,7 @@ module IntegerGraph_
 		integer :: i
 		
 		do i=1,size(edgesIds)
-			call this.deleteEdge( edgesIds(i) )
+			call this%deleteEdge( edgesIds(i) )
 		end do
 	end subroutine deleteEdges
 	
@@ -1238,14 +1238,14 @@ module IntegerGraph_
 		integer :: i, j, idEdge
 		
 		! Busco en las aristas salientes de sNode
-		ivec => this.node2OutEdges.data(sNode)
+		ivec => this%node2OutEdges%data(sNode)
 		
 		output = -1
-		do i=1,ivec.size()
-			idEdge = ivec.at(i)
+		do i=1,ivec%size()
+			idEdge = ivec%at(i)
 			
-			if( this.edgeProperties.data(idEdge).tNode == tNode ) then
-				output = this.edgeProperties.data(idEdge).id
+			if( this%edgeProperties%data(idEdge)%tNode == tNode ) then
+				output = this%edgeProperties%data(idEdge)%id
 			end if
 		end do
 		
@@ -1260,7 +1260,7 @@ module IntegerGraph_
 		integer, intent(in) :: nodeId
 		type(Node), intent(in) :: nodeProperties
 		
-		this.nodeProperties.data(nodeId) = nodeProperties
+		this%nodeProperties%data(nodeId) = nodeProperties
 	end subroutine setNodeProperties
 	
 	!>
@@ -1271,7 +1271,7 @@ module IntegerGraph_
 		integer, intent(in) :: nodeId
 		type(Node) :: output
 		
-		output = this.nodeProperties.data(nodeId)
+		output = this%nodeProperties%data(nodeId)
 	end function getNodeProperties
 	
 	!>
@@ -1282,7 +1282,7 @@ module IntegerGraph_
 		integer, intent(in) :: edgeId
 		type(Edge), intent(in) :: edgeProperties
 		
-		this.edgeProperties.data(edgeId) = edgeProperties
+		this%edgeProperties%data(edgeId) = edgeProperties
 	end subroutine setEdgeProperties
 	
 	!>
@@ -1293,7 +1293,7 @@ module IntegerGraph_
 		integer, intent(in) :: edgeId
 		type(Edge) :: output
 		
-		output = this.edgeProperties.data(edgeId)
+		output = this%edgeProperties%data(edgeId)
 	end function getEdgeProperties
 	
 	!>
@@ -1317,11 +1317,11 @@ module IntegerGraph_
 		
 		select case ( effFormat )
 			case( GML )
-				call this.saveGML( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
+				call this%saveGML( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
 			case( DOT )
-				call this.saveDOT( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
+				call this%saveDOT( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors )
 			case( DAT )
-				call this.saveDAT( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors, append )
+				call this%saveDAT( oFileName, name, nodesLabels, nodePropertiesUnits, edgePropertiesUnits, nodesColors, append )
 		end select
 	end subroutine save
 	
@@ -1356,23 +1356,23 @@ module IntegerGraph_
 		effEdgePropertiesUnits = 1.0_8
 		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
 		
-		write(*,"(A)") "@@@ WARNING @@@ IntegerGraph.saveGML() is not well tested yet"
+		write(*,"(A)") "@@@ WARNING @@@ IntegerGraph%saveGML() is not well tested yet"
 		
 		write(effUnit,"(A)") "graph["
 		write(effUnit,"(A)") "   comment "//achar(34)//"Created by scift library"//achar(34)
 		
-		if( this.isDirected() ) then
+		if( this%isDirected() ) then
 			write(effUnit,"(A)") "   directed 1"
 		end if
 		
-		do i=1,this.nNodes()
+		do i=1,this%nNodes()
 			write(effUnit,"(A)") "   node[ id "//trim(FString_fromInteger(i)) \
 				//" label "//achar(34)//trim(FString_fromInteger(i))//achar(34)//" ]"
 		end do
 		
-		do i=1,this.nEdges()
-			write(effUnit,"(A)") "   edge[ source "//trim(FString_fromInteger(this.edgeProperties.data(i).sNode)) \
-				//" target "//trim(FString_fromInteger(this.edgeProperties.data(i).tNode)) \
+		do i=1,this%nEdges()
+			write(effUnit,"(A)") "   edge[ source "//trim(FString_fromInteger(this%edgeProperties%data(i)%sNode)) \
+				//" target "//trim(FString_fromInteger(this%edgeProperties%data(i)%tNode)) \
 				//" label "//achar(34)//trim(FString_fromInteger(i))//achar(34)//" ]"
 		end do
 		
@@ -1417,13 +1417,13 @@ module IntegerGraph_
 		effEdgePropertiesUnits = 1.0_8
 		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
 		
-		if( this.isDirected() ) then
+		if( this%isDirected() ) then
 			write(effUnit,"(A)") "digraph "//trim(effName)//" {"
 		else
 			write(effUnit,"(A)") "graph "//trim(effName)//" {"
 		end if
 		
-		do i=1,this.nNodes()
+		do i=1,this%nNodes()
 ! 			write(effUnit,"(A)") "   "//trim(FString_fromInteger(i))//" [shape=box]"
 			write(effUnit,"(A)", advance="no") "   "//trim(FString_fromInteger(i))
 
@@ -1433,20 +1433,20 @@ module IntegerGraph_
 			end if
 			
 			if( present(nodesLabels) ) then
-				write(effUnit,"(A)") " [ label = "//char(34)//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//char(34)//trim(colorOptions)//" ]"
+				write(effUnit,"(A)") " [ label = "//char(34)//trim(nodesLabels(i))//"("//trim(FString_fromReal(this%nodeProperties%data(i)%weight))//")"//char(34)//trim(colorOptions)//" ]"
 			else
-! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this.nodeProperties.data(i).label)//"("//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
-				write(effUnit,"(A)") " [ label = "//char(34)//trim(this.nodeProperties.data(i).label)//char(34)//trim(colorOptions)//" ]"
+! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this%nodeProperties%data(i)%label)//"("//trim(adjustl(FString_fromReal(this%nodeProperties%data(i)%weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
+				write(effUnit,"(A)") " [ label = "//char(34)//trim(this%nodeProperties%data(i)%label)//char(34)//trim(colorOptions)//" ]"
 			end if
 		end do
 		
-		do i=1,this.nEdges()
+		do i=1,this%nEdges()
 			
 			loc = 0
-			if( .not. this.isDirected() .and. i > 1 ) then
+			if( .not. this%isDirected() .and. i > 1 ) then
 				do j=i-1,1,-1
-					if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
-						this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+					if( this%edgeProperties%data(i)%sNode == this%edgeProperties%data(j)%tNode .and. &
+						this%edgeProperties%data(i)%tNode == this%edgeProperties%data(j)%sNode ) then
 						loc = 1
 						exit
 					end if
@@ -1455,22 +1455,22 @@ module IntegerGraph_
 			
 			if( loc == 1 ) cycle
 			
-			idNode = this.edgeProperties.data(i).sNode
+			idNode = this%edgeProperties%data(i)%sNode
 			write(effUnit,"(A)",advance="no") "   "//trim(FString_fromInteger(idNode))
 			
-			if( this.isDirected() ) then
+			if( this%isDirected() ) then
 				write(effUnit,"(A)",advance="no") " -> "
 			else
 				write(effUnit,"(A)",advance="no") " -- "
 			end if
 			
-			idNode = this.edgeProperties.data(i).tNode
+			idNode = this%edgeProperties%data(i)%tNode
 			write(effUnit,"(A)",advance="no") trim(FString_fromInteger(idNode))
 			! @todo Hay que poner un parametro que hage swap entre weight y label, para que quede bien el dibujo en dot
-! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(this.edgeProperties.data(i).label)//char(34)
-! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.2)")))//char(34)
-			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F2.0)")))//char(34)
-			write(effUnit,"(A)") " weight = "//trim(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.1)"))//" ]"
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(this%edgeProperties%data(i)%label)//char(34)
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F5.2)")))//char(34)
+			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F2.0)")))//char(34)
+			write(effUnit,"(A)") " weight = "//trim(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F5.1)"))//" ]"
 		end do
 		
 		write(effUnit,"(A)") "}"
@@ -1520,13 +1520,13 @@ module IntegerGraph_
 		effEdgePropertiesUnits = 1.0_8
 		if( present(edgePropertiesUnits) ) effEdgePropertiesUnits = edgePropertiesUnits
 		
-! 		if( this.isDirected() ) then
+! 		if( this%isDirected() ) then
 ! 			write(effUnit,"(A)") "digraph "//trim(effName)//" {"
 ! 		else
 ! 			write(effUnit,"(A)") "graph "//trim(effName)//" {"
 ! 		end if
 		
-		do i=1,this.nNodes()
+		do i=1,this%nNodes()
 ! 			write(effUnit,"(A)") "   "//trim(FString_fromInteger(i))//" [shape=box]"
 			write(effUnit,"(A)",advance="no") trim(FString_fromInteger(i))
 
@@ -1536,24 +1536,24 @@ module IntegerGraph_
 ! 			end if
 			
 			if( present(nodesLabels) ) then
-! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//char(34)//trim(colorOptions)//"]"
+! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(nodesLabels(i))//"("//trim(FString_fromReal(this%nodeProperties%data(i)%weight))//")"//char(34)//trim(colorOptions)//"]"
 
-				write(effUnit,"(A)",advance="no") "[label="//trim(nodesLabels(i))//"("//trim(this.nodeProperties.data(i).label)//")"//trim(colorOptions)//"]"
-! 				write(effUnit,"(A)",advance="no") "[label="//trim(nodesLabels(i))//"("//trim(FString_fromReal(this.nodeProperties.data(i).weight))//")"//trim(colorOptions)//"]"
+				write(effUnit,"(A)",advance="no") "[label="//trim(nodesLabels(i))//"("//trim(this%nodeProperties%data(i)%label)//")"//trim(colorOptions)//"]"
+! 				write(effUnit,"(A)",advance="no") "[label="//trim(nodesLabels(i))//"("//trim(FString_fromReal(this%nodeProperties%data(i)%weight))//")"//trim(colorOptions)//"]"
 			else
-! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this.nodeProperties.data(i).label)//"("//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
-! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(this.nodeProperties.data(i).label)//char(34)//trim(colorOptions)//"],"
-				write(effUnit,"(A)",advance="no") "[label="//trim(this.nodeProperties.data(i).label)//",weight="//trim(adjustl(FString_fromReal(this.nodeProperties.data(i).weight,format="(F10.5)")))//"],"
+! 				write(effUnit,"(A)") " [ label = "//char(34)//trim(this%nodeProperties%data(i)%label)//"("//trim(adjustl(FString_fromReal(this%nodeProperties%data(i)%weight,"(F10.1)")))//")"//char(34)//trim(colorOptions)//" ]"
+! 				write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(this%nodeProperties%data(i)%label)//char(34)//trim(colorOptions)//"],"
+				write(effUnit,"(A)",advance="no") "[label="//trim(this%nodeProperties%data(i)%label)//",weight="//trim(adjustl(FString_fromReal(this%nodeProperties%data(i)%weight,format="(F10.5)")))//"],"
 			end if
 		end do
 		
-		do i=1,this.nEdges()
+		do i=1,this%nEdges()
 			
 			loc = 0
-			if( .not. this.isDirected() .and. i > 1 ) then
+			if( .not. this%isDirected() .and. i > 1 ) then
 				do j=i-1,1,-1
-					if( this.edgeProperties.data(i).sNode == this.edgeProperties.data(j).tNode .and. &
-						this.edgeProperties.data(i).tNode == this.edgeProperties.data(j).sNode ) then
+					if( this%edgeProperties%data(i)%sNode == this%edgeProperties%data(j)%tNode .and. &
+						this%edgeProperties%data(i)%tNode == this%edgeProperties%data(j)%sNode ) then
 						loc = 1
 						exit
 					end if
@@ -1562,26 +1562,26 @@ module IntegerGraph_
 			
 			if( loc == 1 ) cycle
 			
-			idNode = this.edgeProperties.data(i).sNode
+			idNode = this%edgeProperties%data(i)%sNode
 			write(effUnit,"(A)",advance="no") trim(FString_fromInteger(idNode))
 			
-			if( this.isDirected() ) then
+			if( this%isDirected() ) then
 				write(effUnit,"(A)",advance="no") "->"
 			else
 				write(effUnit,"(A)",advance="no") "--"
 			end if
 			
-			idNode = this.edgeProperties.data(i).tNode
+			idNode = this%edgeProperties%data(i)%tNode
 			write(effUnit,"(A)",advance="no") trim(FString_fromInteger(idNode))
 			! @todo Hay que poner un parametro que hage swap entre weight y label, para que quede bien el dibujo en dot
-! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(this.edgeProperties.data(i).label)//char(34)
-! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.2)")))//char(34)
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(this%edgeProperties%data(i)%label)//char(34)
+! 			write(effUnit,"(A)",advance="no") " [ label = "//char(34)//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F5.2)")))//char(34)
 
-! 			write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F2.0)")))//char(34)//","
-! 			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F5.1)")))//"]"
+! 			write(effUnit,"(A)",advance="no") "[label="//char(34)//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F2.0)")))//char(34)//","
+! 			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F5.1)")))//"]"
 
-			write(effUnit,"(A)",advance="no") "[label="//trim(adjustl(this.edgeProperties.data(i).label))//","
-			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this.edgeProperties.data(i).weight/effEdgePropertiesUnits,format="(F10.5)")))//"]"//","
+			write(effUnit,"(A)",advance="no") "[label="//trim(adjustl(this%edgeProperties%data(i)%label))//","
+			write(effUnit,"(A)",advance="no") "weight="//trim(adjustl(FString_fromReal(this%edgeProperties%data(i)%weight/effEdgePropertiesUnits,format="(F10.5)")))//"]"//","
 		end do
 		
 		close(effUnit)
@@ -1602,44 +1602,44 @@ module IntegerGraph_
 		real(8) :: distance_through_u
 		type(IntegerVector) :: neighbors
 		
-		this.sNode = sNode
-		if( allocated(this.minDistance) ) deallocate(this.minDistance)
-		call this.previous.clear()
+		this%sNode = sNode
+		if( allocated(this%minDistance) ) deallocate(this%minDistance)
+		call this%previous%clear()
 		
-		n = this.node2Neighbors.size()
-		allocate( this.minDistance(n) )
+		n = this%node2Neighbors%size()
+		allocate( this%minDistance(n) )
 		
-		this.minDistance = Math_INF
-		this.minDistance(sNode) = 0
-		call this.previous.init( n, value=-1 )
+		this%minDistance = Math_INF
+		this%minDistance(sNode) = 0
+		call this%previous%init( n, value=-1 )
 		
-		call nodeDist.init()
-		call nodeDist.append( this.minDistance(sNode) )
-		call nodeSource.append( sNode )
+		call nodeDist%init()
+		call nodeDist%append( this%minDistance(sNode) )
+		call nodeSource%append( sNode )
 		
-		do while( .not. nodeSource.isEmpty() )
-			dist = nodeDist.first()
-			u = nodeSource.first()
+		do while( .not. nodeSource%isEmpty() )
+			dist = nodeDist%first()
+			u = nodeSource%first()
 			
-			call nodeDist.erase( 1 )
-			call nodeSource.erase( 1 )
+			call nodeDist%erase( 1 )
+			call nodeSource%erase( 1 )
 			
 			!! Visit each edge exiting u
-			neighbors = this.node2Neighbors.at(u)
+			neighbors = this%node2Neighbors%at(u)
 			
-			do i=1,neighbors.size()
-				v = neighbors.at(i)
-				distance_through_u = dist + this.edgeProperties.data( this.getEdgeId(u,v) ).weight
+			do i=1,neighbors%size()
+				v = neighbors%at(i)
+				distance_through_u = dist + this%edgeProperties%data( this%getEdgeId(u,v) )%weight
 				
-				if( distance_through_u < this.minDistance(v) ) then
-					call nodeDist.remove( this.minDistance(v) )
-					call nodeSource.remove( v )
+				if( distance_through_u < this%minDistance(v) ) then
+					call nodeDist%remove( this%minDistance(v) )
+					call nodeSource%remove( v )
 			
-					this.minDistance(v) = distance_through_u
-					call this.previous.set( v, u )
+					this%minDistance(v) = distance_through_u
+					call this%previous%set( v, u )
 					
-					call nodeDist.append( this.minDistance(v) );
-					call nodeSource.append( v );
+					call nodeDist%append( this%minDistance(v) );
+					call nodeSource%append( v );
 				end if
 			end do
 		end do
@@ -1654,12 +1654,12 @@ module IntegerGraph_
 		integer, intent(in) :: tNode
 		real(8) :: output
 		
-		if( this.sNode == -1 ) then
+		if( this%sNode == -1 ) then
 			output = -1
 			return
 		end if
 		
-		output = this.minDistance( tNode )
+		output = this%minDistance( tNode )
 		if( Math_isInf(output) ) output = -1
 	end function distance
 	
@@ -1674,14 +1674,14 @@ module IntegerGraph_
 		
 		integer :: node
 		
-		if( this.sNode == -1 ) return
+		if( this%sNode == -1 ) return
 		
-		call output.clear()
+		call output%clear()
 		
 		node = tNode
 		do while( node /= -1 )
 			call output.prepend( node )
-			node = this.previous.at(node)
+			node = this%previous%at(node)
 		end do
 	end function shortestPath
 	
@@ -1695,18 +1695,18 @@ module IntegerGraph_
 		integer :: i, j
 		type(IntegerVector), pointer :: iNeighbors
 		
-		call output.init( this.nNodes(), this.nNodes(), val=0.0_8 )
+		call output%init( this%nNodes(), this%nNodes(), val=0.0_8 )
 		
 		! Hago todos los i y todos los j para no tener que asumir que es
 		! simetrica en el caso no dirigido. Se obtebdra automaticamente
-		do i=1,this.nNodes()
-			call output.set( i, i, this.nodeProperties.data(i).weight )
+		do i=1,this%nNodes()
+			call output%set( i, i, this%nodeProperties%data(i)%weight )
 			
-			iNeighbors => this.node2Neighbors.data(i)
+			iNeighbors => this%node2Neighbors%data(i)
 			
-			do j=1,this.nNodes()
+			do j=1,this%nNodes()
 				if( i/=j .and. iNeighbors.contains(j) ) then
-					call output.set( i, j, this.edgeProperties.data( this.getEdgeId(i,j) ).weight )
+					call output%set( i, j, this%edgeProperties%data( this%getEdgeId(i,j) )%weight )
 				end if
 			end do
 		end do
@@ -1724,15 +1724,15 @@ module IntegerGraph_
 		
 		integer :: i, j
 		
-		call output.init( this.nNodes(), this.nNodes(), val=0.0_8 )
+		call output%init( this%nNodes(), this%nNodes(), val=0.0_8 )
 		
 		! Hago todos los i y todos los j para no tener que asumir que es
 		! simetrica en el caso no dirigido. Se obtebdra automaticamente
-		do i=1,this.nNodes()
-			call this.computeDijkstraPaths( i )
+		do i=1,this%nNodes()
+			call this%computeDijkstraPaths( i )
 			
-			do j=1,this.nNodes()
-				call output.set( i, j, real(this.distance(j),8) )
+			do j=1,this%nNodes()
+				call output%set( i, j, real(this%distance(j),8) )
 			end do
 		end do
 	end function distanceMatrix
@@ -1748,25 +1748,25 @@ module IntegerGraph_
 		type(IntegerVector), pointer :: iNeighbors
 		real(8) :: wi
 		
-		call output.init( this.nNodes(), this.nNodes(), val=0.0_8 )
+		call output%init( this%nNodes(), this%nNodes(), val=0.0_8 )
 		
 		! Hago todos los i y todos los j para no tener que asumir que es
 		! simetrica en el caso no dirigido. Se obtebdra automaticamente
-		do i=1,this.nNodes()
-			iNeighbors => this.node2Neighbors.data(i)
+		do i=1,this%nNodes()
+			iNeighbors => this%node2Neighbors%data(i)
 			
 			wi = 0.0_8
-			do j=1,iNeighbors.size()
-				edgeId = this.getEdgeId( i, iNeighbors.at(j) )
-				wi = wi + this.edgeProperties.data( edgeId ).weight
+			do j=1,iNeighbors%size()
+				edgeId = this%getEdgeId( i, iNeighbors%at(j) )
+				wi = wi + this%edgeProperties%data( edgeId )%weight
 			end do
 			
-			do j=1,this.nNodes()
+			do j=1,this%nNodes()
 				if( i==j ) then
-					call output.set( i, i, wi )
+					call output%set( i, i, wi )
 				else if( i/=j .and. iNeighbors.contains(j) ) then
-					edgeId = this.getEdgeId(i,j)
-					call output.set( i, j, -this.edgeProperties.data( edgeId ).weight )
+					edgeId = this%getEdgeId(i,j)
+					call output%set( i, j, -this%edgeProperties%data( edgeId )%weight )
 				end if
 			end do
 		end do
@@ -1788,19 +1788,19 @@ module IntegerGraph_
 		if( present(laplacianMatrix) ) then
 			L = laplacianMatrix
 		else
-			L = this.laplacianMatrix()
+			L = this%laplacianMatrix()
 		end if
 		
-		call Phi.init( this.nNodes(), this.nNodes(), val=1.0_8/real(this.nNodes(),8) )
+		call Phi%init( this%nNodes(), this%nNodes(), val=1.0_8/real(this%nNodes(),8) )
 		
 		Gamma = L + Phi
 		Gamma = Gamma.inverse()
 		
-		call output.init( this.nNodes(), this.nNodes() )
+		call output%init( this%nNodes(), this%nNodes() )
 		
-		do i=1,this.nNodes()
-			do j=1,this.nNodes()
-				call output.set( i, j, Gamma.get(i,i)+Gamma.get(j,j)-Gamma.get(i,j)-Gamma.get(j,i) )
+		do i=1,this%nNodes()
+			do j=1,this%nNodes()
+				call output%set( i, j, Gamma%get(i,i)+Gamma%get(j,j)-Gamma%get(i,j)-Gamma%get(j,i) )
 			end do
 		end do
 	end function resistanceDistanceMatrix
@@ -1819,10 +1819,10 @@ module IntegerGraph_
 		if( present(distanceMatrix) ) then
 			dMatrix = distanceMatrix
 		else
-			dMatrix = this.distanceMatrix()
+			dMatrix = this%distanceMatrix()
 		end if
 		
-		output = maxval(dMatrix.data)
+		output = maxval(dMatrix%data)
 	end function diameter
 	
 	!>
@@ -1839,19 +1839,19 @@ module IntegerGraph_
 		
 		output = 0.0_8
 		
-		do i=1,this.nEdges()
-			edgei => this.edgeProperties.data(i)
+		do i=1,this%nEdges()
+			edgei => this%edgeProperties%data(i)
 			
-			neighbors => this.node2Neighbors.data(edgei.sNode)
-			vs = neighbors.size()
+			neighbors => this%node2Neighbors%data(edgei%sNode)
+			vs = neighbors%size()
 			
-			neighbors => this.node2Neighbors.data(edgei.tNode)
-			vt = neighbors.size()
+			neighbors => this%node2Neighbors%data(edgei%tNode)
+			vt = neighbors%size()
 			
 			output = output + 1.0_8/sqrt(vs*vt)
 		end do
 		
-		if( .not. this.isDirected() ) output = output/2.0_8
+		if( .not. this%isDirected() ) output = output/2.0_8
 		
 		neighbors => null()
 	end function randicIndex
@@ -1875,13 +1875,13 @@ module IntegerGraph_
 		if( present(distanceMatrix) ) then
 			dMatrix = distanceMatrix
 		else
-			dMatrix = this.distanceMatrix()
+			dMatrix = this%distanceMatrix()
 		end if
 		
 		output = 0.0_8
-		do i=1,this.nNodes()
-			do j=1,this.nNodes()
-				output = output + this.nodeProperties.data(i).weight*this.nodeProperties.data(j).weight*dMatrix.get(i,j)
+		do i=1,this%nNodes()
+			do j=1,this%nNodes()
+				output = output + this%nodeProperties%data(i)%weight*this%nodeProperties%data(j)%weight*dMatrix%get(i,j)
 			end do
 		end do
 		output = output/2.0_8
@@ -1902,16 +1902,16 @@ module IntegerGraph_
 		if( present(distanceMatrix) ) then
 			dMatrix = distanceMatrix
 		else
-			dMatrix = this.distanceMatrix()
+			dMatrix = this%distanceMatrix()
 		end if
 		
-		diam = this.diameter( distanceMatrix=dMatrix )
+		diam = this%diameter( distanceMatrix=dMatrix )
 		
 		output = 0.0_8
-		do i=1,this.nNodes()
-			do j=1,this.nNodes()
+		do i=1,this%nNodes()
+			do j=1,this%nNodes()
 				if( i/=j ) then
-					output = output + ( diam - dMatrix.get(i,j) )
+					output = output + ( diam - dMatrix%get(i,j) )
 				end if
 			end do
 		end do
@@ -1934,23 +1934,23 @@ module IntegerGraph_
 		if( present(distanceMatrix) ) then
 			dMatrix = distanceMatrix
 		else
-			dMatrix = this.distanceMatrix()
+			dMatrix = this%distanceMatrix()
 		end if
 		
 		output = 0.0_8
 		
-		do i=1,this.nEdges()
-			edgei => this.edgeProperties.data(i)
+		do i=1,this%nEdges()
+			edgei => this%edgeProperties%data(i)
 			
-			ds = sum( dMatrix.data(edgei.sNode,:) )
-			dt = sum( dMatrix.data(edgei.tNode,:) )
+			ds = sum( dMatrix%data(edgei%sNode,:) )
+			dt = sum( dMatrix%data(edgei%tNode,:) )
 			
 			output = output + 1.0_8/sqrt(ds*dt)
 		end do
 		
-		output = this.nEdges()*output/real(this.nEdges()-this.nNodes()+2,8)
+		output = this%nEdges()*output/real(this%nEdges()-this%nNodes()+2,8)
 		
-		if( .not. this.isDirected() ) output = output/2.0_8
+		if( .not. this%isDirected() ) output = output/2.0_8
 	end function balabanIndex
 	
 	!>
@@ -1972,22 +1972,22 @@ module IntegerGraph_
 		if( present(adjacencyMatrix) ) then
 			A = adjacencyMatrix
 		else
-			A = this.adjacencyMatrix()
+			A = this%adjacencyMatrix()
 		end if
 		
 		if( present(distanceMatrix) ) then
 			D = distanceMatrix
 		else
-			D = this.distanceMatrix()
+			D = this%distanceMatrix()
 		end if
 		
 		! Hago todos los i y todos los j para no tener que asumir que es
 		! simetrica en el caso no dirigido. Se obtebdra automaticamente
 		output = 0.0_8
-		do i=1,this.nNodes()
-			do j=1,this.nNodes()
-				vj = this.node2Neighbors.data(j).size()
-				output = output + real(vj,8)*( A.get(i,j) + D.get(i,j) )
+		do i=1,this%nNodes()
+			do j=1,this%nNodes()
+				vj = this%node2Neighbors%data(j)%size()
+				output = output + real(vj,8)*( A%get(i,j) + D%get(i,j) )
 			end do
 		end do
 	end function molecularTopologicalIndex
@@ -2005,10 +2005,10 @@ module IntegerGraph_
 		if( present(resistanceDistanceMatrix) ) then
 			Omega = resistanceDistanceMatrix
 		else
-			Omega = this.resistanceDistanceMatrix()
+			Omega = this%resistanceDistanceMatrix()
 		end if
 		
-		output = this.wienerIndex( distanceMatrix=Omega )
+		output = this%wienerIndex( distanceMatrix=Omega )
 	end function kirchhoffIndex
 	
 	!>
@@ -2026,25 +2026,25 @@ module IntegerGraph_
 		if( present(distanceMatrix) ) then
 			D = distanceMatrix
 		else
-			D = this.distanceMatrix()
+			D = this%distanceMatrix()
 		end if
 		
 		if( present(resistanceDistanceMatrix) ) then
 			Omega = resistanceDistanceMatrix
 		else
-			Omega = this.resistanceDistanceMatrix()
+			Omega = this%resistanceDistanceMatrix()
 		end if
 		
 		OmegaD = Omega
-		do i=1,this.nNodes()
-			do j=1,this.nNodes()
+		do i=1,this%nNodes()
+			do j=1,this%nNodes()
 				if( i/=j ) then
-					call OmegaD.set( i, j, OmegaD.get(i,j)/D.get(i,j) )
+					call OmegaD%set( i, j, OmegaD%get(i,j)/D%get(i,j) )
 				end if
 			end do
 		end do
 		
-		output = this.wienerIndex( distanceMatrix=OmegaD )
+		output = this%wienerIndex( distanceMatrix=OmegaD )
 	end function kirchhoffSumIndex
 	
 	!>
@@ -2062,25 +2062,25 @@ module IntegerGraph_
 		if( present(distanceMatrix) ) then
 			D = distanceMatrix
 		else
-			D = this.distanceMatrix()
+			D = this%distanceMatrix()
 		end if
 		
 		if( present(resistanceDistanceMatrix) ) then
 			Omega = resistanceDistanceMatrix
 		else
-			Omega = this.resistanceDistanceMatrix()
+			Omega = this%resistanceDistanceMatrix()
 		end if
 		
 		DOmega = Omega
-		do i=1,this.nNodes()
-			do j=1,this.nNodes()
+		do i=1,this%nNodes()
+			do j=1,this%nNodes()
 				if( i/=j ) then
-					call DOmega.set( i, j, D.get(i,j)/DOmega.get(i,j) )
+					call DOmega%set( i, j, D%get(i,j)/DOmega%get(i,j) )
 				end if
 			end do
 		end do
 		
-		output = this.wienerIndex( distanceMatrix=DOmega )
+		output = this%wienerIndex( distanceMatrix=DOmega )
 	end function wienerSumIndex
 	
 	!>
@@ -2098,25 +2098,25 @@ module IntegerGraph_
 		if( present(distanceMatrix) ) then
 			D = distanceMatrix
 		else
-			D = this.distanceMatrix()
+			D = this%distanceMatrix()
 		end if
 		
 		if( present(resistanceDistanceMatrix) ) then
 			Omega = resistanceDistanceMatrix
 		else
-			Omega = this.resistanceDistanceMatrix()
+			Omega = this%resistanceDistanceMatrix()
 		end if
 		
 		OmegaD = Omega
-		do i=1,this.nNodes()
-			do j=1,this.nNodes()
+		do i=1,this%nNodes()
+			do j=1,this%nNodes()
 				if( i/=j ) then
-					call OmegaD.set( i, j, OmegaD.get(i,j)/D.get(i,j) )
+					call OmegaD%set( i, j, OmegaD%get(i,j)/D%get(i,j) )
 				end if
 			end do
 		end do
 		
-		output = this.balabanIndex( distanceMatrix=OmegaD )
+		output = this%balabanIndex( distanceMatrix=OmegaD )
 	end function JOmegaIndex
 	
 	!>
@@ -2149,51 +2149,51 @@ module IntegerGraph_
 		effCheckLabels = .false.
 		if( present(checkLabels) ) effCheckLabels = checkLabels
 		
-		if( this.nNodes() /= other.nNodes() .or. this.nEdges() /= other.nEdges() ) then
+		if( this%nNodes() /= other%nNodes() .or. this%nEdges() /= other.nEdges() ) then
 			output = .false.
 			return
 		end if
 		
 		if( effCheckLabels ) then
-			call labelsMapThis.init()
-			do i=1,this.nNodes()
-				sBuffer = trim(this.nodeProperties.data(i).label)
-				call labelsMapThis.set( sBuffer, labelsMapThis.at( sBuffer, defaultValue=0 )+1 )
+			call labelsMapThis%init()
+			do i=1,this%nNodes()
+				sBuffer = trim(this%nodeProperties%data(i)%label)
+				call labelsMapThis%set( sBuffer, labelsMapThis%at( sBuffer, defaultValue=0 )+1 )
 			end do
 			
-			call labelsMapOther.init()
-			do i=1,other.nNodes()
-				sBuffer = trim(other.nodeProperties.data(i).label)
-				call labelsMapOther.set( sBuffer, labelsMapOther.at( sBuffer, defaultValue=0 )+1 )
+			call labelsMapOther%init()
+			do i=1,other%nNodes()
+				sBuffer = trim(other%nodeProperties%data(i)%label)
+				call labelsMapOther%set( sBuffer, labelsMapOther%at( sBuffer, defaultValue=0 )+1 )
 			end do
 			
-			if( labelsMapThis.size() /= labelsMapOther.size() ) then
+			if( labelsMapThis%size() /= labelsMapOther%size() ) then
 				output = .false.
 				return
 			end if
 			
-			do i=1,labelsMapThis.size()
+			do i=1,labelsMapThis%size()
 				labelA = labelsMapThis.keyFromPos(i)
 				labelB = labelsMapOther.keyFromPos(i)
 				
-				if( trim(labelA.fstr) /= trim(labelB.fstr) .or. labelsMapThis.atFromPos(i) /= labelsMapOther.atFromPos(i) ) then
+				if( trim(labelA%fstr) /= trim(labelB%fstr) .or. labelsMapThis%atFromPos(i) /= labelsMapOther%atFromPos(i) ) then
 					output = .false.
 					return
 				end if
 			end do
 		end if
 		
-		if( this.nNodes() == 1 ) then
+		if( this%nNodes() == 1 ) then
 			this_descrip = 0.0_8
 			other_descrip = 0.0_8
 			
-			this_descrip(1) = this.nodeProperties.data(1).weight
-			other_descrip(1) = other.nodeProperties.data(1).weight
+			this_descrip(1) = this%nodeProperties%data(1)%weight
+			other_descrip(1) = other%nodeProperties%data(1)%weight
 			
 		! Be Careful. Remember that undirected graphs include at least two directed edges for each undirected edge.
-! 		if( .not. this.isDirected() .and. this.nNodes() == 2 ) then
-! 			w1 = this.edgeProperties.data(i).weight
-! 			w2 = other.edgeProperties.data(i).weight
+! 		if( .not. this%isDirected() .and. this%nNodes() == 2 ) then
+! 			w1 = this%edgeProperties%data(i)%weight
+! 			w2 = other.edgeProperties%data(i)%weight
 ! 			
 ! 			effSimilarity = 1.0_8 - abs( w1-w2 )/max(w1,w2)
 ! ! 			effSimilarity = 1.0_8/( 1.0_8+abs(w1-w2)/2 )
@@ -2206,46 +2206,46 @@ module IntegerGraph_
 ! 			return
 ! 		end if
 		else
-			A = this.adjacencyMatrix()
-			D = this.distanceMatrix()
-			L = this.laplacianMatrix()
+			A = this%adjacencyMatrix()
+			D = this%distanceMatrix()
+			L = this%laplacianMatrix()
 			
-			this_descrip(1) = this.randicIndex()
-			this_descrip(2) = this.wienerIndex( distanceMatrix=D )
-			this_descrip(3) = this.inverseWienerIndex( distanceMatrix=D )
-			this_descrip(4) = this.balabanIndex( distanceMatrix=D )
-			this_descrip(5) = this.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
+			this_descrip(1) = this%randicIndex()
+			this_descrip(2) = this%wienerIndex( distanceMatrix=D )
+			this_descrip(3) = this%inverseWienerIndex( distanceMatrix=D )
+			this_descrip(4) = this%balabanIndex( distanceMatrix=D )
+			this_descrip(5) = this%molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
 			
-			if( other.nComponents( laplacianMatrix=L ) > 1 ) then
+			if( other%nComponents( laplacianMatrix=L ) > 1 ) then
 				this_descrip(6:9) = 0.0_8
 			else
-				Omega = this.resistanceDistanceMatrix( laplacianMatrix=L )
+				Omega = this%resistanceDistanceMatrix( laplacianMatrix=L )
 				
-				this_descrip(6) = this.kirchhoffIndex( resistanceDistanceMatrix=Omega )
-				this_descrip(7) = this.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-				this_descrip(8) = this.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-				this_descrip(9) = this.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				this_descrip(6) = this%kirchhoffIndex( resistanceDistanceMatrix=Omega )
+				this_descrip(7) = this%kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				this_descrip(8) = this%wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				this_descrip(9) = this%JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
 			end if
 			
-			A = other.adjacencyMatrix()
-			D = other.distanceMatrix()
-			L = other.laplacianMatrix()
+			A = other%adjacencyMatrix()
+			D = other%distanceMatrix()
+			L = other%laplacianMatrix()
 			
-			other_descrip(1) = other.randicIndex()
-			other_descrip(2) = other.wienerIndex( distanceMatrix=D )
-			other_descrip(3) = other.inverseWienerIndex( distanceMatrix=D )
-			other_descrip(4) = other.balabanIndex( distanceMatrix=D )
-			other_descrip(5) = other.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
+			other_descrip(1) = other%randicIndex()
+			other_descrip(2) = other%wienerIndex( distanceMatrix=D )
+			other_descrip(3) = other%inverseWienerIndex( distanceMatrix=D )
+			other_descrip(4) = other%balabanIndex( distanceMatrix=D )
+			other_descrip(5) = other%molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
 			
-			if( other.nComponents( laplacianMatrix=L ) > 1 ) then
+			if( other%nComponents( laplacianMatrix=L ) > 1 ) then
 				other_descrip(6:9) = 1000.0_8
 			else
-				Omega = other.resistanceDistanceMatrix( laplacianMatrix=L )
+				Omega = other%resistanceDistanceMatrix( laplacianMatrix=L )
 				
-				other_descrip(6) = other.kirchhoffIndex( resistanceDistanceMatrix=Omega )
-				other_descrip(7) = other.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-				other_descrip(8) = other.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-				other_descrip(9) = other.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				other_descrip(6) = other%kirchhoffIndex( resistanceDistanceMatrix=Omega )
+				other_descrip(7) = other%kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				other_descrip(8) = other%wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+				other_descrip(9) = other%JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
 			end if
 		end if
 		
@@ -2263,8 +2263,8 @@ module IntegerGraph_
 		
 		if( present(similarity) ) similarity = effSimilarity
 		
-! 		call this.show( formatted=.true. )
-! 		call other.show( formatted=.true. )
+! 		call this%show( formatted=.true. )
+! 		call other%show( formatted=.true. )
 ! 		write(*,"(A,<size(this_descrip)>F8.3)") "   Descriptor1 = ", this_descrip
 ! 		write(*,"(A,<size(this_descrip)>F8.3)") "   Descriptor2 = ", other_descrip
 ! 		write(*,"(A,F8.3)") "   similarity = ", effSimilarity
@@ -2283,23 +2283,23 @@ module IntegerGraph_
 		integer :: sPos, tPos
 		integer, allocatable :: transferIds(:)
 		
-		call output.init( directed=this.isDirected() )
+		call output%init( directed=this%isDirected() )
 		
-		if( any( nodeIds > this.nNodes() ) ) then
+		if( any( nodeIds > this%nNodes() ) ) then
 			return
 		end if
 		
 		allocate( transferIds(size(nodeIds)) )
 		
 		do i=1,size(nodeIds)
-			call output.newNode( label=this.nodeProperties.data( nodeIds(i) ).label, weight=this.nodeProperties.data( nodeIds(i) ).weight, id=id )
+			call output%newNode( label=this%nodeProperties%data( nodeIds(i) )%label, weight=this%nodeProperties%data( nodeIds(i) )%weight, id=id )
 			transferIds( i ) = id
 		end do
 		
-		do i=1,this.nEdges()
+		do i=1,this%nEdges()
 			sPos = 0
 			do j=1,size(nodeIds)
-				if( this.edgeProperties.data(i).sNode == nodeIds(j) ) then
+				if( this%edgeProperties%data(i)%sNode == nodeIds(j) ) then
 					sPos = j
 					exit
 				end if
@@ -2307,14 +2307,14 @@ module IntegerGraph_
 			
 			tPos = 0
 			do j=1,size(nodeIds)
-				if( this.edgeProperties.data(i).tNode == nodeIds(j) ) then
+				if( this%edgeProperties%data(i)%tNode == nodeIds(j) ) then
 					tPos = j
 					exit
 				end if
 			end do
 			
 			if( sPos /= 0 .and. tPos /= 0 ) then
-				call output.newEdge( transferIds(sPos), transferIds(tPos), weight=this.edgeProperties.data(i).weight, id=id )
+				call output%newEdge( transferIds(sPos), transferIds(tPos), weight=this%edgeProperties%data(i)%weight, id=id )
 			end if
 		end do
 		
@@ -2342,8 +2342,8 @@ module IntegerGraph_
 			return
 		end if
 		
-		do i=1,subGraphNodes.size()
-			ivec => this.node2Neighbors.data( subGraphNodes.at(i) )
+		do i=1,subGraphNodes%size()
+			ivec => this%node2Neighbors%data( subGraphNodes%at(i) )
 			
 			if( ivec.contains( nodeId ) ) then
 				output = .false.
@@ -2368,24 +2368,24 @@ module IntegerGraph_
 		integer :: i
 		logical :: isExclusive
 		
-		ivec => this.node2Neighbors.data( nodeId )
+		ivec => this%node2Neighbors%data( nodeId )
 		
-		call output.init()
-		do i=1,ivec.size()
+		call output%init()
+		do i=1,ivec%size()
 			if( present(exclusive) .and. present(minId) ) then
-				if( this.isExclusive( ivec.at(i), exclusive ) .and. ivec.at(i) > minId ) then
-					call output.append( ivec.at(i) )
+				if( this%isExclusive( ivec%at(i), exclusive ) .and. ivec%at(i) > minId ) then
+					call output%append( ivec%at(i) )
 				end if
 			else if( present(exclusive) ) then
-				if( this.isExclusive( ivec.at(i), exclusive ) ) then
-					call output.append( ivec.at(i) )
+				if( this%isExclusive( ivec%at(i), exclusive ) ) then
+					call output%append( ivec%at(i) )
 				end if
 			else if( present(minId) ) then
-				if( ivec.at(i) > minId ) then
-					call output.append( ivec.at(i) )
+				if( ivec%at(i) > minId ) then
+					call output%append( ivec%at(i) )
 				end if
 			else
-				call output.append( ivec.at(i) )
+				call output%append( ivec%at(i) )
 			end if
 		end do
 		
@@ -2401,12 +2401,12 @@ module IntegerGraph_
 		
 		integer :: i, j
 		
-		call this.newNodes( n )
+		call this%newNodes( n )
 		
-		do i=1,this.nNodes()
-			do j=1,this.nNodes()
+		do i=1,this%nNodes()
+			do j=1,this%nNodes()
 				if( i/=j ) then
-					call this.newEdge( i, j )
+					call this%newEdge( i, j )
 				end if
 			end do
 		end do
@@ -2430,7 +2430,7 @@ module IntegerGraph_
 		integer :: i
 		type(Node) :: nodeProp
 		
-		call mygraph.init( directed=.false. )
+		call mygraph%init( directed=.false. )
 		
 		!------------------------------------------
 		! Ejemplo 0
@@ -2443,198 +2443,198 @@ module IntegerGraph_
 		!       \   /         5 -->   3,   4
 		!        (5)
 		
-		call mygraph.newNode()
-		call mygraph.newNode()
-		call mygraph.newNode()
-		call mygraph.newNode()
-		call mygraph.newNode()
+		call mygraph%newNode()
+		call mygraph%newNode()
+		call mygraph%newNode()
+		call mygraph%newNode()
+		call mygraph%newNode()
 		
-		call mygraph.newEdges( 1, [2] )
-		call mygraph.newEdges( 2, [1,3,4] )
-		call mygraph.newEdges( 3, [2,5] )
-		call mygraph.newEdges( 4, [2,5] )
-		call mygraph.newEdges( 5, [3,4] )
+		call mygraph%newEdges( 1, [2] )
+		call mygraph%newEdges( 2, [1,3,4] )
+		call mygraph%newEdges( 3, [2,5] )
+		call mygraph%newEdges( 4, [2,5] )
+		call mygraph%newEdges( 5, [3,4] )
 		
-		call mygraph.show( formatted=.true. )
+		call mygraph%show( formatted=.true. )
 ! 		
 ! 		write(*,*) ">> Deleting node 1"
 ! 		call mygraph.deleteNode( 1 )
-! 		call mygraph.show( formatted=.true. )
+! 		call mygraph%show( formatted=.true. )
 ! 
 ! 		write(*,*) ">> Deleting node 3"
 ! 		call mygraph.deleteNode( 3 )
-! 		call mygraph.show( formatted=.true. )
+! 		call mygraph%show( formatted=.true. )
 
 		write(*,*) ">> Deleting edge 6"
 		call mygraph.deleteEdge( 6 )
-		call mygraph.show( formatted=.true. )
+		call mygraph%show( formatted=.true. )
 ! 		
-! 		call mygraph.save( "salida.gml", format=GML )
-! 		call mygraph.save( "salida.dot", format=DOT )
+! 		call mygraph%save( "salida.gml", format=GML )
+! 		call mygraph%save( "salida.dot", format=DOT )
 		
 ! 		stop
 		
 		!------------------------------------------
 		! Ejemplo 1
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
 ! 		
-! 		call mygraph.newEdges( 1, [2,3,6] )
-! 		call mygraph.newEdges( 2, [1,3,4] )
-! 		call mygraph.newEdges( 3, [1,2,4,6] )
-! 		call mygraph.newEdges( 4, [2,3,5] )
-! 		call mygraph.newEdges( 5, [4,6] )
-! 		call mygraph.newEdges( 6, [1,3,5] )
+! 		call mygraph%newEdges( 1, [2,3,6] )
+! 		call mygraph%newEdges( 2, [1,3,4] )
+! 		call mygraph%newEdges( 3, [1,2,4,6] )
+! 		call mygraph%newEdges( 4, [2,3,5] )
+! 		call mygraph%newEdges( 5, [4,6] )
+! 		call mygraph%newEdges( 6, [1,3,5] )
 
 ! 		!------------------------------------------
 ! 		! Ejemplo 3
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
 ! 		
-! 		call mygraph.newEdges( 1, [2,3,4] )
-! 		call mygraph.newEdges( 2, [5,1] )
-! 		call mygraph.newEdges( 3, [8] )
-! 		call mygraph.newEdges( 4, [1] )
-! 		call mygraph.newEdges( 5, [2,6,7] )
-! 		call mygraph.newEdges( 6, [5] )
-! 		call mygraph.newEdges( 7, [5] )
-! 		call mygraph.newEdges( 8, [3] )
+! 		call mygraph%newEdges( 1, [2,3,4] )
+! 		call mygraph%newEdges( 2, [5,1] )
+! 		call mygraph%newEdges( 3, [8] )
+! 		call mygraph%newEdges( 4, [1] )
+! 		call mygraph%newEdges( 5, [2,6,7] )
+! 		call mygraph%newEdges( 6, [5] )
+! 		call mygraph%newEdges( 7, [5] )
+! 		call mygraph%newEdges( 8, [3] )
 ! 
 ! 		!------------------------------------------
 ! 		! Ejemplo 2
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
+! ! 		call mygraph%newNode()
+! ! 		call mygraph%newNode()
+! ! 		call mygraph%newNode()
+! ! 		call mygraph%newNode()
+! ! 		call mygraph%newNode()
+! ! 		call mygraph%newNode()
 ! ! 		
-! ! 		call mygraph.newEdges( 1, [2] )
-! ! 		call mygraph.newEdges( 2, [1,3,4] )
-! ! 		call mygraph.newEdges( 3, [2,4] )
-! ! 		call mygraph.newEdges( 4, [2,3,5] )
-! ! 		call mygraph.newEdges( 5, [4,6] )
-! ! 		call mygraph.newEdges( 6, [5] )
+! ! 		call mygraph%newEdges( 1, [2] )
+! ! 		call mygraph%newEdges( 2, [1,3,4] )
+! ! 		call mygraph%newEdges( 3, [2,4] )
+! ! 		call mygraph%newEdges( 4, [2,3,5] )
+! ! 		call mygraph%newEdges( 5, [4,6] )
+! ! 		call mygraph%newEdges( 6, [5] )
 ! 
-! 		call mygraph.show()
+! 		call mygraph%show()
 ! 		
 ! 		call mygraph.computeDijkstraPaths( 8 )
 ! 		write(*,*) "distance from 1 to 6 = ", mygraph.distance(7)
 ! 		path = mygraph.shortestPath(7)
-! 		call path.show()
+! 		call path%show()
 
 		!------------------------------------------
 		! Ejemplo Diego
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
+! 		call mygraph%newNode()
 ! 		
-! 		call mygraph.newEdges( 1, [2,3,4], [1.01_8,1.43_8,1.01_8] )
-! 		call mygraph.newEdges( 2, [1,4,3], [1.01_8,1.43_8,1.01_8] )
-! 		call mygraph.newEdges( 3, [2,1,4], [1.01_8,1.43_8,1.01_8] )
-! 		call mygraph.newEdges( 4, [1,2,3], [1.01_8,1.43_8,1.01_8] )
+! 		call mygraph%newEdges( 1, [2,3,4], [1.01_8,1.43_8,1.01_8] )
+! 		call mygraph%newEdges( 2, [1,4,3], [1.01_8,1.43_8,1.01_8] )
+! 		call mygraph%newEdges( 3, [2,1,4], [1.01_8,1.43_8,1.01_8] )
+! 		call mygraph%newEdges( 4, [1,2,3], [1.01_8,1.43_8,1.01_8] )
 		
-		call mygraph.show( formatted=.true. )
+		call mygraph%show( formatted=.true. )
 		
 		call mygraph.computeDijkstraPaths( 1 )
 		write(*,*) "Distance from 1 to 3 = ", mygraph.distance(3)
 		path = mygraph.shortestPath(3)
 		write(*,*) "Path(1,3) = "
-		call path.show()
+		call path%show()
 		
 		write(*,*) "Adjacency matrix"
-		AMatrix = mygraph.adjacencyMatrix()
-		call AMatrix.show( formatted=.true. )
+		AMatrix = mygraph%adjacencyMatrix()
+		call AMatrix%show( formatted=.true. )
 		write(*,*) ""
 		write(*,*) "Distance matrix"
-		dMatrix = mygraph.distanceMatrix()
-		call dMatrix.show( formatted=.true. )
+		dMatrix = mygraph%distanceMatrix()
+		call dMatrix%show( formatted=.true. )
 		write(*,*) ""
 		write(*,*) "Laplacian matrix"
-		LMatrix = mygraph.laplacianMatrix()
-		call LMatrix.show( formatted=.true. )
+		LMatrix = mygraph%laplacianMatrix()
+		call LMatrix%show( formatted=.true. )
 		write(*,*) ""
 		write(*,*) "Resistance-Distance matrix"
-		OmegaMatrix = mygraph.resistanceDistanceMatrix( laplacianMatrix=LMatrix )
-		call OmegaMatrix.show( formatted=.true. )
+		OmegaMatrix = mygraph%resistanceDistanceMatrix( laplacianMatrix=LMatrix )
+		call OmegaMatrix%show( formatted=.true. )
 		write(*,*) ""
 		write(*,*) "Indices"
 		write(*,*) "-------"
-		write(*,*) "Randic               = ", mygraph.randicIndex()
-		write(*,*) "Wiener               = ", mygraph.wienerIndex( distanceMatrix=dMatrix )
-		write(*,*) "Wiener               = ", mygraph.inverseWienerIndex( distanceMatrix=dMatrix )
-		write(*,*) "Balaban              = ", mygraph.balabanIndex( distanceMatrix=dMatrix )
-		write(*,*) "MolecularTopological = ", mygraph.molecularTopologicalIndex( adjacencyMatrix=AMatrix, distanceMatrix=dMatrix )
-		write(*,*) "Kirchhoff            = ", mygraph.kirchhoffIndex( resistanceDistanceMatrix=OmegaMatrix )
-		write(*,*) "KirchhoffSum         = ", mygraph.kirchhoffSumIndex( distanceMatrix=dMatrix, resistanceDistanceMatrix=OmegaMatrix )
-		write(*,*) "wienerSum            = ", mygraph.wienerSumIndex( distanceMatrix=dMatrix, resistanceDistanceMatrix=OmegaMatrix )
-		write(*,*) "JOmega               = ", mygraph.JOmegaIndex( distanceMatrix=dMatrix, resistanceDistanceMatrix=OmegaMatrix )
+		write(*,*) "Randic               = ", mygraph%randicIndex()
+		write(*,*) "Wiener               = ", mygraph%wienerIndex( distanceMatrix=dMatrix )
+		write(*,*) "Wiener               = ", mygraph%inverseWienerIndex( distanceMatrix=dMatrix )
+		write(*,*) "Balaban              = ", mygraph%balabanIndex( distanceMatrix=dMatrix )
+		write(*,*) "MolecularTopological = ", mygraph%molecularTopologicalIndex( adjacencyMatrix=AMatrix, distanceMatrix=dMatrix )
+		write(*,*) "Kirchhoff            = ", mygraph%kirchhoffIndex( resistanceDistanceMatrix=OmegaMatrix )
+		write(*,*) "KirchhoffSum         = ", mygraph%kirchhoffSumIndex( distanceMatrix=dMatrix, resistanceDistanceMatrix=OmegaMatrix )
+		write(*,*) "wienerSum            = ", mygraph%wienerSumIndex( distanceMatrix=dMatrix, resistanceDistanceMatrix=OmegaMatrix )
+		write(*,*) "JOmega               = ", mygraph%JOmegaIndex( distanceMatrix=dMatrix, resistanceDistanceMatrix=OmegaMatrix )
 		
-! 		write(*,*) "idEdge(3,4) = ", mygraph.getEdgeId( 3, 4 )
-! 		write(*,*) "idEdge(4,3) = ", mygraph.getEdgeId( 4, 3 )
-! 		write(*,*) "idEdge(2,4) = ", mygraph.getEdgeId( 2, 4 )
+! 		write(*,*) "idEdge(3,4) = ", mygraph%getEdgeId( 3, 4 )
+! 		write(*,*) "idEdge(4,3) = ", mygraph%getEdgeId( 4, 3 )
+! 		write(*,*) "idEdge(2,4) = ", mygraph%getEdgeId( 2, 4 )
 		
 		write(*,*) ""
 		write(*,*) "Apollonian Network 2"
 		write(*,*) "--------------------"
-		call mygraph.init()
+		call mygraph%init()
 		
-		call mygraph.newNodes( 7 )
-		call mygraph.newEdges( 1, [2,5,4,6,3] )
-		call mygraph.newEdges( 2, [1,5,4,7,3] )
-		call mygraph.newEdges( 3, [1,6,4,7,2] )
-		call mygraph.newEdges( 4, [1,5,2,7,3,6] )
-		call mygraph.newEdges( 5, [1,2,4] )
-		call mygraph.newEdges( 6, [1,4,3] )
-		call mygraph.newEdges( 7, [3,4,2] )
+		call mygraph%newNodes( 7 )
+		call mygraph%newEdges( 1, [2,5,4,6,3] )
+		call mygraph%newEdges( 2, [1,5,4,7,3] )
+		call mygraph%newEdges( 3, [1,6,4,7,2] )
+		call mygraph%newEdges( 4, [1,5,2,7,3,6] )
+		call mygraph%newEdges( 5, [1,2,4] )
+		call mygraph%newEdges( 6, [1,4,3] )
+		call mygraph%newEdges( 7, [3,4,2] )
 		
 		write(*,*) "Index                             expected                obtained"
-		write(*,*) "Wiener                 ", 27.0_8, mygraph.wienerIndex()
-		write(*,*) "MolecularTopological   ", 360.0_8, mygraph.molecularTopologicalIndex()
-		write(*,*) "Kirchhoff              ", 834.0_8/85.0_8, mygraph.kirchhoffIndex()
-		write(*,*) "KirchhoffSum           ", 672.0_8/85.0_8, mygraph.kirchhoffSumIndex()
+		write(*,*) "Wiener                 ", 27.0_8, mygraph%wienerIndex()
+		write(*,*) "MolecularTopological   ", 360.0_8, mygraph%molecularTopologicalIndex()
+		write(*,*) "Kirchhoff              ", 834.0_8/85.0_8, mygraph%kirchhoffIndex()
+		write(*,*) "KirchhoffSum           ", 672.0_8/85.0_8, mygraph%kirchhoffSumIndex()
 		
 		write(*,*) ""
 		write(*,*) "============================"
 		write(*,*) " Testing inducedSubgraph"
 		write(*,*) "============================"
-		call mygraph.init()
+		call mygraph%init()
 		
-		call mygraph.newNodes( 5, labels=["1.a","2.a","3.a","4.a","5.a"], weights=[1.0_8,2.0_8,3.0_8,4.0_8,5.0_8] )
-		call mygraph.newEdges( 1, [2,3], weights=[1.2_8,1.3_8] )
-		call mygraph.newEdges( 2, [1,3], weights=[2.1_8,2.3_8] )
-		call mygraph.newEdges( 3, [1,2,4,5], weights=[3.1_8,3.2_8,3.4_8,3.5_8] )
-		call mygraph.newEdges( 4, [3], weights=[4.3_8] )
-		call mygraph.newEdges( 5, [3], weights=[5.3_8] )
+		call mygraph%newNodes( 5, labels=["1.a","2.a","3.a","4.a","5.a"], weights=[1.0_8,2.0_8,3.0_8,4.0_8,5.0_8] )
+		call mygraph%newEdges( 1, [2,3], weights=[1.2_8,1.3_8] )
+		call mygraph%newEdges( 2, [1,3], weights=[2.1_8,2.3_8] )
+		call mygraph%newEdges( 3, [1,2,4,5], weights=[3.1_8,3.2_8,3.4_8,3.5_8] )
+		call mygraph%newEdges( 4, [3], weights=[4.3_8] )
+		call mygraph%newEdges( 5, [3], weights=[5.3_8] )
 		
-		call mygraph.show( formatted=.true. )
+		call mygraph%show( formatted=.true. )
 		
 		write(*,*) ">>>>> inducedSubgraph [1,2,3]"
 		mysubgraph = mygraph.inducedSubgraph( [1,2,3] )
-		call mysubgraph.show( formatted=.true. )
+		call mysubgraph%show( formatted=.true. )
 		write(*,*) ""
 		write(*,*) ">>>>> inducedSubgraph [1,3,4]"
 		mysubgraph = mygraph.inducedSubgraph( [1,3,4] )
-		call mysubgraph.show( formatted=.true. )
+		call mysubgraph%show( formatted=.true. )
 		
-! 		call mysubgraph.save( "salida.gml", format=GML )
-! 		call mysubgraph.save( "salida.dot", format=DOT )
-! 		call mysubgraph.save( "salida.dat", format=DAT )
-! 		call mysubgraph.save( "salida.dat", format=DAT, append=.true. )
+! 		call mysubgraph%save( "salida.gml", format=GML )
+! 		call mysubgraph%save( "salida.dot", format=DOT )
+! 		call mysubgraph%save( "salida.dat", format=DAT )
+! 		call mysubgraph%save( "salida.dat", format=DAT, append=.true. )
 		
-		call mysubgraph.initFromDATLine( "1[label=1.a,weight=1.00000];2[label=3.a,weight=3.00000];3[label=4.a,weight=4.00000];1--2[label=3.a--1.a,weight=1.30000];2--3[label=4.a--3.a,weight=3.40000];" )
-		call mysubgraph.show( formatted=.true. )
+		call mysubgraph%initFromDATLine( "1[label=1.a,weight=1.00000];2[label=3.a,weight=3.00000];3[label=4.a,weight=4.00000];1--2[label=3.a--1.a,weight=1.30000];2--3[label=4.a--3.a,weight=3.40000];" )
+		call mysubgraph%show( formatted=.true. )
 		write(*,"(A)") mysubgraph.toDATString()
 		
 	end subroutine IntegerGraph_test

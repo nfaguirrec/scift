@@ -90,8 +90,8 @@ module StringRealHistogramPair_
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<Pair:"
-			ITEMS( "first=", this.first.fstr )
-			ITEMI( ",second=", this.second.size() )
+			ITEMS( "first=", this%first%fstr )
+			ITEMI( ",second=", this%second%size() )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -105,8 +105,8 @@ module StringRealHistogramPair_
 ! 
 ! 			LINE("Pair")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -130,21 +130,21 @@ module StringRealHistogramPair_
 		write(*,*) "Testing for empty constructor"
 		write(*,*) "-----------------------------"
 		
-		write(*,*) "call mypair1.init( str, hist )"
+		write(*,*) "call mypair1%init( str, hist )"
 		
-		call hist.init( Histogram_STURGES )
-		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
+		call hist%init( Histogram_STURGES )
+		call hist%add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
 		
 		str = "Hola"
 		mypair1 = StringRealHistogramPair( str, hist )
-		call mypair1.show()
+		call mypair1%show()
 		
-		write(*,*) "call mypair2.init( str, hist )"
+		write(*,*) "call mypair2%init( str, hist )"
 		
 		str = "Entonces"
-		call hist.add( [23.21883_8, 25.35600_8, 28.41117_8, 22.08219_8, 19.55053_8] )
+		call hist%add( [23.21883_8, 25.35600_8, 28.41117_8, 22.08219_8, 19.55053_8] )
 		mypair2 = StringRealHistogramPair( str, hist )
-		call mypair2.show()
+		call mypair2%show()
 		
 		write(*,*) "------------------------------"
 		write(*,*) "Testing for copy constructor"
@@ -153,7 +153,7 @@ module StringRealHistogramPair_
 		write(*,*) "mypair1 = mypair2"
 		
 		mypair1 = mypair2
-		call mypair1.show()
+		call mypair1%show()
 	end subroutine StringRealHistogramPair_test
 
 end module StringRealHistogramPair_

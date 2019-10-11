@@ -110,7 +110,7 @@ module CNFunction_
 		
 		nData = 1
 		do while( .not. stream.eof() )
-			line = stream.readLine( cCommentsEff )
+			line = stream%readLine( cCommentsEff )
 			
 			if( len(line) /= 0 ) then
 				call buffer.fromFString( line )
@@ -130,7 +130,7 @@ module CNFunction_
 							read( tokens(columnsEff(1)),* ) x(nData)
 							
 							buffer = "("//trim(tokens(columnsEff(2)))//", "//trim(tokens(columnsEff(3)))//")"
-							read( buffer.fstr,* ) y(nData)
+							read( buffer%fstr,* ) y(nData)
 							nData = nData + 1
 						end if
 					end if
@@ -153,13 +153,13 @@ module CNFunction_
 		end do
 		
 		nPoints = nData-1
-		call this.xGrid.fromArray( x(1:nPoints) )
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(nPoints) )
-		this.fArray = y(1:nPoints)
-		call this.setUnits( effUnits )
+		call this%xGrid%fromArray( x(1:nPoints) )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(nPoints) )
+		this%fArray = y(1:nPoints)
+		call this%setUnits( effUnits )
 		
-		call this.checkEquallyspaced()
+		call this%checkEquallyspaced()
 		
 		deallocate(x)
 		deallocate(y)
@@ -180,21 +180,21 @@ module CNFunction_
 		
 		output = trim(output)//"<CNFunction:"
 		
-		output = trim(output)//this.xGrid.str()
+		output = trim(output)//this%xGrid%str()
 		
 ! 		output = trim(output)//",max="
-! 		fmt = int(log10(this.max+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.max
+! 		fmt = int(log10(this%max+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%max
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",h="
-! 		fmt = int(log10(this.h+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.h
+! 		fmt = int(log10(this%h+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%h
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",size="
-! 		fmt = int(log10(float(this.size+1)))+1
-! 		write(strBuffer, "(i<fmt>)") this.size
+! 		fmt = int(log10(float(this%size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this%size
 ! 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -228,11 +228,11 @@ module CNFunction_
 ! 		effUnits = [1.0_8, 1.0_8]
 ! 		if( present(units) ) effUnits = units
 ! 		
-! 		effIXRange = [1,this.nPoints()]
+! 		effIXRange = [1,this%nPoints()]
 ! 		if( present(xrange) ) then
 ! 			effIXRange = [ &
-! 				floor( 1.0000001*(xrange(1)-this.xGrid.min)/this.xGrid.stepSize+1.0 ), &
-! 				floor( 1.0000001*(xrange(2)-this.xGrid.min)/this.xGrid.stepSize+1.0 ) ]
+! 				floor( 1.0000001*(xrange(1)-this%xGrid%min)/this%xGrid%stepSize+1.0 ), &
+! 				floor( 1.0000001*(xrange(2)-this%xGrid%min)/this%xGrid%stepSize+1.0 ) ]
 ! 		else if( present(ixrange) ) then
 ! 			effIXRange = ixrange
 ! 		end if
@@ -249,12 +249,12 @@ module CNFunction_
 ! 		write(effUnit,"(A)") "# "//trim(date)
 ! 		
 ! 		do i=effIXRange(1),effIXRange(2),invResolution
-! 			if( abs(this.fArray( i )) > 1d-98 ) then
-! 				write(effUnit,"(A,E15.7,2E15.7)") trim(effBeforeLine), this.xGrid.data(i)/effUnits(1), &
-! 					real(this.fArray( i ))/effUnits(2), &
-! 					aimag(this.fArray( i ))/effUnits(2)
+! 			if( abs(this%fArray( i )) > 1d-98 ) then
+! 				write(effUnit,"(A,E15.7,2E15.7)") trim(effBeforeLine), this%xGrid%data(i)/effUnits(1), &
+! 					real(this%fArray( i ))/effUnits(2), &
+! 					aimag(this%fArray( i ))/effUnits(2)
 ! 			else
-! 				write(effUnit,"(A,E15.7,2E15.7)") trim(effBeforeLine), this.xGrid.data(i)/effUnits(1), 0.0_8, 0.0_8
+! 				write(effUnit,"(A,E15.7,2E15.7)") trim(effBeforeLine), this%xGrid%data(i)/effUnits(1), 0.0_8, 0.0_8
 ! 			end if
 ! 		end do
 ! 		
@@ -327,8 +327,8 @@ module CNFunction_
 		complex(8), allocatable :: data(:)
 		integer :: i
 		
-		call xGrid.init( 1.0_8, 10.0_8, 100 )
-		call xGrid.show()
+		call xGrid%init( 1.0_8, 10.0_8, 100 )
+		call xGrid%show()
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test from function
@@ -337,8 +337,8 @@ module CNFunction_
 		write(*,*) "---"
 		
 		call nFunc.fromFunction( xGrid, func=funcTest )
-		call nFunc.show()
-		call nFunc.save( "salida1", format=BLKS_FORMAT )
+		call nFunc%show()
+		call nFunc%save( "salida1", format=BLKS_FORMAT )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test for copy constructor
@@ -347,10 +347,10 @@ module CNFunction_
 		write(*,*) "---"
 		
 		call nFunc2.copy( nFunc )
-		call nFunc2.show()
+		call nFunc2%show()
 		
-! 		call ofile.init( "salida2" )
-! 		call nFunc.toFStream( ofile )
+! 		call ofile%init( "salida2" )
+! 		call nFunc%toFStream( ofile )
 ! 		call ofile.close()
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -359,14 +359,14 @@ module CNFunction_
 		write(*,*) "Testing from array"
 		write(*,*) "---"
 		
-		allocate( data(xGrid.nPoints) )
-		do i=1,xGrid.nPoints
-			data(i) = funcTest( xGrid.data(i) )
+		allocate( data(xGrid%nPoints) )
+		do i=1,xGrid%nPoints
+			data(i) = funcTest( xGrid%data(i) )
 		end do
 		
-		call nFunc.fromGridArray( xGrid, fArray=data )
-		call nFunc.show()
-		call nFunc.save( "salida3", format=BLKS_FORMAT )
+		call nFunc%fromGridArray( xGrid, fArray=data )
+		call nFunc%show()
+		call nFunc%save( "salida3", format=BLKS_FORMAT )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test from IFStream
@@ -374,11 +374,11 @@ module CNFunction_
 		write(*,*) "Testing from IFStream"
 		write(*,*) "---"
 		
-		call ifile.init( "data/formats/TWO_COLUMNS" )
+		call ifile%init( "data/formats/TWO_COLUMNS" )
 		call nFunc.fromFStream( ifile, columns=[1,2] )
-		call nFunc.show()
+		call nFunc%show()
 		call ifile.close()
-		call nFunc.save( "salidaF0", format=BLKS_FORMAT )
+		call nFunc%save( "salidaF0", format=BLKS_FORMAT )
 		
 ! 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 		! Test operators
@@ -386,91 +386,91 @@ module CNFunction_
 ! 		write(*,*) "Testing operators"
 ! 		write(*,*) "---"
 ! 		
-! 		call xGrid.init( 1.0_8, 10.0_8, 100 )
+! 		call xGrid%init( 1.0_8, 10.0_8, 100 )
 ! 		call nFunc.fromFunction( xGrid, func=funcTest )
 ! 		call nFunc2.fromFunction( xGrid, func=funcTest2 )
-! 		call nFunc.save( "salidaF1" )
-! 		call nFunc2.save( "salidaF2" )
+! 		call nFunc%save( "salidaF1" )
+! 		call nFunc2%save( "salidaF2" )
 ! 		
 ! 		nFunc3 = nFunc+nFunc2
-! 		call nFunc3.save( "salidaF1aF2" )
+! 		call nFunc3%save( "salidaF1aF2" )
 ! 		
 ! 		nFunc3 = nFunc+3.0_8
-! 		call nFunc3.save( "salidaF1a3.0" )
+! 		call nFunc3%save( "salidaF1a3.0" )
 ! 		
 ! 		nFunc3 = nFunc-nFunc2
-! 		call nFunc3.save( "salidaF1mF2" )
+! 		call nFunc3%save( "salidaF1mF2" )
 ! 		
 ! 		nFunc3 = nFunc-3.0_8
-! 		call nFunc3.save( "salidaF1m3.0" )
+! 		call nFunc3%save( "salidaF1m3.0" )
 ! 		
 ! 		nFunc3 = nFunc*nFunc2
-! 		call nFunc3.save( "salidaF1pF2" )
+! 		call nFunc3%save( "salidaF1pF2" )
 ! 		
 ! 		nFunc3 = nFunc*3.0_8
-! 		call nFunc3.save( "salidaF1p3.0" )
+! 		call nFunc3%save( "salidaF1p3.0" )
 ! 		
 ! 		nFunc3 = nFunc/nFunc2
-! 		call nFunc3.save( "salidaF1dF2" )
+! 		call nFunc3%save( "salidaF1dF2" )
 ! 		
 ! 		nFunc3 = nFunc/3.0_8
-! 		call nFunc3.save( "salidaF1d3.0" )
+! 		call nFunc3%save( "salidaF1d3.0" )
 ! 		
 ! 		nFunc3 = nFunc**nFunc2
-! 		call nFunc3.save( "salidaF1ppF2" )
+! 		call nFunc3%save( "salidaF1ppF2" )
 ! 		
 ! 		nFunc3 = nFunc**2.0_8
-! 		call nFunc3.save( "salidaF1pp3.0" )
+! 		call nFunc3%save( "salidaF1pp3.0" )
 
 		write(*,*) "===================================================================="
 		write(*,*) " TESTING RESIZE"
 		write(*,*) "===================================================================="
 		write(*,*) ""
 		
-		call xGrid.init( 1.0_8, 10.0_8, 10 )
+		call xGrid%init( 1.0_8, 10.0_8, 10 )
 		call nFunc.fromFunction( xGrid, func=funcTest )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = -1"
 		write(*,*) "---------------------------------"
-		call nFunc.resize( 5, -1 )
-		call nFunc.show()
-		do i=1,nFunc.nPoints()
-			write(*,"(I5,F10.5,5X,2F10.5)") i, nFunc.x(i), nFunc.at(i)
+		call nFunc%resize( 5, -1 )
+		call nFunc%show()
+		do i=1,nFunc%nPoints()
+			write(*,"(I5,F10.5,5X,2F10.5)") i, nFunc%x(i), nFunc%at(i)
 		end do
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid -5, dir = -1"
 		write(*,*) "----------------------------------"
-		call nFunc.resize( -5, -1 )
-		call nFunc.show()
-		do i=1,nFunc.nPoints()
-			write(*,"(I5,F10.5,5X,2F10.5)") i, nFunc.x(i), nFunc.at(i)
+		call nFunc%resize( -5, -1 )
+		call nFunc%show()
+		do i=1,nFunc%nPoints()
+			write(*,"(I5,F10.5,5X,2F10.5)") i, nFunc%x(i), nFunc%at(i)
 		end do
 		
 		write(*,*) ""
 		write(*,*) "===================================================================="
 		write(*,*) ""
 		
-		call xGrid.init( 1.0_8, 10.0_8, 10 )
+		call xGrid%init( 1.0_8, 10.0_8, 10 )
 		call nFunc.fromFunction( xGrid, func=funcTest )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = 0"
 		write(*,*) "--------------------------------"
-		call nFunc.resize( 5, 0 )
-		call nFunc.show()
-		do i=1,nFunc.nPoints()
-			write(*,"(I5,F10.5,5X,2F10.5)") i, nFunc.x(i), nFunc.at(i)
+		call nFunc%resize( 5, 0 )
+		call nFunc%show()
+		do i=1,nFunc%nPoints()
+			write(*,"(I5,F10.5,5X,2F10.5)") i, nFunc%x(i), nFunc%at(i)
 		end do
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid -5, dir = 0"
 		write(*,*) "---------------------------------"
-		call nFunc.resize( -5, 0 )
-		call nFunc.show()
-		do i=1,nFunc.nPoints()
-			write(*,"(I5,F10.5,5X,2F10.5)") i, nFunc.x(i), nFunc.at(i)
+		call nFunc%resize( -5, 0 )
+		call nFunc%show()
+		do i=1,nFunc%nPoints()
+			write(*,"(I5,F10.5,5X,2F10.5)") i, nFunc%x(i), nFunc%at(i)
 		end do
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -480,17 +480,17 @@ module CNFunction_
 		write(*,*) "---"
 		
 		! plot "salidaFuncExact.dat" w l, "" u 1:3 w l, "salidaFunc.dat" w p pt 5, "" u 1:3 w lp, "salidaFunc2.dat" w p, "" u 1:3 w p lc rgb "magenta"
-		call xGrid.init( 1.0_8, 10.0_8, 1000 )
+		call xGrid%init( 1.0_8, 10.0_8, 1000 )
 		call nFunc.fromFunction( xGrid, func=funcTest )
-		call nFunc.save( "salidaFuncExact.dat" )
+		call nFunc%save( "salidaFuncExact.dat" )
 		
-		call xGrid.init( 1.0_8, 10.0_8, 21 )
+		call xGrid%init( 1.0_8, 10.0_8, 21 )
 		call nFunc.fromFunction( xGrid, func=funcTest )
-		call nFunc.save( "salidaFunc.dat" )
+		call nFunc%save( "salidaFunc.dat" )
 		
-		call xGrid2.init( -2.0_8, 13.0_8, 41 )
+		call xGrid2%init( -2.0_8, 13.0_8, 41 )
 		nFunc2 = nFunc.interpolate( xGrid2 )
-		call nFunc2.save( "salidaFunc2.dat" )
+		call nFunc2%save( "salidaFunc2.dat" )
 
 	end subroutine CNFunction_test
 	

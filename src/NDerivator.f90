@@ -68,12 +68,12 @@ module NDerivator_
 		type(RNFunction), target, intent(in) :: func
 		integer, optional :: nPoints
 		
-		this.nPoints = 5
+		this%nPoints = 5
 		if( present(nPoints) ) then
-			this.nPoints = nPoints
+			this%nPoints = nPoints
 		end if
 		
-		this.func => func
+		this%func => func
 	end subroutine init
 	
 	!>
@@ -82,7 +82,7 @@ module NDerivator_
 	subroutine destroy( this )
 		type(NDerivator) :: this
 		
-		nullify(this.func)
+		nullify(this%func)
 	end subroutine destroy
 	
 	!>
@@ -100,23 +100,23 @@ module NDerivator_
 ! 		output = trim(output)//"<NDerivator:"
 ! 		
 ! 		output = trim(output)//"min="
-! 		fmt = int(log10(this.min+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+! 		fmt = int(log10(this%min+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%min
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",max="
-! 		fmt = int(log10(this.max+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.max
+! 		fmt = int(log10(this%max+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%max
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",h="
-! 		fmt = int(log10(this.h+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.h
+! 		fmt = int(log10(this%h+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%h
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",size="
-! 		fmt = int(log10(float(this.size+1)))+1
-! 		write(strBuffer, "(i<fmt>)") this.size
+! 		fmt = int(log10(float(this%size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this%size
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//">"
@@ -137,7 +137,7 @@ module NDerivator_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!> 
@@ -240,15 +240,15 @@ module NDerivator_
 		integer :: i, ind
 		real(8), allocatable :: coeff(:,:,:)
 		
-		allocate( coeff(this.nPoints,this.nPoints,0:order) )
+		allocate( coeff(this%nPoints,this%nPoints,0:order) )
 		
-		if( this.func.xGrid.isEquallyspaced ) then
+		if( this%func%xGrid%isEquallyspaced ) then
 		
-			ind = (x-this.func.xGrid.min)/this.func.xGrid.stepSize+1
+			ind = (x-this%func%xGrid%min)/this%func%xGrid%stepSize+1
 			
 		else
-			do i=1,this.func.xGrid.nPoints
-				if( x < this.func.xGrid.data(i) ) then
+			do i=1,this%func%xGrid%nPoints
+				if( x < this%func%xGrid%data(i) ) then
 					exit
 				end if
 			end do
@@ -260,17 +260,17 @@ module NDerivator_
 		end if
 		
 		! Diferencias hacia adelante
-		if( ind <= this.nPoints/2 ) then
-			call fornbergWeights( this.func.xGrid.data(1:this.nPoints), x, order, coeff )
-			output = sum( coeff( this.nPoints, :, order )*this.func.fArray(1:this.nPoints) )
+		if( ind <= this%nPoints/2 ) then
+			call fornbergWeights( this%func%xGrid%data(1:this%nPoints), x, order, coeff )
+			output = sum( coeff( this%nPoints, :, order )*this%func%fArray(1:this%nPoints) )
 		! Diferencias hacia atrás
-		else if( ind >= this.func.xGrid.nPoints-this.nPoints/2+1  ) then
-			call fornbergWeights( this.func.xGrid.data(this.func.xGrid.nPoints-this.nPoints+1:this.func.xGrid.nPoints), x, order, coeff )
-			output = sum( coeff( this.nPoints, :, order )*this.func.fArray(this.func.xGrid.nPoints-this.nPoints+1:this.func.xGrid.nPoints) )
+		else if( ind >= this%func%xGrid%nPoints-this%nPoints/2+1  ) then
+			call fornbergWeights( this%func%xGrid%data(this%func%xGrid%nPoints-this%nPoints+1:this%func%xGrid%nPoints), x, order, coeff )
+			output = sum( coeff( this%nPoints, :, order )*this%func%fArray(this%func%xGrid%nPoints-this%nPoints+1:this%func%xGrid%nPoints) )
 		! Diferencias centradas
 		else
-			call fornbergWeights( this.func.xGrid.data(ind-this.nPoints/2:ind+this.nPoints/2), x, order, coeff )
-			output = sum( coeff( this.nPoints, :, order )*this.func.fArray(ind-this.nPoints/2:ind+this.nPoints/2) )
+			call fornbergWeights( this%func%xGrid%data(ind-this%nPoints/2:ind+this%nPoints/2), x, order, coeff )
+			output = sum( coeff( this%nPoints, :, order )*this%func%fArray(ind-this%nPoints/2:ind+this%nPoints/2) )
 		end if
 		
 		deallocate( coeff )
@@ -289,13 +289,13 @@ module NDerivator_
 		real(8), allocatable :: dArray(:)
 		integer :: i
 		
-		allocate( dArray(this.func.xGrid.nPoints) )
+		allocate( dArray(this%func%xGrid%nPoints) )
 		
-		do i=1,this.func.xGrid.nPoints
-			dArray(i) = this.evaluateAPoint( this.func.xGrid.data(i), order )
+		do i=1,this%func%xGrid%nPoints
+			dArray(i) = this%evaluateAPoint( this%func%xGrid%data(i), order )
 		end do
 		
-		call output.fromGridArray( this.func.xGrid, dArray )
+		call output%fromGridArray( this%func%xGrid, dArray )
 		
 		deallocate( dArray )
 	end function evaluateOnGrid
@@ -350,21 +350,21 @@ module NDerivator_
 		real(8) :: value
 		integer :: i, j
 		
-		call xGrid.init( 0.0_8, 10.0_8, 101 )
+		call xGrid%init( 0.0_8, 10.0_8, 101 )
 		call func.fromFunction( xGrid, funcTest )
 		call dFunc.fromFunction( xGrid, dfuncTest )
-		call derivator.init( func )
+		call derivator%init( func )
 		
-! 		do i=1,xGrid.nPoints
-! 			write(*,"(3F15.5)") xGrid.data(i), dnFunc.fArray(i), derivator.evaluate( xGrid.data(i), 2 )
+! 		do i=1,xGrid%nPoints
+! 			write(*,"(3F15.5)") xGrid%data(i), dnFunc%fArray(i), derivator.evaluate( xGrid%data(i), 2 )
 ! 		end do
 ! 		
 ! 		write(*,*)
 ! 		write(*,*)
 ! 		
 ! 		call nFunc.fromFunction( xGrid, dfuncTest )
-! 		do i=1,xGrid.nPoints
-! 			write(*,"(3F15.5)") xGrid.data(i), dnFunc.fArray(i), derivator.evaluate( xGrid.data(i), 1 )
+! 		do i=1,xGrid%nPoints
+! 			write(*,"(3F15.5)") xGrid%data(i), dnFunc%fArray(i), derivator.evaluate( xGrid%data(i), 1 )
 ! 		end do
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -373,9 +373,9 @@ module NDerivator_
 		!   gnuplot> plot "salida.dat" w l, "salida1.dat" w l, "salida2.dat" w p pt 7
 		! verde y azul deben dar igual
 		ndFunc = derivator.evaluate( order=0 )
-		call func.save( "salida.dat" )
-		call dFunc.save( "salida1.dat" )
-		call ndFunc.save( "salida2.dat" )
+		call func%save( "salida.dat" )
+		call dFunc%save( "salida1.dat" )
+		call ndFunc%save( "salida2.dat" )
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		
 	end subroutine NDerivator_test

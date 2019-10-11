@@ -181,22 +181,22 @@ module Molecule_
 		character(:), allocatable :: effName
 		integer :: i
 		
-		if( allocated(this.name) ) deallocate(this.name)
+		if( allocated(this%name) ) deallocate(this%name)
 		
 		if( present(name) ) then
-			this.name = name
+			this%name = name
 		else
-			this.name = "unknown"
+			this%name = "unknown"
 		end if
 		
-		if( allocated(this.atoms) ) deallocate(this.atoms)
-		allocate( this.atoms(nAtoms) )
+		if( allocated(this%atoms) ) deallocate(this%atoms)
+		allocate( this%atoms(nAtoms) )
 		
-		do i=1,size(this.atoms)
-			call this.atoms(i).init()
+		do i=1,size(this%atoms)
+			call this%atoms(i)%init()
 		end do
 		
-		this.composition = -1
+		this%composition = -1
 	end subroutine initBase
 	
 	!>
@@ -223,7 +223,7 @@ module Molecule_
 		loadNameEff = .true.
 		if( present(loadName) ) loadNameEff = loadName
 		
-		call ifile.init( trim(fileName) )
+		call ifile%init( trim(fileName) )
 		
 		if( GOptions_printLevel > 1 ) then
 			write(*,*) "Reading molecule from file "//trim(fileName)
@@ -233,23 +233,23 @@ module Molecule_
 			case( AUTO_FORMAT )
 				sBuffer = FString_removeFileExtension( fileName, extension=extension )
 				
-				if( trim(extension) == ".xyz" .or. trim(extension) == ".xyz0" ) then
-					call this.loadXYZ( ifile, loadName=loadName )
-				else if( trim(extension) == ".rxyz" ) then
-					call this.loadXYZ( ifile, loadName=loadName )
+				if( trim(extension) == "%xyz" .or. trim(extension) == "%xyz0" ) then
+					call this%loadXYZ( ifile, loadName=loadName )
+				else if( trim(extension) == "%rxyz" ) then
+					call this%loadXYZ( ifile, loadName=loadName )
 				else if( trim(extension) == ".molden" ) then
-					call this.loadGeomMOLDEN( ifile, loadName=loadName )
+					call this%loadGeomMOLDEN( ifile, loadName=loadName )
 				else
 					call GOptions_error( &
 						"Unknown format file (AUTO_FORMAT). fileName = "//trim(fileName), &
-						"Molecule.fromFile(extension="//trim(extension)//")" &
+						"Molecule%fromFile(extension="//trim(extension)//")" &
 					)
 				end if
 				
 			case( XYZ )
-				call this.loadXYZ( ifile, loadName=loadName )
+				call this%loadXYZ( ifile, loadName=loadName )
 			case( MOLDEN )
-				call this.loadGeomMOLDEN( ifile, loadName=loadName )
+				call this%loadGeomMOLDEN( ifile, loadName=loadName )
 			case default
 				write(*,*) "This format file is not implemented"
 				stop
@@ -296,25 +296,25 @@ module Molecule_
 				do i=1,nMolecules
 					nAtoms = nAtoms + molecules(i).nAtoms()
 				end do
-				call this.init( nAtoms )
+				call this%init( nAtoms )
 				
 				k = 1
 				position = 0.0_8
 				do i=1,nMolecules
 					if( i>1 ) then
-						position = position + molecules(i-1).radius() + molecules(i).radius() - overlap
+						position = position + molecules(i-1)%radius() + molecules(i)%radius() - overlap
 					end if
 					
 					otherCopy = molecules(i)
-					call otherCopy.setCenter( [ 0.0_8, 0.0_8, position ] )
+					call otherCopy%setCenter( [ 0.0_8, 0.0_8, position ] )
 					
 					do j=1,otherCopy.nAtoms()
-						call this.set( k, otherCopy.atoms(j) )
+						call this%set( k, otherCopy%atoms(j) )
 						k = k + 1
 					end do
 				end do
 				
-				call this.orient()
+				call this%orient()
 				
 			case default
 				write(*,*) "### ERROR ### Molecule.fromMolecules(). parameter 'method="//trim(FString_fromInteger(method))//"' is not implemented yet"
@@ -333,43 +333,43 @@ module Molecule_
 		
 		integer :: i
 		
-		if( allocated(this.name) ) deallocate(this.name)
-		if( allocated(this.atoms) ) deallocate(this.atoms)
+		if( allocated(this%name) ) deallocate(this%name)
+		if( allocated(this%atoms) ) deallocate(this%atoms)
 		
-		this.name = other.name
+		this%name = other.name
 		
-		allocate( this.atoms( size(other.atoms) ) )
-		do i=1,size(other.atoms)
-			this.atoms(i) = other.atoms(i)
+		allocate( this%atoms( size(other%atoms) ) )
+		do i=1,size(other%atoms)
+			this%atoms(i) = other%atoms(i)
 		end do
 		
-		this.radius_ = other.radius_
-		this.testRadius_ = other.testRadius_
+		this%radius_ = other%radius_
+		this%testRadius_ = other.testRadius_
 		
-		this.geomCenter_ = other.geomCenter_
-		this.testGeomCenter_ = other.testGeomCenter_
+		this%geomCenter_ = other.geomCenter_
+		this%testGeomCenter_ = other.testGeomCenter_
 		
-		this.centerOfMass_ = other.centerOfMass_
-		this.testMassCenter_ = other.testMassCenter_
+		this%centerOfMass_ = other.centerOfMass_
+		this%testMassCenter_ = other.testMassCenter_
 		
-		this.diagInertiaTensor = other.diagInertiaTensor
-		this.inertiaAxes_ = other.inertiaAxes_
+		this%diagInertiaTensor = other.diagInertiaTensor
+		this%inertiaAxes_ = other.inertiaAxes_
 		
-		this.mass_ = other.mass_
-		this.testMass_ = other.testMass_
+		this%mass_ = other%mass_
+		this%testMass_ = other.testMass_
 		
-		this.composition = other.composition
-		this.chemicalFormula_ = other.chemicalFormula_
-		this.testChemicalFormula_ = other.testChemicalFormula_
+		this%composition = other.composition
+		this%chemicalFormula_ = other.chemicalFormula_
+		this%testChemicalFormula_ = other.testChemicalFormula_
 		
-		this.massNumber_ = other.massNumber_
-		this.testMassNumber_ = other.testMassNumber_
+		this%massNumber_ = other%massNumber_
+		this%testMassNumber_ = other.testMassNumber_
 		
-		this.isLineal_ = other.isLineal_
-		this.fv_ = other.fv_
-		this.fr_ = other.fr_
+		this%isLineal_ = other.isLineal_
+		this%fv_ = other.fv_
+		this%fr_ = other.fr_
 		
-		this.molGraph = other.molGraph
+		this%molGraph = other.molGraph
 	end subroutine copyMolecule
 	
 	!>
@@ -378,7 +378,7 @@ module Molecule_
 	subroutine destroyMolecule( this )
 		type(Molecule) :: this
 		
-		if( allocated(this.atoms) ) deallocate( this.atoms )
+		if( allocated(this%atoms) ) deallocate( this%atoms )
 	end subroutine destroyMolecule
 	
 	!>
@@ -413,19 +413,19 @@ module Molecule_
 #define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
 #define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
 			
-			do i=1,size(this.atoms)
+			do i=1,size(this%atoms)
 				if( i == 0 ) then
-					ITEMS( "", this.atoms(i).str() )
+					ITEMS( "", this%atoms(i)%str() )
 				else
-					ITEMS( ",", this.atoms(i).str() )
+					ITEMS( ",", this%atoms(i)%str() )
 				end if
 			end do
 			
-			output = trim(output)//",gCenter="; write(fstr, "(3f10.6)") this.center()
+			output = trim(output)//",gCenter="; write(fstr, "(3f10.6)") this%center()
 			output = trim(output)//trim(fstr)
-			output = trim(output)//",mCenter="; write(fstr, "(3f10.6)") this.centerOfMass()
+			output = trim(output)//",mCenter="; write(fstr, "(3f10.6)") this%centerOfMass()
 			output = trim(output)//trim(fstr)
-			output = trim(output)//",testCenter="; write(fstr, "(L1)") this.testGeomCenter_
+			output = trim(output)//",testCenter="; write(fstr, "(L1)") this%testGeomCenter_
 			output = trim(output)//trim(fstr)
 #undef RFMT
 #undef ITEMS
@@ -440,12 +440,12 @@ module Molecule_
 #define ITEMI(l,v) output = trim(output)//effPrefix//l; write(fstr, "(i10)") v; output = trim(output)//trim(fstr)//new_line('')
 #define ITEMR(l,v) output = trim(output)//effPrefix//l; write(fstr, "(f10.5)") v; output = trim(output)//trim(fstr)//new_line('')
 
-			ITEMS("name =", this.name)
+			ITEMS("name =", this%name)
 			LINE("")
 			
-			do i=1,size(this.atoms)
-				write(fstr, "(A10,3f10.5)") this.atoms(i).symbol, this.atoms(i).r/angs
-				if( i /= size(this.atoms) ) then
+			do i=1,size(this%atoms)
+				write(fstr, "(A10,3f10.5)") this%atoms(i)%symbol, this%atoms(i)%r/angs
+				if( i /= size(this%atoms) ) then
 					output = trim(output)//trim(fstr)//new_line('')
 				else
 					output = trim(output)//trim(fstr)
@@ -495,7 +495,7 @@ module Molecule_
 
 		j=1
 		do i=1,AtomicElementsDB_nElems
-			write(effunit,"(A6)",advance="no") AtomicElementsDB_instance.symbol(i)//":"//trim(FString_fromInteger(this.composition(i)))//"  "
+			write(effunit,"(A6)",advance="no") AtomicElementsDB_instance%symbol(i)//":"//trim(FString_fromInteger(this%composition(i)))//"  "
 			
 			if( j == 10 ) then
 				write(effunit,*) ""
@@ -520,25 +520,25 @@ module Molecule_
 		
 		if( present(nodesSuffixes) ) then
 			
-			if( size(nodesSuffixes) /= this.nAtoms() ) then
+			if( size(nodesSuffixes) /= this%nAtoms() ) then
 				call GOptions_error( &
-					"Wrong size for nodesSuffixes array (size,nAtoms) ==> ("//trim(FString_fromInteger(size(nodesSuffixes)))//","//trim(FString_fromInteger(this.nAtoms()))//")", &
-					"Molecule.showGraph()" &
+					"Wrong size for nodesSuffixes array (size,nAtoms) ==> ("//trim(FString_fromInteger(size(nodesSuffixes)))//","//trim(FString_fromInteger(this%nAtoms()))//")", &
+					"Molecule%showGraph()" &
 					)
 			end if
 			
-			allocate( effNodesLabels( this.nAtoms() )  )
+			allocate( effNodesLabels( this%nAtoms() )  )
 			
-			do i=1,this.nAtoms()
-				effNodesLabels(i) = trim(this.atoms(i).symbol)//trim(nodesSuffixes(i))
+			do i=1,this%nAtoms()
+				effNodesLabels(i) = trim(this%atoms(i)%symbol)//trim(nodesSuffixes(i))
 			end do
 			
-			call this.molGraph.show( unit=unit, formatted=.true., nodesLabels=effNodesLabels, edgePropertiesUnits=angs )
+			call this%molGraph%show( unit=unit, formatted=.true., nodesLabels=effNodesLabels, edgePropertiesUnits=angs )
 			
 			deallocate( effNodesLabels )
 		else
-! 			call this.molGraph.show( unit=unit, formatted=.true., nodesLabels=this.atoms(:).symbol, edgePropertiesUnits=angs )
-			call this.molGraph.show( unit=unit, formatted=.true., edgePropertiesUnits=angs )
+! 			call this%molGraph%show( unit=unit, formatted=.true., nodesLabels=this%atoms(:)%symbol, edgePropertiesUnits=angs )
+			call this%molGraph%show( unit=unit, formatted=.true., edgePropertiesUnits=angs )
 		end if
 		
 		
@@ -563,29 +563,29 @@ module Molecule_
 		loadNameEff = .true.
 		if( present(loadName) ) loadNameEff = loadName
 		
-		if( allocated(this.atoms) ) deallocate(this.atoms)
+		if( allocated(this%atoms) ) deallocate(this%atoms)
 		
 		if( ifile.numberOfLines < 3 ) then
 			write(*,"(A)") "### ERROR ### bad format in XYZ file ("//trim(ifile.name)//")"
 			stop
 		end if
 		
-		buffer = ifile.readLine()
+		buffer = ifile%readLine()
 		
 		call buffer.split( tokens, " " )
 		nAtoms = FString_toInteger(tokens(1))
 		
-		allocate( this.atoms( nAtoms ) )
+		allocate( this%atoms( nAtoms ) )
 		
-		buffer = ifile.readLine()
+		buffer = ifile%readLine()
 		
 		if( loadNameEff ) then
-			if( allocated(this.name) ) deallocate(this.name)
+			if( allocated(this%name) ) deallocate(this%name)
 			
-			if( len_trim(buffer.fstr) /= 0 ) then
-				this.name = trim(buffer.fstr)
+			if( len_trim(buffer%fstr) /= 0 ) then
+				this%name = trim(buffer%fstr)
 			else
-				this.name = trim(ifile.name)
+				this%name = trim(ifile.name)
 			end if
 		end if
 			
@@ -595,7 +595,7 @@ module Molecule_
 				stop
 			end if
 			
-			buffer = ifile.readLine()
+			buffer = ifile%readLine()
 			
 			call buffer.split( tokens, " " )
 			
@@ -604,7 +604,7 @@ module Molecule_
 				stop
 			end if
 			
-			call this.atoms(i).init( &
+			call this%atoms(i)%init( &
 				trim(tokens(1)), &
 				FString_toReal(tokens(2))*angs, &
 				FString_toReal(tokens(3))*angs, &
@@ -613,7 +613,7 @@ module Molecule_
 		end do
 		
 ! 		if( .not. ifile.eof() ) then
-! 			buffer = ifile.readLine()
+! 			buffer = ifile%readLine()
 ! 			
 ! 			if( buffer.length() /= 0 ) then
 ! 				write(*,"(A)") "### ERROR ### Inconsistent XYZ file, line "//trim(FString_fromInteger(ifile.currentLine))//" ("//trim(ifile.name)//")"
@@ -623,17 +623,17 @@ module Molecule_
 		
 		deallocate( tokens )
 		
-		this.axesChosen = .false.
+		this%axesChosen = .false.
 		
-		this.testRadius_ = .false.
-		this.testGeomCenter_ = .false.
-		this.testMassCenter_ = .false.
-		this.testMass_ = .false.
-		this.testChemicalFormula_ = .false.
-		this.testMassNumber_ = .false.
+		this%testRadius_ = .false.
+		this%testGeomCenter_ = .false.
+		this%testMassCenter_ = .false.
+		this%testMass_ = .false.
+		this%testChemicalFormula_ = .false.
+		this%testMassNumber_ = .false.
 		
 		! Actualiza el vector de composición y la formula química
-		call this.updateChemicalFormula()
+		call this%updateChemicalFormula()
 
 	end subroutine loadXYZ
 	
@@ -661,9 +661,9 @@ module Molecule_
 		loadNameEff = .true.
 		if( present(loadName) ) loadNameEff = loadName
 		
-		if( allocated(this.atoms) ) deallocate(this.atoms)
+		if( allocated(this%atoms) ) deallocate(this%atoms)
 		
-		buffer = ifile.readLine()
+		buffer = ifile%readLine()
 		
 		if( buffer /= "[Molden Format]" ) then
 			write(*,*) "### ERROR ### bad format in MOLDEN file"
@@ -671,15 +671,15 @@ module Molecule_
 		end if
 		
 		if( loadNameEff ) then
-			this.name = ifile.name
+			this%name = ifile.name
 		end if
 		
-		call geometryBlock.init()
+		call geometryBlock%init()
 		
 		advance = .true.
 		do while( .not. ifile.eof() )
 			if( advance ) then
-				buffer = ifile.readLine()
+				buffer = ifile%readLine()
 				call buffer.split( tokens, " " )
 				advance = .true.
 			end if
@@ -697,7 +697,7 @@ module Molecule_
 				end if
 				
 				do while( .not. ifile.eof() )
-					buffer = ifile.readLine()
+					buffer = ifile%readLine()
 					call buffer.split( tokens, " " )
 					
 					if( index( tokens(1), "[" ) == 1 ) then
@@ -705,28 +705,28 @@ module Molecule_
 						exit
 					end if
 					
-					call geometryBlock.append( buffer )
+					call geometryBlock%append( buffer )
 				end do
 			end if
 			
-			if( geometryBlock.size() > 0 ) exit
+			if( geometryBlock%size() > 0 ) exit
 				
 			if( .not. advance ) then
-				buffer = ifile.readLine()
+				buffer = ifile%readLine()
 				call buffer.split( tokens, " " )
 			end if
 		end do
 		
 		if( allocated(tokens) ) deallocate( tokens )
 		
-		allocate( this.atoms( geometryBlock.size() ) )
+		allocate( this%atoms( geometryBlock%size() ) )
 		
 		i=1
-		iter => geometryBlock.begin
+		iter => geometryBlock%begin
 		do while( associated(iter) )
-			read( iter.data.fstr, * ) symbol, iBuffer, iBuffer, x, y, z
+			read( iter%data%fstr, * ) symbol, iBuffer, iBuffer, x, y, z
 			
-			call this.atoms(i).init( &
+			call this%atoms(i)%init( &
 				trim(symbol), &
 				x*geometryUnits, &
 				y*geometryUnits, &
@@ -737,17 +737,17 @@ module Molecule_
 			i = i + 1
 		end do
 		
-		this.axesChosen = .false.
+		this%axesChosen = .false.
 		
-		this.testRadius_ = .false.
-		this.testGeomCenter_ = .false.
-		this.testMassCenter_ = .false.
-		this.testMass_ = .false.
-		this.testChemicalFormula_ = .false.
-		this.testMassNumber_ = .false.
+		this%testRadius_ = .false.
+		this%testGeomCenter_ = .false.
+		this%testMassCenter_ = .false.
+		this%testMass_ = .false.
+		this%testChemicalFormula_ = .false.
+		this%testMassNumber_ = .false.
 		
 		! Actualiza el vector de composición y la formula química
-		call this.updateChemicalFormula()
+		call this%updateChemicalFormula()
 
 	end subroutine loadGeomMOLDEN
 		
@@ -768,7 +768,7 @@ module Molecule_
 		
 		select case ( effFormat )
 			case( XYZ )
-				call this.saveXYZ( fileName, units, append )
+				call this%saveXYZ( fileName, units, append )
 		end select
 	end subroutine save
 	
@@ -796,9 +796,9 @@ module Molecule_
 		
 		if( present(fileName) ) then
 			if( effAppend ) then
-				call ofile.init( fileName, append=effAppend )
+				call ofile%init( fileName, append=effAppend )
 			else
-				call ofile.init( fileName )
+				call ofile%init( fileName )
 			end if
 			
 			fileUnit = ofile.unit
@@ -806,11 +806,11 @@ module Molecule_
 			fileUnit = 6
 		end if
 		
-		write(fileUnit,*) this.nAtoms()
-		write(fileUnit,"(A)") trim(this.name)
+		write(fileUnit,*) this%nAtoms()
+		write(fileUnit,"(A)") trim(this%name)
 		
-		do i=1,this.nAtoms()
-			write(fileUnit,"(A5,3F20.8)") this.atoms(i).symbol, this.atoms(i).x/effUnits, this.atoms(i).y/effUnits, this.atoms(i).z/effUnits
+		do i=1,this%nAtoms()
+			write(fileUnit,"(A5,3F20.8)") this%atoms(i)%symbol, this%atoms(i)%x/effUnits, this%atoms(i)%y/effUnits, this%atoms(i)%z/effUnits
 		end do
 		
 		if( present(fileName) ) then
@@ -832,56 +832,56 @@ module Molecule_
 		integer :: i
 		type(Node) :: nodeProp
 		
-		if( this.molGraph.nNodes() < 1 ) then
+		if( this%molGraph%nNodes() < 1 ) then
 			call GOptions_error( &
 				"Molecular graph has to be created before call this function", &
-				"Molecule.saveDOT()" &
+				"Molecule%saveDOT()" &
 				)
 		end if
 		
 		if( present(nodesLabels) ) then
-			if( size(nodesLabels) /= this.nAtoms() ) then
+			if( size(nodesLabels) /= this%nAtoms() ) then
 				call GOptions_error( &
-					"Wrong size for nodesLabels array (size,nAtoms) ==> ("//trim(FString_fromInteger(size(nodesLabels)))//","//trim(FString_fromInteger(this.nAtoms()))//")", &
+					"Wrong size for nodesLabels array (size,nAtoms) ==> ("//trim(FString_fromInteger(size(nodesLabels)))//","//trim(FString_fromInteger(this%nAtoms()))//")", &
 					"molecule.graph.main()" &
 					)
 			end if
 		end if
 		
 		if( present(nodesSuffixes) ) then
-			if( size(nodesSuffixes) /= this.nAtoms() ) then
+			if( size(nodesSuffixes) /= this%nAtoms() ) then
 				call GOptions_error( &
-					"Wrong size for nodesSuffixes array (size,nAtoms) ==> ("//trim(FString_fromInteger(size(nodesSuffixes)))//","//trim(FString_fromInteger(this.nAtoms()))//")", &
+					"Wrong size for nodesSuffixes array (size,nAtoms) ==> ("//trim(FString_fromInteger(size(nodesSuffixes)))//","//trim(FString_fromInteger(this%nAtoms()))//")", &
 					"molecule.graph.main()" &
 					)
 			end if
 		end if
 		
-		allocate( colors( this.molGraph.nNodes() ) )
-		allocate( effNodesLabels( this.molGraph.nNodes() )  )
+		allocate( colors( this%molGraph%nNodes() ) )
+		allocate( effNodesLabels( this%molGraph%nNodes() )  )
 		
-		do i=1,this.nAtoms()
-			colors(i) = this.atoms(i).color()
+		do i=1,this%nAtoms()
+			colors(i) = this%atoms(i)%color()
 		end do
 		
 		if( present(nodesLabels) .and. present(nodesSuffixes) ) then
-			do i=1,this.molGraph.nNodes()
+			do i=1,this%molGraph%nNodes()
 				effNodesLabels(i) = trim(nodesLabels(i))//trim(nodesSuffixes(i))
 			end do
-			call this.molGraph.save( oFileName=fileName, format=DOT, nodesLabels=effNodesLabels, edgePropertiesUnits=angs, nodesColors=colors )
+			call this%molGraph%save( oFileName=fileName, format=DOT, nodesLabels=effNodesLabels, edgePropertiesUnits=angs, nodesColors=colors )
 		else if( present(nodesSuffixes) ) then
-			do i=1,this.molGraph.nNodes()
-				nodeProp = this.molGraph.getNodeProperties(i)
-				effNodesLabels(i) = trim(nodeProp.label)//trim(nodesSuffixes(i))
+			do i=1,this%molGraph%nNodes()
+				nodeProp = this%molGraph%getNodeProperties(i)
+				effNodesLabels(i) = trim(nodeProp%label)//trim(nodesSuffixes(i))
 			end do
-			call this.molGraph.save( oFileName=fileName, format=DOT, nodesLabels=effNodesLabels, edgePropertiesUnits=angs, nodesColors=colors )
+			call this%molGraph%save( oFileName=fileName, format=DOT, nodesLabels=effNodesLabels, edgePropertiesUnits=angs, nodesColors=colors )
 		else if( present(nodesLabels) ) then
-			do i=1,this.molGraph.nNodes()
+			do i=1,this%molGraph%nNodes()
 				effNodesLabels(i) = trim(nodesLabels(i))
 			end do
-			call this.molGraph.save( oFileName=fileName, format=DOT, nodesLabels=effNodesLabels, edgePropertiesUnits=angs, nodesColors=colors )
+			call this%molGraph%save( oFileName=fileName, format=DOT, nodesLabels=effNodesLabels, edgePropertiesUnits=angs, nodesColors=colors )
 		else
-			call this.molGraph.save( oFileName=fileName, format=DOT, edgePropertiesUnits=angs, nodesColors=colors )
+			call this%molGraph%save( oFileName=fileName, format=DOT, edgePropertiesUnits=angs, nodesColors=colors )
 		end if
 		
 	end subroutine saveDOT
@@ -910,19 +910,19 @@ module Molecule_
 		if( present(overlappingRadius) ) effOverlappingRadius = overlappingRadius
 		
 ! Testing overlap
-#define OVERLAPPING(i,j) effAlpha*(this.atoms(i).radius( type=radiusType )+other.atoms(j).radius( type=radiusType ))-effOverlappingRadius > norm2( rVec2-rVec1 )
+#define OVERLAPPING(i,j) effAlpha*(this%atoms(i)%radius( type=radiusType )+other%atoms(j)%radius( type=radiusType ))-effOverlappingRadius > norm2( rVec2-rVec1 )
 
 		output = .false.
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Se verifica que a los centros no sobrelapen ni que
 		! se salgan del radio del sistema
-		do i=1,this.nAtoms()
-			rVec1 = this.atoms(i).r
+		do i=1,this%nAtoms()
+			rVec1 = this%atoms(i)%r
 			
 			do j=1,other.nAtoms()
 				
-				rVec2 = other.atoms(j).r
+				rVec2 = other%atoms(j)%r
 				
 				output = OVERLAPPING(i,j)
 				
@@ -958,20 +958,20 @@ module Molecule_
 		if( present(overlappingRadius) ) effOverlappingRadius = overlappingRadius
 		
 ! Testing overlap
-#define OVERLAPPING(i,j) effAlpha*(this.atoms(i).radius( type=radiusType )+this.atoms(j).radius( type=radiusType ))-effOverlappingRadius > norm2( rVec2-rVec1 )
+#define OVERLAPPING(i,j) effAlpha*(this%atoms(i)%radius( type=radiusType )+this%atoms(j)%radius( type=radiusType ))-effOverlappingRadius > norm2( rVec2-rVec1 )
 
 		output = .false.
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Se verifica que a los centros no sobrelapen ni que
 		! se salgan del radio del sistema
-		do i=1,this.nAtoms()
-			rVec1 = this.atoms(i).r
+		do i=1,this%nAtoms()
+			rVec1 = this%atoms(i)%r
 			
-			do j=1,this.nAtoms()
+			do j=1,this%nAtoms()
 				
 				if( i /= j ) then
-					rVec2 = this.atoms(j).r
+					rVec2 = this%atoms(j)%r
 					
 					output = OVERLAPPING(i,j)
 					
@@ -1018,8 +1018,8 @@ module Molecule_
 			effRadius = radius
 		else
 			effRadius = 0.0_8
-			do i=1,this.nAtoms()
-				effRadius = effRadius + this.atoms(i).radius( type=radiusType )
+			do i=1,this%nAtoms()
+				effRadius = effRadius + this%atoms(i)%radius( type=radiusType )
 			end do
 			effRadius = effAlpha*effRadius
 		end if
@@ -1028,7 +1028,7 @@ module Molecule_
 		if( present(overlappingRadius) ) effOverlappingRadius = overlappingRadius
 		
 ! Testing overlap
-#define OVERLAPPING(i,j) this.atoms(i).radius( type=radiusType )+this.atoms(j).radius( type=radiusType )-effOverlappingRadius > norm2( rVec2-rVec1 )
+#define OVERLAPPING(i,j) this%atoms(i)%radius( type=radiusType )+this%atoms(j)%radius( type=radiusType )-effOverlappingRadius > norm2( rVec2-rVec1 )
 
 ! ! Sampling on "x" axis, which is the axis with inertia moment equal to cero
 ! #define RVEC_X(i) [ sample(1,i), 0.0_8, 0.0_8 ]
@@ -1037,12 +1037,12 @@ module Molecule_
 ! ! Sampling on "x-y-z" axes in spherical coordinates
 ! #define RVEC_XYZ(i) [ sample(1,i)*sin(sample(2,i))*cos(sample(3,i)), sample(1,i)*sin(sample(2,i))*sin(sample(3,i)), sample(1,i)*cos(sample(2,i)) ]
 ! 		
-! 		allocate( sample(3,this.nAtoms()) )
+! 		allocate( sample(3,this%nAtoms()) )
 ! 		
-! 		call rs.init( nDim=3 )
-! 		call rs.setRange( 1, [0.0_8,effRadius] )         ! r in (0,Rsys)
-! 		call rs.setRange( 2, [0.0_8,MATH_PI] )        ! theta in (0,pi)
-! 		call rs.setRange( 3, [0.0_8,2.0_8*MATH_PI] )  ! phi in (0,2pi)
+! 		call rs%init( nDim=3 )
+! 		call rs%setRange( 1, [0.0_8,effRadius] )         ! r in (0,Rsys)
+! 		call rs%setRange( 2, [0.0_8,MATH_PI] )        ! theta in (0,pi)
+! 		call rs%setRange( 3, [0.0_8,2.0_8*MATH_PI] )  ! phi in (0,2pi)
 
 ! Sampling on "x" axis, which is the axis with inertia moment equal to cero
 #define RVEC_X(i) [ sample(1,i), 0.0_8, 0.0_8 ]
@@ -1051,12 +1051,12 @@ module Molecule_
 ! Sampling on "x-y-z" axes in spherical coordinates
 #define RVEC_XYZ(i) [ sample(1,i), sample(2,i), sample(3,i) ]
 		
-		allocate( sample(3,this.nAtoms()) )
+		allocate( sample(3,this%nAtoms()) )
 		
-		call rs.init( nDim=3 )
-		call rs.setRange( 1, [-effRadius,effRadius] )
-		call rs.setRange( 2, [-effRadius,effRadius] )
-		call rs.setRange( 3, [-effRadius,effRadius] )
+		call rs%init( nDim=3 )
+		call rs%setRange( 1, [-effRadius,effRadius] )
+		call rs%setRange( 2, [-effRadius,effRadius] )
+		call rs%setRange( 3, [-effRadius,effRadius] )
 		
 		overlap = .false.
 		nTrials_ = 0
@@ -1068,13 +1068,13 @@ module Molecule_
 			!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			! Se verifica que a los centros no sobrelapen ni que
 			! se salgan del radio del sistema
-			do i=1,this.nAtoms()-1
+			do i=1,this%nAtoms()-1
 				rVec1 = RVEC_XYZ(i)
 				
 				overlap = norm2(rVec1) > effRadius
 				if( overlap ) exit
 				
-				do j=i+1,this.nAtoms()
+				do j=i+1,this%nAtoms()
 					
 					rVec2 = RVEC_XYZ(j)
 					
@@ -1091,12 +1091,12 @@ module Molecule_
 				! Se verifica que a ajustar el centro de masas el sistema
 				! no se salga del volumen de simulación
 				cm = 0.0_8
-				do i=1,this.nAtoms()
-					cm = cm + this.atoms(i).mass()*RVEC_XYZ(i)
+				do i=1,this%nAtoms()
+					cm = cm + this%atoms(i)%mass()*RVEC_XYZ(i)
 				end do
-				cm = cm/this.mass()
+				cm = cm/this%mass()
 				
-				do i=1,this.nAtoms()
+				do i=1,this%nAtoms()
 					if( norm2(RVEC_XYZ(i)-cm) > effRadius ) then
 						overlap = .true.
 					end if
@@ -1108,8 +1108,8 @@ module Molecule_
 			nTrials_ = nTrials_ + 1
 		end do
 		
-		do i=1,this.nAtoms()
-			this.atoms(i).r = RVEC_XYZ(i)
+		do i=1,this%nAtoms()
+			this%atoms(i)%r = RVEC_XYZ(i)
 		end do
 #undef OVERLAPPING
 #undef RVEC_X
@@ -1121,12 +1121,12 @@ module Molecule_
 		if( overlap ) then
 			call GOptions_error( &
 				"Maximum number of iterations reached"//" (n = "//trim(FString_fromInteger(n))//")", &
-				"Molecule.randomCenters()", &
+				"Molecule%randomCenters()", &
 				"Consider to increase systemRadius("//trim(FString_fromReal(effRadius/angs))//" angs)" &
 				)
 		end if
 		
-		call this.orient()
+		call this%orient()
 	end subroutine randomGeometry
 	
 	!>
@@ -1165,10 +1165,10 @@ module Molecule_
 		if( present(overlappingRadius) ) effOverlappingRadius = overlappingRadius
 		
 ! Testing overlap
-#define OVERLAPPING(i,j) this.atoms(i).radius( type=radiusType )+this.atoms(j).radius( type=radiusType )-effOverlappingRadius > norm2( rVec2-rVec1 )
+#define OVERLAPPING(i,j) this%atoms(i)%radius( type=radiusType )+this%atoms(j)%radius( type=radiusType )-effOverlappingRadius > norm2( rVec2-rVec1 )
 		
 		call RandomUtils_init()
-		allocate( sample(3,this.nAtoms()) )
+		allocate( sample(3,this%nAtoms()) )
 		
 		select case( effMethod )
 			
@@ -1183,7 +1183,7 @@ module Molecule_
 					overlap = .false.
 					
 					i =1
-					do i=1,this.nAtoms()
+					do i=1,this%nAtoms()
 ! 						! This distribution is uniform on the surface but not on the volume
 						call random_number( rVec1 )
 						rVec1 = rVec1*[ effRadius, MATH_PI, 2.0_8*MATH_PI ]  ! r, theta, phi
@@ -1194,12 +1194,12 @@ module Molecule_
 					
 					!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					! Se verifica que a los centros no sobrelapen
-					do i=1,this.nAtoms()-1
-						rVec1 = this.atoms(i).r + RVEC_XYZ(i)
+					do i=1,this%nAtoms()-1
+						rVec1 = this%atoms(i)%r + RVEC_XYZ(i)
 						
-						do j=i+1,this.nAtoms()
+						do j=i+1,this%nAtoms()
 							
-							rVec2 = this.atoms(j).r + RVEC_XYZ(j)
+							rVec2 = this%atoms(j)%r + RVEC_XYZ(j)
 							
 							overlap = OVERLAPPING(i,j) > effRadius
 							
@@ -1213,8 +1213,8 @@ module Molecule_
 					nTrials1 = nTrials1 + 1
 				end do
 				
-				do i=1,this.nAtoms()
-					this.atoms(i).r = this.atoms(i).r + RVEC_XYZ(i)
+				do i=1,this%nAtoms()
+					this%atoms(i)%r = this%atoms(i)%r + RVEC_XYZ(i)
 				end do
 #undef RVEC_XYZ
 				
@@ -1228,7 +1228,7 @@ module Molecule_
 				do while( nTrials1 < effMaxIter )
 					overlap = .false.
 					
-					do i=1,this.nAtoms()
+					do i=1,this%nAtoms()
 						nTrials2 = 1
 						do while( nTrials2 < effMaxIter )
 							call random_number( rVec1 )
@@ -1246,12 +1246,12 @@ module Molecule_
 					if( .not. overlap ) then
 						!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 						! Se verifica que a los centros no sobrelapen
-						do i=1,this.nAtoms()-1
-							rVec1 = this.atoms(i).r + RVEC_XYZ(i)
+						do i=1,this%nAtoms()-1
+							rVec1 = this%atoms(i)%r + RVEC_XYZ(i)
 							
-							do j=i+1,this.nAtoms()
+							do j=i+1,this%nAtoms()
 								
-								rVec2 = this.atoms(j).r + RVEC_XYZ(j)
+								rVec2 = this%atoms(j)%r + RVEC_XYZ(j)
 								
 								overlap = OVERLAPPING(i,j) > effRadius
 								
@@ -1275,8 +1275,8 @@ module Molecule_
 					nTrials1 = nTrials1 + 1
 				end do
 				
-				do i=1,this.nAtoms()
-					this.atoms(i).r = this.atoms(i).r + RVEC_XYZ(i)
+				do i=1,this%nAtoms()
+					this%atoms(i)%r = this%atoms(i)%r + RVEC_XYZ(i)
 				end do
 #undef RVEC_XYZ
 				
@@ -1355,14 +1355,14 @@ module Molecule_
 		integer :: pos
 		type(Atom), intent(in) :: atm
 		
-		this.atoms(pos) = atm
+		this%atoms(pos) = atm
 		
-		this.testRadius_ = .false.
-		this.testGeomCenter_ = .false.
-		this.testMassCenter_ = .false.
-		this.testMass_ = .false.
-		this.testChemicalFormula_ = .false.
-		this.testMassNumber_ = .false.
+		this%testRadius_ = .false.
+		this%testGeomCenter_ = .false.
+		this%testMassCenter_ = .false.
+		this%testMass_ = .false.
+		this%testChemicalFormula_ = .false.
+		this%testMassNumber_ = .false.
 	end subroutine set
 	
 	!>
@@ -1380,9 +1380,9 @@ module Molecule_
 		si = -1
 		sj = -1
 		dist = 0.0_8
-		do i=1,size(this.atoms)-1
-			do j=i+1,size(this.atoms)
-				dist = norm2( this.atoms(j).r-this.atoms(i).r )
+		do i=1,size(this%atoms)-1
+			do j=i+1,size(this%atoms)
+				dist = norm2( this%atoms(j)%r-this%atoms(i)%r )
 				
 				if( dist > maxDist ) then
 					maxDist = dist
@@ -1409,25 +1409,25 @@ module Molecule_
 		integer :: i, j
 		integer :: si, sj
 		
-		if( .not. this.testRadius_ ) then
-			this.radius_ = 0.0_8
+		if( .not. this%testRadius_ ) then
+			this%radius_ = 0.0_8
 			
-			if( this.nAtoms() > 1 ) then
+			if( this%nAtoms() > 1 ) then
 				
-				call this.extremeAtoms( si, sj, this.radius_ )
+				call this%extremeAtoms( si, sj, this%radius_ )
 				
-				cRadius1 = this.atoms(si).radius( type=type )
-				cRadius2 = this.atoms(sj).radius( type=type )
+				cRadius1 = this%atoms(si)%radius( type=type )
+				cRadius2 = this%atoms(sj)%radius( type=type )
 				
-				this.radius_ = this.radius_/2.0_8 + max( cRadius1, cRadius2 )
+				this%radius_ = this%radius_/2.0_8 + max( cRadius1, cRadius2 )
 			else
-				this.radius_ = this.atoms(1).radius( type=type )
+				this%radius_ = this%atoms(1)%radius( type=type )
 			end if
 			
-			this.testRadius_ = .true.
+			this%testRadius_ = .true.
 		end if
 		
-		output = this.radius_
+		output = this%radius_
 	end function radius
 	
 	!>
@@ -1437,7 +1437,7 @@ module Molecule_
 		class(Molecule), intent(in) :: this
 		integer :: output
 		
-		output = size(this.atoms)
+		output = size(this%atoms)
 	end function nAtoms
 	
 	!>
@@ -1447,8 +1447,8 @@ module Molecule_
 		class(Molecule), intent(in) :: this
 		logical :: output
 		
-		if( this.isLineal_ /= -1 ) then
-			output = ( this.isLineal_==1 )
+		if( this%isLineal_ /= -1 ) then
+			output = ( this%isLineal_==1 )
 		else
 			write(6,*) "### ERROR ### Cluster.isLineal(). it is first necessary to orient the molecule ( see orient() method )"
 			stop
@@ -1470,13 +1470,13 @@ module Molecule_
 		if( present(debug) ) effDebug = debug
 		
 		output = .false.
-		if( trim(this.chemicalFormula()) == trim(other.chemicalFormula()) ) then
+		if( trim(this%chemicalFormula()) == trim(other.chemicalFormula()) ) then
 			output = .true.
 		end if
 		
 		if( effDebug ) then
 			write(*,*) ""
-			write(*,*) "Formula1 = ", trim(this.chemicalFormula())
+			write(*,*) "Formula1 = ", trim(this%chemicalFormula())
 			write(*,*) "Formula2 = ", trim(other.chemicalFormula())
 			write(*,*) "  Equal? = ", output
 			write(*,*) ""
@@ -1575,7 +1575,7 @@ module Molecule_
 		effDebug = .true.
 ! 		if( present(debug) ) effDebug = debug
 		
-		this_descrip = this.connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
+		this_descrip = this%connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
 		other_descrip = other.connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
 		
 		! Jaccard similarity index
@@ -1620,27 +1620,27 @@ module Molecule_
 		effAlpha = 1.0_8
 		if( present(alpha) ) effAlpha = alpha
 		
-		call this.buildGraph( alpha=effAlpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
+		call this%buildGraph( alpha=effAlpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
 		
-		A = this.molGraph.adjacencyMatrix()
-		D = this.molGraph.distanceMatrix()
-		L = this.molGraph.laplacianMatrix()
+		A = this%molGraph%adjacencyMatrix()
+		D = this%molGraph%distanceMatrix()
+		L = this%molGraph%laplacianMatrix()
 		
-		output(1) = this.molGraph.randicIndex()
-		output(2) = this.molGraph.wienerIndex( distanceMatrix=D )
-		output(3) = this.molGraph.inverseWienerIndex( distanceMatrix=D )
-		output(4) = this.molGraph.balabanIndex( distanceMatrix=D )
-		output(5) = this.molGraph.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
+		output(1) = this%molGraph%randicIndex()
+		output(2) = this%molGraph%wienerIndex( distanceMatrix=D )
+		output(3) = this%molGraph%inverseWienerIndex( distanceMatrix=D )
+		output(4) = this%molGraph%balabanIndex( distanceMatrix=D )
+		output(5) = this%molGraph%molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
 		
-		if( this.molGraph.nComponents( laplacianMatrix=L ) > 1 ) then
+		if( this%molGraph%nComponents( laplacianMatrix=L ) > 1 ) then
 			output(6:9) = 0.0_8
 		else
-			Omega = this.molGraph.resistanceDistanceMatrix( laplacianMatrix=L )
+			Omega = this%molGraph%resistanceDistanceMatrix( laplacianMatrix=L )
 			
-			output(6) = this.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
-			output(7) = this.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-			output(8) = this.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-			output(9) = this.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			output(6) = this%molGraph%kirchhoffIndex( resistanceDistanceMatrix=Omega )
+			output(7) = this%molGraph%kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			output(8) = this%molGraph%wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+			output(9) = this%molGraph%JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
 		end if
 	end function connectivityDescriptors
 	
@@ -1673,19 +1673,19 @@ module Molecule_
 		if( present(useIm) ) effUseIm = useIm
 		
 		if( effUseMassWeight ) then
-			allocate( wi(this.nAtoms()) )
-			do i=1,this.nAtoms()
-				wi(i) = this.atoms(i).mass()
+			allocate( wi(this%nAtoms()) )
+			do i=1,this%nAtoms()
+				wi(i) = this%atoms(i)%mass()
 			end do
-			wi = wi/this.mass()
+			wi = wi/this%mass()
 		end if
 		
-		allocate( distance(this.nAtoms()) )
+		allocate( distance(this%nAtoms()) )
 		
-		call this.updateGeomCenter()
+		call this%updateGeomCenter()
 		
-		do i=1,this.nAtoms()
-			distance(i) = norm2( this.atoms(i).r - this.geomCenter_ )
+		do i=1,this%nAtoms()
+			distance(i) = norm2( this%atoms(i)%r - this%geomCenter_ )
 		end do
 		
 		if( effUseMassWeight ) distance = wi*distance
@@ -1696,8 +1696,8 @@ module Molecule_
 		id_min = minloc( distance )
 		id_max = maxloc( distance )
 		
-		do i=1,this.nAtoms()
-			distance(i) = norm2( this.atoms(i).r - this.atoms(id_min(1)).r )
+		do i=1,this%nAtoms()
+			distance(i) = norm2( this%atoms(i)%r - this%atoms(id_min(1))%r )
 		end do
 		
 		if( effUseMassWeight ) distance = wi*distance
@@ -1705,8 +1705,8 @@ module Molecule_
 		output(5) = Math_stdev( distance )
 		output(6) = Math_skewness( distance )
 		
-		do i=1,this.nAtoms()
-			distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
+		do i=1,this%nAtoms()
+			distance(i) = norm2( this%atoms(i)%r - this%atoms(id_max(1))%r )
 		end do
 		
 		if( effUseMassWeight ) distance = wi*distance
@@ -1716,8 +1716,8 @@ module Molecule_
 		
 		id_max = maxloc( distance )
 		
-		do i=1,this.nAtoms()
-			distance(i) = norm2( this.atoms(i).r - this.atoms(id_max(1)).r )
+		do i=1,this%nAtoms()
+			distance(i) = norm2( this%atoms(i)%r - this%atoms(id_max(1))%r )
 		end do
 		
 		if( effUseMassWeight ) distance = wi*distance
@@ -1726,7 +1726,7 @@ module Molecule_
 		output(12) = Math_skewness( distance )
 		
 		if( effUseIm ) then
-			call this.buildInertiaTensor( Im, unitaryMasses=.true. )
+			call this%buildInertiaTensor( Im, unitaryMasses=.true. )
 			call Im.eigen( eValues=diagUIm )
 			
 			output(13) = diagUIm(1)!/maxval(diagUIm)
@@ -1748,7 +1748,7 @@ module Molecule_
 		logical :: output
 		
 		output = .false.
-		if( all(this.composition <= molRef.composition) ) output = .true.
+		if( all(this%composition <= molRef.composition) ) output = .true.
 	end function isFragmentOf
 	
 	!>
@@ -1760,7 +1760,7 @@ module Molecule_
 		class(Atom), intent(in) :: atom2
 		real(8) :: output
 		
-		output = norm2( atom1.r - atom2.r )
+		output = norm2( atom1%r - atom2%r )
 	end function distance
 	
 	!>
@@ -1775,8 +1775,8 @@ module Molecule_
 		
 		real(8) :: v12(3), v32(3)
 		
-		v12 = atom1.r-atom2.r
-		v32 = atom3.r-atom2.r
+		v12 = atom1%r-atom2%r
+		v32 = atom3%r-atom2%r
 		
 		output = acos( sum(v12*v32)/norm2(v12)/norm2(v32) )
 	end function angle
@@ -1796,9 +1796,9 @@ module Molecule_
 		real(8) :: n1(3), n2(3)
 		real(8) :: u1(3), u2(3), u3(3)
 		
-		q1 = atom2.r-atom1.r
-		q2 = atom3.r-atom2.r
-		q3 = atom4.r-atom3.r
+		q1 = atom2%r-atom1%r
+		q2 = atom3%r-atom2%r
+		q3 = atom4%r-atom3%r
 		
 		n1 = Math_crossProduct( q1, q2 )
 		n1 = n1/norm2(n1)
@@ -1819,8 +1819,8 @@ module Molecule_
 		class(Molecule), intent(in) :: this
 		integer :: output
 		
-		if( this.fv_ /= -1 ) then
-			output = this.fv_
+		if( this%fv_ /= -1 ) then
+			output = this%fv_
 		else
 			write(6,*) "### ERROR ### Cluster.fv(). Vibrational number of degrees of freedom have not selected"
 			stop
@@ -1834,8 +1834,8 @@ module Molecule_
 		class(Molecule), intent(in) :: this
 		integer :: output
 		
-		if( this.fr_ /= -1 ) then
-			output = this.fr_
+		if( this%fr_ /= -1 ) then
+			output = this%fr_
 		else
 			write(6,*) "### ERROR ### Cluster.fr(). Rotational number of degrees of freedom have not selected"
 			stop
@@ -1850,9 +1850,9 @@ module Molecule_
 		
 		integer :: i
 		
-		this.massNumber_ = 0
-		do i=1,size(this.atoms)
-			this.massNumber_ = this.massNumber_ + AtomicElementsDB_instance.atomicMassNumber( this.atoms(i).symbol )
+		this%massNumber_ = 0
+		do i=1,size(this%atoms)
+			this%massNumber_ = this%massNumber_ + AtomicElementsDB_instance%atomicMassNumber( this%atoms(i)%symbol )
 		end do
 	end subroutine updateMassNumber
 	
@@ -1862,12 +1862,12 @@ module Molecule_
 	integer function massNumber( this )
 		class(Molecule) :: this 
 		
-		if( .not. this.testMassNumber_ ) then
-			call this.updateMassNumber()
-			this.testMassNumber_ = .true.
+		if( .not. this%testMassNumber_ ) then
+			call this%updateMassNumber()
+			this%testMassNumber_ = .true.
 		end if
 		
-		massNumber = this.massNumber_
+		massNumber = this%massNumber_
 	end function massNumber
 	
 	!>
@@ -1878,9 +1878,9 @@ module Molecule_
 		
 		integer :: i
 		
-		this.mass_ = 0.0_8
-		do i=1,size(this.atoms)
-			this.mass_ = this.mass_ + AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )
+		this%mass_ = 0.0_8
+		do i=1,size(this%atoms)
+			this%mass_ = this%mass_ + AtomicElementsDB_instance%atomicMass( this%atoms(i)%symbol )
 		end do
 	end subroutine updateMass
 	
@@ -1890,12 +1890,12 @@ module Molecule_
 	real(8) function mass( this )
 		class(Molecule) :: this 
 		
-		if( .not. this.testMass_ ) then
-			call this.updateMass()
-			this.testMass_ = .true.
+		if( .not. this%testMass_ ) then
+			call this%updateMass()
+			this%testMass_ = .true.
 		end if
 		
-		mass = this.mass_
+		mass = this%mass_
 	end function mass
 	
 	!>
@@ -1912,11 +1912,11 @@ module Molecule_
 		integer, allocatable :: counts(:)
 		integer :: nDiffAtoms ! numero de átomos de diferente tipo
 		
-		allocate( keys(size(this.atoms)) ) ! En el peor de los casos cada atomo es diferente
+		allocate( keys(size(this%atoms)) ) ! En el peor de los casos cada atomo es diferente
 		
 		keys = 0
-		do i=1,size(this.atoms)
-			keys(i) = AtomicElementsDB_instance.atomicNumber( this.atoms(i).symbol )  ! Asi los simbolos son organizados por masa atomica
+		do i=1,size(this%atoms)
+			keys(i) = AtomicElementsDB_instance%atomicNumber( this%atoms(i)%symbol )  ! Asi los simbolos son organizados por masa atomica
 		end do
 		
 		allocate( counts(minval( keys ):maxval( keys )) )
@@ -1924,12 +1924,12 @@ module Molecule_
 		allocate(   zVec(minval( keys ):maxval( keys )) )
 		
 		counts = 0
-		do i=1,size(this.atoms)
-			key = AtomicElementsDB_instance.atomicNumber( this.atoms(i).symbol )
+		do i=1,size(this%atoms)
+			key = AtomicElementsDB_instance%atomicNumber( this%atoms(i)%symbol )
 			counts( key ) = counts( key ) + 1
 			
-			symb( key ) = this.atoms(i).symbol
-			zVec( key ) = AtomicElementsDB_instance.atomicNumber( symb(key) )
+			symb( key ) = this%atoms(i)%symbol
+			zVec( key ) = AtomicElementsDB_instance%atomicNumber( symb(key) )
 		end do
 		
 		nDiffAtoms = 0
@@ -1939,17 +1939,17 @@ module Molecule_
 			end if
 		end do
 		
-		this.composition = 0
+		this%composition = 0
 		
-		this.chemicalFormula_ = ""
+		this%chemicalFormula_ = ""
 		do i=minval(keys),maxval(keys)
 			if( counts(i) /= 0 ) then
 				if( counts(i) == 1 ) then
-					this.chemicalFormula_ = trim(adjustl(this.chemicalFormula_))//trim(adjustl(symb( i )))
+					this%chemicalFormula_ = trim(adjustl(this%chemicalFormula_))//trim(adjustl(symb( i )))
 				else
-					this.chemicalFormula_ = trim(adjustl(this.chemicalFormula_))//trim(adjustl(symb( i )))//trim(FString_fromInteger( counts(i) ))
+					this%chemicalFormula_ = trim(adjustl(this%chemicalFormula_))//trim(adjustl(symb( i )))//trim(FString_fromInteger( counts(i) ))
 				end if
-				this.composition( zVec(i) ) = counts(i)
+				this%composition( zVec(i) ) = counts(i)
 			end if
 		end do
 		
@@ -1958,7 +1958,7 @@ module Molecule_
 		deallocate( counts )
 		deallocate( symb )
 		
-		this.testChemicalFormula_ = .true.
+		this%testChemicalFormula_ = .true.
 	end subroutine updateChemicalFormula
 	
 	!>
@@ -1968,11 +1968,11 @@ module Molecule_
 		class(Molecule) :: this
 		character(100) :: output
 		
-		if( .not. this.testChemicalFormula_ ) then
-			call this.updateChemicalFormula()
+		if( .not. this%testChemicalFormula_ ) then
+			call this%updateChemicalFormula()
 		end if
 		
-		output = trim(adjustl(this.chemicalFormula_))
+		output = trim(adjustl(this%chemicalFormula_))
 	end function chemicalFormula
 	
 	!>
@@ -1983,13 +1983,13 @@ module Molecule_
 		
 		integer :: i
 		
-		this.geomCenter_ = 0.0_8
+		this%geomCenter_ = 0.0_8
 		
-		do i=1,size(this.atoms)
-			this.geomCenter_ = this.geomCenter_ + this.atoms(i).r
+		do i=1,size(this%atoms)
+			this%geomCenter_ = this%geomCenter_ + this%atoms(i)%r
 		end do
 		
-		this.geomCenter_ = this.geomCenter_/real( size(this.atoms), 8 )
+		this%geomCenter_ = this%geomCenter_/real( size(this%atoms), 8 )
 	end subroutine updateGeomCenter
 	
 	!>
@@ -1999,12 +1999,12 @@ module Molecule_
 		class(Molecule) :: this
 		real(8) :: output(3)
 		
-		if( .not. this.testGeomCenter_ ) then
-			call this.updateGeomCenter()
-			this.testGeomCenter_ = .true.
+		if( .not. this%testGeomCenter_ ) then
+			call this%updateGeomCenter()
+			this%testGeomCenter_ = .true.
 		end if
 
-		output = this.geomCenter_
+		output = this%geomCenter_
 	end function center
 	
 	!>
@@ -2017,15 +2017,15 @@ module Molecule_
 		real(8) :: dr(3)
 		integer :: i
 		
-		dr = center-this.center()
+		dr = center-this%center()
 		
-		do i=1,size(this.atoms)
-			this.atoms(i).r = this.atoms(i).r + dr
+		do i=1,size(this%atoms)
+			this%atoms(i)%r = this%atoms(i)%r + dr
 		end do
 		
-		this.geomCenter_ = center
-		this.testGeomCenter_ = .true.
-		this.testMassCenter_ = .false.
+		this%geomCenter_ = center
+		this%testGeomCenter_ = .true.
+		this%testMassCenter_ = .false.
 	end subroutine setCenter
 	
 	!>
@@ -2036,14 +2036,14 @@ module Molecule_
 		
 		integer :: i
 		
-		this.centerOfMass_ = 0.0_8
+		this%centerOfMass_ = 0.0_8
 		
-		do i=1,size(this.atoms)
-			this.centerOfMass_ = this.centerOfMass_ + &
-				AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )*this.atoms(i).r
+		do i=1,size(this%atoms)
+			this%centerOfMass_ = this%centerOfMass_ + &
+				AtomicElementsDB_instance%atomicMass( this%atoms(i)%symbol )*this%atoms(i)%r
 		end do
 		
-		this.centerOfMass_ = this.centerOfMass_/this.mass()
+		this%centerOfMass_ = this%centerOfMass_/this%mass()
 	end subroutine updateCenterOfMass
 	
 	!>
@@ -2053,12 +2053,12 @@ module Molecule_
 		class(Molecule) :: this
 		real(8) :: output(3)
 		
-		if( .not. this.testMassCenter_ ) then
-			call this.updateCenterOfMass()
-			this.testMassCenter_ = .true.
+		if( .not. this%testMassCenter_ ) then
+			call this%updateCenterOfMass()
+			this%testMassCenter_ = .true.
 		end if
 
-		output = this.centerOfMass_
+		output = this%centerOfMass_
 	end function centerOfMass
 	
 	!>
@@ -2080,48 +2080,48 @@ module Molecule_
 		effDebug = .false.
 		if( present(debug) ) effDebug = debug
 		
-		if( .not. this.axesChosen ) then
-			call this.orient( moveCM=.false., debug=debug )
+		if( .not. this%axesChosen ) then
+			call this%orient( moveCM=.false., debug=debug )
 		end if
 		
 		if( ( .not. present(center) ) .and. ( .not. present(axes) ) ) then
-			inertiaTensor = this.diagInertiaTensor
+			inertiaTensor = this%diagInertiaTensor
 			return
 		end if
 		
 		if( present(center) .and. ( .not. present(axes) ) ) then
-			rThetaPhi = Math_cart2Spher( this.inertiaAxes_(:,3) )
+			rThetaPhi = Math_cart2Spher( this%inertiaAxes_(:,3) )
 			Rot = SpecialMatrix_rotation( rThetaPhi(3), rThetaPhi(2), 0.0_8 )
 			
-			call r.columnVector( 3, values=this.inertiaAxes_(:,1) )
+			call r.columnVector( 3, values=this%inertiaAxes_(:,1) )
 			r = Rot*r
-			rThetaPhi = Math_cart2Spher( r.data(:,1) )
+			rThetaPhi = Math_cart2Spher( r%data(:,1) )
 			Rot = SpecialMatrix_zRotation( rThetaPhi(3) )*Rot
 			
 			if( present(angles) ) angles = rThetaPhi
 			
 			! It rotates the inertia tensor
-			Im = Rot.transpose()*this.diagInertiaTensor*Rot
+			Im = Rot.transpose()*this%diagInertiaTensor*Rot
 			
-			call r.columnVector( 3, values=this.centerOfMass() )
+			call r.columnVector( 3, values=this%centerOfMass() )
 			call c.columnVector( 3, values=center )
 			d = r-c
 			
-			inertiaTensor = Im + ( SpecialMatrix_identity(3,3)*d.norm2()**2 - d*d.transpose() )*this.mass()
+			inertiaTensor = Im + ( SpecialMatrix_identity(3,3)*d.norm2()**2 - d*d.transpose() )*this%mass()
 			
 			if( effDebug ) then
 				write(*,*) ""
 				write(*,*) ">>>>>>>>>>>>> BEGIN DEBUG: Molecule.inertiaTensor.center"
 				write(*,*) ""
-				call this.show( formatted=.true. )
+				call this%show( formatted=.true. )
 				write(*,*) ""
 				write(*,*) "Inertia tensor by rotations around arbitrary center = "
-				call inertiaTensor.show( formatted=.true. )
+				call inertiaTensor%show( formatted=.true. )
 				
 				write(*,*) ""
 				write(*,*) "Exact inertia tensor around arbitrary center = "
-				call this.buildInertiaTensor( Im, center=center )
-				call Im.show( formatted=.true. )
+				call this%buildInertiaTensor( Im, center=center )
+				call Im%show( formatted=.true. )
 				write(*,*) ""
 				write(*,*) ">>>>>>>>>>>>> END DEBUG: Molecule.inertiaTensor.center"
 			end if
@@ -2130,10 +2130,10 @@ module Molecule_
 		end if
 		
 		if( ( .not. present(center) ) .and. present(axes) ) then
-			call axisProj.columnVector( 3, values=this.inertiaAxes_(:,3) )
+			call axisProj.columnVector( 3, values=this%inertiaAxes_(:,3) )
 			axisProj = axisProj.projectionOntoNewAxes( axes )
 			
-			rThetaPhi = Math_cart2Spher( axisProj.data(:,1) )
+			rThetaPhi = Math_cart2Spher( axisProj%data(:,1) )
 			Rot = SpecialMatrix_rotation( rThetaPhi(3), rThetaPhi(2), 0.0_8 )
 			
 			if( present(angles) ) then
@@ -2141,12 +2141,12 @@ module Molecule_
 				angles(2) = rThetaPhi(2) ! beta
 			end if
 			
-			call axisProj.columnVector( 3, values=this.inertiaAxes_(:,1) )
+			call axisProj.columnVector( 3, values=this%inertiaAxes_(:,1) )
 			axisProj = axisProj.projectionOntoNewAxes( axes )
 			
-			call r.columnVector( 3, values=axisProj.data(:,1) )
+			call r.columnVector( 3, values=axisProj%data(:,1) )
 			r = Rot*r
-			rThetaPhi = Math_cart2Spher( r.data(:,1) )
+			rThetaPhi = Math_cart2Spher( r%data(:,1) )
 			Rot = SpecialMatrix_zRotation( rThetaPhi(3) )*Rot
 			
 			if( present(angles) ) then
@@ -2154,21 +2154,21 @@ module Molecule_
 			end if
 			
 			! It rotates the inertia tensor around its center of mass
-			inertiaTensor = Rot.transpose()*this.diagInertiaTensor*Rot
+			inertiaTensor = Rot.transpose()*this%diagInertiaTensor*Rot
 			
 			if( effDebug ) then
 				write(*,*) ""
 				write(*,*) ">>>>>>>>>>>>> BEGIN DEBUG: Molecule.inertiaTensor.axes"
 				write(*,*) ""
-				call this.show( formatted=.true. )
+				call this%show( formatted=.true. )
 				write(*,*) ""
 				write(*,*) "Inertia tensor by rotating around CM and projection onto chosen axes = "
-				call inertiaTensor.show( formatted=.true. )
+				call inertiaTensor%show( formatted=.true. )
 				
 				write(*,*) ""
 				write(*,*) "Exact inertia tensor around CM and projection onto chosen axes = "
-				call this.buildInertiaTensor( Im, axes=axes )
-				call Im.show( formatted=.true. )
+				call this%buildInertiaTensor( Im, axes=axes )
+				call Im%show( formatted=.true. )
 				write(*,*) ""
 				write(*,*) ">>>>>>>>>>>>> END DEBUG: Molecule.inertiaTensor.axes"
 			end if
@@ -2177,44 +2177,44 @@ module Molecule_
 		end if
 		
 		if( present(center) .and. present(axes) ) then
-			call axisProj.columnVector( 3, values=this.inertiaAxes_(:,3) )
+			call axisProj.columnVector( 3, values=this%inertiaAxes_(:,3) )
 			axisProj = axisProj.projectionOntoNewAxes( axes )
 			
-			rThetaPhi = Math_cart2Spher( axisProj.data(:,1) )
+			rThetaPhi = Math_cart2Spher( axisProj%data(:,1) )
 			Rot = SpecialMatrix_rotation( rThetaPhi(3), rThetaPhi(2), 0.0_8 )
 			
-			call axisProj.columnVector( 3, values=this.inertiaAxes_(:,1) )
+			call axisProj.columnVector( 3, values=this%inertiaAxes_(:,1) )
 			axisProj = axisProj.projectionOntoNewAxes( axes )
 			
-			call r.columnVector( 3, values=axisProj.data(:,1) )
+			call r.columnVector( 3, values=axisProj%data(:,1) )
 			r = Rot*r
-			rThetaPhi = Math_cart2Spher( r.data(:,1) )
+			rThetaPhi = Math_cart2Spher( r%data(:,1) )
 			Rot = SpecialMatrix_zRotation( rThetaPhi(3) )*Rot
 			
 			if( present(angles) ) angles = rThetaPhi
 			
 			! It rotates the inertia tensor around its center of mass
-			Im = Rot.transpose()*this.diagInertiaTensor*Rot
+			Im = Rot.transpose()*this%diagInertiaTensor*Rot
 			
-			call r.columnVector( 3, values=this.centerOfMass() )
+			call r.columnVector( 3, values=this%centerOfMass() )
 			call c.columnVector( 3, values=center )
 			d = r-c
 			
-			inertiaTensor = Im + ( SpecialMatrix_identity(3,3)*d.norm2()**2 - d*d.transpose() )*this.mass()
+			inertiaTensor = Im + ( SpecialMatrix_identity(3,3)*d.norm2()**2 - d*d.transpose() )*this%mass()
 			
 			if( effDebug ) then
 				write(*,*) ""
 				write(*,*) ">>>>>>>>>>>>> BEGIN DEBUG: Molecule.inertiaTensor.(center,axes)"
 				write(*,*) ""
-				call this.show( formatted=.true. )
+				call this%show( formatted=.true. )
 				write(*,*) ""
 				write(*,*) "Inertia tensor by rotating around center and projection onto chosen axes = "
-				call inertiaTensor.show( formatted=.true. )
+				call inertiaTensor%show( formatted=.true. )
 				
 				write(*,*) ""
 				write(*,*) "Exact inertia tensor around center and projection onto chosen axes = "
-				call this.buildInertiaTensor( Im, center=center, axes=axes )
-				call Im.show( formatted=.true. )
+				call this%buildInertiaTensor( Im, center=center, axes=axes )
+				call Im%show( formatted=.true. )
 				write(*,*) ""
 				write(*,*) ">>>>>>>>>>>>> END DEBUG: Molecule.inertiaTensor.(center,axes)"
 			end if
@@ -2231,11 +2231,11 @@ module Molecule_
 		integer, intent(in) :: i
 		real(8) :: output(3)
 		
-		if( .not. this.axesChosen ) then
-			call this.orient( moveCM=.false. )
+		if( .not. this%axesChosen ) then
+			call this%orient( moveCM=.false. )
 		end if
 		
-		output(:) = this.inertiaAxes_(:,i)
+		output(:) = this%inertiaAxes_(:,i)
 	end function inertiaAxis
 	
 	!>
@@ -2245,11 +2245,11 @@ module Molecule_
 		class(Molecule), intent(in) :: this
 		type(Matrix) :: output
 		
-		if( .not. this.axesChosen ) then
-			call this.orient( moveCM=.false. )
+		if( .not. this%axesChosen ) then
+			call this%orient( moveCM=.false. )
 		end if
 		
-		call output.init( this.inertiaAxes_ )
+		call output%init( this%inertiaAxes_ )
 	end function inertiaAxes
 	
 	!>
@@ -2273,23 +2273,23 @@ module Molecule_
 		effUseEdgeWeights = .true.
 		if( present(useEdgeWeights) ) effUseEdgeWeights = useEdgeWeights
 		
-		call this.molGraph.init( directed=.false., name=this.name )
+		call this%molGraph%init( directed=.false., name=this%name )
 		
-		do i=1,this.nAtoms()
+		do i=1,this%nAtoms()
 			if( effUseNodeWeights ) then
-				call this.molGraph.newNode( label=trim(this.atoms(i).symbol), weight=this.atoms(i).atomicNumber() )
+				call this%molGraph%newNode( label=trim(this%atoms(i)%symbol), weight=this%atoms(i)%atomicNumber() )
 			else
-				call this.molGraph.newNode( label=trim(this.atoms(i).symbol) )
+				call this%molGraph%newNode( label=trim(this%atoms(i)%symbol) )
 			end if
 		end do
 		
-		do i=1,this.nAtoms()
-			do j=1,this.nAtoms()
-				if( i/=j .and. this.atoms(i).isConnectedWith( this.atoms(j), alpha=alpha, distance=dij ) ) then
+		do i=1,this%nAtoms()
+			do j=1,this%nAtoms()
+				if( i/=j .and. this%atoms(i)%isConnectedWith( this%atoms(j), alpha=alpha, distance=dij ) ) then
 					if( effUseEdgeWeights ) then
-						call this.molGraph.newEdge( i, j, weight=dij )
+						call this%molGraph%newEdge( i, j, weight=dij )
 					else
-						call this.molGraph.newEdge( i, j )
+						call this%molGraph%newEdge( i, j )
 					end if
 				end if
 			end do
@@ -2307,8 +2307,8 @@ module Molecule_
 		integer :: i, ssum
 		
 		ssum = 0
-		do i=1,this.nAtoms()
-			ssum = ssum + this.atoms(i).atomicNumber()
+		do i=1,this%nAtoms()
+			ssum = ssum + this%atoms(i)%atomicNumber()
 		end do
 		
 		if( present(charge) ) then
@@ -2352,42 +2352,42 @@ module Molecule_
 		effUnitaryMasses = .false.
 		if( present(unitaryMasses) ) effUnitaryMasses = unitaryMasses
 		
-		allocate( X(this.nAtoms()) )
-		allocate( Y(this.nAtoms()) )
-		allocate( Z(this.nAtoms()) )
-		allocate( m(this.nAtoms()) )
+		allocate( X(this%nAtoms()) )
+		allocate( Y(this%nAtoms()) )
+		allocate( Z(this%nAtoms()) )
+		allocate( m(this%nAtoms()) )
 		
 		if( present(axes) ) then
-			do i=1,this.nAtoms()
-				call r.columnVector( 3, values=this.atoms(i).r )
+			do i=1,this%nAtoms()
+				call r.columnVector( 3, values=this%atoms(i)%r )
 				r = r.projectionOntoNewAxes( axes )
 				
-				X(i) = r.get(1,1)
-				Y(i) = r.get(2,1)
-				Z(i) = r.get(3,1)
+				X(i) = r%get(1,1)
+				Y(i) = r%get(2,1)
+				Z(i) = r%get(3,1)
 				
 				if( effUnitaryMasses ) then
 					m(i) = 1.0_8
 				else
-					m(i) = AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )
+					m(i) = AtomicElementsDB_instance%atomicMass( this%atoms(i)%symbol )
 				end if
 			end do
 		else
-			do i=1,this.nAtoms()
-				X(i) = this.atoms(i).x
-				Y(i) = this.atoms(i).y
-				Z(i) = this.atoms(i).z
+			do i=1,this%nAtoms()
+				X(i) = this%atoms(i)%x
+				Y(i) = this%atoms(i)%y
+				Z(i) = this%atoms(i)%z
 				
 				if( effUnitaryMasses ) then
 					m(i) = 1.0_8
 				else
-					m(i) = AtomicElementsDB_instance.atomicMass( this.atoms(i).symbol )
+					m(i) = AtomicElementsDB_instance%atomicMass( this%atoms(i)%symbol )
 				end if
 			end do
 		end if
 		
 		if( effCM ) then
-			centerOfMass = this.centerOfMass()
+			centerOfMass = this%centerOfMass()
 			X = X - centerOfMass(1)
 			Y = Y - centerOfMass(2)
 			Z = Z - centerOfMass(3)
@@ -2397,17 +2397,17 @@ module Molecule_
 			Z = Z - effCenter(3)
 		end if
 		
-		call Im.init(3,3)
+		call Im%init(3,3)
 		
-		call Im.set( 1, 1,  sum( m*(Y**2+Z**2) ) )
-		call Im.set( 1, 2, -sum( m*X*Y ) )
-		call Im.set( 1, 3, -sum( m*X*Z ) )
-		call Im.set( 2, 1, -sum( m*Y*X ) )
-		call Im.set( 2, 2,  sum( m*(X**2+Z**2) ) )
-		call Im.set( 2, 3, -sum( m*Y*Z ) )
-		call Im.set( 3, 1, -sum( m*Z*X ) )
-		call Im.set( 3, 2, -sum( m*Z*Y ) )
-		call Im.set( 3, 3,  sum( m*(X**2+Y**2) ) )
+		call Im%set( 1, 1,  sum( m*(Y**2+Z**2) ) )
+		call Im%set( 1, 2, -sum( m*X*Y ) )
+		call Im%set( 1, 3, -sum( m*X*Z ) )
+		call Im%set( 2, 1, -sum( m*Y*X ) )
+		call Im%set( 2, 2,  sum( m*(X**2+Z**2) ) )
+		call Im%set( 2, 3, -sum( m*Y*Z ) )
+		call Im%set( 3, 1, -sum( m*Z*X ) )
+		call Im%set( 3, 2, -sum( m*Z*Y ) )
+		call Im%set( 3, 3,  sum( m*(X**2+Y**2) ) )
 		
 		deallocate( X )
 		deallocate( Y )
@@ -2448,117 +2448,117 @@ module Molecule_
 			write(*,*) ">>>>>>>>>>>>> BEGIN DEBUG: Molecule.orient"
 			write(*,*) ""
 			write(*,*) "Initial geometry = "
-			call this.show( formatted=.true. )
+			call this%show( formatted=.true. )
 			write(*,*) ""
 		end if
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! 1) It choose the origin as the center of mass
-		centerOfMass = this.centerOfMass()
-		do i=1,this.nAtoms()
-			this.atoms(i).r = this.atoms(i).r - centerOfMass
+		centerOfMass = this%centerOfMass()
+		do i=1,this%nAtoms()
+			this%atoms(i)%r = this%atoms(i)%r - centerOfMass
 		end do
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! 2) It builds the inertia tensor which is diagonalizes
 		!    in order to get the principal axes
-		call this.buildInertiaTensor( Im, CM=.false. )
-		call Im.eigen( eVecs=Vm, eVals=this.diagInertiaTensor )
-! 		call Vm.show( formatted=.true. )
+		call this%buildInertiaTensor( Im, CM=.false. )
+		call Im.eigen( eVecs=Vm, eVals=this%diagInertiaTensor )
+! 		call Vm%show( formatted=.true. )
 		
 		if( effDebug ) then
 			write(*,*) "Inertia tensor = "
-			call Im.show( formatted=.true. )
+			call Im%show( formatted=.true. )
 			write(*,*) ""
 			write(*,*) "Diagonal inertia tensor = "
-			call this.diagInertiaTensor.show( formatted=.true. )
+			call this%diagInertiaTensor%show( formatted=.true. )
 			write(*,*) ""
 		end if
 		
-		rThetaPhi = Math_cart2Spher( Vm.data(:,3) )
+		rThetaPhi = Math_cart2Spher( Vm%data(:,3) )
 		Rot = SpecialMatrix_rotation( rThetaPhi(3), rThetaPhi(2), 0.0_8 )
 		
-		call r.columnVector( 3, values=Vm.data(:,1) )
+		call r.columnVector( 3, values=Vm%data(:,1) )
 		r = Rot*r
-		rThetaPhi = Math_cart2Spher( r.data(:,1) )
+		rThetaPhi = Math_cart2Spher( r%data(:,1) )
 		Rot = SpecialMatrix_zRotation( rThetaPhi(3) )*Rot
 		
-		do i=1,this.nAtoms()
-			call r.columnVector( 3, values=this.atoms(i).r )
+		do i=1,this%nAtoms()
+			call r.columnVector( 3, values=this%atoms(i)%r )
 			r = Rot*r
-			this.atoms(i).r = r.data(:,1)
+			this%atoms(i)%r = r%data(:,1)
 		end do
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! 3) It restore the center of mass if moveCM=false
 		if( .not. effMoveCM ) then
-			do i=1,this.nAtoms()
-				this.atoms(i).r = this.atoms(i).r + centerOfMass
+			do i=1,this%nAtoms()
+				this%atoms(i)%r = this%atoms(i)%r + centerOfMass
 			end do
 			
-			this.centerOfMass_ = centerOfMass
-			this.testMassCenter_ = .true.
-			this.testGeomCenter_ = .true.
+			this%centerOfMass_ = centerOfMass
+			this%testMassCenter_ = .true.
+			this%testGeomCenter_ = .true.
 		else
-			this.centerOfMass_ = [ 0.0_8, 0.0_8, 0.0_8 ]
-			this.testMassCenter_ = .true.
-			this.testGeomCenter_ = .false.
+			this%centerOfMass_ = [ 0.0_8, 0.0_8, 0.0_8 ]
+			this%testMassCenter_ = .true.
+			this%testGeomCenter_ = .false.
 		end if
 		
-		this.inertiaAxes_(:,1) = [ 1.0_8, 0.0_8, 0.0_8 ]
-		this.inertiaAxes_(:,2) = [ 0.0_8, 1.0_8, 0.0_8 ]
-		this.inertiaAxes_(:,3) = [ 0.0_8, 0.0_8, 1.0_8 ]
+		this%inertiaAxes_(:,1) = [ 1.0_8, 0.0_8, 0.0_8 ]
+		this%inertiaAxes_(:,2) = [ 0.0_8, 1.0_8, 0.0_8 ]
+		this%inertiaAxes_(:,3) = [ 0.0_8, 0.0_8, 1.0_8 ]
 		
-		this.axesChosen = .true.
+		this%axesChosen = .true.
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! 4) By using the diagonal representation of the inertia
 		!    tensor, we can get the number of degrees of freedom
 		!    for the rotational and the vibrational motions
-		this.isLineal_ = 0
-		if( this.nAtoms() == 1 ) then
+		this%isLineal_ = 0
+		if( this%nAtoms() == 1 ) then
 			if( effDebug ) write(*,*) "* Atom detected"
 			
-			this.fv_ = 0
-			this.fr_ = 0
-		else if( abs( this.diagInertiaTensor.get(1,1) ) < 10.0 ) then ! La molecula es candidata a ser lineal
+			this%fv_ = 0
+			this%fr_ = 0
+		else if( abs( this%diagInertiaTensor%get(1,1) ) < 10.0 ) then ! La molecula es candidata a ser lineal
 			
-			if( effDebug ) write(*,*) "* Candidate to linear molecule detected. I1=", abs( this.diagInertiaTensor.get(1,1) ), "< 10.0 a.u."
+			if( effDebug ) write(*,*) "* Candidate to linear molecule detected. I1=", abs( this%diagInertiaTensor%get(1,1) ), "< 10.0 a.u."
 			
-			call this.extremeAtoms( si, sj )
+			call this%extremeAtoms( si, sj )
 			if( effDebug ) write(*,*) "Extreme atoms = ", si, sj
 			
 			rms_di = 0.0_8
-			do i=1,this.nAtoms()
-				rms_di = rms_di + Math_pointLineDistance( this.atoms(i).r, this.atoms(si).r, this.atoms(sj).r )
+			do i=1,this%nAtoms()
+				rms_di = rms_di + Math_pointLineDistance( this%atoms(i)%r, this%atoms(si)%r, this%atoms(sj)%r )
 			end do
-			rms_di = rms_di/real(this.nAtoms(),8)
+			rms_di = rms_di/real(this%nAtoms(),8)
 			
 			if( effDebug ) write(*,*) "Error in linear configuration = ", rms_di
 			
 			if( rms_di < 1d-2 ) then
 				if( effDebug ) write(*,*) "* Linear molecule detected. rms_di=", rms_di, "< 1e-2 a.u."
 				
-				this.fv_ = 3*this.nAtoms()-5
-				this.fr_ = 2
+				this%fv_ = 3*this%nAtoms()-5
+				this%fr_ = 2
 			else
 				if( effDebug ) write(*,*) "* Nonlinear molecule detected. rms_di=", rms_di, "> 1e-2 a.u."
 				
-				this.fv_ = 3*this.nAtoms()-6
-				this.fr_ = 3
+				this%fv_ = 3*this%nAtoms()-6
+				this%fr_ = 3
 			end if
 			
-			this.isLineal_ = 1
+			this%isLineal_ = 1
 		else
-			if( effDebug ) write(*,*) "* Nonlinear molecule detected. I1=", abs( this.diagInertiaTensor.get(1,1) ), "> 10.0 a.u."
+			if( effDebug ) write(*,*) "* Nonlinear molecule detected. I1=", abs( this%diagInertiaTensor%get(1,1) ), "> 10.0 a.u."
 			
-			this.fv_ = 3*this.nAtoms()-6
-			this.fr_ = 3
+			this%fv_ = 3*this%nAtoms()-6
+			this%fr_ = 3
 		end if
 		
 		if( effDebug ) then
 			write(*,*) "Final geometry = "
-			call this.show( formatted=.true. )
+			call this%show( formatted=.true. )
 			write(*,*) ""
 			write(*,*) ">>>>>>>>>>>>> END DEBUG: Molecule.orient"
 			write(*,*) ""
@@ -2605,26 +2605,26 @@ module Molecule_
 		if( present(force1D) ) effForce1D = force1D
 		if( present(force2D) ) effForce2D = force2D
 		
-		if( this.fr_ == 0 ) then
+		if( this%fr_ == 0 ) then
 			return
 		end if
 		
 		if( effDebug ) then
 			write(*,*) ""
-			write(*,*) ">>>>>>>>>>>>> BEGIN DEBUG: Molecule.rotate"
+			write(*,*) ">>>>>>>>>>>>> BEGIN DEBUG: Molecule%rotate"
 			write(*,*) ""
 			write(*,*) "Initial geometry = "
-			call this.show( formatted=.true. )
+			call this%show( formatted=.true. )
 			write(*,*) ""
 		end if
 		
-		if( .not. this.axesChosen ) then
-			call this.orient( moveCM=.false., debug=debug )
+		if( .not. this%axesChosen ) then
+			call this%orient( moveCM=.false., debug=debug )
 		end if
 		
-		centerOfMass = this.centerOfMass()		
-		do i=1,this.nAtoms()
-			this.atoms(i).r = this.atoms(i).r - centerOfMass
+		centerOfMass = this%centerOfMass()		
+		do i=1,this%nAtoms()
+			this%atoms(i)%r = this%atoms(i)%r - centerOfMass
 		end do
 		
 		if( effRandom ) then
@@ -2633,29 +2633,29 @@ module Molecule_
 			else if( effForce2D ) then
 				Rot = SpecialMatrix_randomRotation( alpha=effAlpha, beta=effBeta, gamma=effGamma, fr=2 )
 			else
-				Rot = SpecialMatrix_randomRotation( alpha=effAlpha, beta=effBeta, gamma=effGamma, fr=this.fr_ )
+				Rot = SpecialMatrix_randomRotation( alpha=effAlpha, beta=effBeta, gamma=effGamma, fr=this%fr_ )
 			end if
 		else
 			Rot = SpecialMatrix_rotation( effAlpha, effBeta, effGamma )
 		end if
 		
 		! It rotates the atoms one by one around of its center of mass
-		do i=1,this.nAtoms()
-			call r.columnVector( 3, values=this.atoms(i).r )
+		do i=1,this%nAtoms()
+			call r.columnVector( 3, values=this%atoms(i)%r )
 			r = Rot*r
-			this.atoms(i).r = r.data(:,1)
+			this%atoms(i)%r = r%data(:,1)
 		end do
 		
 		! It restores its center
-		do i=1,this.nAtoms()
-			this.atoms(i).r = this.atoms(i).r + centerOfMass
+		do i=1,this%nAtoms()
+			this%atoms(i)%r = this%atoms(i)%r + centerOfMass
 		end do
 		
 		! It rotates the inertia axes
 		do i=1,3
-			call r.columnVector( 3, values=this.inertiaAxes_(:,i) )
+			call r.columnVector( 3, values=this%inertiaAxes_(:,i) )
 			r = Rot*r
-			this.inertiaAxes_(:,i) = r.data(:,1)
+			this%inertiaAxes_(:,i) = r%data(:,1)
 		end do
 		
 		if( effRandom ) then
@@ -2666,20 +2666,20 @@ module Molecule_
 		
 		if( effDebug ) then
 			write(*,*) "Final geometry = "
-			call this.show( formatted=.true. )
+			call this%show( formatted=.true. )
 			write(*,*) ""
 			write(*,*) "Inertia axes by rotation = "
-			call A.init( this.inertiaAxes_ )
-			call A.show( formatted=.true. )
+			call A%init( this%inertiaAxes_ )
+			call A%show( formatted=.true. )
 			
 			write(*,*) ""
 			write(*,*) "Exact inertia axes by diagonalization of inertia tensor = "
-			call this.buildInertiaTensor( Im, CM=.true. )
+			call this%buildInertiaTensor( Im, CM=.true. )
 			call Im.eigen( eVecs=Vm )
-			call Vm.show( formatted=.true. )
+			call Vm%show( formatted=.true. )
 			
 			write(*,*) ""
-			write(*,*) ">>>>>>>>>>>>> END DEBUG: Molecule.rotate"
+			write(*,*) ">>>>>>>>>>>>> END DEBUG: Molecule%rotate"
 			write(*,*) ""
 		end if
 	end subroutine rotate
@@ -2711,119 +2711,119 @@ module Molecule_
 ! 	write(*,*) "( compA <= compC ) ==>", all( compA <= compC )
 ! 	write(*,*) "( compA >= compC ) ==>", all( compA >= compC )
 		
-		call mol1.init( 2 )
-		call atom.init( " H", 0.0_8, 0.0_8, 0.3561_8 )
-		mol1.atoms(1) = atom
-		call atom.init( " H", 0.0_8, 0.0_8,-0.3561_8 )
-		mol1.atoms(2) = atom
-		call mol1.show( formatted=.true. )
+		call mol1%init( 2 )
+		call atom%init( " H", 0.0_8, 0.0_8, 0.3561_8 )
+		mol1%atoms(1) = atom
+		call atom%init( " H", 0.0_8, 0.0_8,-0.3561_8 )
+		mol1%atoms(2) = atom
+		call mol1%show( formatted=.true. )
 		
-		call mol1.setCenter( [1.0_8, 1.0_8, 1.0_8] )
-		call mol1.show( formatted=.true. )
+		call mol1%setCenter( [1.0_8, 1.0_8, 1.0_8] )
+		call mol1%show( formatted=.true. )
 		
-		call mol1.init( 5 )
+		call mol1%init( 5 )
 		
-		call atom1.init( " He", 0.15_8, 2.15_8, 1.15_8 )
-		call atom1.init( " He", 0.0_8, 0.0_8, 0.0_8 )
-		call atom1.show()
-		mol1.atoms(1) = atom
-		call atom2.init( " He", 1.64_8, 2.35_8, 1.28_8 )
-		call atom2.show()
-		mol1.atoms(2) = atom
-		call atom.init( "  He", 1.75_8, 3.15_8, 0.85_8 )
-		mol1.atoms(3) = atom
-		call atom.init( "He  ", 1.62_8, 3.45_8, 0.70_8 )
-		mol1.atoms(4) = atom
-		call atom.init( "  He", 3.42_8, 2.04_8, 0.98_8 )
-		mol1.atoms(5) = atom
+		call atom1%init( " He", 0.15_8, 2.15_8, 1.15_8 )
+		call atom1%init( " He", 0.0_8, 0.0_8, 0.0_8 )
+		call atom1%show()
+		mol1%atoms(1) = atom
+		call atom2%init( " He", 1.64_8, 2.35_8, 1.28_8 )
+		call atom2%show()
+		mol1%atoms(2) = atom
+		call atom%init( "  He", 1.75_8, 3.15_8, 0.85_8 )
+		mol1%atoms(3) = atom
+		call atom%init( "He  ", 1.62_8, 3.45_8, 0.70_8 )
+		mol1%atoms(4) = atom
+		call atom%init( "  He", 3.42_8, 2.04_8, 0.98_8 )
+		mol1%atoms(5) = atom
 		
-		call mol1.show( formatted=.true. )
-		write(*,*) "molecule radius = ", mol1.radius()
-! 		call mol1.save( "salida.xyz", format=XYZ )
+		call mol1%show( formatted=.true. )
+		write(*,*) "molecule radius = ", mol1%radius()
+! 		call mol1%save( "salida%xyz", format=XYZ )
 		
 		write(*,*) ""
 		write(*,*) "Testing load procedures"
 		write(*,*) "======================="
 		call mol1.load( "data/formats/RXYZ", format=XYZ )
-		call mol1.show( formatted=.true. )
+		call mol1%show( formatted=.true. )
 		call mol1.load( "data/formats/MOLDEN", format=MOLDEN )
-		call mol1.show( formatted=.true. )
+		call mol1%show( formatted=.true. )
 ! 		stop
 		
 		write(*,*) ""
 		write(*,*) "Testing copy constructor"
 		write(*,*) "========================"
 		mol2 = mol1
-		call mol1.show()
-		call mol2.show()
+		call mol1%show()
+		call mol2%show()
 		
 		write(*,*) ""
 		write(*,*) "Testing properties"
 		write(*,*) "=================="
-		write(*,*) "mol2.massNumber() = ", mol2.massNumber()
+		write(*,*) "mol2%massNumber() = ", mol2%massNumber()
 		write(*,*) "mol2.chemicalFormula() = ", mol2.chemicalFormula()
 		write(*,*) ""
 		
 		write(*,*) "Testing center of molecule"
 		write(*,*) "=========================="
-		call mol2.show(formatted=.true.)
+		call mol2%show(formatted=.true.)
 		write(*,"(A,3F10.5)") "mol2.center = ", mol2.center()
-		call mol2.setCenter( [-2.0_8, 1.0_8, 2.0_8] )
+		call mol2%setCenter( [-2.0_8, 1.0_8, 2.0_8] )
 		write(*,"(A,3F10.5)") "mol2.geomCenter = ", mol2.center()
-! 		call mol2.setCenter( [ 2.0_8,-1.0_8,-2.0_8] )
-		call mol2.setCenter( atom.r )
+! 		call mol2%setCenter( [ 2.0_8,-1.0_8,-2.0_8] )
+		call mol2%setCenter( atom%r )
 		write(*,"(A,3F10.5)") "mol2.geomCenter = ", mol2.center()
-! 		call mol2.show(formatted=.true.)
+! 		call mol2%show(formatted=.true.)
 		
-		call mol1.init( 2 )
-		mol1.atoms(1) = atom1
-		mol1.atoms(2) = atom2
-! 		call mol1.fromFile( "prueba.xyz" )
-		call mol1.show( formatted=.true. )
+		call mol1%init( 2 )
+		mol1%atoms(1) = atom1
+		mol1%atoms(2) = atom2
+! 		call mol1%fromFile( "prueba%xyz" )
+		call mol1%show( formatted=.true. )
 		write(*,"(A,3F10.5)") "mol2.geomCenterA = ", mol1.center()
-		call mol1.show( formatted=.true. )
-		call mol1.setCenter( [-2.0_8, 1.0_8, 2.0_8] )
-		call mol1.show( formatted=.true. )
+		call mol1%show( formatted=.true. )
+		call mol1%setCenter( [-2.0_8, 1.0_8, 2.0_8] )
+		call mol1%show( formatted=.true. )
 		write(*,"(A,3F10.5)") "mol2.geomCenter = ", mol1.center()
 		
 		write(*,*) ""
 		write(*,*) "Testing rotation of molecule"
 		write(*,*) "============================"
-		call mol1.init( "data/formats/XYZ", format=XYZ )
-! 		call mol1.init( "prueba.xyz" )
-! 		call mol1.init( "C9T-cyclic.xyz" )
-! 		call mol1.init( "C2.xyz" )
-		call mol1.rotate( alpha=45.0_8*deg, beta=45.0_8*deg, gamma=0.0_8*deg, debug=.true. )
+		call mol1%init( "data/formats/XYZ", format=XYZ )
+! 		call mol1%init( "prueba%xyz" )
+! 		call mol1%init( "C9T-cyclic%xyz" )
+! 		call mol1%init( "C2%xyz" )
+		call mol1%rotate( alpha=45.0_8*deg, beta=45.0_8*deg, gamma=0.0_8*deg, debug=.true. )
 		write(*,*) ""
 		write(*,*) "Inertia tensor around its center of mass"
 		write(*,*) "----------------------------------------"
 		Im = mol1.inertiaTensor( debug=.true. )
 		write(*,*) ""
-		call Im.show( formatted=.true. )
+		call Im%show( formatted=.true. )
 		write(*,*) ""
 		write(*,*) "Inertia tensor around arbitrary center"
 		write(*,*) "--------------------------------------"
 		write(*,*) "center = [-2.0, 1.0, 2.0]"
 		Im = mol1.inertiaTensor( center=[-2.0_8, 1.0_8, 2.0_8], debug=.true. )
 		write(*,*) ""
-		call Im.show( formatted=.true. )
+		call Im%show( formatted=.true. )
 		write(*,*) ""
 		write(*,*) "Inertia tensor around its center of mass and arbitrary axes"
 		write(*,*) "-----------------------------------------------------------"
 		
 		! These axis are equivalent to a rotation with alpha=45º and beta=45º
-		call refAxes.init(3,3)
-		refAxes.data(1,:) = [  0.5000, 0.5000, -0.7071 ]
-		refAxes.data(2,:) = [ -0.7071, 0.7071,  0.0000 ]
-		refAxes.data(3,:) = [  0.5000, 0.5000,  0.7071 ]
+		call refAxes%init(3,3)
+		refAxes%data(1,:) = [  0.5000, 0.5000, -0.7071 ]
+		refAxes%data(2,:) = [ -0.7071, 0.7071,  0.0000 ]
+		refAxes%data(3,:) = [  0.5000, 0.5000,  0.7071 ]
 
 		write(*,*) ""
 		write(*,*) "axes = "
-		call refAxes.show( formatted=.true. )
+		call refAxes%show( formatted=.true. )
 
 		Im = mol1.inertiaTensor( axes=refAxes, debug=.true. )
 		write(*,*) ""
-		call Im.show( formatted=.true. )
+		call Im%show( formatted=.true. )
 		
 		write(*,*) ""
 		write(*,*) "Inertia tensor around arbitrary center and axes"
@@ -2831,16 +2831,16 @@ module Molecule_
 		write(*,*) "center = [-2.0, 1.0, 2.0]"
 		write(*,*) ""
 		write(*,*) "axes = "
-		call refAxes.show( formatted=.true. )
+		call refAxes%show( formatted=.true. )
 
 		Im = mol1.inertiaTensor( center=[-2.0_8, 1.0_8, 2.0_8], axes=refAxes, debug=.true. )
 		write(*,*) ""
-		call Im.show( formatted=.true. )
+		call Im%show( formatted=.true. )
 		
 		write(*,*) "Composition vector"
 		write(*,*) "-------------------"
-		call mol1.init( "data/formats/XYZ", format=XYZ )
-		call mol1.showCompositionVector()
+		call mol1%init( "data/formats/XYZ", format=XYZ )
+		call mol1%showCompositionVector()
 		
 		write(*,*) ""
 		write(*,*) "Inertia tensor around arbitrary center and axes"
@@ -2851,27 +2851,27 @@ module Molecule_
 		write(*,*) "         [ 1.0 | 1.0 | 0.0]"
 		write(*,*) "         [ 0.0 | 0.0 | 1.0]"
 		write(*,*) ""
-		call refAxes.init(3,3)
-		refAxes.data(:,1) = [-1.0, 1.0, 0.0]
-		refAxes.data(:,2) = [ 1.0, 1.0, 0.0]
-		refAxes.data(:,3) = [ 0.0, 0.0, 1.0]
+		call refAxes%init(3,3)
+		refAxes%data(:,1) = [-1.0, 1.0, 0.0]
+		refAxes%data(:,2) = [ 1.0, 1.0, 0.0]
+		refAxes%data(:,3) = [ 0.0, 0.0, 1.0]
 		
 		Im = mol1.inertiaTensor( center=[-2.0_8, 1.0_8, 2.0_8], axes=refAxes, debug=.true. )
 		write(*,*) ""
-		call Im.show( formatted=.true. )
+		call Im%show( formatted=.true. )
 		
 		write(*,*) "Testing rotation of molecule"
 		write(*,*) "============================"
-		call mol1.init( "data/formats/XYZ", format=XYZ )
-! 		call mol1.init( "prueba.xyz" )
-! 		call mol1.init( "C9T-cyclic.xyz" )
-! 		call mol1.init( "C2.xyz" )
-! 		call mol1.init( "C1.xyz" )
+		call mol1%init( "data/formats/XYZ", format=XYZ )
+! 		call mol1%init( "prueba%xyz" )
+! 		call mol1%init( "C9T-cyclic%xyz" )
+! 		call mol1%init( "C2%xyz" )
+! 		call mol1%init( "C1%xyz" )
 		
-! 		call mol1.show( formatted=.true. )
+! 		call mol1%show( formatted=.true. )
 		write(*,*) "Initial inertia tensor = "
 		call mol1.buildInertiaTensor( Im, CM=.false. )
-		call Im.show( formatted=.true. )
+		call Im%show( formatted=.true. )
 		write(*,*) ""
 		write(*,"(A,3F7.2)") "  initial center of mass = ", mol1.centerOfMass()
 		write(*,"(A,3F7.2)") "initial geometric center = ", mol1.center()
@@ -2887,7 +2887,7 @@ module Molecule_
 		call mol1.buildInertiaTensor( Im, CM=.true. )
 		write(*,*) ""
 		write(*,*) "new inertia tensor = "
-		call Im.show( formatted=.true. )
+		call Im%show( formatted=.true. )
 		write(*,*) ""
 		write(*,"(A,3F7.2)") "  new center of mass = ", mol1.centerOfMass()
 		write(*,"(A,3F7.2)") "new geometric center = ", mol1.center()
@@ -2900,12 +2900,12 @@ module Molecule_
 		
 		write(*,*) ""
 		write(*,*) ">>>>>>>>>  Randomly oriented molecule ... OK"
-		call mol1.rotate( random=.true. )
+		call mol1%rotate( random=.true. )
 		
 		call mol1.buildInertiaTensor( Im, CM=.true. )
 		write(*,*) ""
 		write(*,*) "new inertia tensor = "
-		call Im.show( formatted=.true. )
+		call Im%show( formatted=.true. )
 		write(*,*) ""
 		write(*,"(A,3F7.2)") "  new center of mass = ", mol1.centerOfMass()
 		write(*,"(A,3F7.2)") "new geometric center = ", mol1.center()
@@ -2916,7 +2916,7 @@ module Molecule_
 			write(*,"(5X,A,3F7.2)") "V_"//FString_fromInteger(i)//" = ", mol1.inertiaAxis(i)
 		end do
 		
-		call mol1.save("salida.xyz")
+		call mol1%save("salida%xyz")
 		
 		call mol1.load( "data/formats/RXYZ", format=XYZ )
 		do i=1,1000000

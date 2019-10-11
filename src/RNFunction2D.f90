@@ -93,10 +93,10 @@ module RNFunction2D_
 #define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<RNFunction2D:"
-			output = trim(output)//trim(this.xyGrid.str())
-! 			ITEMI( "min=", this.min )
-			ITEMI( ",sizex=", this.nPoints(1) )
-			ITEMI( ",sizey=", this.nPoints(2) )
+			output = trim(output)//trim(this%xyGrid%str())
+! 			ITEMI( "min=", this%min )
+			ITEMI( ",sizex=", this%nPoints(1) )
+			ITEMI( ",sizey=", this%nPoints(2) )
 #undef ITEMS
 #undef ITEMI
 #undef ITEMR
@@ -109,8 +109,8 @@ module RNFunction2D_
 
 			LINE("RNFunction2D")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -135,7 +135,7 @@ module RNFunction2D_
 			unitEff = IO_STDOUT
 		end if
 		
-		write(*,*) "### ERROR ### RNFunction2D.toFStream is no implemented yet"
+		write(*,*) "### ERROR ### RNFunction2D%toFStream is no implemented yet"
 		stop
 	end subroutine toFStream
 
@@ -195,19 +195,19 @@ module RNFunction2D_
 		write(*,*) "Testing constructors"
 		write(*,*) "----------------------------"
 		
-		call func.init( xVec, yVec, fArray )
-		call func.show()
+		call func%init( xVec, yVec, fArray )
+		call func%show()
 		
-		call xyGrid.fromArray( xVec, yVec )
-		call func.init( xyGrid, fArray )
-		call func.show()
+		call xyGrid%fromArray( xVec, yVec )
+		call func%init( xyGrid, fArray )
+		call func%show()
 		
-		call xyGrid.init( min=[-5.0_8,-5.0_8], max=[5.0_8,5.0_8], size=[100,100] )
-		call func.init( xyGrid, funcTest )
-		call func.show()
+		call xyGrid%init( min=[-5.0_8,-5.0_8], max=[5.0_8,5.0_8], size=[100,100] )
+		call func%init( xyGrid, funcTest )
+		call func%show()
 		
-		call func.init( "data/formats/real-N2DF", format=N2DF_FORMAT )
-		call func.show()
+		call func%init( "data/formats/real-N2DF", format=N2DF_FORMAT )
+		call func%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
@@ -215,26 +215,26 @@ module RNFunction2D_
 		write(*,*) "----------------------------"
 		
 		func2 = func
-		call func2.show()
+		call func2%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
 		write(*,*) "Testing I/O methods"
 		write(*,*) "----------------------------"
 		
-		call func.save( "salida.n2df", format=N2DF_FORMAT )
+		call func%save( "salida.n2df", format=N2DF_FORMAT )
 		call func.load( "salida.n2df", format=N2DF_FORMAT )
-		call func.show()
+		call func%show()
 		
 		write(*,*) ""
 		write(*,*) "----------------------------"
 		write(*,*) "Testing resize(+3,+2)"
 		write(*,*) "----------------------------"
 		
-		call func.init( xVec, yVec, fArray )
-		call func.show()
-		call func.resize( 3, 2, +1, +1 )
-		call func.show()
+		call func%init( xVec, yVec, fArray )
+		call func%show()
+		call func%resize( 3, 2, +1, +1 )
+		call func%show()
 		
 	end subroutine RNFunction2D_test
 	
