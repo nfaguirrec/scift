@@ -1572,8 +1572,8 @@ module Molecule_
 		effThr = 0.92_8
 		if( present(thr) ) effThr = thr
 		
-		effDebug = .true.
-! 		if( present(debug) ) effDebug = debug
+		effDebug = .false.
+		if( present(debug) ) effDebug = debug
 		
 		this_descrip = this.connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
 		other_descrip = other.connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
