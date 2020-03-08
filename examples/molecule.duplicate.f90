@@ -135,7 +135,7 @@ program main
 	
 	do i=1,ifile.numberOfLines
 		
-		if( mod(i,int(ifile.numberOfLines/10.0_8)) == 0 ) then
+		if( mod(i,int(max(ifile.numberOfLines,10)/10.0_8)) == 0 ) then
 			write(6,"(A)",advance="no") "."
 			call flush(6)
 		end if
@@ -161,7 +161,7 @@ program main
 	
 	do i=1,size(molecules)
 	
-		if( mod(i,int(ifile.numberOfLines/10.0_8)) == 0 ) then
+		if( mod(i,int(max(ifile.numberOfLines,10)/10.0_8)) == 0 ) then
 			write(6,"(A)",advance="no") "."
 			call flush(6)
 		end if
