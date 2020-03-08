@@ -73,20 +73,20 @@ getAllDeps()
 	
 	if [ -f .running ]
 	then
-# 		if [ "`cat .running`" -ge $maxDepth ]
-# 		then
-# 				echo "" >> /dev/stderr
-# 				echo "" >> /dev/stderr
-# 				echo "## ERROR ## fmake.getAllDeps()" >> /dev/stderr
-# 				echo "            Cyclic dependency or maximum depth ($maxDepth) reached" >> /dev/stderr
-# 				echo "" >> /dev/stderr
-# 				cat .tmpdeps >> /dev/stderr
-# 				echo "" >> /dev/stderr
-# 				rm -rf .running 2> /dev/null
-# 				rm -rf .tmpdeps 2> /dev/null
-# 				kill -9 $PID 2> /dev/null
-# 				exit
-# 		fi
+		if [ "`cat .running`" -ge $maxDepth ]
+		then
+				echo "" >> /dev/stderr
+				echo "" >> /dev/stderr
+				echo "## ERROR ## fmake.getAllDeps()" >> /dev/stderr
+				echo "            Cyclic dependency or maximum depth ($maxDepth) reached" >> /dev/stderr
+				echo "" >> /dev/stderr
+				cat .tmpdeps >> /dev/stderr
+				echo "" >> /dev/stderr
+				rm -rf .running 2> /dev/null
+				rm -rf .tmpdeps 2> /dev/null
+				kill -9 $PID 2> /dev/null
+				exit
+		fi
 		
 		deps=`getDeps $1`
 		
