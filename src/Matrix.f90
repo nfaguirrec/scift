@@ -298,14 +298,14 @@ module Matrix_
 		class(Matrix), intent(inout) :: this
 		class(Matrix), intent(in) :: other
 		
-		this%nRows = other.nRows
-		this%nCols = other.nCols
+		this%nRows = other%nRows
+		this%nCols = other%nCols
 		
 		if( allocated(this%data) ) deallocate(this%data)
-		allocate( this%data(other.nRows,other.nCols) )
+		allocate( this%data(other%nRows,other%nCols) )
 		
 		this%data = other%data
-		this%type = other.type
+		this%type = other%type
 	end subroutine copyMatrix
 	
 	!>
@@ -1143,7 +1143,7 @@ module Matrix_
 		class(Matrix), intent(in) :: other
 		type(Matrix) :: output
 		
-		if( this%nCols /= other.nCols .or. this%nRows /= other.nRows ) then
+		if( this%nCols /= other%nCols .or. this%nRows /= other%nRows ) then
 			write(*,*) "## ERROR ## Matrix%rAddition: The matrices have not the same size"
 			stop
 		end if
@@ -1172,7 +1172,7 @@ module Matrix_
 		class(Matrix), intent(in) :: other
 		type(Matrix) :: output
 		
-		if( this%nCols /= other.nCols .or. this%nRows /= other.nRows ) then
+		if( this%nCols /= other%nCols .or. this%nRows /= other%nRows ) then
 			write(*,*) "## ERROR ## Matrix%rSubtraction: The matrices have not the same size"
 			stop
 		end if
@@ -1201,12 +1201,12 @@ module Matrix_
 		class(Matrix), intent(in) :: other
 		type(Matrix) :: output
 		
-		if( this%nCols /= other.nRows ) then
+		if( this%nCols /= other%nRows ) then
 			write(*,*) "## ERROR ## Matrix%rMultiplication: matrices with incompatible sizes"
 			stop
 		end if
 		
-		call output%init( this%nRows, other.nCols )
+		call output%init( this%nRows, other%nCols )
 		output%data = matmul( this%data, other%data )
 	end function rMultiplication
 	
@@ -1230,12 +1230,12 @@ module Matrix_
 		class(Matrix), intent(in) :: other
 		type(Matrix) :: output
 		
-		if( this%nCols /= other.nCols .or. this%nRows /= other.nRows ) then
+		if( this%nCols /= other%nCols .or. this%nRows /= other%nRows ) then
 			write(*,*) "## ERROR ## Matrix%rDivision: The matrices have not the same size"
 			stop
 		end if
 		
-		output = other.inverse()
+		output = other%inverse()
 		output%data = matmul( this%data, output%data )
 	end function rDivision
 	

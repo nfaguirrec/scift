@@ -40,9 +40,11 @@ module Math_
 	private
 	
 	real(8), public, parameter :: Math_PI = acos(-1.0_8)
-	real(8), public, parameter :: Math_INF = 1.0_8/0.0_8
+        !	real(8), public, parameter :: Math_INF = 1.0_8/0.0_8
+!	real(8), public, parameter :: Math_INF = IEEE_POSITIVE_INF
 ! 	real(8), public, parameter :: Math_INF = 99999999999999999.0_8
-	real(8), public, parameter :: Math_NAN = 0.0_8/0.0_8
+!	real(8), public, parameter :: Math_NAN = IEEE_QUIET_NAN
+!	real(8), public, parameter :: Math_NAN = 0.0_8/0.0_8
 	complex(8), public, parameter :: Math_I = cmplx(0.0_8,1.0_8)
 	
 	integer, public, parameter :: Math_IINF = huge(0)
@@ -731,7 +733,8 @@ module Math_
 
 		if( x < -1.0_8 .or. x > 1_8 ) then
 ! 			r = Math_NAN
-			r = sqrt(-1.0_8)
+!			r = sqrt(-1.0_8)
+                        stop "Math_erfinv return a NaN value"
 			return
 		end if
 		
@@ -1318,13 +1321,13 @@ module Math_
 		!--------------------------------------------------------
 		
 		allocate( strArray(8) )
-		strArray = ["H", "C", "CH", "C2", "H2", "C2H", "CH2", "C2H2"]
+		strArray = ["   H", "   C", "  CH", "  C2", "  H2", " C2H", " CH2", "C2H2"]
 		
 		allocate( MyiArray(8) )
 		MyiArray = [1, 6, 7, 12, 2, 13, 8, 14]
 		
-		write(*,*)
-		write(*,"(A,<size(strArray)>A5,A)") " set = { ", strArray, " }"
+!		write(*,*)
+!		write(*,"(A,"//trim(FString_fromInteger(size(strArray)))//"A5,A)") " set = { ", strArray, " }"
 		
 		k=1
 		do nFrag=1,size(strArray)
@@ -1357,18 +1360,18 @@ module Math_
 ! 		write(*,"(3F15.6)") 0.4769362762, 0.3013321461, -0.3045701942
 ! 		write(*,"(3F15.6)") Math_erfinv(0.5_8)-0.4769362762, Math_erfinv(0.33_8)-0.3013321461, Math_erfinv(-1.0_8/3.0_8)-(-0.3045701942)
 
-		write(*,*) ""
-		write(*,*) "Testing IEEE support"
-		write(*,*) "===================="
-		write(*,*) "isNaN( 2.0 ) = ", Math_isNaN( 2.0_8 )
-		write(*,*) "isNaN( 1.0d500 ) = ", Math_isNaN( 1.0d500 )
-		write(*,*) "isNaN( sqrt(-1.0_8) ) = ", Math_isNaN( sqrt(-1.0_8) )
-		write(*,*) "1.0_8/Math_INF = ", 1.0_8/Math_INF
-		write(*,"(A,F10.5)") "Math_INF = ", Math_INF
-		write(*,*) "isInf( 1.0d56 ) = ", Math_isInf( 1.0d56 )
-		write(*,*) "isInf( 1.0_8/0.0_8 ) = ", Math_isInf( 1.0_8/0.0_8 )
-		write(*,*) "isInf( 1.0_8/0.0_8+10.0_8 ) = ", Math_isInf( 1.0_8/0.0_8+10.0_8 )
-		write(*,*) "isInf( 1.0_8/0.0_8-10.0_8 ) = ", Math_isInf( 1.0_8/0.0_8-10.0_8 )
+!		write(*,*) ""
+!		write(*,*) "Testing IEEE support"
+!		write(*,*) "===================="
+!		write(*,*) "isNaN( 2.0 ) = ", Math_isNaN( 2.0_8 )
+!		write(*,*) "isNaN( 1.0d500 ) = ", Math_isNaN( 1.0d500 )
+!		write(*,*) "isNaN( sqrt(-1.0_8) ) = ", Math_isNaN( sqrt(-1.0_8) )
+!		write(*,*) "1.0_8/Math_INF = ", 1.0_8/Math_INF
+!		write(*,"(A,F10.5)") "Math_INF = ", Math_INF
+!		write(*,*) "isInf( 1.0d56 ) = ", Math_isInf( 1.0d56 )
+!		write(*,*) "isInf( 1.0_8/0.0_8 ) = ", Math_isInf( 1.0_8/0.0_8 )
+!		write(*,*) "isInf( 1.0_8/0.0_8+10.0_8 ) = ", Math_isInf( 1.0_8/0.0_8+10.0_8 )
+!		write(*,*) "isInf( 1.0_8/0.0_8-10.0_8 ) = ", Math_isInf( 1.0_8/0.0_8-10.0_8 )
 		
 	end subroutine Math_test
 	

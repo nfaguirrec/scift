@@ -144,7 +144,7 @@ module CNFunction2D_
 		integer :: unitEff
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
@@ -238,7 +238,7 @@ module CNFunction2D_
 		write(*,*) "----------------------------"
 		
 		call func%save( "salida.n2df", format=N2DF_FORMAT )
-		call func.load( "salida.n2df", format=N2DF_FORMAT )
+		call func%load( "salida.n2df", format=N2DF_FORMAT )
 		call func%show()
 		
 		write(*,*) ""

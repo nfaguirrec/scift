@@ -152,10 +152,10 @@
 		integer :: i
 		integer :: err
 		
-		this.xyGrid = xyGrid
+		this%xyGrid = xyGrid
 		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(xyGrid.nPoints(1),xyGrid.nPoints(2)), stat=err )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(xyGrid%nPoints(1),xyGrid%nPoints(2)), stat=err )
 		
 		if( err /= 0 ) then
 			call GOptions_error( &
@@ -164,7 +164,7 @@
 			)
 		end if
 		
-		this.fArray = 0.0_8
+		this%fArray = 0.0_8
 	end subroutine fromGrid2D
 	
 	!>
@@ -203,23 +203,23 @@
 			end if
 		end if
 		
-		call this.xyGrid.fromArray( xArray, yArray )
-		call this.xyGrid.setUnits( effUnits(1) )
+		call this%xyGrid%fromArray( xArray, yArray )
+		call this%xyGrid%setUnits( effUnits(1) )
 		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray( size(xArray), size(yArray) ) )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray( size(xArray), size(yArray) ) )
 		
 		do j=1,size(fArray,dim=2); do i=1,size(fArray,dim=1)
 #if __ID_TYPE__ == 0
-			this.fArray(i,j) = min( max( fArray(i,j)*effUnits(2), -effCutoff ), effCutoff )
+			this%fArray(i,j) = min( max( fArray(i,j)*effUnits(2), -effCutoff ), effCutoff )
 #elif __ID_TYPE__ == 1
-			this.fArray(i,j) = fArray(i,j)*effUnits(2)
+			this%fArray(i,j) = fArray(i,j)*effUnits(2)
 #endif
 		end do; end do
 
 		if( effFillWithZeros ) then
 			do j=size(fArray,dim=2)+1,size(yArray); do i=size(fArray,dim=1)+1,size(xArray)
-				this.fArray(i,j) = 0.0_8
+				this%fArray(i,j) = 0.0_8
 			end do; end do
 		end if
 
@@ -250,33 +250,33 @@
 		effFillWithZeros = .false.
 		if( present(fillWithZeros) ) effFillWithZeros = fillWithZeros
 		
-		this.xyGrid = xyGrid
-		call this.xyGrid.setUnits( effUnits(1) )
+		this%xyGrid = xyGrid
+		call this%xyGrid%setUnits( effUnits(1) )
 		
 		if( .not. effFillWithZeros ) then
-			if( xyGrid.nPoints(1) /= size(fArray,dim=1) ) then
+			if( xyGrid%nPoints(1) /= size(fArray,dim=1) ) then
 				call GOptions_error( "The xArray's size should be equal to fArray's size", "NFunction2D.fromGrid2DArray()" )
 			end if
 			
-			if( xyGrid.nPoints(2) /= size(fArray,dim=2) ) then
+			if( xyGrid%nPoints(2) /= size(fArray,dim=2) ) then
 				call GOptions_error( "The yArray's size should be equal to fArray's size", "NFunction2D.fromGrid2DArray()" )
 			end if
 		end if
 		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(xyGrid.nPoints(1),xyGrid.nPoints(2)) )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(xyGrid%nPoints(1),xyGrid%nPoints(2)) )
 		
-		do j=1,xyGrid.nPoints(2); do i=1,xyGrid.nPoints(1)
+		do j=1,xyGrid%nPoints(2); do i=1,xyGrid%nPoints(1)
 #if __ID_TYPE__ == 0
-			this.fArray(i,j) = min( max( fArray(i,j)*effUnits(2), -effCutoff ), effCutoff )
+			this%fArray(i,j) = min( max( fArray(i,j)*effUnits(2), -effCutoff ), effCutoff )
 #elif __ID_TYPE__ == 1
-			this.fArray(i,j) = fArray(i,j)*effUnits(2)
+			this%fArray(i,j) = fArray(i,j)*effUnits(2)
 #endif
 		end do; end do
 
 		if( effFillWithZeros ) then
-			do j=xyGrid.nPoints(2)+1,size(fArray,dim=2); do i=xyGrid.nPoints(1)+1,size(fArray,dim=1)
-				this.fArray(i,j) = 0.0_8
+			do j=xyGrid%nPoints(2)+1,size(fArray,dim=2); do i=xyGrid%nPoints(1)+1,size(fArray,dim=1)
+				this%fArray(i,j) = 0.0_8
 			end do; end do
 		end if
 		
@@ -303,21 +303,21 @@
 		effCutoff = 1d10
 		if( present(cutoff) ) effCutoff = cutoff
 		
-		this.xyGrid = xyGrid
+		this%xyGrid = xyGrid
 		
-		call this.xyGrid.setUnits( effUnits(1) )
+		call this%xyGrid%setUnits( effUnits(1) )
 		
-		nx = this.xyGrid.nPoints(1)
-		ny = this.xyGrid.nPoints(2)
+		nx = this%xyGrid%nPoints(1)
+		ny = this%xyGrid%nPoints(2)
 		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(nx,ny) )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(nx,ny) )
 		
 		do j=1,ny; do i=1,nx
 #if __ID_TYPE__ == 0
-			this.fArray(i,j) = min( max( func( xyGrid.x(i), xyGrid.y(j) )*effUnits(2), -effCutoff ), effCutoff )
+			this%fArray(i,j) = min( max( func( xyGrid%x(i), xyGrid%y(j) )*effUnits(2), -effCutoff ), effCutoff )
 #elif __ID_TYPE__ == 1
-			this.fArray(i,j) = func( xyGrid.x(i), xyGrid.y(j) )*effUnits(2)
+			this%fArray(i,j) = func( xyGrid%x(i), xyGrid%y(j) )*effUnits(2)
 #endif
 		end do; end do
 	end subroutine fromFunction
@@ -349,9 +349,9 @@
 				deallocate( tokens )
 				
 				if( trim(extension) == "n2df" ) then
-					call this.loadN2DF( fileName )
+					call this%loadN2DF( fileName )
 				else if( trim(extension) == "blks" ) then
-					call this.loadBLKS( fileName )
+					call this%loadBLKS( fileName )
 				else
 					call GOptions_error( &
 						"Unknown format file (AUTO_FORMAT). fileName = "//trim(fileName), &
@@ -359,9 +359,9 @@
 					)
 				end if
 			case( N2DF_FORMAT )
-				call this.loadN2DF( fileName )
+				call this%loadN2DF( fileName )
 			case( BLKS_FORMAT )
-				call this.loadBLKS( fileName )
+				call this%loadBLKS( fileName )
 			case default
 				call GOptions_error( "The format is not supported ("//trim(FString_fromInteger(effFormat))//")", "NFunction2D.fromFile()" )
 		end select
@@ -376,27 +376,27 @@
 		
 		integer :: i, j
 		
-		this.xyGrid = other.xyGrid
+		this%xyGrid = other%xyGrid
 		
-		if( allocated(this.fArray) ) deallocate( this.fArray )
-		allocate( this.fArray(other.nPoints(1),other.nPoints(2)) )
+		if( allocated(this%fArray) ) deallocate( this%fArray )
+		allocate( this%fArray(other%nPoints(1),other%nPoints(2)) )
 		
-		do j=1,other.nPoints(2); do i=1,other.nPoints(1)
-			this.fArray(i,j) = other.fArray(i,j)
+		do j=1,other%nPoints(2); do i=1,other%nPoints(1)
+			this%fArray(i,j) = other%fArray(i,j)
 		end do; end do
 	end subroutine copyNFunction2D
 	
 	!>
 	!! @brief Copy constructor
 	!!
-	pure subroutine copyFArray( this, other )
+	subroutine copyFArray( this, other )
 		class(NFunction2D), intent(inout) :: this
 		class(NFunction2D), intent(in) :: other
 		
 		integer :: i, j
 		
-		do j=1,other.nPoints(2); do i=1,other.nPoints(1)
-			this.fArray(i,j) = other.fArray(i,j)
+		do j=1,other%nPoints(2); do i=1,other%nPoints(1)
+			this%fArray(i,j) = other%fArray(i,j)
 		end do; end do
 	end subroutine copyFArray
 	
@@ -406,7 +406,7 @@
 	subroutine destroyNFunction2D( this )
 		type(NFunction2D) :: this
 		
-		if( allocated(this.fArray) ) deallocate( this.fArray )
+		if( allocated(this%fArray) ) deallocate( this%fArray )
 	end subroutine destroyNFunction2D
 	
 	!>
@@ -419,15 +419,15 @@
 		
 		integer :: i, j
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "NFunction2D.addition()" )
 		end if
 		
 		output = this
 
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j) + other.fArray(i,j)
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j) + other%fArray(i,j)
 		end do; end do
 	end function addition
 	
@@ -443,8 +443,8 @@
 		
 		output = this
 
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j) + constant
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j) + constant
 		end do; end do
 	end function additionFC
 	
@@ -458,15 +458,15 @@
 		
 		integer :: i, j
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "NFunction2D.subtraction()" )
 		end if
 		
 		output = this
 
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j) - other.fArray(i,j)
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j) - other%fArray(i,j)
 		end do; end do
 	end function subtraction
 	
@@ -482,8 +482,8 @@
 		
 		output = this
 
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j) - constant
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j) - constant
 		end do; end do
 	end function subtractionFC
 	
@@ -497,16 +497,16 @@
 		
 		integer :: i, j
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "NFunction2D.multiplication()" )
 			stop
 		end if
 		
 		output = this
 		
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j)*other.fArray(i,j)
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j)*other%fArray(i,j)
 		end do; end do
 	end function multiplication
 	
@@ -522,8 +522,8 @@
 		
 		output = this
 
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j)*constant
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j)*constant
 		end do; end do
 	end function multiplicationFC
 	
@@ -537,15 +537,15 @@
 		
 		integer :: i, j
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "NFunction2D.division()" )
 		end if
 		
 		output = this
 
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j)/other.fArray(i,j)
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j)/other%fArray(i,j)
 		end do; end do
 	end function division
 	
@@ -561,8 +561,8 @@
 		
 		output = this
 
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j)/constant
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j)/constant
 		end do; end do
 	end function divisionFC
 	
@@ -576,15 +576,15 @@
 		
 		integer :: i, j
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "NFunction2D.exponentiation()" )
 		end if
 		
 		output = this
 
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j)**other.fArray(i,j)
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j)**other%fArray(i,j)
 		end do; end do
 	end function exponentiation
 	
@@ -600,8 +600,8 @@
 		
 		output = this
 
-		do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j)**constant
+		do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j)**constant
 		end do; end do
 	end function exponentiationFC	
 	
@@ -629,9 +629,9 @@
 				deallocate( tokens )
 				
 				if( trim(extension) == "n2df" ) then
-					call this.saveN2DF( fileName )
+					call this%saveN2DF( fileName )
 				else if( trim(extension) == "blks" ) then
-					call this.saveBLKS( fileName )
+					call this%saveBLKS( fileName )
 				else
 					call GOptions_error( &
 						"Unknown format file (AUTO_FORMAT). FileName = "//trim(fileName), &
@@ -639,9 +639,9 @@
 					)
 				end if
 			case( N2DF_FORMAT )
-				call this.saveN2DF( fileName )
+				call this%saveN2DF( fileName )
 			case( BLKS_FORMAT )
-				call this.saveBLKS( fileName )
+				call this%saveBLKS( fileName )
 			case default
 				call GOptions_error( "Format "//FString_fromInteger(effFormat)//" not supported", "NFunction2D.save()" )
 		end select
@@ -656,7 +656,7 @@
 		
 		integer :: idType
 		
-		if( .not. this.xyGrid.isEquallyspaced() ) then
+		if( .not. this%xyGrid%isEquallyspaced() ) then
 			call GOptions_error( &
 				"This subroutine is not available for functions wich are not equally spaced", &
 				"NFunction2D.saveN2DF()" &
@@ -671,17 +671,17 @@
 		write(1) idType
 		
 		! origin of the grid
-		write(1) this.xyGrid.min(1), this.xyGrid.min(2)
+		write(1) this%xyGrid%min(1), this%xyGrid%min(2)
 		
 		! Number of points for each coordinate
-		write(1) this.xyGrid.nPoints(1), this.xyGrid.nPoints(2)
+		write(1) this%xyGrid%nPoints(1), this%xyGrid%nPoints(2)
 		
 		! Increment for each coordinate
-		write(1) this.xyGrid.stepSize(1), this.xyGrid.stepSize(2)
+		write(1) this%xyGrid%stepSize(1), this%xyGrid%stepSize(2)
 		
 		!!!!!!!!!!!!!!!!!!!!!!!
 		! Volumetric data
-		write(1) this.fArray
+		write(1) this%fArray
 		
 		close(1)
 	end subroutine saveN2DF
@@ -709,13 +709,13 @@
 		write(1,"(A)") "# XY"
 		write(1,"(A)") "# "//trim(date)
 		
-		do ix=1,this.xyGrid.nPoints(1)
-			do iy=1,this.xyGrid.nPoints(2)
+		do ix=1,this%xyGrid%nPoints(1)
+			do iy=1,this%xyGrid%nPoints(2)
 				
 #if __ID_TYPE__ == 0
-				write(1,"(4E13.5)") this.xyGrid.at(ix,iy), this.fArray(ix,iy)
+				write(1,"(4E13.5)") this%xyGrid%at(ix,iy), this%fArray(ix,iy)
 #elif __ID_TYPE__ == 1
-				write(1,"(5E13.5)") this.xyGrid.at(ix,iy), this.fArray(ix,iy)
+				write(1,"(5E13.5)") this%xyGrid%at(ix,iy), this%fArray(ix,iy)
 #endif
 			end do
 				
@@ -766,7 +766,7 @@
 			open( unit=1, file=trim(fileName), status="unknown" )
 		end if
 		
-		if( .not. this.isEquallyspaced() ) then
+		if( .not. this%isEquallyspaced() ) then
 			call GOptions_error( &
 				"This subroutine is not available yet for functions wich are not equally spaced", &
 				"NFunction2D.saveProjection1D()" &
@@ -785,9 +785,9 @@
 			)
 		end if
 		
-		minDir = this.xyGrid.min(codeDir)
-		maxDir = this.xyGrid.max(codeDir)
-		stepSizeDir = this.xyGrid.stepSize(codeDir)*invResolution
+		minDir = this%xyGrid%min(codeDir)
+		maxDir = this%xyGrid%max(codeDir)
+		stepSizeDir = this%xyGrid%stepSize(codeDir)*invResolution
 		
 		if( minDir > maxDir ) then
 			call GOptions_error( &
@@ -799,7 +799,7 @@
 		valDir = minDir
 		ssum = 0.0_8
 		do while( valDir <= maxDir )
-			value = this.evaluateXY( origin(1), valDir )  !< Busca el punto más cercano, no interpola
+			value = this%evaluateXY( origin(1), valDir )  !< Busca el punto más cercano, no interpola
 			
 #if __ID_TYPE__ == 1
 			if( abs(value) > 1d-98 ) then
@@ -919,8 +919,8 @@
 		! Volumetric data
 		read(1) fArray
 		
-		call xyGrid.init( min=[xMin,yMin], max=[xMax,yMax], size=[nx,ny] )
-		call this.fromGrid2DArray( xyGrid, fArray )
+		call xyGrid%init( min=[xMin,yMin], max=[xMax,yMax], size=[nx,ny] )
+		call this%fromGrid2DArray( xyGrid, fArray )
 		
 		deallocate( fArray )
 		
@@ -937,11 +937,11 @@
 		integer :: i, j
 		real(8) :: nConstant
 		
-		nConstant = 1.0_8/this.norm()
+		nConstant = 1.0_8/this%norm()
 		
-		do j=1,this.xyGrid.nPoints(2)
-			do i=1,this.xyGrid.nPoints(1)
-				this.fArray(i,j) = nConstant*this.fArray(i,j)
+		do j=1,this%xyGrid%nPoints(2)
+			do i=1,this%xyGrid%nPoints(1)
+				this%fArray(i,j) = nConstant*this%fArray(i,j)
 			end do
 		end do
 		
@@ -958,9 +958,9 @@
 		real(8) :: output
 		
 #if __ID_TYPE__ == 1
-		output = sqrt( sum( conjg(this.fArray)*this.fArray )*this.xyGrid.dV() )
+		output = sqrt( sum( conjg(this%fArray)*this%fArray )*this%xyGrid%dV() )
 #else
-		output = sqrt( sum( this.fArray*this.fArray )*this.xyGrid.dV() )
+		output = sqrt( sum( this%fArray*this%fArray )*this%xyGrid%dV() )
 #endif
 	end function norm
 	
@@ -979,15 +979,15 @@
 		if( present(checkBox) ) effCheckBox = checkBox
 		
 		if( effCheckBox ) then
-			if( .not. this.checkBox( oper ) ) then
+			if( .not. this%checkBox( oper ) ) then
 				call GOptions_error( "Inconsistent boxes", "NFunction2D.expectationValueFromNFunction()" )
 			end if
 		end if
 		
 #if __ID_TYPE__ == 1
-		output = sum( conjg(this.fArray)*oper.fArray*this.fArray )*this.xyGrid.dV()
+		output = sum( conjg(this%fArray)*oper%fArray*this%fArray )*this%xyGrid%dV()
 #else
-		output = sum( this.fArray*oper.fArray*this.fArray )*this.xyGrid.dV()
+		output = sum( this%fArray*oper%fArray*this%fArray )*this%xyGrid%dV()
 #endif
 	end function expectationValueFromNFunction
 	
@@ -1011,13 +1011,13 @@
 		if( present(factor) ) effFactor = factor
 		
 		if( effCheckBox ) then
-			if( this.nPoints(1) /= size(oper,dim=1) &
-				  .or. this.nPoints(2) /= size(oper,dim=2) ) then
+			if( this%nPoints(1) /= size(oper,dim=1) &
+				  .or. this%nPoints(2) /= size(oper,dim=2) ) then
 				call GOptions_error( &
 					"Inconsistent boxes", &
 					"NFunction2D.expectationValueFromRArray()", &
-					"("//trim(FString_fromInteger(this.nPoints(1)))//"," &
-					   //trim(FString_fromInteger(this.nPoints(2)))//") /= (" &
+					"("//trim(FString_fromInteger(this%nPoints(1)))//"," &
+					   //trim(FString_fromInteger(this%nPoints(2)))//") /= (" &
 					   //trim(FString_fromInteger(size(oper,dim=1)))//"," &
 					   //trim(FString_fromInteger(size(oper,dim=2)))//")" &
 					)
@@ -1025,9 +1025,9 @@
 		end if
 		
 #if __ID_TYPE__ == 1
-		output = effFactor*sum( conjg(this.fArray)*oper*this.fArray )*this.xyGrid.dV()
+		output = effFactor*sum( conjg(this%fArray)*oper*this%fArray )*this%xyGrid%dV()
 #else
-		output = effFactor*sum( this.fArray*oper*this.fArray )*this.xyGrid.dV()
+		output = effFactor*sum( this%fArray*oper*this%fArray )*this%xyGrid%dV()
 #endif
 	end function expectationValueFromRArray
 	
@@ -1045,20 +1045,20 @@
 		integer :: i, j
 		integer :: nx, ny
 		
-		nx = this.xyGrid.nPoints(1)
-		ny = this.xyGrid.nPoints(2)
+		nx = this%xyGrid%nPoints(1)
+		ny = this%xyGrid%nPoints(2)
 		
 		effCheckBox = .true.
 		if( present(checkBox) ) effCheckBox = checkBox
 		
 		if( effCheckBox ) then
-			if( this.xyGrid.nPoints(1) /= size(oper,dim=1) &
-				  .or. this.xyGrid.nPoints(2) /= size(oper,dim=2) ) then
+			if( this%xyGrid%nPoints(1) /= size(oper,dim=1) &
+				  .or. this%xyGrid%nPoints(2) /= size(oper,dim=2) ) then
 				call GOptions_error( &
 					"Inconsistent boxes", &
 					"NFunction2D.expectationValueFromCArray()", &
-					"("//trim(FString_fromInteger(this.xyGrid.nPoints(1)))//"," &
-					   //trim(FString_fromInteger(this.xyGrid.nPoints(2)))//") /= (" &
+					"("//trim(FString_fromInteger(this%xyGrid%nPoints(1)))//"," &
+					   //trim(FString_fromInteger(this%xyGrid%nPoints(2)))//") /= (" &
 					   //trim(FString_fromInteger(size(oper,dim=1)))//"," &
 					   //trim(FString_fromInteger(size(oper,dim=2)))//")" &
 					)
@@ -1068,11 +1068,11 @@
 #if __ID_TYPE__ == 1
 		output = 0.0_8
 		do j=1,ny; do i=1,nx
-			output = output + conjg(this.fArray(i,j))*oper(i,j)*this.fArray(i,j)
+			output = output + conjg(this%fArray(i,j))*oper(i,j)*this%fArray(i,j)
 		end do; end do
-		output = output*this.xyGrid.dV()
+		output = output*this%xyGrid%dV()
 #else
-		output = sum( this.fArray*oper*this.fArray )*this.xyGrid.dV()
+		output = sum( this%fArray*oper*this%fArray )*this%xyGrid%dV()
 #endif
 	end function expectationValueFromCArray
 	
@@ -1084,7 +1084,7 @@
 		integer, intent(in) :: i, j
 		__TYPE_VALUE__, intent(in) :: value
 		
-		this.fArray( i, j ) = value
+		this%fArray( i, j ) = value
 	end subroutine set
 	
 	!>
@@ -1095,7 +1095,7 @@
 		integer, intent(in) :: i, j
 		__TYPE_VALUE__ :: output
 		
-		output = this.fArray( i, j )
+		output = this%fArray( i, j )
 	end function at
 	
 	!>
@@ -1106,7 +1106,7 @@
 		integer, intent(in) :: pos
 		__TYPE_VALUE__ :: output
 		
-		output = this.xyGrid.component(1).at( pos )
+		output = this%xyGrid%component(1)%at( pos )
 	end function x
 	
 	!>
@@ -1117,7 +1117,7 @@
 		integer, intent(in) :: pos
 		__TYPE_VALUE__ :: output
 		
-		output = this.xyGrid.component(2).at( pos )
+		output = this%xyGrid%component(2)%at( pos )
 	end function y
 	
 	!>
@@ -1128,7 +1128,7 @@
 		integer, intent(in) :: pos
 		real(8) :: output
 		
-		output = this.xyGrid.min( pos )
+		output = this%xyGrid%min( pos )
 	end function minInCoord
 	
 	!>
@@ -1138,7 +1138,7 @@
 		class(NFunction2D), intent(in) :: this
 		real(8) :: output(2)
 		
-		output = this.xyGrid.min()
+		output = this%xyGrid%min()
 	end function minVec
 	
 	!>
@@ -1149,7 +1149,7 @@
 		integer, intent(in) :: pos
 		real(8) :: output
 		
-		output = this.xyGrid.max( pos )
+		output = this%xyGrid%max( pos )
 	end function maxInCoord
 	
 	!>
@@ -1159,7 +1159,7 @@
 		class(NFunction2D), intent(in) :: this
 		real(8) :: output(2)
 		
-		output = this.xyGrid.max()
+		output = this%xyGrid%max()
 	end function maxVec
 	
 	!>
@@ -1170,7 +1170,7 @@
 		integer, intent(in) :: pos
 		real(8) :: output
 		
-		output = this.xyGrid.stepSize( pos )
+		output = this%xyGrid%stepSize( pos )
 	end function stepSizeInCoord
 	
 	!>
@@ -1180,17 +1180,17 @@
 		class(NFunction2D), intent(in) :: this
 		real(8) :: output(2)
 		
-		output = this.xyGrid.stepSize()
+		output = this%xyGrid%stepSize()
 	end function stepSizeVec
 	
 	!>
 	!! @brief
 	!!
-	pure function isEquallyspaced( this ) result( output )
+	function isEquallyspaced( this ) result( output )
 		class(NFunction2D), intent(in) :: this
 		logical :: output
 		
-		output = this.xyGrid.isEquallyspaced()
+		output = this%xyGrid%isEquallyspaced()
 	end function isEquallyspaced
 	
 	!>
@@ -1199,7 +1199,7 @@
 	subroutine checkEquallyspaced( this )
 		class(NFunction2D) :: this
 		
-		call this.xyGrid.checkEquallyspaced()
+		call this%xyGrid%checkEquallyspaced()
 	end subroutine checkEquallyspaced
 	
 	!>
@@ -1211,9 +1211,9 @@
 		integer :: output
 		
 ! 		if( present(i) ) then
-			output = this.xyGrid.nPoints(i)
+			output = this%xyGrid%nPoints(i)
 ! 		else
-! 			output = this.xyGrid.nPoints(1)*this.xyGrid.nPoints(2)*this.xyGrid.nPoints(3)
+! 			output = this%xyGrid%nPoints(1)*this%xyGrid%nPoints(2)*this%xyGrid%nPoints(3)
 ! 		end if
 	end function nPointsInCoord
 	
@@ -1224,7 +1224,7 @@
 		class(NFunction2D), intent(in) :: this
 		integer :: output(2)
 		
-		output = [ this.xyGrid.nPoints(1), this.xyGrid.nPoints(2) ]
+		output = [ this%xyGrid%nPoints(1), this%xyGrid%nPoints(2) ]
 	end function nPointsVec
 	
 	!>
@@ -1239,16 +1239,16 @@
 		integer :: ix, iy
 		
 		! Map x,y to a point dx,dy in the cube [1,n1] x [1,n2]
-		ix = floor( 1.0000001*(x-this.xyGrid.min(1))/this.xyGrid.stepSize(1)+1.0 )
-		iy = floor( 1.0000001*(y-this.xyGrid.min(2))/this.xyGrid.stepSize(2)+1.0 )
+		ix = floor( 1.0000001*(x-this%xyGrid%min(1))/this%xyGrid%stepSize(1)+1.0 )
+		iy = floor( 1.0000001*(y-this%xyGrid%min(2))/this%xyGrid%stepSize(2)+1.0 )
 		
 		if( &
-			ix < 1 .or. ix > this.xyGrid.nPoints(1) .or. &
-			iy < 1 .or. iy > this.xyGrid.nPoints(2) &
+			ix < 1 .or. ix > this%xyGrid%nPoints(1) .or. &
+			iy < 1 .or. iy > this%xyGrid%nPoints(2) &
 		) then
 			output = 0.0_8
 		else
-			output = this.fArray(ix,iy)
+			output = this%fArray(ix,iy)
 		end if
 	end function evaluateXY
 
@@ -1263,16 +1263,16 @@
 		
 		integer :: ival
 		
-		ival = floor( 1.0000001*(val-this.xyGrid.min(coord))/this.xyGrid.stepSize(coord)+1.0 )
+		ival = floor( 1.0000001*(val-this%xyGrid%min(coord))/this%xyGrid%stepSize(coord)+1.0 )
 		
-		if( ival < 1 .or. ival > this.xyGrid.nPoints(coord) ) then
+		if( ival < 1 .or. ival > this%xyGrid%nPoints(coord) ) then
 			output = 0.0_8
 		else
 			select case( coord )
 				case( 1 )
-					output = sum(this.fArray(ival,:))
+					output = sum(this%fArray(ival,:))
 				case( 2 )
-					output = sum(this.fArray(:,ival:))
+					output = sum(this%fArray(:,ival:))
 				case default
 					call GOptions_error( "coord > 2", "NFunction2D.evaluateCoord()" )
 			end select
@@ -1307,36 +1307,36 @@
 		effDirY = 1
 		if( present(diry) ) effDirY = diry
 		
-		xyGrid = this.xyGrid
-		call xyGrid.resize( dnx, dny, dirx, diry )
+		xyGrid = this%xyGrid
+		call xyGrid%resize( dnx, dny, dirx, diry )
 		
 		call GOptions_warning( "This method has not been tested yet", "NFunction2D.resize()" )
 		
-		oldN = this.xyGrid.nPoints()
+		oldN = this%xyGrid%nPoints()
 		
 		if( effDirX == 1 .and. effDirY == 1 ) then
 		
-			newN = xyGrid.nPoints()
+			newN = xyGrid%nPoints()
 			allocate( fArray(newN(1),newN(2)) )
 			fArray = 0.0_8
 			
 			do j=1,oldN(2); do i=1,oldN(1)
-				fArray(i,j) = this.fArray(i,j)
+				fArray(i,j) = this%fArray(i,j)
 			end do; end do
 
 		else if( effDirX == -1 .and. effDirY == -1 ) then
 		
-			newN = xyGrid.nPoints()
+			newN = xyGrid%nPoints()
 			allocate( fArray(newN(1),newN(2)) )
 			fArray = 0.0_8
 			
 			do j=dny+1,newN(2); do i=dnx+1,newN(1)
-				fArray(i,j) = this.fArray(i-dnx,j-dny)
+				fArray(i,j) = this%fArray(i-dnx,j-dny)
 			end do; end do
 			
 		else if( effDirX == 0 .and. effDirY == 0 ) then
 			
-			newN = xyGrid.nPoints()
+			newN = xyGrid%nPoints()
 			allocate( fArray(newN(1),newN(2)) )
 			fArray = 0.0_8
 			
@@ -1344,7 +1344,7 @@
 			do j=dny+1,dny+oldN(2)
 				ii=1
 				do i=dnx+1,dnx+oldN(1)
-					fArray(i,j) = this.fArray(ii,jj)
+					fArray(i,j) = this%fArray(ii,jj)
 					ii=ii+1
 				end do
 				jj = jj+1
@@ -1357,7 +1357,7 @@
 			)
 		end if
 		
-		call this.init( xyGrid, fArray )
+		call this%init( xyGrid, fArray )
 		
 		deallocate( fArray )
 	end subroutine resize
@@ -1365,12 +1365,12 @@
 	!>
 	!! @brief
 	!!
-	pure function checkBox( this, other ) result( output )
+	function checkBox( this, other ) result( output )
 		class(NFunction2D), intent(in) :: this
 		class(NFunction2D), intent(in) :: other
 		logical :: output
 		
-		output = this.xyGrid.isEqualTo( other.xyGrid )
+		output = this%xyGrid%isEqualTo( other%xyGrid )
 	end function checkBox
 	
 	!>
@@ -1387,18 +1387,18 @@
 		effHermitian = .true.
 		if( present(hermitian) ) effHermitian = hermitian
 		
-! 		if( .not. this.xyGrid.isEquallyspaced() ) then
+! 		if( .not. this%xyGrid%isEquallyspaced() ) then
 ! 			call GOptions_error( "The grid is not equally spaced", "NFunction2D.innerProductWithNFunction2D()" )
 ! 		end if
 		
 #if __ID_TYPE__ == 1
 		if( effHermitian ) then
-			output = sum( conjg(this.fArray)*other.fArray )*this.xyGrid.dV()
+			output = sum( conjg(this%fArray)*other%fArray )*this%xyGrid%dV()
 		else
-			output = sum( this.fArray*other.fArray )*this.xyGrid.dV()
+			output = sum( this%fArray*other%fArray )*this%xyGrid%dV()
 		end if
 #else
-		output = sum( this.fArray*other.fArray )*this.xyGrid.dV()
+		output = sum( this%fArray*other%fArray )*this%xyGrid%dV()
 #endif
 	end function innerProductWithNFunction2D
 	
@@ -1416,18 +1416,18 @@
 		effHermitian = .true.
 		if( present(hermitian) ) effHermitian = hermitian
 		
-! 		if( .not. this.xyGrid.isEquallyspaced() ) then
+! 		if( .not. this%xyGrid%isEquallyspaced() ) then
 ! 			call GOptions_error( "The grid is not equally spaced", "NFunction2D.innerProductWithRArray()" )
 ! 		end if
 		
 #if __ID_TYPE__ == 1
 		if( effHermitian ) then
-			output = sum( conjg(this.fArray)*other )*this.xyGrid.dV()
+			output = sum( conjg(this%fArray)*other )*this%xyGrid%dV()
 		else
-			output = sum( this.fArray*other )*this.xyGrid.dV()
+			output = sum( this%fArray*other )*this%xyGrid%dV()
 		end if
 #else
-		output = sum( this.fArray*other )*this.xyGrid.dV()
+		output = sum( this%fArray*other )*this%xyGrid%dV()
 #endif
 	end function innerProductWithRArray
 	
@@ -1445,18 +1445,18 @@
 		effHermitian = .true.
 		if( present(hermitian) ) effHermitian = hermitian
 		
-! 		if( .not. this.xyGrid.isEquallyspaced() ) then
+! 		if( .not. this%xyGrid%isEquallyspaced() ) then
 ! 			call GOptions_error( "The grid is not equally spaced", "NFunction2D.innerProductWithCArray()" )
 ! 		end if
 		
 #if __ID_TYPE__ == 1
 		if( effHermitian ) then
-			output = sum( conjg(this.fArray)*other )*this.xyGrid.dV()
+			output = sum( conjg(this%fArray)*other )*this%xyGrid%dV()
 		else
-			output = sum( this.fArray*other )*this.xyGrid.dV()
+			output = sum( this%fArray*other )*this%xyGrid%dV()
 		end if
 #else
-		output = sum( this.fArray*other )*this.xyGrid.dV()
+		output = sum( this%fArray*other )*this%xyGrid%dV()
 #endif
 	end function innerProductWithCArray
 	
@@ -1472,8 +1472,8 @@
 		output = this
 		
 #if __ID_TYPE__ == 1
-		do j=1,this.xyGrid.nPoints(2); do i=1,this.xyGrid.nPoints(1)
-			output.fArray(i,j) = conjg(this.fArray(i,j))
+		do j=1,this%xyGrid%nPoints(2); do i=1,this%xyGrid%nPoints(1)
+			output%fArray(i,j) = conjg(this%fArray(i,j))
 		end do; end do
 #endif
 	end function conjugate
@@ -1490,12 +1490,12 @@
 		output = this
 		
 #if __ID_TYPE__ == 1
-		do j=1,this.xyGrid.nPoints(2); do i=1,this.xyGrid.nPoints(1)
-			output.fArray(i,j) = abs(this.fArray(i,j))**2
+		do j=1,this%xyGrid%nPoints(2); do i=1,this%xyGrid%nPoints(1)
+			output%fArray(i,j) = abs(this%fArray(i,j))**2
 		end do; end do
 #else
-		do j=1,this.xyGrid.nPoints(2); do i=1,this.xyGrid.nPoints(1)
-			output.fArray(i,j) = this.fArray(i,j)**2
+		do j=1,this%xyGrid%nPoints(2); do i=1,this%xyGrid%nPoints(1)
+			output%fArray(i,j) = this%fArray(i,j)**2
 		end do; end do
 #endif
 	end function absoluteSquare
@@ -1517,30 +1517,30 @@
 		real(8), allocatable :: cValues(:)
 		integer :: id(2,1)
 		
-		if( .not. this.xyGrid.isEquallyspaced() ) then
+		if( .not. this%xyGrid%isEquallyspaced() ) then
 			call GOptions_error( "The grid is not equally spaced", "NFunction2D.reducedFunction()" )
 		end if
 		
 		id(1,:) = [ 2 ]
 		id(2,:) = [ 1 ]
 		
-		dS = this.xyGrid.stepSize( id(coord,1) )
+		dS = this%xyGrid%stepSize( id(coord,1) )
 		
-		allocate( cValues(this.xyGrid.nPoints(coord)) )
+		allocate( cValues(this%xyGrid%nPoints(coord)) )
 		
-		do i=1,this.xyGrid.nPoints(coord)
+		do i=1,this%xyGrid%nPoints(coord)
 			select case( coord )
 				case( 1 )
-					cValues(i) = sum(this.fArray(i,:))
+					cValues(i) = sum(this%fArray(i,:))
 				case( 2 )
-					cValues(i) = sum(this.fArray(:,i))
+					cValues(i) = sum(this%fArray(:,i))
 				
 				case default
 					call GOptions_error( "coord > 3", "NFunction2D.reducedFunction()" )
 			end select
 		end do
 		
-		call output.init( this.xyGrid.component(coord), cValues*dS )
+		call output%init( this%xyGrid%component(coord), cValues*dS )
 		
 		deallocate( cValues )
 		

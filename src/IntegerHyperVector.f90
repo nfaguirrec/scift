@@ -71,7 +71,7 @@ module IntegerHyperVector_
 		class(IntegerHyperVector), intent(in) :: other
 		logical :: output
 		
-! 		this%nItems = other.nItems
+! 		this%nItems = other%nItems
 ! 		this%resizeIncrement = other%resizeIncrement
 		
 		write(*,*) "### ERROR ### IntegerHyperVector.equal  is not implemented yet"

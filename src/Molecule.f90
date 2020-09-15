@@ -336,7 +336,7 @@ module Molecule_
 		if( allocated(this%name) ) deallocate(this%name)
 		if( allocated(this%atoms) ) deallocate(this%atoms)
 		
-		this%name = other.name
+		this%name = other%name
 		
 		allocate( this%atoms( size(other%atoms) ) )
 		do i=1,size(other%atoms)
@@ -344,32 +344,32 @@ module Molecule_
 		end do
 		
 		this%radius_ = other%radius_
-		this%testRadius_ = other.testRadius_
+		this%testRadius_ = other%testRadius_
 		
-		this%geomCenter_ = other.geomCenter_
-		this%testGeomCenter_ = other.testGeomCenter_
+		this%geomCenter_ = other%geomCenter_
+		this%testGeomCenter_ = other%testGeomCenter_
 		
-		this%centerOfMass_ = other.centerOfMass_
-		this%testMassCenter_ = other.testMassCenter_
+		this%centerOfMass_ = other%centerOfMass_
+		this%testMassCenter_ = other%testMassCenter_
 		
-		this%diagInertiaTensor = other.diagInertiaTensor
-		this%inertiaAxes_ = other.inertiaAxes_
+		this%diagInertiaTensor = other%diagInertiaTensor
+		this%inertiaAxes_ = other%inertiaAxes_
 		
 		this%mass_ = other%mass_
-		this%testMass_ = other.testMass_
+		this%testMass_ = other%testMass_
 		
-		this%composition = other.composition
-		this%chemicalFormula_ = other.chemicalFormula_
-		this%testChemicalFormula_ = other.testChemicalFormula_
+		this%composition = other%composition
+		this%chemicalFormula_ = other%chemicalFormula_
+		this%testChemicalFormula_ = other%testChemicalFormula_
 		
 		this%massNumber_ = other%massNumber_
-		this%testMassNumber_ = other.testMassNumber_
+		this%testMassNumber_ = other%testMassNumber_
 		
-		this%isLineal_ = other.isLineal_
-		this%fv_ = other.fv_
-		this%fr_ = other.fr_
+		this%isLineal_ = other%isLineal_
+		this%fv_ = other%fv_
+		this%fr_ = other%fr_
 		
-		this%molGraph = other.molGraph
+		this%molGraph = other%molGraph
 	end subroutine copyMolecule
 	
 	!>
@@ -920,7 +920,7 @@ module Molecule_
 		do i=1,this%nAtoms()
 			rVec1 = this%atoms(i)%r
 			
-			do j=1,other.nAtoms()
+			do j=1,other%nAtoms()
 				
 				rVec2 = other%atoms(j)%r
 				
@@ -1470,14 +1470,14 @@ module Molecule_
 		if( present(debug) ) effDebug = debug
 		
 		output = .false.
-		if( trim(this%chemicalFormula()) == trim(other.chemicalFormula()) ) then
+		if( trim(this%chemicalFormula()) == trim(other%chemicalFormula()) ) then
 			output = .true.
 		end if
 		
 		if( effDebug ) then
 			write(*,*) ""
 			write(*,*) "Formula1 = ", trim(this%chemicalFormula())
-			write(*,*) "Formula2 = ", trim(other.chemicalFormula())
+			write(*,*) "Formula2 = ", trim(other%chemicalFormula())
 			write(*,*) "  Equal? = ", output
 			write(*,*) ""
 		end if
@@ -1576,7 +1576,7 @@ module Molecule_
 ! 		if( present(debug) ) effDebug = debug
 		
 		this_descrip = this%connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
-		other_descrip = other.connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
+		other_descrip = other%connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
 		
 		! Jaccard similarity index
 ! 		this_descrip  =  this_descrip + abs(minval(this_descrip))

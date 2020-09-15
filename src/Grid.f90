@@ -219,14 +219,14 @@ module Grid_
 		
 		!! En el peor de los casos cada
 		!! línea es un valor
-		allocate( data(ifile.numberOfLines), stat=allocStat )
+		allocate( data(ifile%numberOfLines), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid%fromFile()" )
 		
 		nData = 1
-		do while( .not. ifile.eof() )
+		do while( .not. ifile%eof() )
 			buffer = ifile%readLine( cCommentsEff )
 			
-			call buffer.split( tokens, " " )
+			call buffer%split( tokens, " " )
 			
 			if( columnEff <= size(tokens) ) then
 				if( len(trim(tokens(columnEff))) /= 0 ) then
@@ -243,7 +243,7 @@ module Grid_
 		this%data = data(1:nData-1)
 		
 		deallocate( data )
-		call ifile.close()
+		call ifile%close()
 		
 		this%min = minval(this%data)
 		this%max = maxval(this%data)
@@ -313,7 +313,7 @@ module Grid_
 			abs( this%max - other%max ) > effTol .or. &
 			abs( this%stepSize - other%stepSize ) > effTol .or. &
 			this%nPoints /= other%nPoints .or. &
-			this%isEquallyspaced /= other%isEquallyspaced &
+			this%isEquallyspaced .eqv. other%isEquallyspaced &
 		) then
 			output = .false.
 			return
@@ -366,7 +366,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data + other%data
 	end function addition
 	
@@ -378,7 +378,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data+constant
 	end function additionFC
 	
@@ -395,7 +395,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data - other%data
 	end function subtraction
 	
@@ -407,7 +407,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data-constant
 	end function subtractionFC
 	
@@ -424,7 +424,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data*other%data
 		
 		! @todo Hay que hacer algo con el stepSize
@@ -438,7 +438,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data*constant
 		output%stepSize = this%stepSize*constant
 	end function multiplicationFC
@@ -456,7 +456,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data/other%data
 	end function division
 	
@@ -468,7 +468,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data/constant
 	end function divisionFC
 	
@@ -485,7 +485,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data**other%data
 	end function exponentiation
 	
@@ -497,7 +497,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output%copy( this )
 		output%data = this%data**constant
 	end function exponentiationFC
 	
@@ -729,11 +729,11 @@ module Grid_
 		if( present(units) .and. present(ofileName) ) then
 			call ofile%init( ofileName )
 			call toFStream( this, ofile, units )
-			call ofile.close()
+			call ofile%close()
 		else if( present(ofileName) ) then
 			call ofile%init( ofileName )
 			call toFStream( this, ofile )
-			call ofile.close()
+			call ofile%close()
 		else
 			call toFStream( this )
 		end if
@@ -754,7 +754,7 @@ module Grid_
 		integer :: i
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
@@ -871,7 +871,7 @@ module Grid_
 		write(*,*) "---"
 		write(*,*) "Testing copy constructor"
 		write(*,*) "---"
-		call rGrid2.copy( rGrid )
+		call rGrid2%copy( rGrid )
 		call rGrid2%show()
 		do i=1,rGrid2%nPoints
 			write(*,"(i5,f10.5)") i, rGrid2%data(i)
@@ -879,7 +879,7 @@ module Grid_
 		
 		write(*,*) "===================================================================="
 		
-		call rGrid2.copy( rGrid )
+		call rGrid2%copy( rGrid )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = +1 "
@@ -903,7 +903,7 @@ module Grid_
 		write(*,*) " TESTING RESIZE"
 		write(*,*) "===================================================================="
 		
-		call rGrid2.copy( rGrid )
+		call rGrid2%copy( rGrid )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = -1"
@@ -925,7 +925,7 @@ module Grid_
 		
 		write(*,*) "===================================================================="
 		
-		call rGrid2.copy( rGrid )
+		call rGrid2%copy( rGrid )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = 0"

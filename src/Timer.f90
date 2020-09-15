@@ -38,7 +38,6 @@
 !! @brief
 !!
 module Timer_
-	use IFPORT
 	implicit none
 	private
 	
@@ -91,10 +90,10 @@ module Timer_
 		class(Timer), intent(out) :: this
 		class(Timer), intent(in) :: other
 		
-		this%name = other.name
-		this%startTime = other.startTime
-		this%sDate = other.sDate
-		this%elapsetTime = other.elapsetTime
+		this%name = other%name
+		this%startTime = other%startTime
+		this%sDate = other%sDate
+		this%elapsetTime = other%elapsetTime
 	end subroutine copyTimer
 	
 	!>
@@ -186,7 +185,7 @@ module Timer_
 	subroutine start( this )
 		class(Timer), intent(inout) :: this
 		
-		this%startTime = DCLOCK()
+                call CPU_TIME(this%startTime)
 		call FDATE(this%sDate)
 		this%elapsetTime = 0.0_8
 	end subroutine start
@@ -200,7 +199,7 @@ module Timer_
 		
 		real(8) :: cTime
 		
-		cTime = DCLOCK()
+                call CPU_TIME(cTime)
 		
 		output(1) = int( ( cTime - this%startTime )/3600.0_8 )
 		output(2) = mod( int( ( cTime - this%startTime )/60.0_8 ), 60 )
@@ -214,7 +213,8 @@ module Timer_
 		class(Timer), intent(in) :: this
 		real(8) :: output
 		
-		output = DCLOCK() - this%startTime
+                call CPU_TIME(output)
+		output = output - this%startTime
 	end function elapsedSeconds
 	
 	!>
@@ -223,8 +223,9 @@ module Timer_
 	function elapsedMinutes( this ) result( output )
 		class(Timer), intent(in) :: this
 		real(8) :: output
-		
-		output = ( DCLOCK() - this%startTime )/60.0_8
+	
+                call CPU_TIME(output)
+		output = ( output - this%startTime )/60.0_8
 	end function elapsedMinutes
 	
 	!>
@@ -234,7 +235,8 @@ module Timer_
 		class(Timer), intent(in) :: this
 		real(8) :: output
 		
-		output = ( DCLOCK() - this%startTime )/3600.0_8
+                call CPU_TIME(output)
+		output = ( output - this%startTime )/3600.0_8
 	end function elapsedHours
 	
 	!>

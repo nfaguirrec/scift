@@ -128,13 +128,13 @@ module StringHistogram_
 		class(StringHistogram), intent(out) :: this
 		class(StringHistogram), intent(in) :: other
 
-		this%algorithm = other.algorithm
+		this%algorithm = other%algorithm
 		
 		this%counts = other%counts
 		this%density = other%density
 		
 		this%rCounts = other%rCounts
-		this%totalCounts = other.totalCounts
+		this%totalCounts = other%totalCounts
 	end subroutine copyStringHistogram
 	
 	!>

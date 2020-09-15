@@ -92,7 +92,7 @@ module CommandLineParser_
 		class(CommandLineParser) :: this
 		type(CommandLineParser) :: other
 		
-		this%usage = other.usage
+		this%usage = other%usage
 	end subroutine copy
 	
 	!>
@@ -266,8 +266,8 @@ module CommandLineParser_
 		write(*,*) "Parameter -d"
 		write(*,*) "------------"
 		write(*,*) trim(buffer%fstr)
-		write(*,*) buffer.toReal()
-		write(*,*) buffer.toInteger()
+		write(*,*) buffer%toReal()
+		write(*,*) buffer%toInteger()
 		
 		realBuffer = parser%getReal( "-f", def=-3.0_8 )
 		write(*,*) "Parameter -f"

@@ -129,7 +129,7 @@ module RNFunction3D_
 		integer :: unitEff
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
@@ -272,11 +272,11 @@ module RNFunction3D_
 		call func%save( "salida.cube", format=CUBE_FORMAT )
 		call func%save( "salida.n3df", format=N3DF_FORMAT )
 		
-		call func.load( "salida.cube", format=CUBE_FORMAT )
+		call func%load( "salida.cube", format=CUBE_FORMAT )
 		call func%save( "salida2.cube", format=CUBE_FORMAT )
 		call func%show()
 		
-		call func.load( "salida.n3df", format=N3DF_FORMAT )
+		call func%load( "salida.n3df", format=N3DF_FORMAT )
 		call func%save( "salida3.cube", format=CUBE_FORMAT )
 		call func%show()
 		

@@ -118,7 +118,7 @@ module Edge_
 		this%id = other%id
 		this%label = other%label
 		this%weight = other%weight
-		this%directed = other.directed
+		this%directed = other%directed
 	end subroutine copy
 
 	!>

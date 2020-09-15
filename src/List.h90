@@ -50,17 +50,17 @@
 	!!    type(IntegerList) :: mylist
 	!!    type(IntegerListIterator), pointer :: iter
 	!!         
-	!!    call mylist.init()
+	!!    call mylist%init()
 	!!    
-	!!    call mylist.append( 8 )
-	!!    call mylist.append( 5 )
-	!!    call mylist.append( 1 )
+	!!    call mylist%append( 8 )
+	!!    call mylist%append( 5 )
+	!!    call mylist%append( 1 )
 	!!    
-	!!    iter => mylist.begin
+	!!    iter => mylist%begin
 	!!    do while ( associated(iter) )
-	!!            write(*,*) iter.data
+	!!            write(*,*) iter%data
 	!!            
-	!!            iter => iter.next
+	!!            iter => iter%next
 	!!    end do
 	!! @endcode{.f90}
 	!!
@@ -115,17 +115,17 @@
 	!!    type(IntegerList) :: mylist
 	!!    type(IntegerListIterator), pointer :: iter
 	!!         
-	!!    call mylist.init()
+	!!    call mylist%init()
 	!!    
-	!!    call mylist.append( 8 )
-	!!    call mylist.append( 5 )
-	!!    call mylist.append( 1 )
+	!!    call mylist%append( 8 )
+	!!    call mylist%append( 5 )
+	!!    call mylist%append( 1 )
 	!!    
-	!!    iter => mylist.begin
+	!!    iter => mylist%begin
 	!!    do while ( associated(iter) )
-	!!            write(*,*) iter.data
+	!!            write(*,*) iter%data
 	!!            
-	!!            iter => iter.next
+	!!            iter => iter%next
 	!!    end do
 	!! @endcode{.f90}
 	!!
@@ -202,13 +202,13 @@
 		
 		integer :: i
 		
-		if( this.size() > 0 ) then
-			call this.clear()
+		if( this%size() > 0 ) then
+			call this%clear()
 		end if
 		
 		if( present(initialSize) .and. present(value) ) then
 			do i=1,initialSize
-				call this.append( value )
+				call this%append( value )
 			end do
 		end if
 	end subroutine initList
@@ -225,12 +225,12 @@
 		
 		class(ListIterator), pointer :: iter
 		
-		call this.clear()
+		call this%clear()
 		
-		iter => other.begin
+		iter => other%begin
 		do while( associated(iter) )
-			call this.append( iter.data )
-			iter => iter.next
+			call this%append( iter%data )
+			iter => iter%next
 		end do
 	end subroutine copyList
 	
@@ -243,7 +243,7 @@
 	subroutine destroyList( this )
 		type(List), intent(inout) :: this
 		
-		call this.clear()
+		call this%clear()
 	end subroutine destroyList
 
 	!>
@@ -258,13 +258,13 @@
 		
 		output = .false.
 		
-		iter1 => this.begin
-		iter2 => other.begin
+		iter1 => this%begin
+		iter2 => other%begin
 		do while ( associated(iter1) .and. associated(iter2) )
-			iter1 => iter1.next
-			iter2 => iter2.next
+			iter1 => iter1%next
+			iter2 => iter2%next
 			
-			if( .not. ( iter1.data == iter2.data ) ) then
+			if( .not. ( iter1%data == iter2%data ) ) then
 				output = .false.
 				return
 			end if
@@ -320,9 +320,9 @@
 		type(OFStream) :: ofile
 		
 		if( present(ofileName) ) then
-			call ofile.init( ofileName )
-			call this.toFStream( ofile )
-			call ofile.close()
+			call ofile%init( ofileName )
+			call this%toFStream( ofile )
+			call ofile%close()
 		else
 			call toFStream( this )
 		end if
@@ -336,7 +336,7 @@
 		class(List), intent(in) :: this
 		integer :: output
 		
-		output = this.nItems
+		output = this%nItems
 	end function ssize
 	
 	!>
@@ -346,7 +346,7 @@
 		class(List), intent(in) :: this
 		logical :: output
 		
-		output = ( this.nItems == 0 )
+		output = ( this%nItems == 0 )
 	end function isEmpty
 	
 	!>
@@ -356,24 +356,24 @@
 		class(List), intent(inout) :: this
 		__CLASS_ITEMLIST__, intent(in) :: item
 		
-		if ( this.nItems == 0 ) then
-			allocate(this.begin)
+		if ( this%nItems == 0 ) then
+			allocate(this%begin)
 			
 			! copy
-			this.begin.data = item
+			this%begin%data = item
 			
-			this.end => this.begin
+			this%end => this%begin
 		else
-			allocate(this.end.next)
-			this.end.next.prev => this.end
+			allocate(this%end%next)
+			this%end%next%prev => this%end
 			
 			! copy
-			this.end.next.data = item
+			this%end%next%data = item
 			
-			this.end => this.end.next
+			this%end => this%end%next
 		end if
 		
-		this.nItems = this.nItems+1
+		this%nItems = this%nItems+1
 	end subroutine appendValue
 	
 	!>
@@ -386,7 +386,7 @@
 		integer :: i
 		
 		do i=1,size(array)
-			call this.append( array(i) )
+			call this%append( array(i) )
 		end do
 	end subroutine appendFArray
 	
@@ -397,19 +397,19 @@
 		class(List), intent(inout) :: this
 		__CLASS_ITEMLIST__, intent(in) :: item
 		
-		if ( this.nItems == 0 ) then
-			call this.append( item )
+		if ( this%nItems == 0 ) then
+			call this%append( item )
 		else
-			allocate(this.begin.prev)
-			this.begin.prev.next => this.begin
+			allocate(this%begin%prev)
+			this%begin%prev%next => this%begin
 			
 			! copy
-			this.begin.prev.data = item
+			this%begin%prev%data = item
 			
-			this.begin => this.begin.prev
+			this%begin => this%begin%prev
 		end if
 		
-		this.nItems = this.nItems+1
+		this%nItems = this%nItems+1
 	end subroutine prepend
 	
 	!>
@@ -429,38 +429,38 @@
 ! 		allocate(elem)
 ! 		
 ! 		! copy
-! 		elem.data = item
+! 		elem%data = item
 ! 		
-! 		elem.prev => before
+! 		elem%prev => before
 ! 		
-! 		if ( associated(before.next) ) then
-! 			elem.next => before.next
-! 			before.next.prev => elem
-! 			before.next => elem
+! 		if ( associated(before%next) ) then
+! 			elem%next => before%next
+! 			before%next%prev => elem
+! 			before%next => elem
 ! 		else
-! 			before.next => elem
-! 			this.end => elem
+! 			before%next => elem
+! 			this%end => elem
 ! 		end if
 ! 		
-! 		this.nItems = this.nItems+1 
+! 		this%nItems = this%nItems+1 
 
 		
-		if ( associated(cBefore.next) ) then
-			after => cBefore.next
+		if ( associated(cBefore%next) ) then
+			after => cBefore%next
 			
-			cBefore.next => null()
-			allocate(cBefore.next)
+			cBefore%next => null()
+			allocate(cBefore%next)
 			
 			! copy
-			cBefore.next.data = item
+			cBefore%next%data = item
 			
-			cBefore.next.next => after
-			cBefore.next.prev => cBefore
-			after.prev => cBefore.next
+			cBefore%next%next => after
+			cBefore%next%prev => cBefore
+			after%prev => cBefore%next
 			
-			this.nItems = this.nItems+1 
+			this%nItems = this%nItems+1 
 		else
-			call this.append( item )
+			call this%append( item )
 		end if
 		
 	end subroutine insert
@@ -475,28 +475,28 @@
 		class(ListIterator), pointer :: cPtr
 		cPtr => ptr
 		
-		if( associated(cPtr.prev) .and. associated(cPtr.next) ) then ! < El elemento enta en medio de otros dos
-			cPtr.prev.next => cPtr.next
-			cPtr.next.prev => cPtr.prev
-			cPtr.prev => null()
-			cPtr.next => null()
-		else if( ( .not. associated(cPtr.prev) ) .and. associated(cPtr.next) ) then ! < El elemento es la cabeza
-			this.begin => cPtr.next
-			cPtr.next => null()
-			this.begin.prev => null()
-		else if( associated(cPtr.prev) .and. ( .not. associated(cPtr.next) ) ) then ! < El elemento es la cola
-			this.end => cPtr.prev
-			cPtr.prev => null()
-			this.end.next => null()
+		if( associated(cPtr%prev) .and. associated(cPtr%next) ) then ! < El elemento enta en medio de otros dos
+			cPtr%prev%next => cPtr%next
+			cPtr%next%prev => cPtr%prev
+			cPtr%prev => null()
+			cPtr%next => null()
+		else if( ( .not. associated(cPtr%prev) ) .and. associated(cPtr%next) ) then ! < El elemento es la cabeza
+			this%begin => cPtr%next
+			cPtr%next => null()
+			this%begin%prev => null()
+		else if( associated(cPtr%prev) .and. ( .not. associated(cPtr%next) ) ) then ! < El elemento es la cola
+			this%end => cPtr%prev
+			cPtr%prev => null()
+			this%end%next => null()
 		end if
 		
 		deallocate(cPtr)
 		
-		this.nItems = this.nItems-1 
+		this%nItems = this%nItems-1 
 		
-		if( this.nItems == 0 ) then
-			this.begin => null()
-			this.end => null()
+		if( this%nItems == 0 ) then
+			this%begin => null()
+			this%end => null()
 		end if
 	end subroutine eraseFromPtr
 	
@@ -511,14 +511,14 @@
 		class(ListIterator), pointer :: iter
 		
 		i=1
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
 			if( i==pos ) then
-				call this.eraseFromPtr( iter )
+				call this%eraseFromPtr( iter )
 				return
 			end if
 			
-			iter => iter.next
+			iter => iter%next
 			i = i+1
 		end do
 	end subroutine eraseFromPos
@@ -527,6 +527,7 @@
 	!! @brief Removes all the items in the list except those identified with the position given by posVec vector
 	!!
 	subroutine eraseAllExcept( this, posVec )
+		use String_
 		class(List), intent(inout) :: this
 		integer, intent(in) :: posVec(:)
 		
@@ -537,31 +538,31 @@
 		
 		nItems = size(posVec)
 		
-		if( any( posVec > this.ssize() ) ) then
+		if( any( posVec > this%ssize() ) ) then
 			write(*,"(A)") "### ERROR ### List.eraseAllExcept( posVec ): There is one value X than X > size"
-			write(*,"(A,I3)")                 "                size = ", this.ssize()
-			write(*,"(A,<size(posVec)>I3,A)") "              posVec = (", posVec, ")"
+			write(*,"(A,I3)")                 "                size = ", this%ssize()
+			write(*,"(A,"//trim(FString_fromInteger(size(posVec)))//"I3,A)") "              posVec = (", posVec, ")"
 			stop
 		end if
 		
-		allocate( iterVec(this.size()) ) ! En el peor de los casos se borran todos
+		allocate( iterVec(this%size()) ) ! En el peor de los casos se borran todos
 		
 		i = 1
 		j = 1
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
 			if( .not. any( i == posVec ) ) then
-				iterVec(j).p => iter
+				iterVec(j)%p => iter
 				j = j+1
 			end if
 			
 			i = i+1
-			iter => iter.next
+			iter => iter%next
 		end do
 		n = j-1
 		
 		do i=1,n
-			call this.erase( iterVec(i).p )
+			call this%erase( iterVec(i)%p )
 		end do
 		
 		deallocate( iterVec )
@@ -577,9 +578,9 @@
 		integer :: i
 		integer, allocatable :: ids(:)
 		
-		if( nItems > this.ssize() ) then
+		if( nItems > this%ssize() ) then
 			write(*,*) ""
-			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ List.eraseAllExceptFirst( nItems ). nItems > size (", nItems, " > ", this.size(), "). List is not affected."
+			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ List.eraseAllExceptFirst( nItems ). nItems > size (", nItems, " > ", this%size(), "). List is not affected."
 			return
 		end if
 		
@@ -589,7 +590,7 @@
 			ids(i) = i
 		end do
 		
-		call this.eraseAllExcept( ids )
+		call this%eraseAllExcept( ids )
 		
 		deallocate( ids )
 	end subroutine eraseAllExceptFirst
@@ -604,26 +605,26 @@
 		integer :: i, j
 		integer, allocatable :: ids(:)
 		
-		if( nItems > this.ssize() ) then
+		if( nItems > this%ssize() ) then
 			write(*,*) ""
-			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ List.eraseAllExceptLast( nItems ). nItems > size (", nItems, " > ", this.size(), "). List is not affected."
+			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ List.eraseAllExceptLast( nItems ). nItems > size (", nItems, " > ", this%size(), "). List is not affected."
 			return
 		end if
 		
 		allocate( ids(nItems) )
 		
 ! 		j = 1
-! 		do i=this.size()-nItems,this.size()
+! 		do i=this%size()-nItems,this%size()
 ! 			ids(j) = i
 ! 			j = j+1
 ! 		end do
 		
-		j = this.size()-nItems
+		j = this%size()-nItems
 		do i=1,nItems
 			ids(i) = j+i
 		end do
 		
-		call this.eraseAllExcept( ids )
+		call this%eraseAllExcept( ids )
 		
 		deallocate( ids )
 	end subroutine eraseAllExceptLast
@@ -637,22 +638,22 @@
 		class(ListIterator), pointer :: iter
 		class(ListIterator), pointer :: iterPos
 		
-		if( .not. ( associated(this.begin) .and. associated(this.end) ) ) return
+		if( .not. ( associated(this%begin) .and. associated(this%end) ) ) return
 		
-		iter => this.begin
-! 		if( associated(iter.next) ) iterPos => iter.next
+		iter => this%begin
+! 		if( associated(iter%next) ) iterPos => iter%next
 		
 		do while ( associated(iter) )
-			call this.erase( iter )
-			iter => this.begin
+			call this%erase( iter )
+			iter => this%begin
 ! 			iter => iterPos
 			
-! 			if( associated(iterPos) ) iterPos => iter.next
+! 			if( associated(iterPos) ) iterPos => iter%next
 		end do
 		
-! 		this.nItems = 0
-! 		this.begin => null()
-! 		this.end => null()
+! 		this%nItems = 0
+! 		this%begin => null()
+! 		this%end => null()
 	end subroutine clear
 	
 	!>
@@ -663,7 +664,7 @@
 		class(ListIterator), intent(in), pointer :: ptr
 		__TYPE_ITEMLIST__ :: output
 		
-		output = ptr.data
+		output = ptr%data
 	end function atFromPtr
 	
 	!>
@@ -678,14 +679,14 @@
 		class(ListIterator), pointer :: iter
 		
 		i=1
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
 			if( i==pos ) then
-				output = iter.data
+				output = iter%data
 				return
 			end if
 			
-			iter => iter.next
+			iter => iter%next
 			i = i+1
 		end do
 	end function atFromPos
@@ -698,7 +699,7 @@
 		class(ListIterator), intent(inout), pointer :: ptr
 		__TYPE_ITEMLIST__, intent(in) :: item
 		
-		ptr.data = item
+		ptr%data = item
 	end subroutine replaceFromPtr
 	
 	!>
@@ -713,14 +714,14 @@
 		class(ListIterator), pointer :: iter
 		
 		i=1
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
 			if( i==pos ) then
-				iter.data = item
+				iter%data = item
 				return
 			end if
 			
-			iter => iter.next
+			iter => iter%next
 			i = i+1
 		end do
 	end subroutine replaceFromPos
@@ -738,16 +739,16 @@
 		
 		class(ListIterator), pointer :: iter
 		
-		iter => this.begin
+		iter => this%begin
 		if( present(from) ) iter => from
 		
 		do while ( associated(iter) )
-			if( iter.data == value ) then
+			if( iter%data == value ) then
 				output = iter
 				exit
 			end if
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 	end function pointerOf
 	
@@ -769,12 +770,12 @@
 ! 		
 ! 		integer :: i
 ! 		
-! 		effFrom = this.size()
+! 		effFrom = this%size()
 ! 		if( present(from) ) effFrom = from
 ! 		
 ! 		output=-1
 ! 		do i=effFrom,1,-1
-! 			if( this.data(i) == value ) then
+! 			if( this%data(i) == value ) then
 ! 				output = i
 ! 				exit
 ! 			end if
@@ -790,7 +791,7 @@
 		logical :: output
 		
 		output = .false.
-		if( associated( this.pointerOf(value) ) ) output = .true.
+		if( associated( this%pointerOf(value) ) ) output = .true.
 	end function contains
 	
 	!>
@@ -805,14 +806,14 @@
 		class(ListIterator), pointer :: iter
 		
 		i=1
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
 			if( i==pos ) then
 				output = iter
 				return
 			end if
 			
-			iter => iter.next
+			iter => iter%next
 			i = i+1
 		end do
 	end function ptr
@@ -828,14 +829,14 @@
 		class(ListIterator), pointer :: iter
 		
 		if( allocated(output) ) deallocate(output)
-		allocate( output(this.size()) )
+		allocate( output(this%size()) )
 		
 		i=1
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
-			output(i) = iter.data
+			output(i) = iter%data
 			
-			iter => iter.next
+			iter => iter%next
 			i = i+1
 		end do
 	end function fArray

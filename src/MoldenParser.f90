@@ -78,7 +78,7 @@ module MoldenParser_
 		class(MoldenParser), intent(out) :: this
 		class(MoldenParser), intent(in) :: other
 
-		this%val = other.val
+		this%val = other%val
 	end subroutine copyMoldenParser
 	
 	!>

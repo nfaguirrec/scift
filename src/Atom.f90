@@ -40,6 +40,7 @@
 module Atom_
 	use AtomicElementsDB_
 	use UnitsConverter_
+        use String_
 	
 	implicit none
 	private
@@ -168,8 +169,8 @@ module Atom_
 		
 #define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
 #define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
-#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
-#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i"//trim(FString_fromInteger(fmt))//)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f"//trim(FString_fromInteger(fmt+7))//".6)") v; output = trim(output)//trim(fstr)
 		
 			ITEMS( "symbol=", this%symbol )
 			ITEMR( ",x=", this%x )

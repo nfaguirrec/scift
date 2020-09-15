@@ -124,7 +124,7 @@ module RealList_
 		type(RealListIterator), pointer :: iter
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
@@ -135,7 +135,7 @@ module RealList_
 		do while ( associated(iter) )
 			write(unitEff,"(F15.7)") iter%data
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 	end subroutine toFStream
 	
@@ -147,7 +147,7 @@ module RealList_
 		do while( associated(iter) )
 			write(*,"(F5.3,A)", advance="no") iter%data, "  --> "
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		write(*,*)
 	end subroutine showMyListForward
@@ -156,11 +156,11 @@ module RealList_
 		type(RealList) :: mylist
 		class(RealListIterator), pointer :: iter
 		
-		iter => mylist.end
+		iter => mylist%end
 		do while( associated(iter) )
 			write(*,"(A,F5.3)", advance="no") "  <-- ", iter%data
 			
-			iter => iter.prev
+			iter => iter%prev
 		end do
 		write(*,*)
 	end subroutine showMyListBackward
@@ -193,14 +193,14 @@ module RealList_
 		write(*,*) "Testing for prepend method"
 		write(*,*) "-------------------------"
 		
-		write(*,*) "call mylist.prepend( 2.0 )"
-		write(*,*) "call mylist.prepend( 7.0 )"
-		write(*,*) "call mylist.prepend( 0.0 )"
+		write(*,*) "call mylist%prepend( 2.0 )"
+		write(*,*) "call mylist%prepend( 7.0 )"
+		write(*,*) "call mylist%prepend( 0.0 )"
 		write(*,*)
 		
-		call mylist.prepend( 2.0_8 )
-		call mylist.prepend( 7.0_8 )
-		call mylist.prepend( 0.0_8 )
+		call mylist%prepend( 2.0_8 )
+		call mylist%prepend( 7.0_8 )
+		call mylist%prepend( 0.0_8 )
 		
 		call showMyListForward( mylist )
 		
@@ -209,30 +209,30 @@ module RealList_
 		write(*,*) "-------------------------"
 		
 		write(*,*) "iter => mylist%begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "call mylist.insert( iter, 1.0 )"
+		write(*,*) "iter => iter%next"
+		write(*,*) "iter => iter%next"
+		write(*,*) "call mylist%insert( iter, 1.0 )"
 		write(*,*)
 		
 		iter => mylist%begin
-		iter => iter.next
-		iter => iter.next
+		iter => iter%next
+		iter => iter%next
 		
-		call mylist.insert( iter, 1.0_8 )
+		call mylist%insert( iter, 1.0_8 )
 		call showMyListForward( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist.insert( iter, 2.0 )"
+		write(*,*) "call mylist%insert( iter, 2.0 )"
 		write(*,*)
 		
-		call mylist.insert( iter, 2.0_8 )
+		call mylist%insert( iter, 2.0_8 )
 		call showMyListForward( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist.insert( mylist.end, 9.0 )"
+		write(*,*) "call mylist%insert( mylist%end, 9.0 )"
 		write(*,*)
 				
-		call mylist.insert( mylist.end, 9.0_8 )
+		call mylist%insert( mylist%end, 9.0_8 )
 		call showMyListForward( mylist )
 
 		write(*,*) "------------------------"
@@ -240,12 +240,12 @@ module RealList_
 		write(*,*) "------------------------"
 		
 		write(*,*) "iter => mylist%begin"
-		write(*,*) "iter => iter.next"
+		write(*,*) "iter => iter%next"
 		write(*,*) "call mylist%erase( iter )"
 		write(*,*)
 		
 		iter => mylist%begin
-		iter => iter.next
+		iter => iter%next
 		
 		call mylist%erase( iter )
 		call showMyListForward( mylist )
@@ -258,9 +258,9 @@ module RealList_
 		call showMyListForward( mylist )
 		
 		write(*,*)
-		write(*,*) "call mylist%erase( mylist.end )"
+		write(*,*) "call mylist%erase( mylist%end )"
 		write(*,*)
-		call mylist%erase( mylist.end )
+		call mylist%erase( mylist%end )
 		call showMyListForward( mylist )
 		
 		write(*,*) "------------------------"
@@ -287,7 +287,7 @@ module RealList_
 ! 				call mylist%erase( iter )
 ! 				iter => mylist%begin
 ! 			else
-! 				iter => iter.next
+! 				iter => iter%next
 ! 			end if
 ! 		end do
 ! 		

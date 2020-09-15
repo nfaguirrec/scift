@@ -72,8 +72,8 @@
 		__TYPE_ITEMFIRST__ :: first
 		__TYPE_ITEMSECOND__ :: second
 		
-		this.first = first
-		this.second = second
+		this%first = first
+		this%second = second
 	end subroutine initDefault
 	
 	!>
@@ -83,8 +83,8 @@
 		class(Pair), intent(out) :: this
 		class(Pair), intent(in) :: other
 		
-		this.first = other.first
-		this.second = other.second
+		this%first = other%first
+		this%second = other%second
 	end subroutine copyPair
 	
 	!>
@@ -96,7 +96,7 @@
 		logical :: output
 		
 		output = .false.
-		if( this.first == other.first .and. this.second == other.second ) then
+		if( this%first == other%first .and. this%second == other%second ) then
 			output = .true.
 		end if
 	end function equal

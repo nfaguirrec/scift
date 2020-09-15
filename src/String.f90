@@ -41,7 +41,7 @@ module String_
 	
 	character(1), public, parameter :: ENDL = achar(10)
 	! @todo Toca 100 porque en algunos casos len(FString_NULL) cambia al llamarla desde diferentes funciones y cuando cambia, cambia a 100
-	character(100), public, parameter :: FString_NULL = repeat(""C,100)
+	character(100), public, parameter :: FString_NULL = repeat("#$%^%#@$%^",10)
 
 ! 	http://publib.boulder.ibm.com/infocenter/lnxpcomp/v9v111/index.jsp?topic=/com.ibm%xlf111.linux.doc/xlflr/generic_interface_blocks.htm
 ! module m
@@ -616,7 +616,7 @@ module String_
 		character(*), intent(in) :: str
 		type(String) :: output
 		
-		call output.fromFString( str )
+		call output%fromFString( str )
 	end function FString_toString
 	
 	!>
@@ -1270,7 +1270,7 @@ module String_
 		write(*,*) "Testing split"
 		write(*,*) "============="
 		write(*,*) "Original ==> ", str1%fstr
-		call str1.split( tokens, " " )
+		call str1%split( tokens, " " )
 		write(*,*) "Split( ) ==> "
 		do i=1,size(tokens)
 			write(*,*) i, "    ", trim(tokens(i))
@@ -1319,39 +1319,39 @@ module String_
 		write(*,*) "==============================================="
 		str1 = "AAABBB"
 		call str1%show()
-		write(*,*) "isNumeric => ", str1.isNumeric()
+		write(*,*) "isNumeric => ", str1%isNumeric()
 		str1 = "12345"
 		call str1%show()
-		write(*,*) "isNumeric => ", str1.isNumeric()
-		write(*,*) "integer   => ", str1.toInteger()
-		write(*,*) "   real   => ", str1.toReal()
-		write(*,*) "complex   => ", str1.toComplex()
+		write(*,*) "isNumeric => ", str1%isNumeric()
+		write(*,*) "integer   => ", str1%toInteger()
+		write(*,*) "   real   => ", str1%toReal()
+		write(*,*) "complex   => ", str1%toComplex()
 		str1 = "0.12345"
 		call str1%show()
-		write(*,*) "isNumeric => ", str1.isNumeric()
-		write(*,*) "integer   => ", str1.toInteger()
-		write(*,*) "   real   => ", str1.toReal()
-		write(*,*) "complex   => ", str1.toComplex()
+		write(*,*) "isNumeric => ", str1%isNumeric()
+		write(*,*) "integer   => ", str1%toInteger()
+		write(*,*) "   real   => ", str1%toReal()
+		write(*,*) "complex   => ", str1%toComplex()
 		str1 = "-3.52345"
 		call str1%show()
-		write(*,*) "isNumeric => ", str1.isNumeric()
-		write(*,*) "integer => ", str1.toInteger()
-		write(*,*) "   real => ", str1.toReal()
-		write(*,*) "complex   => ", str1.toComplex()
+		write(*,*) "isNumeric => ", str1%isNumeric()
+		write(*,*) "integer => ", str1%toInteger()
+		write(*,*) "   real => ", str1%toReal()
+		write(*,*) "complex   => ", str1%toComplex()
 		str1 = "(-3.52345,1.7538)"
 		call str1%show()
-		write(*,*) "isNumeric => ", str1.isNumeric()
-		write(*,*) "integer => ", str1.toInteger()
-		write(*,*) "   real => ", str1.toReal()
-		write(*,*) "complex   => ", str1.toComplex()
+		write(*,*) "isNumeric => ", str1%isNumeric()
+		write(*,*) "integer => ", str1%toInteger()
+		write(*,*) "   real => ", str1%toReal()
+		write(*,*) "complex   => ", str1%toComplex()
 		str1 = " ( -3.52345, 2.345, 6.345 )"
 		call str1%show()
-		write(*,*) "isNumeric => ", str1.isNumeric()
+		write(*,*) "isNumeric => ", str1%isNumeric()
 		call FString_toIntegerArray( str1%fstr, intArray )
 		write(*,*) "integer => ", intArray
 		str1 = " ( -3.52345, 2.345, 6.345 )"
 		call str1%show()
-		write(*,*) "isNumeric => ", str1.isNumeric()
+		write(*,*) "isNumeric => ", str1%isNumeric()
 		call FString_toRealArray( str1%fstr, realArray )
 		write(*,*) "     real => ", realArray
 		
@@ -1399,7 +1399,7 @@ module String_
 		fstr = "a**2*sin(2*pi/4.0/a**2)+exp(-b*x**2)"
 		write(*,"(A,A)") "original => ", fstr
 		allocate(fstrArray(3))
-		fstrArray = [ "a", "b", "pi" ]
+		fstrArray = [ " a", " b", "pi" ]
 		write(*,"(A,3A10)") "    vars => ", fstrArray
 		allocate(realArray(3))
 		realArray = [ 3.12345_8, 0.09876_8, 3.141592_8 ]

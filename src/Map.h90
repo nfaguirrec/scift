@@ -96,7 +96,7 @@
 	subroutine initDefault( this )
 		class(Map) :: this
 		
-		call this.list.init()
+		call this%list.init()
 	end subroutine initDefault
 	
 	!>
@@ -106,9 +106,9 @@
 		class(Map), intent(out) :: this
 		class(Map), intent(in) :: other
 		
-		this.list = other.list
-		this.begin => this.list.begin
-		this.end => this.list.end
+		this%list = other%list
+		this%begin => this%list.begin
+		this%end => this%list.end
 	end subroutine copyList
 	
 	!>
@@ -117,7 +117,7 @@
 	subroutine destroyMap( this )
 		type(Map), intent(inout) :: this
 		
-		call this.clear()
+		call this%clear()
 	end subroutine destroyMap
 	
 #ifndef MapBasicInterface
@@ -153,10 +153,10 @@
 		
 		if( present(ofileName) ) then
 			call ofile.init( ofileName )
-			call this.toFStream( ofile )
+			call this%toFStream( ofile )
 			call ofile.close()
 		else
-			call this.toFStream()
+			call this%toFStream()
 		end if
 	end subroutine save
 #endif
@@ -168,7 +168,7 @@
 		class(Map), intent(in) :: this
 		integer :: output
 		
-		output = this.list.size()
+		output = this%list.size()
 	end function size
 	
 	!>
@@ -178,7 +178,7 @@
 		class(Map), intent(in) :: this
 		logical :: output
 		
-		output = ( this.list.size() == 0 )
+		output = ( this%list.size() == 0 )
 	end function isEmpty
 	
 	!>
@@ -193,11 +193,11 @@
 		__TYPE_MAPPAIR__ :: pair, pairPrev
 		__CLASS_MAPITERATOR__, pointer :: iter
 		
-		iter => this.list.begin
+		iter => this%list.begin
 		pair = iter.data
 		
 		! Si solo hay un elemento en la lista
-		if( this.list.size() == 1 ) then
+		if( this%list.size() == 1 ) then
 			if( pair.first == key ) then
 				output = 0
 			else if( pair.first < key ) then
@@ -238,10 +238,10 @@
 			iter => iter.next
 		end do
 		
-		iter => this.list.end
+		iter => this%list.end
 		pair = iter.data
 		
-		ptr => this.list.end
+		ptr => this%list.end
 		if( key == pair.first ) then
 			output = 0
 		else if( pair.first < key ) then
@@ -260,13 +260,13 @@
 		
 		integer :: loc
 		
-		if( this.size() == 0 ) then
+		if( this%size() == 0 ) then
 			output = .false.
 			ptr => null()
 			return
 		end if
 		
-		loc = this.privateFind( key, ptr )
+		loc = this%privateFind( key, ptr )
 		if( abs(loc) == 1 ) then
 			output = .false.
 			ptr => null()
@@ -286,7 +286,7 @@
 		__CLASS_MAPITERATOR__, pointer :: ptr
 		integer :: loc
 		
-		output = this.find( key, ptr )
+		output = this%find( key, ptr )
 		
 		ptr => null()
 	end function contains
@@ -304,26 +304,26 @@
 		
 		call pair.init( key, value )
 		
-		if( this.list.isEmpty() ) then
-			call this.list.append( pair )
+		if( this%list.isEmpty() ) then
+			call this%list.append( pair )
 			
-			this.begin => this.list.begin
-			this.end => this.list.end
+			this%begin => this%list.begin
+			this%end => this%list.end
 
 			return
 		end if
 		
-		select case( this.privateFind( key, ptr ) )
+		select case( this%privateFind( key, ptr ) )
 			case(-1)
-				call this.list.prepend( pair )
+				call this%list.prepend( pair )
 			case(0)
-				call this.list.replace( ptr, pair )
+				call this%list.replace( ptr, pair )
 			case(1)
-				call this.list.insert( ptr, pair )
+				call this%list.insert( ptr, pair )
 		end select
 		
-		this.begin => this.list.begin
-		this.end => this.list.end
+		this%begin => this%list.begin
+		this%end => this%list.end
 	end subroutine insert
 	
 	!>
@@ -338,7 +338,7 @@
 		
 		call pair.init( ptr.data.first, value )
 		
-		call this.list.replace( ptr, pair )
+		call this%list.replace( ptr, pair )
 	end subroutine setFromPtr
 	
 	!>
@@ -348,10 +348,10 @@
 		class(Map) :: this
 		__CLASS_MAPITERATOR__, intent(in), pointer :: ptr
 		
-		call this.list.erase( ptr )
+		call this%list.erase( ptr )
 		
-		this.begin => this.list.begin
-		this.end => this.list.end
+		this%begin => this%list.begin
+		this%end => this%list.end
 	end subroutine eraseFromPtr
 	
 	!>
@@ -363,11 +363,11 @@
 		
 		__CLASS_MAPITERATOR__, pointer :: ptr
 		
-		if( this.find( key, ptr ) ) then
-			call this.list.erase( ptr )
+		if( this%find( key, ptr ) ) then
+			call this%list.erase( ptr )
 			
-			this.begin => this.list.begin
-			this.end => this.list.end
+			this%begin => this%list.begin
+			this%end => this%list.end
 		end if
 	end subroutine eraseFromKey
 	
@@ -377,9 +377,9 @@
 	subroutine clear( this )
 		class(Map), intent(inout) :: this
 		
-		call this.list.clear()
-		this.begin => this.list.begin
-		this.end => this.list.end
+		call this%list.clear()
+		this%begin => this%list.begin
+		this%end => this%list.end
 	end subroutine clear
 	
 	!>
@@ -404,10 +404,10 @@
 		
 		__CLASS_MAPITERATOR__, pointer :: ptr
 		
-		if( this.find( key, ptr ) ) then
+		if( this%find( key, ptr ) ) then
 			output = ptr.data.second
 		else if( present(defaultValue) ) then
-			call this.insert( key, defaultValue )
+			call this%insert( key, defaultValue )
 			output = defaultValue
 		else
 			write(6,"(A)") "### Error ### Map.atFromKey: There isn't value associated to key "//trim(key.fstr)
@@ -426,7 +426,7 @@
 		
 		__TYPE_MAPPAIR__ :: pair
 		
-		pair = this.list.at( pos )
+		pair = this%list.at( pos )
 		
 		output = pair.second
 	end function atFromPos
@@ -464,7 +464,7 @@
 		
 		__TYPE_MAPPAIR__ :: pair
 		
-		pair = this.list.at( pos )
+		pair = this%list.at( pos )
 		
 		output = pair.first
 	end function keyFromPos
@@ -490,7 +490,7 @@
 		
 		__CLASS_MAPITERATOR__, pointer :: ptr
 		
-		if( this.find( key, ptr ) ) then
+		if( this%find( key, ptr ) ) then
 			output = ptr.data
 		end if
 	end function pairFromKey
@@ -503,6 +503,6 @@
 		integer, intent(in) :: pos
 		__TYPE_MAPPAIR__ :: output
 		
-		output = this.list.at( pos )
+		output = this%list.at( pos )
 	end function pairFromPos
 #endif

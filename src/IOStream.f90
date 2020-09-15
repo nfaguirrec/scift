@@ -135,7 +135,7 @@ module IOStream_
 			deallocate( tokens )
 		else
 			fmt = int(log10(1.0*lastUnit))+1
-			write( sunit, "(i<fmt>)" ) lastUnit
+			write( sunit, "(i"//trim(FString_fromInteger(fmt))//")" ) lastUnit
 			this%name = "fort."//trim(sunit)
 		end if
 		
@@ -197,7 +197,8 @@ module IOStream_
 		class(FStream) :: this
 		logical output
 		
-		output = eof( this%unit )
+                ! output = eof( this%unit ) << It may work only in intel
+                output = IS_IOSTAT_END( this%unit )
 	end function FStream_eof
 	
 	!>
@@ -208,14 +209,15 @@ module IOStream_
 		
 		integer :: fmt
 		
-		select type( this )
-			type is ( FStream )
+                ! @TODO: Find equivalent in gnu
+!		select type( this )
+!			type is ( FStream )
 				write(IO_STDOUT, "(a)", advance="no") "<FStream:"
-			type is ( IFStream )
-				write(IO_STDOUT, "(a)", advance="no") "<IFStream:"
-			type is ( OFStream )
-				write(IO_STDOUT, "(a)", advance="no") "<OFStream:"
-		end select
+!			type is ( IFStream )
+!				write(IO_STDOUT, "(a)", advance="no") "<IFStream:"
+!			type is ( OFStream )
+!				write(IO_STDOUT, "(a)", advance="no") "<OFStream:"
+!		end select
 		
 		write(IO_STDOUT, "(a)", advance="no") "name="
 		write(IO_STDOUT, "(a)", advance="no") trim(this%name)
@@ -225,21 +227,21 @@ module IOStream_
 		
 		write(IO_STDOUT, "(a)", advance="no") ",unit="
 		fmt = int(log10(1.0*this%unit))+1
-		write(IO_STDOUT, "(i<fmt>)", advance="no") this%unit
+		write(IO_STDOUT, "(i"//trim(FString_fromInteger(fmt))//")", advance="no") this%unit
 		
 		select type( this )
 			type is ( IFStream )
 				write(IO_STDOUT, "(a)", advance="no") ",numberOfLines="
 				fmt = int(log10(1.0*this%numberOfLines+1))+1
-				write(IO_STDOUT, "(i<fmt>)", advance="no") this%numberOfLines
+				write(IO_STDOUT, "(i"//trim(FString_fromInteger(fmt))//")", advance="no") this%numberOfLines
 				
 				write(IO_STDOUT, "(a)", advance="no") ",minNColumns="
 				fmt = int(log10(1.0*this%minNColumns+1))+1
-				write(IO_STDOUT, "(i<fmt>)", advance="no") this%minNColumns
+				write(IO_STDOUT, "(i"//trim(FString_fromInteger(fmt))//")", advance="no") this%minNColumns
 				
 				write(IO_STDOUT, "(a)", advance="no") ",maxNColumns="
 				fmt = int(log10(1.0*this%maxNColumns+1))+1
-				write(IO_STDOUT, "(i<fmt>)", advance="no") this%maxNColumns
+				write(IO_STDOUT, "(i"//trim(FString_fromInteger(fmt))//")", advance="no") this%maxNColumns
 		end select
 
 		write(IO_STDOUT, "(a)", advance="no") ">"
@@ -271,7 +273,7 @@ module IOStream_
 				read( this%unit, "(a)", iostat=iostat ) buffer
 				
 				call strBuffer%init( trim(buffer) )
-				call strBuffer.split( tokens, " " )
+				call strBuffer%split( tokens, " " )
 				
 				if( this%minNColumns > size(tokens) ) then
 					this%minNColumns = size(tokens)

@@ -144,6 +144,1670 @@
 		end function prototypeFunction3D
 	end interface
 	
+	contains
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGrid3D( this, xyzGrid )
+		class(NFunction3D) :: this 
+		type(Grid3D), intent(in) :: xyzGrid
+		
+		integer :: i
+		integer :: err
+		
+		this%xyzGrid = xyzGrid
+		
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(xyzGrid%nPoints(1),xyzGrid%nPoints(2),xyzGrid%nPoints(3)), stat=err )
+		
+		if( err /= 0 ) then
+			call GOptions_error( &
+				"Not enought memory to allocate this function", &
+				"NFunction3D%fromGrid3D()" &
+			)
+		end if
+		
+		this%fArray = 0.0_8
+	end subroutine fromGrid3D
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromArrays( this, xArray, yArray, zArray, fArray, units, cutoff, fillWithZeros )
+		class(NFunction3D) :: this 
+		real(8), intent(in) :: xArray(:)
+		real(8), intent(in) :: yArray(:)
+		real(8), intent(in) :: zArray(:)
+		__TYPE_VALUE__, intent(in) :: fArray(:,:,:)
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		logical, optional :: fillWithZeros
+		
+		integer :: i, j, k
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		logical :: effFillWithZeros
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) effUnits = units
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		effFillWithZeros = .false.
+		if( present(fillWithZeros) ) effFillWithZeros = fillWithZeros
+		
+		if( .not. effFillWithZeros ) then
+			if( size(xArray) /= size(fArray,dim=1) ) then
+				write(*,"(A)") "### ERROR ### NFunction3D%fromArrays: The xArray's size should be equal to fArray's size"
+				stop
+			end if
+			
+			if( size(yArray) /= size(fArray,dim=2) ) then
+				write(*,"(A)") "### ERROR ### NFunction3D%fromArrays: The yArray's size should be equal to fArray's size"
+				stop
+			end if
+			
+			if( size(zArray) /= size(fArray,dim=3) ) then
+				write(*,"(A)") "### ERROR ### NFunction3D%fromArrays: The zArray's size should be equal to fArray's size"
+				stop
+			end if
+		end if
+		
+		call this%xyzGrid%init( xArray, yArray, zArray )
+		call this%xyzGrid%setUnits( effUnits(1) )
+		
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray( size(xArray), size(yArray), size(zArray) ) )
+		
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,size(fArray,dim=3); do j=1,size(fArray,dim=2); do i=1,size(fArray,dim=1)
+#if __ID_TYPE__ == 0
+			this%fArray(i,j,k) = min( max( fArray(i,j,k)*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this%fArray(i,j,k) = fArray(i,j,k)*effUnits(2)
+#endif
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+
+		if( effFillWithZeros ) then
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+			do k=size(fArray,dim=3)+1,size(zArray); do j=size(fArray,dim=2)+1,size(yArray); do i=size(fArray,dim=1)+1,size(xArray)
+				this%fArray(i,j,k) = 0.0_8
+			end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+		end if
+
+	end subroutine fromArrays
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromGrid3DArray( this, xyzGrid, fArray, units, cutoff, fillWithZeros )
+		class(NFunction3D) :: this 
+		type(Grid3D), intent(in) :: xyzGrid
+		__TYPE_VALUE__, intent(in) :: fArray(:,:,:)
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		logical, optional :: fillWithZeros
+		
+		integer :: i, j, k
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		logical :: effFillWithZeros
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) effUnits = units
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		effFillWithZeros = .false.
+		if( present(fillWithZeros) ) effFillWithZeros = fillWithZeros
+		
+		this%xyzGrid = xyzGrid
+		call this%xyzGrid%setUnits( effUnits(1) )
+		
+		if( .not. effFillWithZeros ) then
+			if( xyzGrid%nPoints(1) /= size(fArray,dim=1) ) then
+				write(*,"(A)") "### ERROR ### NFunction3D%fromArrays: The xArray's size should be equal to fArray's size"
+				stop
+			end if
+			
+			if( xyzGrid%nPoints(2) /= size(fArray,dim=2) ) then
+				write(*,"(A)") "### ERROR ### NFunction3D%fromArrays: The yArray's size should be equal to fArray's size"
+				stop
+			end if
+			
+			if( xyzGrid%nPoints(3) /= size(fArray,dim=3) ) then
+				write(*,"(A)") "### ERROR ### NFunction3D%fromArrays: The zArray's size should be equal to fArray's size"
+				stop
+			end if
+		end if
+		
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(xyzGrid%nPoints(1),xyzGrid%nPoints(2),xyzGrid%nPoints(3)) )
+		
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,xyzGrid%nPoints(3); do j=1,xyzGrid%nPoints(2); do i=1,xyzGrid%nPoints(1)
+#if __ID_TYPE__ == 0
+			this%fArray(i,j,k) = min( max( fArray(i,j,k)*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this%fArray(i,j,k) = fArray(i,j,k)*effUnits(2)
+#endif
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+
+		if( effFillWithZeros ) then
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+			do k=xyzGrid%nPoints(3)+1,size(fArray,dim=3); do j=xyzGrid%nPoints(2)+1,size(fArray,dim=2); do i=xyzGrid%nPoints(1)+1,size(fArray,dim=1)
+				this%fArray(i,j,k) = 0.0_8
+			end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+		end if
+		
+	end subroutine fromGrid3DArray
+	
+	!>
+	!! @brief Constructor
+	!!
+! 	subroutine fromFunction( this, xyzGrid, func, units )
+! 		class(NFunction3D), target :: this 
+! 		type(Grid3D), target, intent(in) :: xyzGrid
+! 		procedure(prototypeFunction3D) :: func
+! 		real(8), optional, intent(in) :: units(2)
+! 		
+! 		integer :: i, j, k
+! 		real(8) :: effUnits(2)
+! 		integer :: nx, ny, nz
+! 		
+! #ifdef _OPENMP
+! 		real(8), pointer :: x(:), y(:), z(:)
+! 		__TYPE_VALUE__, pointer :: fArray(:,:,:)
+! #endif
+! 		
+! 		if( present(units) ) then
+! 			effUnits = units
+! 		else
+! 			effUnits = [1.0_8, 1.0_8]
+! 		end if
+! 		
+! 		this%xyzGrid = xyzGrid
+! 		call this%xyzGrid%setUnits( effUnits(1) )
+! 		
+! 		nx = this%xyzGrid%nPoints(1)
+! 		ny = this%xyzGrid%nPoints(2)
+! 		nz = this%xyzGrid%nPoints(3)
+! 		
+! 		if( allocated(this%fArray) ) deallocate(this%fArray)
+! 		allocate( this%fArray(nx,ny,nz) )
+! 		
+! #ifdef _OPENMP
+! 		x => xyzGrid%component(1).data
+! 		y => xyzGrid%component(2).data
+! 		z => xyzGrid%component(3).data
+! 		fArray => this%fArray
+! 		
+! 		!$omp parallel do shared(fArray,x,y,z,effUnits) private(k)
+! 		do k=1,nz; do j=1,ny; do i=1,nx
+! 			fArray(i,j,k) = func( x(i), y(j), z(k) )*effUnits(2)
+! 		end do; end do; end do
+! 		!$omp end parallel do
+! 		
+! 		nullify( x, y, z, fArray )
+! #else
+! ! 		NFunction3D_forall( k, 1, nx, j, 1, ny, i, 1, nz )
+! 		do k=1,nz; do j=1,ny; do i=1,nx
+! 			this%fArray(i,j,k) = func( xyzGrid%x(i), xyzGrid%y(j), xyzGrid%z(k) )*effUnits(2)
+! 		end do; end do; end do
+! ! 		NFunction3D_endforall
+! #endif
+! 	end subroutine fromFunction
+	
+	!>
+	!! @brief Constructor
+	!!
+	subroutine fromFunction( this, xyzGrid, func, units, cutoff )
+		class(NFunction3D), target :: this 
+		type(Grid3D), target, intent(in) :: xyzGrid
+		procedure(prototypeFunction3D) :: func
+		real(8), optional, intent(in) :: units(2)
+		real(8), optional, intent(in) :: cutoff
+		
+		integer :: i, j, k
+		real(8) :: effUnits(2)
+		real(8) :: effCutoff
+		integer :: nx, ny, nz
+		
+		effUnits = [1.0_8, 1.0_8]
+		if( present(units) ) effUnits = units
+		
+		effCutoff = 1d10
+		if( present(cutoff) ) effCutoff = cutoff
+		
+		this%xyzGrid = xyzGrid
+		
+		call this%xyzGrid%setUnits( effUnits(1) )
+		
+		nx = this%xyzGrid%nPoints(1)
+		ny = this%xyzGrid%nPoints(2)
+		nz = this%xyzGrid%nPoints(3)
+		
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(nx,ny,nz) )
+		
+!@todo Esto aparentemente no funciona porque no se puede compartir la funcion func, verificar con wpp -i harmonicKt.wpp
+! ! ! !$omp parallel
+! ! ! !$omp do
+		do k=1,nz; do j=1,ny; do i=1,nx
+#if __ID_TYPE__ == 0
+			this%fArray(i,j,k) = min( max( func( xyzGrid%x(i), xyzGrid%y(j), xyzGrid%z(k) )*effUnits(2), -effCutoff ), effCutoff )
+#elif __ID_TYPE__ == 1
+			this%fArray(i,j,k) = func( xyzGrid%x(i), xyzGrid%y(j), xyzGrid%z(k) )*effUnits(2)
+#endif
+		end do; end do; end do
+! ! ! !$omp end parallel
+	end subroutine fromFunction
+	
+	!>
+	!! @brief Reads from a file
+	!!
+	subroutine fromFile( this, fileName, format, cutoff )
+		class(NFunction3D) :: this
+		character(*), optional, intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		real(8), optional, intent(in) :: cutoff
+		
+		integer :: effFormat
+		
+		character(100), allocatable :: tokens(:)
+		character(100) :: extension
+		
+		if( present(cutoff) ) stop "### ERROR ### NFunction3D%fromFile: cutoff option is not implemented yet"
+		
+		effFormat = AUTO_FORMAT
+		if( present(format) ) effFormat = format
+		
+		select case ( effFormat )
+			case( AUTO_FORMAT )
+				call FString_split( fileName, tokens, "." )
+				extension = ""
+				if( size( tokens ) > 1 ) extension = trim(tokens(size(tokens)))
+				deallocate( tokens )
+				
+				if( trim(extension) == "n3df" ) then
+					call this%loadN3DF( fileName )
+				else if( trim(extension) == "cube" ) then
+					call this%loadCUBE( fileName, CUBE_FORMAT )
+				else if( trim(extension) == "rcube" ) then
+					call this%loadCUBE( fileName, RCUBE_FORMAT )
+				else if( trim(extension) == "icube" ) then
+					call this%loadCUBE( fileName, ICUBE_FORMAT )
+				else if( trim(extension) == "blks" ) then
+					call this%loadBLKS( fileName )
+				else
+					call GOptions_error( &
+						"Unknown format file (AUTO_FORMAT). fileName = "//trim(fileName), &
+						"NFunction3D%fromFile(extension="//trim(extension)//")" &
+					)
+				end if
+			case( N3DF_FORMAT )
+				call this%loadN3DF( fileName )
+			case( CUBE_FORMAT )
+				call this%loadCUBE( fileName, CUBE_FORMAT )
+			case( RCUBE_FORMAT )
+				call this%loadCUBE( fileName, RCUBE_FORMAT )
+			case( ICUBE_FORMAT )
+				call this%loadCUBE( fileName, ICUBE_FORMAT )
+			case( BLKS_FORMAT )
+				call this%loadBLKS( fileName )
+			case default
+				write(6,*) "### ERROR ### NFunction3D%fromFile(). The format is not supported (", effFormat, ")"
+				stop
+		end select
+	end subroutine fromFile
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	subroutine copyNFunction3D( this, other )
+		class(NFunction3D), intent(inout) :: this
+		class(NFunction3D), intent(in) :: other
+		
+		integer :: i, j, k
+		
+		this%xyzGrid = other%xyzGrid
+		
+		if( allocated(this%fArray) ) deallocate( this%fArray )
+		allocate( this%fArray(other%ssize(1),other%ssize(2),other%ssize(3)) )
+		
+! 		this%fArray = other%fArray
+		
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,other%ssize(3); do j=1,other%ssize(2); do i=1,other%ssize(1)
+			this%fArray(i,j,k) = other%fArray(i,j,k)
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end subroutine copyNFunction3D
+	
+	!>
+	!! @brief Copy constructor
+	!!
+	subroutine copyFArray( this, other )
+		class(NFunction3D), intent(inout) :: this
+		class(NFunction3D), intent(in) :: other
+		
+		integer :: i, j, k
+		
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,other%ssize(3); do j=1,other%ssize(2); do i=1,other%ssize(1)
+			this%fArray(i,j,k) = other%fArray(i,j,k)
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end subroutine copyFArray
+	
+	!>
+	!! @brief Destructor
+	!!
+	subroutine destroyNFunction3D( this )
+		type(NFunction3D) :: this
+		
+		if( allocated(this%fArray) ) deallocate( this%fArray )
+	end subroutine destroyNFunction3D
+	
+	!>
+	!! @brief
+	!!
+	function addition( this, other ) result( output )
+		class(NFunction3D), intent(in) :: this
+		class(NFunction3D), intent(in) :: other
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
+			write(*,*) "## ERROR ## the Grids have not the same size"
+			stop
+		end if
+		
+		output = this
+! 		output%fArray = this%fArray + other%fArray
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k) + other%fArray(i,j,k)
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function addition
+	
+	!>
+	!! @brief
+	!!
+	function additionFC( this, constant ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		output = this
+! 		output%fArray = this%fArray+constant
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k) + constant
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function additionFC
+	
+	!>
+	!! @brief
+	!!
+	function subtraction( this, other ) result( output )
+		class(NFunction3D), intent(in) :: this
+		type(NFunction3D), intent(in) :: other
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
+			write(*,*) "## ERROR ## the Grids have not the same size"
+			stop
+		end if
+		
+		output = this
+! 		output%fArray = this%fArray - other%fArray
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k) - other%fArray(i,j,k)
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function subtraction
+	
+	!>
+	!! @brief
+	!!
+	function subtractionFC( this, constant ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		output = this
+! 		output%fArray = this%fArray-constant
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k) - constant
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function subtractionFC
+	
+	!>
+	!! @brief
+	!!
+	function multiplication( this, other ) result( output )
+		class(NFunction3D), intent(in) :: this
+		type(NFunction3D), intent(in) :: other
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
+			write(*,*) "## ERROR ## the Grids have not the same size"
+			stop
+		end if
+		
+		output = this
+		
+! 		output%fArray = this%fArray*other%fArray
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k)*other%fArray(i,j,k)
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function multiplication
+	
+	!>
+	!! @brief
+	!!
+	function multiplicationFC( this, constant ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		output = this
+! 		output%fArray = this%fArray*constant
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k)*constant
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function multiplicationFC
+	
+	!>
+	!! @brief
+	!!
+	function division( this, other ) result( output )
+		class(NFunction3D), intent(in) :: this
+		type(NFunction3D), intent(in) :: other
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
+			write(*,*) "## ERROR ## the Grids have not the same size"
+			stop
+		end if
+		
+		output = this
+! 		output%fArray = this%fArray/other%fArray
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k)/other%fArray(i,j,k)
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function division
+	
+	!>
+	!! @brief
+	!!
+	function divisionFC( this, constant ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		output = this
+! 		output%fArray = this%fArray/constant
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k)/constant
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function divisionFC
+	
+	!>
+	!! @brief
+	!!
+	function exponentiation( this, other ) result( output )
+		class(NFunction3D), intent(in) :: this
+		type(NFunction3D), intent(in) :: other
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) .or. &
+		    this%nPoints(3) /= other%nPoints(3) ) then
+			write(*,*) "## ERROR ## the Grids have not the same size"
+			stop
+		end if
+		
+		output = this
+! 		output%fArray = this%fArray**other%fArray
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k)**other%fArray(i,j,k)
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function exponentiation
+	
+	!>
+	!! @brief
+	!!
+	function exponentiationFC( this, constant ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8), intent(in) :: constant
+		type(NFunction3D) :: output
+		
+		integer :: i, j, k
+		
+		output = this
+! 		output%fArray = this%fArray**constant
+
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k)**constant
+		end do; end do; end do
+!$omp end do nowait
+!$omp end parallel
+	end function exponentiationFC	
+	
+	!>
+	!! @brief Save the funtion in a file
+	!!
+	subroutine save( this, fileName, format )
+		class(NFunction3D) :: this
+		character(*), optional, intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		
+		integer :: effFormat
+		
+		character(100), allocatable :: tokens(:)
+		character(100) :: extension
+		
+		effFormat = AUTO_FORMAT
+		if( present(format) ) effFormat = format
+		
+		select case ( effFormat )
+			case( AUTO_FORMAT )
+				call FString_split( fileName, tokens, "." )
+				extension = ""
+				if( size( tokens ) > 1 ) extension = trim(tokens(size(tokens)))
+				deallocate( tokens )
+				
+				if( trim(extension) == "n3df" ) then
+					call this%saveN3DF( fileName )
+				else if( trim(extension) == "cube" ) then
+					call this%saveCUBE( fileName, CUBE_FORMAT )
+				else if( trim(extension) == "rcube" ) then
+					call this%saveCUBE( fileName, RCUBE_FORMAT )
+				else if( trim(extension) == "icube" ) then
+					call this%saveCUBE( fileName, ICUBE_FORMAT )
+				else if( trim(extension) == "blks" ) then
+					call this%saveBLKS( fileName )
+				else
+					call GOptions_error( &
+						"Unknown format file (AUTO_FORMAT). FileName = "//trim(fileName), &
+						"NFunction3D%save(extension="//trim(extension)//")" &
+					)
+				end if
+			case( N3DF_FORMAT )
+				call this%saveN3DF( fileName )
+			case( CUBE_FORMAT )
+				call this%saveCUBE( fileName, CUBE_FORMAT )
+			case( RCUBE_FORMAT )
+				call this%saveCUBE( fileName, RCUBE_FORMAT )
+			case( ICUBE_FORMAT )
+				call this%saveCUBE( fileName, ICUBE_FORMAT )
+			case( BLKS_FORMAT )
+				call this%saveBLKS( fileName )
+			case default
+				write(6,*) "### ERROR ### NFunction3D%save(). The format is not supported"
+				stop
+		end select
+	end subroutine save
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveN3DF( this, fileName )
+		class(NFunction3D) :: this
+		character(*) :: fileName
+		
+		integer :: idType
+		
+		if( .not. this%xyzGrid%isEquallyspaced() ) then
+			call GOptions_error( &
+				"This subroutine is not available for functions wich are not equally spaced", &
+				"NFunction3D%saveN3DF()" &
+			)
+		end if
+		
+		idType = __ID_TYPE__
+		
+		open( unit=1, file=trim(fileName), action='write', form="unformatted" )
+		
+		! 0 = REAL, 1 COMPLEX
+		write(1) idType
+		
+		! origin of the grid
+		write(1) this%xyzGrid%min(1), this%xyzGrid%min(2), this%xyzGrid%min(3)
+		
+		! Number of points for each coordinate
+		write(1) this%xyzGrid%nPoints(1), this%xyzGrid%nPoints(2), this%xyzGrid%nPoints(3)
+		
+		! Increment for each coordinate
+		write(1) this%xyzGrid%stepSize(1), this%xyzGrid%stepSize(2), this%xyzGrid%stepSize(3)
+		
+		!!!!!!!!!!!!!!!!!!!!!!!
+		! Volumetric data
+		write(1) this%fArray
+		
+		close(1)
+	end subroutine saveN3DF
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveCUBE( this, fileName, format )
+		class(NFunction3D), intent(in) :: this
+		character(*), intent(in) :: fileName
+		integer, optional, intent(in) :: format
+		
+		integer :: effFormat
+		
+		integer :: ix, iy, iz
+		character(255) :: date
+		
+		if( .not. this%xyzGrid%isEquallyspaced() ) then
+			call GOptions_error( &
+				"This subroutine is not available for functions wich are not equally spaced", &
+				"NFunction3D%saveCUBE()" &
+			)
+		end if
+		
+		call fdate(date)
+		
+		effFormat = CUBE_FORMAT
+		if( present(format) ) effFormat = format
+		
+		open( unit=1, file=trim(fileName), status="unknown" )
+		
+		! The first and second line are simply comments
+#if __ID_TYPE__ == 0
+		write(1,*) "Real Numerical Function"
+#elif __ID_TYPE__ == 1
+		write(1,"(A)",advance="no") "Complex Numerical Function"
+		select case( effFormat )
+			case( CUBE_FORMAT )
+				write(1,"(A)") "NORM"
+			case( RCUBE_FORMAT )
+				write(1,"(A)") "REAL"
+			case( ICUBE_FORMAT )
+				write(1,"(A)") "IMAG"
+		end select
+#endif
+		write(1,*) trim(date)
+		
+		! The third line has the number of atoms
+		! (in this case is the calcium atom) followed by
+		! the position of the grid
+		write(1, "(I4,F12.5,F12.5,F12.5)" ) 0, this%xyzGrid%min(1), this%xyzGrid%min(2), this%xyzGrid%min(3)
+		
+		! The next three lines have the following information for each coordinate
+		! <number of points> <x_increment> <y_increment> <z_increment>
+		write(1, "(I4,F12.5,F12.5,F12.5)" ) this%xyzGrid%nPoints(1), this%xyzGrid%stepSize(1),     0.0,     0.0
+		write(1, "(I4,F12.5,F12.5,F12.5)" ) this%xyzGrid%nPoints(2),     0.0, this%xyzGrid%stepSize(2),     0.0
+		write(1, "(I4,F12.5,F12.5,F12.5)" ) this%xyzGrid%nPoints(3),     0.0,     0.0, this%xyzGrid%stepSize(3)
+		
+		! The last section in the header is one for each atom consisting
+		! of 5 numbers
+		! <atomic number(integer)> <atomic number(real)> <x_coordinate> <y_coordinate> <z_coordinate>
+! 		write(1, "(I4,F12.5,F12.5,F12.5,F12.5)" ) 20, 20.0, this%ximp, yimp, zimp
+		
+		!!!!!!!!!!!!!!!!!!!!!!!
+		! Volumetric data
+		do ix=1,this%xyzGrid%nPoints(1)
+			do iy=1,this%xyzGrid%nPoints(2)
+				
+#if __ID_TYPE__ == 0
+				write(1,"(6E13.5)") ( this%fArray(ix,iy,iz), iz=1,this%xyzGrid%nPoints(3) )
+#elif __ID_TYPE__ == 1
+				select case ( effFormat )
+					case( CUBE_FORMAT )
+						write(1,"(6E13.5)") ( abs(this%fArray(ix,iy,iz)), iz=1,this%xyzGrid%nPoints(3) )
+					case( RCUBE_FORMAT )
+						write(1,"(6E13.5)") ( real(this%fArray(ix,iy,iz)), iz=1,this%xyzGrid%nPoints(3) )
+					case( ICUBE_FORMAT )
+						write(1,"(6E13.5)") ( aimag(this%fArray(ix,iy,iz)), iz=1,this%xyzGrid%nPoints(3) )
+					case default
+						write(6,*) "### ERROR ### NFunction3D%saveCUBE(). The format is not supported"
+						stop
+				end select
+#endif
+			end do
+		end do
+		
+		close(1)
+	end subroutine saveCUBE
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveBLKS( this, fileName )
+		class(NFunction3D), intent(in) :: this
+		character(*), intent(in) :: fileName
+		
+		integer :: ix, iy, iz
+		character(255) :: date
+		
+		call fdate(date)
+		
+		open( unit=1, file=trim(fileName), status="unknown" )
+		
+		! The first and second line are simply comments
+#if __ID_TYPE__ == 0
+		write(1,"(A)") "# Real Numerical Function"
+#elif __ID_TYPE__ == 1
+		write(1,"(A)") "# Complex Numerical Function"
+#endif
+		write(1,"(A)") "# XYZ"
+		write(1,"(A)") "# "//trim(date)
+		
+		do ix=1,this%xyzGrid%nPoints(1)
+			do iy=1,this%xyzGrid%nPoints(2)
+				do iz=1,this%xyzGrid%nPoints(3)
+				
+#if __ID_TYPE__ == 0
+					write(1,"(4E13.5)") this%xyzGrid%at(ix,iy,iz), this%fArray(ix,iy,iz)
+#elif __ID_TYPE__ == 1
+					write(1,"(5E13.5)") this%xyzGrid%at(ix,iy,iz), this%fArray(ix,iy,iz)
+#endif
+				end do
+				
+				write(1,*) ""
+				write(1,*) ""
+			end do
+		end do
+		
+		close(1)
+	end subroutine saveBLKS
+	
+	!>
+	!! @brief
+	!! @todo Solo está implementado el caso en que dir sea en dirección paralela a una coordenanda y origen 0.0,0.0,0.0
+	!!
+	subroutine saveProjection1D( this, fileName, origin, dir, resolution, append, beforeLine )
+		class(NFunction3D), intent(in) :: this
+		character(*), intent(in) :: fileName
+		real(8) :: origin(3)
+		integer, intent(in) :: dir(3)
+		real(8), optional, intent(in) :: resolution
+		logical, optional, intent(in) :: append
+		character(*), optional, intent(in) :: beforeLine
+		
+		logical :: effAppend
+		character(100) :: effBeforeLine
+		integer :: invResolution
+		
+		real(8) :: minDir
+		real(8) :: maxDir
+		real(8) :: stepSizeDir
+		real(8) :: valDir
+		__TYPE_VALUE__ :: value
+		
+		real(8) :: ssum
+		integer :: codeDir
+		
+		effAppend = .false.
+		if( present(append) ) effAppend = append
+		
+		effBeforeLine = ""
+		if( present(beforeLine) ) effBeforeLine = beforeLine
+		
+		invResolution = 1
+		if( present(resolution) ) invResolution = ceiling( 1.0_8/resolution )
+		
+		if( effAppend ) then
+			open( unit=1, file=trim(fileName), status="unknown", access="append" )
+		else
+			open( unit=1, file=trim(fileName), status="unknown" )
+		end if
+		
+		if( .not. this%isEquallyspaced() ) then
+			call GOptions_error( &
+				"This subroutine is not available yet for functions wich are not equally spaced", &
+				"NFunction3D%saveProjection1D()" &
+			)
+		end if
+		
+		codeDir = 3
+		if( all(dir == [1,0,0]) ) then
+			codeDir = 1
+		else if( all(dir == [0,1,0]) ) then
+			codeDir = 2
+		else if( all(dir == [0,0,1]) ) then
+			codeDir = 3
+		else
+			call GOptions_error( &
+				"Direction "//FString_fromIntegerArray(dir)//" is not implemented yet. Try [1,0,0], [0,1,0] or [0,0,1]", &
+				"NFunction3D%saveProjection1D()" &
+			)
+		end if
+		
+		minDir = this%xyzGrid%min(codeDir)
+		maxDir = this%xyzGrid%max(codeDir)
+		stepSizeDir = this%xyzGrid%stepSize(codeDir)*invResolution
+		
+		if( minDir > maxDir ) then
+			call GOptions_error( &
+				"minDir > maxDir ("//FString_fromReal(minDir)//" > "//FString_fromReal(maxDir)//")", &
+				"NFunction3D%saveProjection1D()" &
+			)
+		end if
+		
+		valDir = minDir
+		ssum = 0.0_8
+		do while( valDir <= maxDir )
+			value = this%evaluateXYZ( origin(1), origin(2), valDir )  !< Busca el punto más cercano, no interpola
+			
+#if __ID_TYPE__ == 1
+			if( abs(value) > 1d-98 ) then
+				write(1,"(A,3E13.5)") trim(effBeforeLine), valDir, real(value), aimag(value)
+			else
+				write(1,"(A,3E13.5)") trim(effBeforeLine), valDir, 0.0_8, 0.0_8
+			end if
+#elif __ID_TYPE__ == 0
+			if( abs(value) > 1d-98 ) then
+				write(1,"(A,2E13.5)") trim(effBeforeLine), valDir, value
+			else
+				write(1,"(A,2E13.5)") trim(effBeforeLine), valDir, 0.0_8
+			end if
+#endif
+			ssum = ssum  + abs(value)**2
+			
+			valDir = valDir + stepSizeDir
+		end do
+		
+		write(1,*) "# norm = ", sqrt(1.0_8/(stepSizeDir*ssum))
+		write(1,*) ""
+		write(1,*) ""
+		
+		close(1)
+	end subroutine saveProjection1D
+	
+	!>
+	!! @brief
+	!!
+	subroutine saveProjection2D( this, fileName, n, p0, nx, ny, append )
+		class(NFunction3D), intent(in) :: this
+		character(*), intent(in) :: fileName
+		real(8), optional, intent(in) :: n(3)
+		real(8), optional, intent(in) :: p0(3)
+		integer, optional, intent(in) :: nx, ny
+		logical, optional, intent(in) :: append
+		
+		real(8) :: effN(3)
+		real(8) :: effP0(3)
+		integer :: effNx, effNy
+		logical :: effAppend
+		
+		real(8) :: x, y, z
+		
+		real(8) :: xp, yp
+		real(8) :: xpMin, xpMax, xpStepSize
+		real(8) :: ypMin, ypMax, ypStepSize
+		character(255) :: date
+		
+		effAppend = .false.
+		if( present(append) ) effAppend = append
+		
+		effN = [ 1.0_8, 0.01_8, 0.01_8 ]  ! plane X=cte
+		if( present(n) ) effN = n
+		
+		effNx = 100
+		if( present(nx) ) effNx = nx
+		
+		effNy = 100
+		if( present(ny) ) effNy = ny
+		
+		effP0 = [ 0.0_8, 0.0_8, 0.0_8 ]  ! plane que pasa por X=0.0
+		if( present(p0) ) effP0 = p0
+		
+		call fdate(date)
+		
+		if( effAppend ) then
+			open( unit=1, file=trim(fileName), status="unknown", access="append" )
+		else
+			open( unit=1, file=trim(fileName), status="unknown" )
+		end if
+		
+#if __ID_TYPE__ == 0
+		write(1,"(A)") "# Real Numerical Function"
+#elif __ID_TYPE__ == 1
+		write(1,"(A)") "# Complex Numerical Function"
+#endif
+		write(1,"(A)") "# "//trim(date)
+		
+		!----------------------------------------
+		! xp^2 = x^2 + y^2
+		! yp = z
+		!----------------------------------------
+		
+		xpMin = this%xyzGrid%min(1)/cos( Math_PI/4.0_8 )
+		xpMax = this%xyzGrid%max(1)/cos( Math_PI/4.0_8 )
+! 		xpStepSize = sin( Math_PI/4.0_8 )*( this%xyzGrid%stepSize(1)**2 + this%xyzGrid%stepSize(2)**2 )
+		xpStepSize = (xpMax-xpMin)/real(effNx+1,8)
+		
+		ypMin = this%xyzGrid%min(3)
+		ypMax = this%xyzGrid%max(3)
+! 		ypStepSize = this%xyzGrid%stepSize(3)
+		ypStepSize = (ypMax-ypMin)/real(effNy+1,8)
+		
+		xp = xpMin
+		do while( xp <= xpMax )
+				
+			yp = ypMin
+			do while( yp <= ypMax )
+				
+				x = cos( Math_PI/4.0_8 )*xp
+				y = sin( Math_PI/4.0_8 )*xp
+				z = yp
+				
+! 				z = effP0(3)-effN(1)*(xp-effP0(1))/effN(3)-effN(2)*(yp-effP0(2))/effN(3)
+#if __ID_TYPE__ == 1
+				write(1,"(4E13.5)") xp, yp, real(this%evaluateXYZ(x,y,z)), aimag(this%evaluateXYZ(x,y,z))
+#elif __ID_TYPE__ == 0
+				write(1,"(3E13.5)") xp, yp, this%evaluateXYZ(x,y,z)
+#endif
+				
+				yp = yp + ypStepSize
+			end do
+			
+			write(1,*) ""
+			
+			xp = xp + xpStepSize
+		end do
+		
+		write(1,*) ""
+		write(1,*) ""
+
+! 		!----------------------------------------
+! 		! xp = x
+! 		! yp = z
+! 		!----------------------------------------
+! 		
+! 		xpMin = this%xyzGrid%min(1)
+! 		xpMax = this%xyzGrid%max(1)
+! 		xpStepSize = this%xyzGrid%stepSize(1)
+! 		
+! 		ypMin = this%xyzGrid%min(3)
+! 		ypMax = this%xyzGrid%max(3)
+! 		ypStepSize = this%xyzGrid%stepSize(3)
+! 		
+! 		xp = xpMin
+! 		do while( xp <= xpMax )
+! 				
+! 			yp = ypMin
+! 			do while( yp <= ypMax )
+! 				
+! 				x = xp
+! 				y = 3.5975_8/2.0_8
+! 				z = yp
+! 				
+! ! 				z = effP0(3)-effN(1)*(xp-effP0(1))/effN(3)-effN(2)*(yp-effP0(2))/effN(3)
+! #if __ID_TYPE__ == 1
+! 				write(1,"(4E13.5)") xp, yp, real(this%evaluateXYZ(x,y,z)), aimag(this%evaluateXYZ(x,y,z))
+! #elif __ID_TYPE__ == 0
+! 				write(1,"(3E13.5)") xp, yp, this%evaluateXYZ(x,y,z)
+! #endif
+! 				
+! 				yp = yp + ypStepSize
+! 			end do
+! 			
+! 			write(1,*) ""
+! 			
+! 			xp = xp + xpStepSize
+! 		end do
+! 		
+! 		write(1,*) ""
+! 		write(1,*) ""
+		
+		close(1)
+	end subroutine saveProjection2D
+	
+	!>
+	!! @brief
+	!!
+	subroutine loadCUBE( this, fileName, format, debug )
+		class(NFunction3D) :: this
+		character(*) :: fileName
+		integer, optional, intent(in) :: format
+		logical, optional, intent(in) :: debug
+		
+		integer :: effFormat
+		logical :: effDebug
+		
+		character(100) :: sBuffer
+		integer :: nAtoms
+		real(8) :: rBuffer
+		real(8) :: xMin, yMin, zMin
+		real(8) :: xMax, yMax, zMax
+		real(8) :: hx, hy, hz
+		integer :: nx, ny, nz
+		integer :: i, ix, iy, iz
+		__TYPE_VALUE__, allocatable :: fArray(:,:,:)
+		real(8), allocatable :: cubeDataLine(:)
+		
+		type(Grid3D) :: xyzGrid
+		
+		effFormat = CUBE_FORMAT
+		if( present(format) ) effFormat = format
+		
+		effDebug = .false.
+		if( present(debug) ) effDebug = debug
+		
+		open( unit=1, file=trim(fileName), status='old' )
+		
+		read(1,*) sBuffer ! title
+		read(1,*) sBuffer ! comments
+		read(1,*) nAtoms, xMin, yMin, zMin
+		read(1,*) nx,      hx, rBuffer, rBuffer
+		read(1,*) ny, rBuffer,      hy, rBuffer
+		read(1,*) nz, rBuffer, rBuffer,      hz
+		
+		if( effDebug ) then
+			write(*,*) "==================================================="
+			write(*,*) " Loading cube "//trim(fileName)
+			write(*,*) "==================================================="
+			select case ( effFormat )
+				case( CUBE_FORMAT )
+					write(*,*) " format = ", "CUBE_FORMAT"
+				case( RCUBE_FORMAT )
+					write(*,*) " format = ", "RCUBE_FORMAT"
+				case( ICUBE_FORMAT )
+					write(*,*) " format = ", "ICUBE_FORMAT"
+				case default
+					write(6,*) "### ERROR ### NFunction3D%loadCUBE(). The format is not supported"
+					stop
+			end select
+			write(*,"(A,I10)") "  nAtoms = ", nAtoms
+			write(*,"(A,3F10.5,A)") "     min = ( ", xMin, yMin, zMin, " )"
+			write(*,"(A,3I10,A)") "       n = ( ", nx, ny, nz, " )"
+			write(*,"(A,3F10.5,A)") "       h = ( ", hx, hy, hz, " )"
+		end if
+
+		xMax = xMin + (nx-1)*hx
+		yMax = yMin + (ny-1)*hy
+		zMax = zMin + (nz-1)*hz
+		
+		if( effDebug ) then
+			write(*,"(A,3F10.5,A)") "     max = ( ", xMax, yMax, zMax, " )"
+		end if
+		
+		do i=1,nAtoms
+			read(1,"(A)") sBuffer
+		end do
+		
+		allocate( fArray( nx, ny, nz ) )
+		allocate( cubeDataLine(nz) )
+		
+		do ix=1,nx
+			do iy=1,ny
+				read(1,"(6E13.5)") ( cubeDataLine(iz), iz=1,nz )
+				
+#if __ID_TYPE__ == 0
+				fArray(ix,iy,:) = cubeDataLine(:)
+#elif __ID_TYPE__ == 1
+				select case ( effFormat )
+					case( CUBE_FORMAT )
+						fArray(ix,iy,:) = cmplx( cubeDataLine(:), 0.0_8 )
+					case( RCUBE_FORMAT )
+						fArray(ix,iy,:) = cmplx( cubeDataLine(:), 0.0_8 )
+					case( ICUBE_FORMAT )
+						fArray(ix,iy,:) = cmplx( 0.0_8, cubeDataLine(:) )
+					case default
+						write(6,*) "### ERROR ### NFunction3D%loadCUBE(). The format is not supported"
+						stop
+				end select
+#endif
+			end do
+		end do
+		
+		call xyzGrid%init( min=[xMin,yMin,zMin], max=[xMax,yMax,zMax], size=[nx,ny,nz] )
+		call this%fromGrid3DArray( xyzGrid, fArray )
+		
+		close(1)
+		
+		deallocate( fArray )
+		deallocate( cubeDataLine )
+	end subroutine loadCUBE
+	
+	!>
+	!! @brief
+	!!
+	subroutine loadBLKS( this, fileName, debug )
+		class(NFunction3D) :: this
+		character(*) :: fileName
+		logical, optional, intent(in) :: debug
+		
+		logical :: effDebug
+		
+		effDebug = .false.
+		if( present(debug) ) effDebug = debug
+		
+		call GOptions_error( &
+			"This subroutine is not implemented yet", &
+			"NFunction3D%loadBLKS()" &
+		)
+		
+		open( unit=1, file=trim(fileName), status='old' )
+		
+		
+		
+		close(1)
+	end subroutine loadBLKS
+	
+	!>
+	!! @brief Return 1 if fileName contains real numbers,
+	!!        0 if fileName contains real numbers and
+	!!        -1 elsewhere
+	!!
+	function checkTypeN3DF( this, fileName ) result( output )
+		class(NFunction3D) :: this
+		character(*) :: fileName
+		integer :: idType
+		integer :: output
+		
+		open( unit=1, file=trim(fileName), action='read', form="unformatted" )
+		
+		! 0 = REAL, 1 COMPLEX
+		read(1) idType
+		
+		close(1)
+		
+		if( idType /= 0 .and. idType /= 1 ) then
+			output = -1
+		else
+			output = idType
+		end if
+	end function checkTypeN3DF
+	
+	!>
+	!! @brief
+	!!
+	subroutine loadN3DF( this, fileName )
+		class(NFunction3D) :: this
+		character(*) :: fileName
+		
+		real(8) :: xMin, yMin, zMin
+		real(8) :: xMax, yMax, zMax
+		real(8) :: hx, hy, hz
+		integer :: nx, ny, nz
+		integer :: idType
+		__TYPE_VALUE__, allocatable :: fArray(:,:,:)
+		
+		type(Grid3D) :: xyzGrid
+		
+		open( unit=1, file=trim(fileName), action='read', form="unformatted" )
+		
+		! 0 = REAL, 1 COMPLEX
+		read(1) idType
+		
+		if( idType /= __ID_TYPE__ ) then
+			write(*,*) "### ERROR ### NFunction3D%loadN3DF(): Inconsistent type in file"
+			stop
+		end if
+		
+		! origin of the grid
+		read(1) xMin, yMin, zMin
+		
+		! Number of points for each coordinate
+		read(1) nx, ny, nz
+		
+		! Increment for each coordinate
+		read(1) hx, hy, hz
+		
+		xMax = xMin + (nx-1)*hx
+		yMax = yMin + (ny-1)*hy
+		zMax = zMin + (nz-1)*hz
+		
+		allocate( fArray(nx,ny,nz) )
+		
+		!!!!!!!!!!!!!!!!!!!!!!!
+		! Volumetric data
+		read(1) fArray
+		
+		call xyzGrid%init( min=[xMin,yMin,zMin], max=[xMax,yMax,zMax], size=[nx,ny,nz] )
+		call this%fromGrid3DArray( xyzGrid, fArray )
+		
+		deallocate( fArray )
+		
+		close(1)
+	end subroutine loadN3DF
+
+	!>
+	!! @brief 
+	!!
+	subroutine normalize( this, constant )
+		class(NFunction3D) :: this
+		real(8), optional, intent(out) :: constant
+		
+		integer :: i, j, k
+		real(8) :: nConstant
+		
+		nConstant = 1.0_8/this%norm()
+		
+!$omp parallel private(k)
+!$omp do schedule(dynamic,1)
+		do k=1,this%xyzGrid%nPoints(3)
+			do j=1,this%xyzGrid%nPoints(2)
+				do i=1,this%xyzGrid%nPoints(1)
+					this%fArray(i,j,k) = nConstant*this%fArray(i,j,k)
+				end do
+			end do
+		end do
+!$omp end do nowait
+!$omp end parallel
+		
+		if( present(constant) ) then
+			constant = nConstant
+		end if
+	end subroutine normalize
+	
+	!>
+	!! @brief 
+	!!
+	pure function norm( this ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8) :: output
+		
+#if __ID_TYPE__ == 1
+		output = sqrt( sum( conjg(this%fArray)*this%fArray )*this%xyzGrid%dV() )
+#else
+		output = sqrt( sum( this%fArray*this%fArray )*this%xyzGrid%dV() )
+#endif
+
+! ! !$omp parallel private(k)
+! ! !$omp do schedule(dynamic,1)
+! ! 		output = 0.0_8
+! ! 		do k=1,this%nPoints(3); do j=1,this%nPoints(2); do i=1,this%nPoints(1)
+! ! #if __ID_TYPE__ == 1
+! ! 			output = sqrt( sum( conjg(this%fArray)*this%fArray )*this%xyzGrid%dV() )
+! ! #else
+! ! 			output = sqrt( sum( this%fArray*this%fArray )*this%xyzGrid%dV() )
+! ! #endif
+! ! 			output%fArray(i,j,k) = this%fArray(i,j,k)**other%fArray(i,j,k)
+! ! 		end do; end do; end do
+! ! !$omp end do nowait
+! ! !$omp end parallel
+	end function norm
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromNFunction( this, oper, checkBox ) result( output )
+		class(NFunction3D), intent(in) :: this
+		class(NFunction3D), intent(in) :: oper
+		logical, optional, intent(in) :: checkBox
+		__TYPE_VALUE__ :: output
+		
+		logical :: effCheckBox
+		
+		effCheckBox = .true.
+		if( present(checkBox) ) effCheckBox = checkBox
+		
+		if( effCheckBox ) then
+			if( .not. this%checkBox( oper ) ) then
+				call GOptions_error( "Inconsistent boxes", "NFunction3D%expectationValueFromNFunction()" )
+			end if
+		end if
+		
+#if __ID_TYPE__ == 1
+		output = sum( conjg(this%fArray)*oper%fArray*this%fArray )*this%xyzGrid%dV()
+#else
+		output = sum( this%fArray*oper%fArray*this%fArray )*this%xyzGrid%dV()
+#endif
+	end function expectationValueFromNFunction
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromRArray( this, oper, checkBox, factor ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8), intent(in) :: oper(:,:,:)
+		logical, optional, intent(in) :: checkBox
+		real(8), optional, intent(in) :: factor
+		__TYPE_VALUE__ :: output
+		
+		logical :: effCheckBox
+		real(8) :: effFactor
+		
+		effCheckBox = .true.
+		if( present(checkBox) ) effCheckBox = checkBox
+		
+		effFactor = 1.0_8
+		if( present(factor) ) effFactor = factor
+		
+		if( effCheckBox ) then
+			if( this%nPoints(1) /= size(oper,dim=1) &
+				  .or. this%nPoints(2) /= size(oper,dim=2) &
+				  .or. this%nPoints(3) /= size(oper,dim=3) ) then
+				call GOptions_error( &
+					"Inconsistent boxes", &
+					"NFunction3D%expectationValueFromRArray()", &
+					"("//trim(FString_fromInteger(this%nPoints(1)))//"," &
+					   //trim(FString_fromInteger(this%nPoints(2)))//"," &
+					   //trim(FString_fromInteger(this%nPoints(3)))//") /= (" &
+					   //trim(FString_fromInteger(size(oper,dim=1)))//"," &
+					   //trim(FString_fromInteger(size(oper,dim=2)))//"," &
+					   //trim(FString_fromInteger(size(oper,dim=3)))//")" &
+					)
+			end if
+		end if
+		
+#if __ID_TYPE__ == 1
+		output = effFactor*sum( conjg(this%fArray)*oper*this%fArray )*this%xyzGrid%dV()
+#else
+		output = effFactor*sum( this%fArray*oper*this%fArray )*this%xyzGrid%dV()
+#endif
+	end function expectationValueFromRArray
+	
+	!>
+	!! @brief 
+	!!
+	function expectationValueFromCArray( this, oper, checkBox ) result( output )
+		class(NFunction3D), intent(in) :: this
+		complex(8), intent(in) :: oper(:,:,:)
+		logical, optional, intent(in) :: checkBox
+		__TYPE_VALUE__ :: output
+		
+		logical :: effCheckBox
+		
+		integer :: i, j, k
+		integer :: nx, ny, nz
+		
+		nx = this%xyzGrid%nPoints(1)
+		ny = this%xyzGrid%nPoints(2)
+		nz = this%xyzGrid%nPoints(3)
+		
+		effCheckBox = .true.
+		if( present(checkBox) ) effCheckBox = checkBox
+		
+		if( effCheckBox ) then
+			if( this%xyzGrid%nPoints(1) /= size(oper,dim=1) &
+				  .or. this%xyzGrid%nPoints(2) /= size(oper,dim=2) &
+				  .or. this%xyzGrid%nPoints(3) /= size(oper,dim=3) ) then
+				call GOptions_error( &
+					"Inconsistent boxes", &
+					"NFunction3D%expectationValueFromCArray()", &
+					"("//trim(FString_fromInteger(this%xyzGrid%nPoints(1)))//"," &
+					   //trim(FString_fromInteger(this%xyzGrid%nPoints(2)))//"," &
+					   //trim(FString_fromInteger(this%xyzGrid%nPoints(3)))//") /= (" &
+					   //trim(FString_fromInteger(size(oper,dim=1)))//"," &
+					   //trim(FString_fromInteger(size(oper,dim=2)))//"," &
+					   //trim(FString_fromInteger(size(oper,dim=3)))//")" &
+					)
+			end if
+		end if
+		
+#if __ID_TYPE__ == 1
+! 		output = sum( conjg(this%fArray)*oper*this%fArray )*this%xyzGrid%dV()
+		output = 0.0_8
+		do k=1,nz; do j=1,ny; do i=1,nx
+			output = output + conjg(this%fArray(i,j,k))*oper(i,j,k)*this%fArray(i,j,k)
+		end do; end do; end do
+		output = output*this%xyzGrid%dV()
+#else
+		output = sum( this%fArray*oper*this%fArray )*this%xyzGrid%dV()
+#endif
+	end function expectationValueFromCArray
+	
+	!>
+	!! @brief
+	!!
+	subroutine set( this, i, j, k, value )
+		class(NFunction3D) :: this
+		integer, intent(in) :: i, j, k
+		__TYPE_VALUE__, intent(in) :: value
+		
+		this%fArray( i, j, k ) = value
+	end subroutine set
+	
+	!>
+	!! @brief
+	!!
+	pure function at( this, i, j, k ) result( output )
+		class(NFunction3D), intent(in) :: this
+		integer, intent(in) :: i, j, k
+		__TYPE_VALUE__ :: output
+		
+		output = this%fArray( i, j, k )
+	end function at
+	
+	!>
+	!! @brief
+	!!
+	pure function x( this, pos ) result( output )
+		class(NFunction3D), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_VALUE__ :: output
+		
+		output = this%xyzGrid%component(1)%at( pos )
+	end function x
+	
+	!>
+	!! @brief
+	!!
+	pure function y( this, pos ) result( output )
+		class(NFunction3D), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_VALUE__ :: output
+		
+		output = this%xyzGrid%component(2)%at( pos )
+	end function y
+	
+	!>
+	!! @brief
+	!!
+	pure function z( this, pos ) result( output )
+		class(NFunction3D), intent(in) :: this
+		integer, intent(in) :: pos
+		__TYPE_VALUE__ :: output
+		
+		output = this%xyzGrid%component(3)%at( pos )
+	end function z
+	
+	!>
+	!! @brief
+	!!
+	pure function minInCoord( this, pos ) result( output )
+		class(NFunction3D), intent(in) :: this
+		integer, intent(in) :: pos
+		real(8) :: output
+		
+		output = this%xyzGrid%min( pos )
+	end function minInCoord
+	
+	!>
+	!! @brief
+	!!
+	pure function minVec( this ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8) :: output(3)
+		
+		output = this%xyzGrid%min()
+	end function minVec
+	
+	!>
+	!! @brief
+	!!
+	pure function maxInCoord( this, pos ) result( output )
+		class(NFunction3D), intent(in) :: this
+		integer, intent(in) :: pos
+		real(8) :: output
+		
+		output = this%xyzGrid%max( pos )
+	end function maxInCoord
+	
+	!>
+	!! @brief
+	!!
+	pure function maxVec( this ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8) :: output(3)
+		
+		output = this%xyzGrid%max()
+	end function maxVec
+	
+	!>
+	!! @brief
+	!!
+	pure function stepSizeInCoord( this, pos ) result( output )
+		class(NFunction3D), intent(in) :: this
+		integer, intent(in) :: pos
+		real(8) :: output
+		
+		output = this%xyzGrid%stepSize( pos )
+	end function stepSizeInCoord
+	
+	!>
+	!! @brief
+	!!
+	pure function stepSizeVec( this ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8) :: output(3)
+		
+		output = this%xyzGrid%stepSize()
+	end function stepSizeVec
+	
+	!>
+	!! @brief
+	!!
+	function isEquallyspaced( this ) result( output )
+		class(NFunction3D), intent(in) :: this
+		logical :: output
+		
+		output = this%xyzGrid%isEquallyspaced()
+	end function isEquallyspaced
+	
+	!>
+	!! @brief
+	!!
+	subroutine checkEquallyspaced( this )
+		class(NFunction3D) :: this
+		
+		call this%xyzGrid%checkEquallyspaced()
+	end subroutine checkEquallyspaced
+	
+	!>
+	!! @brief Returns the number of points of the direction i-th (X,Y,Z)
+	!!
+	function ssize( this, i ) result( output )
+		class(NFunction3D), intent(in) :: this
+		integer, optional, intent(in) :: i
+		integer :: output
+		
+		if( present(i) ) then
+			output = this%xyzGrid%nPoints(i)
+		else
+			output = this%xyzGrid%nPoints(1)*this%xyzGrid%nPoints(2)*this%xyzGrid%nPoints(3)
+		end if
+	end function ssize
+	
+	!>
+	!! Code here is based on:
+	!! https://raw.githubusercontent.com/deepzot/likely/master/likely/TriCubicInterpolator.cc
+	!! https://svn.blender.org/svnroot/bf-blender/branches/volume25/source/blender/blenlib/intern/voxel.c
+	!! 
+	function interpolate( this, x, y, z ) result( output )
+		class(NFunction3D), intent(in) :: this
+		real(8) :: x, y, z
+		__TYPE_VALUE__ :: output
+		
+		real(8) :: dx, dy, dz
+		integer :: xi, yi, zi
+		
+		__TYPE_VALUE__ :: derivatives(64)
+		__TYPE_VALUE__ :: coeff(64)
+		integer :: i, j, k, ijkn
+		real(8) :: dzpow
+		real(8) :: dypow
+		
+		real(8) :: rOutput, iOutput
+		
 	integer :: voxelCoeff(64,64) = &
 [ &
 [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], &
@@ -278,1681 +1942,17 @@
 ! 		[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -2, 1, 0, -1, 2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 2, -1, 0, 1, -2, 1 ], &
 ! 		[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, -1, 1 ] &
 ! 	]
-
-	contains
-	
-	!>
-	!! @brief Constructor
-	!!
-	subroutine fromGrid3D( this, xyzGrid )
-		class(NFunction3D) :: this 
-		type(Grid3D), intent(in) :: xyzGrid
-		
-		integer :: i
-		integer :: err
-		
-		this.xyzGrid = xyzGrid
-		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(xyzGrid.nPoints(1),xyzGrid.nPoints(2),xyzGrid.nPoints(3)), stat=err )
-		
-		if( err /= 0 ) then
-			call GOptions_error( &
-				"Not enought memory to allocate this function", &
-				"NFunction3D.fromGrid3D()" &
-			)
-		end if
-		
-		this.fArray = 0.0_8
-	end subroutine fromGrid3D
-	
-	!>
-	!! @brief Constructor
-	!!
-	subroutine fromArrays( this, xArray, yArray, zArray, fArray, units, cutoff, fillWithZeros )
-		class(NFunction3D) :: this 
-		real(8), intent(in) :: xArray(:)
-		real(8), intent(in) :: yArray(:)
-		real(8), intent(in) :: zArray(:)
-		__TYPE_VALUE__, intent(in) :: fArray(:,:,:)
-		real(8), optional, intent(in) :: units(2)
-		real(8), optional, intent(in) :: cutoff
-		logical, optional :: fillWithZeros
-		
-		integer :: i, j, k
-		real(8) :: effUnits(2)
-		real(8) :: effCutoff
-		logical :: effFillWithZeros
-		
-		effUnits = [1.0_8, 1.0_8]
-		if( present(units) ) effUnits = units
-		
-		effCutoff = 1d10
-		if( present(cutoff) ) effCutoff = cutoff
-		
-		effFillWithZeros = .false.
-		if( present(fillWithZeros) ) effFillWithZeros = fillWithZeros
-		
-		if( .not. effFillWithZeros ) then
-			if( size(xArray) /= size(fArray,dim=1) ) then
-				write(*,"(A)") "### ERROR ### NFunction3D.fromArrays: The xArray's size should be equal to fArray's size"
-				stop
-			end if
-			
-			if( size(yArray) /= size(fArray,dim=2) ) then
-				write(*,"(A)") "### ERROR ### NFunction3D.fromArrays: The yArray's size should be equal to fArray's size"
-				stop
-			end if
-			
-			if( size(zArray) /= size(fArray,dim=3) ) then
-				write(*,"(A)") "### ERROR ### NFunction3D.fromArrays: The zArray's size should be equal to fArray's size"
-				stop
-			end if
-		end if
-		
-		call this.xyzGrid.init( xArray, yArray, zArray )
-		call this.xyzGrid.setUnits( effUnits(1) )
-		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray( size(xArray), size(yArray), size(zArray) ) )
-		
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,size(fArray,dim=3); do j=1,size(fArray,dim=2); do i=1,size(fArray,dim=1)
-#if __ID_TYPE__ == 0
-			this.fArray(i,j,k) = min( max( fArray(i,j,k)*effUnits(2), -effCutoff ), effCutoff )
-#elif __ID_TYPE__ == 1
-			this.fArray(i,j,k) = fArray(i,j,k)*effUnits(2)
-#endif
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-
-		if( effFillWithZeros ) then
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-			do k=size(fArray,dim=3)+1,size(zArray); do j=size(fArray,dim=2)+1,size(yArray); do i=size(fArray,dim=1)+1,size(xArray)
-				this.fArray(i,j,k) = 0.0_8
-			end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-		end if
-
-	end subroutine fromArrays
-	
-	!>
-	!! @brief Constructor
-	!!
-	subroutine fromGrid3DArray( this, xyzGrid, fArray, units, cutoff, fillWithZeros )
-		class(NFunction3D) :: this 
-		type(Grid3D), intent(in) :: xyzGrid
-		__TYPE_VALUE__, intent(in) :: fArray(:,:,:)
-		real(8), optional, intent(in) :: units(2)
-		real(8), optional, intent(in) :: cutoff
-		logical, optional :: fillWithZeros
-		
-		integer :: i, j, k
-		real(8) :: effUnits(2)
-		real(8) :: effCutoff
-		logical :: effFillWithZeros
-		
-		effUnits = [1.0_8, 1.0_8]
-		if( present(units) ) effUnits = units
-		
-		effCutoff = 1d10
-		if( present(cutoff) ) effCutoff = cutoff
-		
-		effFillWithZeros = .false.
-		if( present(fillWithZeros) ) effFillWithZeros = fillWithZeros
-		
-		this.xyzGrid = xyzGrid
-		call this.xyzGrid.setUnits( effUnits(1) )
-		
-		if( .not. effFillWithZeros ) then
-			if( xyzGrid.nPoints(1) /= size(fArray,dim=1) ) then
-				write(*,"(A)") "### ERROR ### NFunction3D.fromArrays: The xArray's size should be equal to fArray's size"
-				stop
-			end if
-			
-			if( xyzGrid.nPoints(2) /= size(fArray,dim=2) ) then
-				write(*,"(A)") "### ERROR ### NFunction3D.fromArrays: The yArray's size should be equal to fArray's size"
-				stop
-			end if
-			
-			if( xyzGrid.nPoints(3) /= size(fArray,dim=3) ) then
-				write(*,"(A)") "### ERROR ### NFunction3D.fromArrays: The zArray's size should be equal to fArray's size"
-				stop
-			end if
-		end if
-		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(xyzGrid.nPoints(1),xyzGrid.nPoints(2),xyzGrid.nPoints(3)) )
-		
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,xyzGrid.nPoints(3); do j=1,xyzGrid.nPoints(2); do i=1,xyzGrid.nPoints(1)
-#if __ID_TYPE__ == 0
-			this.fArray(i,j,k) = min( max( fArray(i,j,k)*effUnits(2), -effCutoff ), effCutoff )
-#elif __ID_TYPE__ == 1
-			this.fArray(i,j,k) = fArray(i,j,k)*effUnits(2)
-#endif
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-
-		if( effFillWithZeros ) then
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-			do k=xyzGrid.nPoints(3)+1,size(fArray,dim=3); do j=xyzGrid.nPoints(2)+1,size(fArray,dim=2); do i=xyzGrid.nPoints(1)+1,size(fArray,dim=1)
-				this.fArray(i,j,k) = 0.0_8
-			end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-		end if
-		
-	end subroutine fromGrid3DArray
-	
-	!>
-	!! @brief Constructor
-	!!
-! 	subroutine fromFunction( this, xyzGrid, func, units )
-! 		class(NFunction3D), target :: this 
-! 		type(Grid3D), target, intent(in) :: xyzGrid
-! 		procedure(prototypeFunction3D) :: func
-! 		real(8), optional, intent(in) :: units(2)
-! 		
-! 		integer :: i, j, k
-! 		real(8) :: effUnits(2)
-! 		integer :: nx, ny, nz
-! 		
-! #ifdef _OPENMP
-! 		real(8), pointer :: x(:), y(:), z(:)
-! 		__TYPE_VALUE__, pointer :: fArray(:,:,:)
-! #endif
-! 		
-! 		if( present(units) ) then
-! 			effUnits = units
-! 		else
-! 			effUnits = [1.0_8, 1.0_8]
-! 		end if
-! 		
-! 		this.xyzGrid = xyzGrid
-! 		call this.xyzGrid.setUnits( effUnits(1) )
-! 		
-! 		nx = this.xyzGrid.nPoints(1)
-! 		ny = this.xyzGrid.nPoints(2)
-! 		nz = this.xyzGrid.nPoints(3)
-! 		
-! 		if( allocated(this.fArray) ) deallocate(this.fArray)
-! 		allocate( this.fArray(nx,ny,nz) )
-! 		
-! #ifdef _OPENMP
-! 		x => xyzGrid.component(1).data
-! 		y => xyzGrid.component(2).data
-! 		z => xyzGrid.component(3).data
-! 		fArray => this.fArray
-! 		
-! 		!$omp parallel do shared(fArray,x,y,z,effUnits) private(k)
-! 		do k=1,nz; do j=1,ny; do i=1,nx
-! 			fArray(i,j,k) = func( x(i), y(j), z(k) )*effUnits(2)
-! 		end do; end do; end do
-! 		!$omp end parallel do
-! 		
-! 		nullify( x, y, z, fArray )
-! #else
-! ! 		NFunction3D_forall( k, 1, nx, j, 1, ny, i, 1, nz )
-! 		do k=1,nz; do j=1,ny; do i=1,nx
-! 			this.fArray(i,j,k) = func( xyzGrid.x(i), xyzGrid.y(j), xyzGrid.z(k) )*effUnits(2)
-! 		end do; end do; end do
-! ! 		NFunction3D_endforall
-! #endif
-! 	end subroutine fromFunction
-	
-	!>
-	!! @brief Constructor
-	!!
-	subroutine fromFunction( this, xyzGrid, func, units, cutoff )
-		class(NFunction3D), target :: this 
-		type(Grid3D), target, intent(in) :: xyzGrid
-		procedure(prototypeFunction3D) :: func
-		real(8), optional, intent(in) :: units(2)
-		real(8), optional, intent(in) :: cutoff
-		
-		integer :: i, j, k
-		real(8) :: effUnits(2)
-		real(8) :: effCutoff
-		integer :: nx, ny, nz
-		
-		effUnits = [1.0_8, 1.0_8]
-		if( present(units) ) effUnits = units
-		
-		effCutoff = 1d10
-		if( present(cutoff) ) effCutoff = cutoff
-		
-		this.xyzGrid = xyzGrid
-		
-		call this.xyzGrid.setUnits( effUnits(1) )
-		
-		nx = this.xyzGrid.nPoints(1)
-		ny = this.xyzGrid.nPoints(2)
-		nz = this.xyzGrid.nPoints(3)
-		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(nx,ny,nz) )
-		
-!@todo Esto aparentemente no funciona porque no se puede compartir la funcion func, verificar con wpp -i harmonicKt.wpp
-! ! ! !$omp parallel
-! ! ! !$omp do
-		do k=1,nz; do j=1,ny; do i=1,nx
-#if __ID_TYPE__ == 0
-			this.fArray(i,j,k) = min( max( func( xyzGrid.x(i), xyzGrid.y(j), xyzGrid.z(k) )*effUnits(2), -effCutoff ), effCutoff )
-#elif __ID_TYPE__ == 1
-			this.fArray(i,j,k) = func( xyzGrid.x(i), xyzGrid.y(j), xyzGrid.z(k) )*effUnits(2)
-#endif
-		end do; end do; end do
-! ! ! !$omp end parallel
-	end subroutine fromFunction
-	
-	!>
-	!! @brief Reads from a file
-	!!
-	subroutine fromFile( this, fileName, format, cutoff )
-		class(NFunction3D) :: this
-		character(*), optional, intent(in) :: fileName
-		integer, optional, intent(in) :: format
-		real(8), optional, intent(in) :: cutoff
-		
-		integer :: effFormat
-		
-		character(100), allocatable :: tokens(:)
-		character(100) :: extension
-		
-		if( present(cutoff) ) stop "### ERROR ### NFunction3D.fromFile: cutoff option is not implemented yet"
-		
-		effFormat = AUTO_FORMAT
-		if( present(format) ) effFormat = format
-		
-		select case ( effFormat )
-			case( AUTO_FORMAT )
-				call FString_split( fileName, tokens, "." )
-				extension = ""
-				if( size( tokens ) > 1 ) extension = trim(tokens(size(tokens)))
-				deallocate( tokens )
-				
-				if( trim(extension) == "n3df" ) then
-					call this.loadN3DF( fileName )
-				else if( trim(extension) == "cube" ) then
-					call this.loadCUBE( fileName, CUBE_FORMAT )
-				else if( trim(extension) == "rcube" ) then
-					call this.loadCUBE( fileName, RCUBE_FORMAT )
-				else if( trim(extension) == "icube" ) then
-					call this.loadCUBE( fileName, ICUBE_FORMAT )
-				else if( trim(extension) == "blks" ) then
-					call this.loadBLKS( fileName )
-				else
-					call GOptions_error( &
-						"Unknown format file (AUTO_FORMAT). fileName = "//trim(fileName), &
-						"NFunction3D.fromFile(extension="//trim(extension)//")" &
-					)
-				end if
-			case( N3DF_FORMAT )
-				call this.loadN3DF( fileName )
-			case( CUBE_FORMAT )
-				call this.loadCUBE( fileName, CUBE_FORMAT )
-			case( RCUBE_FORMAT )
-				call this.loadCUBE( fileName, RCUBE_FORMAT )
-			case( ICUBE_FORMAT )
-				call this.loadCUBE( fileName, ICUBE_FORMAT )
-			case( BLKS_FORMAT )
-				call this.loadBLKS( fileName )
-			case default
-				write(6,*) "### ERROR ### NFunction3D.fromFile(). The format is not supported (", effFormat, ")"
-				stop
-		end select
-	end subroutine fromFile
-	
-	!>
-	!! @brief Copy constructor
-	!!
-	subroutine copyNFunction3D( this, other )
-		class(NFunction3D), intent(inout) :: this
-		class(NFunction3D), intent(in) :: other
-		
-		integer :: i, j, k
-		
-		this.xyzGrid = other.xyzGrid
-		
-		if( allocated(this.fArray) ) deallocate( this.fArray )
-		allocate( this.fArray(other.ssize(1),other.ssize(2),other.ssize(3)) )
-		
-! 		this.fArray = other.fArray
-		
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,other.ssize(3); do j=1,other.ssize(2); do i=1,other.ssize(1)
-			this.fArray(i,j,k) = other.fArray(i,j,k)
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end subroutine copyNFunction3D
-	
-	!>
-	!! @brief Copy constructor
-	!!
-	pure subroutine copyFArray( this, other )
-		class(NFunction3D), intent(inout) :: this
-		class(NFunction3D), intent(in) :: other
-		
-		integer :: i, j, k
-		
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,other.ssize(3); do j=1,other.ssize(2); do i=1,other.ssize(1)
-			this.fArray(i,j,k) = other.fArray(i,j,k)
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end subroutine copyFArray
-	
-	!>
-	!! @brief Destructor
-	!!
-	subroutine destroyNFunction3D( this )
-		type(NFunction3D) :: this
-		
-		if( allocated(this.fArray) ) deallocate( this.fArray )
-	end subroutine destroyNFunction3D
-	
-	!>
-	!! @brief
-	!!
-	function addition( this, other ) result( output )
-		class(NFunction3D), intent(in) :: this
-		class(NFunction3D), intent(in) :: other
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
-			write(*,*) "## ERROR ## the Grids have not the same size"
-			stop
-		end if
-		
-		output = this
-! 		output.fArray = this.fArray + other.fArray
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k) + other.fArray(i,j,k)
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function addition
-	
-	!>
-	!! @brief
-	!!
-	function additionFC( this, constant ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8), intent(in) :: constant
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		output = this
-! 		output.fArray = this.fArray+constant
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k) + constant
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function additionFC
-	
-	!>
-	!! @brief
-	!!
-	function subtraction( this, other ) result( output )
-		class(NFunction3D), intent(in) :: this
-		type(NFunction3D), intent(in) :: other
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
-			write(*,*) "## ERROR ## the Grids have not the same size"
-			stop
-		end if
-		
-		output = this
-! 		output.fArray = this.fArray - other.fArray
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k) - other.fArray(i,j,k)
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function subtraction
-	
-	!>
-	!! @brief
-	!!
-	function subtractionFC( this, constant ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8), intent(in) :: constant
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		output = this
-! 		output.fArray = this.fArray-constant
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k) - constant
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function subtractionFC
-	
-	!>
-	!! @brief
-	!!
-	function multiplication( this, other ) result( output )
-		class(NFunction3D), intent(in) :: this
-		type(NFunction3D), intent(in) :: other
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
-			write(*,*) "## ERROR ## the Grids have not the same size"
-			stop
-		end if
-		
-		output = this
-		
-! 		output.fArray = this.fArray*other.fArray
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k)*other.fArray(i,j,k)
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function multiplication
-	
-	!>
-	!! @brief
-	!!
-	function multiplicationFC( this, constant ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8), intent(in) :: constant
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		output = this
-! 		output.fArray = this.fArray*constant
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k)*constant
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function multiplicationFC
-	
-	!>
-	!! @brief
-	!!
-	function division( this, other ) result( output )
-		class(NFunction3D), intent(in) :: this
-		type(NFunction3D), intent(in) :: other
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
-			write(*,*) "## ERROR ## the Grids have not the same size"
-			stop
-		end if
-		
-		output = this
-! 		output.fArray = this.fArray/other.fArray
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k)/other.fArray(i,j,k)
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function division
-	
-	!>
-	!! @brief
-	!!
-	function divisionFC( this, constant ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8), intent(in) :: constant
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		output = this
-! 		output.fArray = this.fArray/constant
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k)/constant
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function divisionFC
-	
-	!>
-	!! @brief
-	!!
-	function exponentiation( this, other ) result( output )
-		class(NFunction3D), intent(in) :: this
-		type(NFunction3D), intent(in) :: other
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) .or. &
-		    this.nPoints(3) /= other.nPoints(3) ) then
-			write(*,*) "## ERROR ## the Grids have not the same size"
-			stop
-		end if
-		
-		output = this
-! 		output.fArray = this.fArray**other.fArray
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k)**other.fArray(i,j,k)
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function exponentiation
-	
-	!>
-	!! @brief
-	!!
-	function exponentiationFC( this, constant ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8), intent(in) :: constant
-		type(NFunction3D) :: output
-		
-		integer :: i, j, k
-		
-		output = this
-! 		output.fArray = this.fArray**constant
-
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k)**constant
-		end do; end do; end do
-!$omp end do nowait
-!$omp end parallel
-	end function exponentiationFC	
-	
-	!>
-	!! @brief Save the funtion in a file
-	!!
-	subroutine save( this, fileName, format )
-		class(NFunction3D) :: this
-		character(*), optional, intent(in) :: fileName
-		integer, optional, intent(in) :: format
-		
-		integer :: effFormat
-		
-		character(100), allocatable :: tokens(:)
-		character(100) :: extension
-		
-		effFormat = AUTO_FORMAT
-		if( present(format) ) effFormat = format
-		
-		select case ( effFormat )
-			case( AUTO_FORMAT )
-				call FString_split( fileName, tokens, "." )
-				extension = ""
-				if( size( tokens ) > 1 ) extension = trim(tokens(size(tokens)))
-				deallocate( tokens )
-				
-				if( trim(extension) == "n3df" ) then
-					call this.saveN3DF( fileName )
-				else if( trim(extension) == "cube" ) then
-					call this.saveCUBE( fileName, CUBE_FORMAT )
-				else if( trim(extension) == "rcube" ) then
-					call this.saveCUBE( fileName, RCUBE_FORMAT )
-				else if( trim(extension) == "icube" ) then
-					call this.saveCUBE( fileName, ICUBE_FORMAT )
-				else if( trim(extension) == "blks" ) then
-					call this.saveBLKS( fileName )
-				else
-					call GOptions_error( &
-						"Unknown format file (AUTO_FORMAT). FileName = "//trim(fileName), &
-						"NFunction3D.save(extension="//trim(extension)//")" &
-					)
-				end if
-			case( N3DF_FORMAT )
-				call this.saveN3DF( fileName )
-			case( CUBE_FORMAT )
-				call this.saveCUBE( fileName, CUBE_FORMAT )
-			case( RCUBE_FORMAT )
-				call this.saveCUBE( fileName, RCUBE_FORMAT )
-			case( ICUBE_FORMAT )
-				call this.saveCUBE( fileName, ICUBE_FORMAT )
-			case( BLKS_FORMAT )
-				call this.saveBLKS( fileName )
-			case default
-				write(6,*) "### ERROR ### NFunction3D.save(). The format is not supported"
-				stop
-		end select
-	end subroutine save
-	
-	!>
-	!! @brief
-	!!
-	subroutine saveN3DF( this, fileName )
-		class(NFunction3D) :: this
-		character(*) :: fileName
-		
-		integer :: idType
-		
-		if( .not. this.xyzGrid.isEquallyspaced() ) then
-			call GOptions_error( &
-				"This subroutine is not available for functions wich are not equally spaced", &
-				"NFunction3D.saveN3DF()" &
-			)
-		end if
-		
-		idType = __ID_TYPE__
-		
-		open( unit=1, file=trim(fileName), action='write', form="unformatted" )
-		
-		! 0 = REAL, 1 COMPLEX
-		write(1) idType
-		
-		! origin of the grid
-		write(1) this.xyzGrid.min(1), this.xyzGrid.min(2), this.xyzGrid.min(3)
-		
-		! Number of points for each coordinate
-		write(1) this.xyzGrid.nPoints(1), this.xyzGrid.nPoints(2), this.xyzGrid.nPoints(3)
-		
-		! Increment for each coordinate
-		write(1) this.xyzGrid.stepSize(1), this.xyzGrid.stepSize(2), this.xyzGrid.stepSize(3)
-		
-		!!!!!!!!!!!!!!!!!!!!!!!
-		! Volumetric data
-		write(1) this.fArray
-		
-		close(1)
-	end subroutine saveN3DF
-	
-	!>
-	!! @brief
-	!!
-	subroutine saveCUBE( this, fileName, format )
-		class(NFunction3D), intent(in) :: this
-		character(*), intent(in) :: fileName
-		integer, optional, intent(in) :: format
-		
-		integer :: effFormat
-		
-		integer :: ix, iy, iz
-		character(255) :: date
-		
-		if( .not. this.xyzGrid.isEquallyspaced() ) then
-			call GOptions_error( &
-				"This subroutine is not available for functions wich are not equally spaced", &
-				"NFunction3D.saveCUBE()" &
-			)
-		end if
-		
-		call fdate(date)
-		
-		effFormat = CUBE_FORMAT
-		if( present(format) ) effFormat = format
-		
-		open( unit=1, file=trim(fileName), status="unknown" )
-		
-		! The first and second line are simply comments
-#if __ID_TYPE__ == 0
-		write(1,*) "Real Numerical Function"
-#elif __ID_TYPE__ == 1
-		write(1,"(A)",advance="no") "Complex Numerical Function"
-		select case( effFormat )
-			case( CUBE_FORMAT )
-				write(1,"(A)") "NORM"
-			case( RCUBE_FORMAT )
-				write(1,"(A)") "REAL"
-			case( ICUBE_FORMAT )
-				write(1,"(A)") "IMAG"
-		end select
-#endif
-		write(1,*) trim(date)
-		
-		! The third line has the number of atoms
-		! (in this case is the calcium atom) followed by
-		! the position of the grid
-		write(1, "(I4,F12.5,F12.5,F12.5)" ) 0, this.xyzGrid.min(1), this.xyzGrid.min(2), this.xyzGrid.min(3)
-		
-		! The next three lines have the following information for each coordinate
-		! <number of points> <x_increment> <y_increment> <z_increment>
-		write(1, "(I4,F12.5,F12.5,F12.5)" ) this.xyzGrid.nPoints(1), this.xyzGrid.stepSize(1),     0.0,     0.0
-		write(1, "(I4,F12.5,F12.5,F12.5)" ) this.xyzGrid.nPoints(2),     0.0, this.xyzGrid.stepSize(2),     0.0
-		write(1, "(I4,F12.5,F12.5,F12.5)" ) this.xyzGrid.nPoints(3),     0.0,     0.0, this.xyzGrid.stepSize(3)
-		
-		! The last section in the header is one for each atom consisting
-		! of 5 numbers
-		! <atomic number(integer)> <atomic number(real)> <x_coordinate> <y_coordinate> <z_coordinate>
-! 		write(1, "(I4,F12.5,F12.5,F12.5,F12.5)" ) 20, 20.0, this.ximp, yimp, zimp
-		
-		!!!!!!!!!!!!!!!!!!!!!!!
-		! Volumetric data
-		do ix=1,this.xyzGrid.nPoints(1)
-			do iy=1,this.xyzGrid.nPoints(2)
-				
-#if __ID_TYPE__ == 0
-				write(1,"(6E13.5)") ( this.fArray(ix,iy,iz), iz=1,this.xyzGrid.nPoints(3) )
-#elif __ID_TYPE__ == 1
-				select case ( effFormat )
-					case( CUBE_FORMAT )
-						write(1,"(6E13.5)") ( abs(this.fArray(ix,iy,iz)), iz=1,this.xyzGrid.nPoints(3) )
-					case( RCUBE_FORMAT )
-						write(1,"(6E13.5)") ( real(this.fArray(ix,iy,iz)), iz=1,this.xyzGrid.nPoints(3) )
-					case( ICUBE_FORMAT )
-						write(1,"(6E13.5)") ( aimag(this.fArray(ix,iy,iz)), iz=1,this.xyzGrid.nPoints(3) )
-					case default
-						write(6,*) "### ERROR ### NFunction3D.saveCUBE(). The format is not supported"
-						stop
-				end select
-#endif
-			end do
-		end do
-		
-		close(1)
-	end subroutine saveCUBE
-	
-	!>
-	!! @brief
-	!!
-	subroutine saveBLKS( this, fileName )
-		class(NFunction3D), intent(in) :: this
-		character(*), intent(in) :: fileName
-		
-		integer :: ix, iy, iz
-		character(255) :: date
-		
-		call fdate(date)
-		
-		open( unit=1, file=trim(fileName), status="unknown" )
-		
-		! The first and second line are simply comments
-#if __ID_TYPE__ == 0
-		write(1,"(A)") "# Real Numerical Function"
-#elif __ID_TYPE__ == 1
-		write(1,"(A)") "# Complex Numerical Function"
-#endif
-		write(1,"(A)") "# XYZ"
-		write(1,"(A)") "# "//trim(date)
-		
-		do ix=1,this.xyzGrid.nPoints(1)
-			do iy=1,this.xyzGrid.nPoints(2)
-				do iz=1,this.xyzGrid.nPoints(3)
-				
-#if __ID_TYPE__ == 0
-					write(1,"(4E13.5)") this.xyzGrid.at(ix,iy,iz), this.fArray(ix,iy,iz)
-#elif __ID_TYPE__ == 1
-					write(1,"(5E13.5)") this.xyzGrid.at(ix,iy,iz), this.fArray(ix,iy,iz)
-#endif
-				end do
-				
-				write(1,*) ""
-				write(1,*) ""
-			end do
-		end do
-		
-		close(1)
-	end subroutine saveBLKS
-	
-	!>
-	!! @brief
-	!! @todo Solo está implementado el caso en que dir sea en dirección paralela a una coordenanda y origen 0.0,0.0,0.0
-	!!
-	subroutine saveProjection1D( this, fileName, origin, dir, resolution, append, beforeLine )
-		class(NFunction3D), intent(in) :: this
-		character(*), intent(in) :: fileName
-		real(8) :: origin(3)
-		integer, intent(in) :: dir(3)
-		real(8), optional, intent(in) :: resolution
-		logical, optional, intent(in) :: append
-		character(*), optional, intent(in) :: beforeLine
-		
-		logical :: effAppend
-		character(100) :: effBeforeLine
-		integer :: invResolution
-		
-		real(8) :: minDir
-		real(8) :: maxDir
-		real(8) :: stepSizeDir
-		real(8) :: valDir
-		__TYPE_VALUE__ :: value
-		
-		real(8) :: ssum
-		integer :: codeDir
-		
-		effAppend = .false.
-		if( present(append) ) effAppend = append
-		
-		effBeforeLine = ""
-		if( present(beforeLine) ) effBeforeLine = beforeLine
-		
-		invResolution = 1
-		if( present(resolution) ) invResolution = ceiling( 1.0_8/resolution )
-		
-		if( effAppend ) then
-			open( unit=1, file=trim(fileName), status="unknown", access="append" )
-		else
-			open( unit=1, file=trim(fileName), status="unknown" )
-		end if
-		
-		if( .not. this.isEquallyspaced() ) then
-			call GOptions_error( &
-				"This subroutine is not available yet for functions wich are not equally spaced", &
-				"NFunction3D.saveProjection1D()" &
-			)
-		end if
-		
-		codeDir = 3
-		if( all(dir == [1,0,0]) ) then
-			codeDir = 1
-		else if( all(dir == [0,1,0]) ) then
-			codeDir = 2
-		else if( all(dir == [0,0,1]) ) then
-			codeDir = 3
-		else
-			call GOptions_error( &
-				"Direction "//FString_fromIntegerArray(dir)//" is not implemented yet. Try [1,0,0], [0,1,0] or [0,0,1]", &
-				"NFunction3D.saveProjection1D()" &
-			)
-		end if
-		
-		minDir = this.xyzGrid.min(codeDir)
-		maxDir = this.xyzGrid.max(codeDir)
-		stepSizeDir = this.xyzGrid.stepSize(codeDir)*invResolution
-		
-		if( minDir > maxDir ) then
-			call GOptions_error( &
-				"minDir > maxDir ("//FString_fromReal(minDir)//" > "//FString_fromReal(maxDir)//")", &
-				"NFunction3D.saveProjection1D()" &
-			)
-		end if
-		
-		valDir = minDir
-		ssum = 0.0_8
-		do while( valDir <= maxDir )
-			value = this.evaluateXYZ( origin(1), origin(2), valDir )  !< Busca el punto más cercano, no interpola
-			
-#if __ID_TYPE__ == 1
-			if( abs(value) > 1d-98 ) then
-				write(1,"(A,3E13.5)") trim(effBeforeLine), valDir, real(value), aimag(value)
-			else
-				write(1,"(A,3E13.5)") trim(effBeforeLine), valDir, 0.0_8, 0.0_8
-			end if
-#elif __ID_TYPE__ == 0
-			if( abs(value) > 1d-98 ) then
-				write(1,"(A,2E13.5)") trim(effBeforeLine), valDir, value
-			else
-				write(1,"(A,2E13.5)") trim(effBeforeLine), valDir, 0.0_8
-			end if
-#endif
-			ssum = ssum  + abs(value)**2
-			
-			valDir = valDir + stepSizeDir
-		end do
-		
-		write(1,*) "# norm = ", sqrt(1.0_8/(stepSizeDir*ssum))
-		write(1,*) ""
-		write(1,*) ""
-		
-		close(1)
-	end subroutine saveProjection1D
-	
-	!>
-	!! @brief
-	!!
-	subroutine saveProjection2D( this, fileName, n, p0, nx, ny, append )
-		class(NFunction3D), intent(in) :: this
-		character(*), intent(in) :: fileName
-		real(8), optional, intent(in) :: n(3)
-		real(8), optional, intent(in) :: p0(3)
-		integer, optional, intent(in) :: nx, ny
-		logical, optional, intent(in) :: append
-		
-		real(8) :: effN(3)
-		real(8) :: effP0(3)
-		integer :: effNx, effNy
-		logical :: effAppend
-		
-		real(8) :: x, y, z
-		
-		real(8) :: xp, yp
-		real(8) :: xpMin, xpMax, xpStepSize
-		real(8) :: ypMin, ypMax, ypStepSize
-		character(255) :: date
-		
-		effAppend = .false.
-		if( present(append) ) effAppend = append
-		
-		effN = [ 1.0_8, 0.01_8, 0.01_8 ]  ! plane X=cte
-		if( present(n) ) effN = n
-		
-		effNx = 100
-		if( present(nx) ) effNx = nx
-		
-		effNy = 100
-		if( present(ny) ) effNy = ny
-		
-		effP0 = [ 0.0_8, 0.0_8, 0.0_8 ]  ! plane que pasa por X=0.0
-		if( present(p0) ) effP0 = p0
-		
-		call fdate(date)
-		
-		if( effAppend ) then
-			open( unit=1, file=trim(fileName), status="unknown", access="append" )
-		else
-			open( unit=1, file=trim(fileName), status="unknown" )
-		end if
-		
-#if __ID_TYPE__ == 0
-		write(1,"(A)") "# Real Numerical Function"
-#elif __ID_TYPE__ == 1
-		write(1,"(A)") "# Complex Numerical Function"
-#endif
-		write(1,"(A)") "# "//trim(date)
-		
-		!----------------------------------------
-		! xp^2 = x^2 + y^2
-		! yp = z
-		!----------------------------------------
-		
-		xpMin = this.xyzGrid.min(1)/cos( Math_PI/4.0_8 )
-		xpMax = this.xyzGrid.max(1)/cos( Math_PI/4.0_8 )
-! 		xpStepSize = sin( Math_PI/4.0_8 )*( this.xyzGrid.stepSize(1)**2 + this.xyzGrid.stepSize(2)**2 )
-		xpStepSize = (xpMax-xpMin)/real(effNx+1,8)
-		
-		ypMin = this.xyzGrid.min(3)
-		ypMax = this.xyzGrid.max(3)
-! 		ypStepSize = this.xyzGrid.stepSize(3)
-		ypStepSize = (ypMax-ypMin)/real(effNy+1,8)
-		
-		xp = xpMin
-		do while( xp <= xpMax )
-				
-			yp = ypMin
-			do while( yp <= ypMax )
-				
-				x = cos( Math_PI/4.0_8 )*xp
-				y = sin( Math_PI/4.0_8 )*xp
-				z = yp
-				
-! 				z = effP0(3)-effN(1)*(xp-effP0(1))/effN(3)-effN(2)*(yp-effP0(2))/effN(3)
-#if __ID_TYPE__ == 1
-				write(1,"(4E13.5)") xp, yp, real(this.evaluateXYZ(x,y,z)), aimag(this.evaluateXYZ(x,y,z))
-#elif __ID_TYPE__ == 0
-				write(1,"(3E13.5)") xp, yp, this.evaluateXYZ(x,y,z)
-#endif
-				
-				yp = yp + ypStepSize
-			end do
-			
-			write(1,*) ""
-			
-			xp = xp + xpStepSize
-		end do
-		
-		write(1,*) ""
-		write(1,*) ""
-
-! 		!----------------------------------------
-! 		! xp = x
-! 		! yp = z
-! 		!----------------------------------------
-! 		
-! 		xpMin = this.xyzGrid.min(1)
-! 		xpMax = this.xyzGrid.max(1)
-! 		xpStepSize = this.xyzGrid.stepSize(1)
-! 		
-! 		ypMin = this.xyzGrid.min(3)
-! 		ypMax = this.xyzGrid.max(3)
-! 		ypStepSize = this.xyzGrid.stepSize(3)
-! 		
-! 		xp = xpMin
-! 		do while( xp <= xpMax )
-! 				
-! 			yp = ypMin
-! 			do while( yp <= ypMax )
-! 				
-! 				x = xp
-! 				y = 3.5975_8/2.0_8
-! 				z = yp
-! 				
-! ! 				z = effP0(3)-effN(1)*(xp-effP0(1))/effN(3)-effN(2)*(yp-effP0(2))/effN(3)
-! #if __ID_TYPE__ == 1
-! 				write(1,"(4E13.5)") xp, yp, real(this.evaluateXYZ(x,y,z)), aimag(this.evaluateXYZ(x,y,z))
-! #elif __ID_TYPE__ == 0
-! 				write(1,"(3E13.5)") xp, yp, this.evaluateXYZ(x,y,z)
-! #endif
-! 				
-! 				yp = yp + ypStepSize
-! 			end do
-! 			
-! 			write(1,*) ""
-! 			
-! 			xp = xp + xpStepSize
-! 		end do
-! 		
-! 		write(1,*) ""
-! 		write(1,*) ""
-		
-		close(1)
-	end subroutine saveProjection2D
-	
-	!>
-	!! @brief
-	!!
-	subroutine loadCUBE( this, fileName, format, debug )
-		class(NFunction3D) :: this
-		character(*) :: fileName
-		integer, optional, intent(in) :: format
-		logical, optional, intent(in) :: debug
-		
-		integer :: effFormat
-		logical :: effDebug
-		
-		character(100) :: sBuffer
-		integer :: nAtoms
-		real(8) :: rBuffer
-		real(8) :: xMin, yMin, zMin
-		real(8) :: xMax, yMax, zMax
-		real(8) :: hx, hy, hz
-		integer :: nx, ny, nz
-		integer :: i, ix, iy, iz
-		__TYPE_VALUE__, allocatable :: fArray(:,:,:)
-		real(8), allocatable :: cubeDataLine(:)
-		
-		type(Grid3D) :: xyzGrid
-		
-		effFormat = CUBE_FORMAT
-		if( present(format) ) effFormat = format
-		
-		effDebug = .false.
-		if( present(debug) ) effDebug = debug
-		
-		open( unit=1, file=trim(fileName), status='old' )
-		
-		read(1,*) sBuffer ! title
-		read(1,*) sBuffer ! comments
-		read(1,*) nAtoms, xMin, yMin, zMin
-		read(1,*) nx,      hx, rBuffer, rBuffer
-		read(1,*) ny, rBuffer,      hy, rBuffer
-		read(1,*) nz, rBuffer, rBuffer,      hz
-		
-		if( effDebug ) then
-			write(*,*) "==================================================="
-			write(*,*) " Loading cube "//trim(fileName)
-			write(*,*) "==================================================="
-			select case ( effFormat )
-				case( CUBE_FORMAT )
-					write(*,*) " format = ", "CUBE_FORMAT"
-				case( RCUBE_FORMAT )
-					write(*,*) " format = ", "RCUBE_FORMAT"
-				case( ICUBE_FORMAT )
-					write(*,*) " format = ", "ICUBE_FORMAT"
-				case default
-					write(6,*) "### ERROR ### NFunction3D.loadCUBE(). The format is not supported"
-					stop
-			end select
-			write(*,"(A,I10)") "  nAtoms = ", nAtoms
-			write(*,"(A,3F10.5,A)") "     min = ( ", xMin, yMin, zMin, " )"
-			write(*,"(A,3I10,A)") "       n = ( ", nx, ny, nz, " )"
-			write(*,"(A,3F10.5,A)") "       h = ( ", hx, hy, hz, " )"
-		end if
-
-		xMax = xMin + (nx-1)*hx
-		yMax = yMin + (ny-1)*hy
-		zMax = zMin + (nz-1)*hz
-		
-		if( effDebug ) then
-			write(*,"(A,3F10.5,A)") "     max = ( ", xMax, yMax, zMax, " )"
-		end if
-		
-		do i=1,nAtoms
-			read(1,"(A)") sBuffer
-		end do
-		
-		allocate( fArray( nx, ny, nz ) )
-		allocate( cubeDataLine(nz) )
-		
-		do ix=1,nx
-			do iy=1,ny
-				read(1,"(6E13.5)") ( cubeDataLine(iz), iz=1,nz )
-				
-#if __ID_TYPE__ == 0
-				fArray(ix,iy,:) = cubeDataLine(:)
-#elif __ID_TYPE__ == 1
-				select case ( effFormat )
-					case( CUBE_FORMAT )
-						fArray(ix,iy,:) = cmplx( cubeDataLine(:), 0.0_8 )
-					case( RCUBE_FORMAT )
-						fArray(ix,iy,:) = cmplx( cubeDataLine(:), 0.0_8 )
-					case( ICUBE_FORMAT )
-						fArray(ix,iy,:) = cmplx( 0.0_8, cubeDataLine(:) )
-					case default
-						write(6,*) "### ERROR ### NFunction3D.loadCUBE(). The format is not supported"
-						stop
-				end select
-#endif
-			end do
-		end do
-		
-		call xyzGrid.init( min=[xMin,yMin,zMin], max=[xMax,yMax,zMax], size=[nx,ny,nz] )
-		call this.fromGrid3DArray( xyzGrid, fArray )
-		
-		close(1)
-		
-		deallocate( fArray )
-		deallocate( cubeDataLine )
-	end subroutine loadCUBE
-	
-	!>
-	!! @brief
-	!!
-	subroutine loadBLKS( this, fileName, debug )
-		class(NFunction3D) :: this
-		character(*) :: fileName
-		logical, optional, intent(in) :: debug
-		
-		logical :: effDebug
-		
-		effDebug = .false.
-		if( present(debug) ) effDebug = debug
-		
-		call GOptions_error( &
-			"This subroutine is not implemented yet", &
-			"NFunction3D.loadBLKS()" &
-		)
-		
-		open( unit=1, file=trim(fileName), status='old' )
-		
-		
-		
-		close(1)
-	end subroutine loadBLKS
-	
-	!>
-	!! @brief Return 1 if fileName contains real numbers,
-	!!        0 if fileName contains real numbers and
-	!!        -1 elsewhere
-	!!
-	function checkTypeN3DF( this, fileName ) result( output )
-		class(NFunction3D) :: this
-		character(*) :: fileName
-		integer :: idType
-		integer :: output
-		
-		open( unit=1, file=trim(fileName), action='read', form="unformatted" )
-		
-		! 0 = REAL, 1 COMPLEX
-		read(1) idType
-		
-		close(1)
-		
-		if( idType /= 0 .and. idType /= 1 ) then
-			output = -1
-		else
-			output = idType
-		end if
-	end function checkTypeN3DF
-	
-	!>
-	!! @brief
-	!!
-	subroutine loadN3DF( this, fileName )
-		class(NFunction3D) :: this
-		character(*) :: fileName
-		
-		real(8) :: xMin, yMin, zMin
-		real(8) :: xMax, yMax, zMax
-		real(8) :: hx, hy, hz
-		integer :: nx, ny, nz
-		integer :: idType
-		__TYPE_VALUE__, allocatable :: fArray(:,:,:)
-		
-		type(Grid3D) :: xyzGrid
-		
-		open( unit=1, file=trim(fileName), action='read', form="unformatted" )
-		
-		! 0 = REAL, 1 COMPLEX
-		read(1) idType
-		
-		if( idType /= __ID_TYPE__ ) then
-			write(*,*) "### ERROR ### NFunction3D.loadN3DF(): Inconsistent type in file"
-			stop
-		end if
-		
-		! origin of the grid
-		read(1) xMin, yMin, zMin
-		
-		! Number of points for each coordinate
-		read(1) nx, ny, nz
-		
-		! Increment for each coordinate
-		read(1) hx, hy, hz
-		
-		xMax = xMin + (nx-1)*hx
-		yMax = yMin + (ny-1)*hy
-		zMax = zMin + (nz-1)*hz
-		
-		allocate( fArray(nx,ny,nz) )
-		
-		!!!!!!!!!!!!!!!!!!!!!!!
-		! Volumetric data
-		read(1) fArray
-		
-		call xyzGrid.init( min=[xMin,yMin,zMin], max=[xMax,yMax,zMax], size=[nx,ny,nz] )
-		call this.fromGrid3DArray( xyzGrid, fArray )
-		
-		deallocate( fArray )
-		
-		close(1)
-	end subroutine loadN3DF
-
-	!>
-	!! @brief 
-	!!
-	subroutine normalize( this, constant )
-		class(NFunction3D) :: this
-		real(8), optional, intent(out) :: constant
-		
-		integer :: i, j, k
-		real(8) :: nConstant
-		
-		nConstant = 1.0_8/this.norm()
-		
-!$omp parallel private(k)
-!$omp do schedule(dynamic,1)
-		do k=1,this.xyzGrid.nPoints(3)
-			do j=1,this.xyzGrid.nPoints(2)
-				do i=1,this.xyzGrid.nPoints(1)
-					this.fArray(i,j,k) = nConstant*this.fArray(i,j,k)
-				end do
-			end do
-		end do
-!$omp end do nowait
-!$omp end parallel
-		
-		if( present(constant) ) then
-			constant = nConstant
-		end if
-	end subroutine normalize
-	
-	!>
-	!! @brief 
-	!!
-	pure function norm( this ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8) :: output
-		
-#if __ID_TYPE__ == 1
-		output = sqrt( sum( conjg(this.fArray)*this.fArray )*this.xyzGrid.dV() )
-#else
-		output = sqrt( sum( this.fArray*this.fArray )*this.xyzGrid.dV() )
-#endif
-
-! ! !$omp parallel private(k)
-! ! !$omp do schedule(dynamic,1)
-! ! 		output = 0.0_8
-! ! 		do k=1,this.nPoints(3); do j=1,this.nPoints(2); do i=1,this.nPoints(1)
-! ! #if __ID_TYPE__ == 1
-! ! 			output = sqrt( sum( conjg(this.fArray)*this.fArray )*this.xyzGrid.dV() )
-! ! #else
-! ! 			output = sqrt( sum( this.fArray*this.fArray )*this.xyzGrid.dV() )
-! ! #endif
-! ! 			output.fArray(i,j,k) = this.fArray(i,j,k)**other.fArray(i,j,k)
-! ! 		end do; end do; end do
-! ! !$omp end do nowait
-! ! !$omp end parallel
-	end function norm
-	
-	!>
-	!! @brief 
-	!!
-	function expectationValueFromNFunction( this, oper, checkBox ) result( output )
-		class(NFunction3D), intent(in) :: this
-		class(NFunction3D), intent(in) :: oper
-		logical, optional, intent(in) :: checkBox
-		__TYPE_VALUE__ :: output
-		
-		logical :: effCheckBox
-		
-		effCheckBox = .true.
-		if( present(checkBox) ) effCheckBox = checkBox
-		
-		if( effCheckBox ) then
-			if( .not. this.checkBox( oper ) ) then
-				call GOptions_error( "Inconsistent boxes", "NFunction3D.expectationValueFromNFunction()" )
-			end if
-		end if
-		
-#if __ID_TYPE__ == 1
-		output = sum( conjg(this.fArray)*oper.fArray*this.fArray )*this.xyzGrid.dV()
-#else
-		output = sum( this.fArray*oper.fArray*this.fArray )*this.xyzGrid.dV()
-#endif
-	end function expectationValueFromNFunction
-	
-	!>
-	!! @brief 
-	!!
-	function expectationValueFromRArray( this, oper, checkBox, factor ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8), intent(in) :: oper(:,:,:)
-		logical, optional, intent(in) :: checkBox
-		real(8), optional, intent(in) :: factor
-		__TYPE_VALUE__ :: output
-		
-		logical :: effCheckBox
-		real(8) :: effFactor
-		
-		effCheckBox = .true.
-		if( present(checkBox) ) effCheckBox = checkBox
-		
-		effFactor = 1.0_8
-		if( present(factor) ) effFactor = factor
-		
-		if( effCheckBox ) then
-			if( this.nPoints(1) /= size(oper,dim=1) &
-				  .or. this.nPoints(2) /= size(oper,dim=2) &
-				  .or. this.nPoints(3) /= size(oper,dim=3) ) then
-				call GOptions_error( &
-					"Inconsistent boxes", &
-					"NFunction3D.expectationValueFromRArray()", &
-					"("//trim(FString_fromInteger(this.nPoints(1)))//"," &
-					   //trim(FString_fromInteger(this.nPoints(2)))//"," &
-					   //trim(FString_fromInteger(this.nPoints(3)))//") /= (" &
-					   //trim(FString_fromInteger(size(oper,dim=1)))//"," &
-					   //trim(FString_fromInteger(size(oper,dim=2)))//"," &
-					   //trim(FString_fromInteger(size(oper,dim=3)))//")" &
-					)
-			end if
-		end if
-		
-#if __ID_TYPE__ == 1
-		output = effFactor*sum( conjg(this.fArray)*oper*this.fArray )*this.xyzGrid.dV()
-#else
-		output = effFactor*sum( this.fArray*oper*this.fArray )*this.xyzGrid.dV()
-#endif
-	end function expectationValueFromRArray
-	
-	!>
-	!! @brief 
-	!!
-	function expectationValueFromCArray( this, oper, checkBox ) result( output )
-		class(NFunction3D), intent(in) :: this
-		complex(8), intent(in) :: oper(:,:,:)
-		logical, optional, intent(in) :: checkBox
-		__TYPE_VALUE__ :: output
-		
-		logical :: effCheckBox
-		
-		integer :: i, j, k
-		integer :: nx, ny, nz
-		
-		nx = this.xyzGrid.nPoints(1)
-		ny = this.xyzGrid.nPoints(2)
-		nz = this.xyzGrid.nPoints(3)
-		
-		effCheckBox = .true.
-		if( present(checkBox) ) effCheckBox = checkBox
-		
-		if( effCheckBox ) then
-			if( this.xyzGrid.nPoints(1) /= size(oper,dim=1) &
-				  .or. this.xyzGrid.nPoints(2) /= size(oper,dim=2) &
-				  .or. this.xyzGrid.nPoints(3) /= size(oper,dim=3) ) then
-				call GOptions_error( &
-					"Inconsistent boxes", &
-					"NFunction3D.expectationValueFromCArray()", &
-					"("//trim(FString_fromInteger(this.xyzGrid.nPoints(1)))//"," &
-					   //trim(FString_fromInteger(this.xyzGrid.nPoints(2)))//"," &
-					   //trim(FString_fromInteger(this.xyzGrid.nPoints(3)))//") /= (" &
-					   //trim(FString_fromInteger(size(oper,dim=1)))//"," &
-					   //trim(FString_fromInteger(size(oper,dim=2)))//"," &
-					   //trim(FString_fromInteger(size(oper,dim=3)))//")" &
-					)
-			end if
-		end if
-		
-#if __ID_TYPE__ == 1
-! 		output = sum( conjg(this.fArray)*oper*this.fArray )*this.xyzGrid.dV()
-		output = 0.0_8
-		do k=1,nz; do j=1,ny; do i=1,nx
-			output = output + conjg(this.fArray(i,j,k))*oper(i,j,k)*this.fArray(i,j,k)
-		end do; end do; end do
-		output = output*this.xyzGrid.dV()
-#else
-		output = sum( this.fArray*oper*this.fArray )*this.xyzGrid.dV()
-#endif
-	end function expectationValueFromCArray
-	
-	!>
-	!! @brief
-	!!
-	subroutine set( this, i, j, k, value )
-		class(NFunction3D) :: this
-		integer, intent(in) :: i, j, k
-		__TYPE_VALUE__, intent(in) :: value
-		
-		this.fArray( i, j, k ) = value
-	end subroutine set
-	
-	!>
-	!! @brief
-	!!
-	pure function at( this, i, j, k ) result( output )
-		class(NFunction3D), intent(in) :: this
-		integer, intent(in) :: i, j, k
-		__TYPE_VALUE__ :: output
-		
-		output = this.fArray( i, j, k )
-	end function at
-	
-	!>
-	!! @brief
-	!!
-	pure function x( this, pos ) result( output )
-		class(NFunction3D), intent(in) :: this
-		integer, intent(in) :: pos
-		__TYPE_VALUE__ :: output
-		
-		output = this.xyzGrid.component(1).at( pos )
-	end function x
-	
-	!>
-	!! @brief
-	!!
-	pure function y( this, pos ) result( output )
-		class(NFunction3D), intent(in) :: this
-		integer, intent(in) :: pos
-		__TYPE_VALUE__ :: output
-		
-		output = this.xyzGrid.component(2).at( pos )
-	end function y
-	
-	!>
-	!! @brief
-	!!
-	pure function z( this, pos ) result( output )
-		class(NFunction3D), intent(in) :: this
-		integer, intent(in) :: pos
-		__TYPE_VALUE__ :: output
-		
-		output = this.xyzGrid.component(3).at( pos )
-	end function z
-	
-	!>
-	!! @brief
-	!!
-	pure function minInCoord( this, pos ) result( output )
-		class(NFunction3D), intent(in) :: this
-		integer, intent(in) :: pos
-		real(8) :: output
-		
-		output = this.xyzGrid.min( pos )
-	end function minInCoord
-	
-	!>
-	!! @brief
-	!!
-	pure function minVec( this ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8) :: output(3)
-		
-		output = this.xyzGrid.min()
-	end function minVec
-	
-	!>
-	!! @brief
-	!!
-	pure function maxInCoord( this, pos ) result( output )
-		class(NFunction3D), intent(in) :: this
-		integer, intent(in) :: pos
-		real(8) :: output
-		
-		output = this.xyzGrid.max( pos )
-	end function maxInCoord
-	
-	!>
-	!! @brief
-	!!
-	pure function maxVec( this ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8) :: output(3)
-		
-		output = this.xyzGrid.max()
-	end function maxVec
-	
-	!>
-	!! @brief
-	!!
-	pure function stepSizeInCoord( this, pos ) result( output )
-		class(NFunction3D), intent(in) :: this
-		integer, intent(in) :: pos
-		real(8) :: output
-		
-		output = this.xyzGrid.stepSize( pos )
-	end function stepSizeInCoord
-	
-	!>
-	!! @brief
-	!!
-	pure function stepSizeVec( this ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8) :: output(3)
-		
-		output = this.xyzGrid.stepSize()
-	end function stepSizeVec
-	
-	!>
-	!! @brief
-	!!
-	pure function isEquallyspaced( this ) result( output )
-		class(NFunction3D), intent(in) :: this
-		logical :: output
-		
-		output = this.xyzGrid.isEquallyspaced()
-	end function isEquallyspaced
-	
-	!>
-	!! @brief
-	!!
-	subroutine checkEquallyspaced( this )
-		class(NFunction3D) :: this
-		
-		call this.xyzGrid.checkEquallyspaced()
-	end subroutine checkEquallyspaced
-	
-	!>
-	!! @brief Returns the number of points of the direction i-th (X,Y,Z)
-	!!
-	function ssize( this, i ) result( output )
-		class(NFunction3D), intent(in) :: this
-		integer, optional, intent(in) :: i
-		integer :: output
-		
-		if( present(i) ) then
-			output = this.xyzGrid.nPoints(i)
-		else
-			output = this.xyzGrid.nPoints(1)*this.xyzGrid.nPoints(2)*this.xyzGrid.nPoints(3)
-		end if
-	end function ssize
-	
-	!>
-	!! Code here is based on:
-	!! https://raw.githubusercontent.com/deepzot/likely/master/likely/TriCubicInterpolator.cc
-	!! https://svn.blender.org/svnroot/bf-blender/branches/volume25/source/blender/blenlib/intern/voxel.c
-	!! 
-	function interpolate( this, x, y, z ) result( output )
-		class(NFunction3D), intent(in) :: this
-		real(8) :: x, y, z
-		__TYPE_VALUE__ :: output
-		
-		real(8) :: dx, dy, dz
-		integer :: xi, yi, zi
-		
-		__TYPE_VALUE__ :: derivatives(64)
-		__TYPE_VALUE__ :: coeff(64)
-		integer :: i, j, k, ijkn
-		real(8) :: dzpow
-		real(8) :: dypow
-		
-		real(8) :: rOutput, iOutput
 		
 		! Map x,y,z to a point dx,dy,dz in the cube [1,n1] x [1,n2] x [1,n3]
-		xi = floor( 1.0000001*(x-this.min(1))/this.stepSize(1)+1.0 )
-		yi = floor( 1.0000001*(y-this.min(2))/this.stepSize(2)+1.0 )
-		zi = floor( 1.0000001*(z-this.min(3))/this.stepSize(3)+1.0 )
+		xi = floor( 1.0000001*(x-this%min(1))/this%stepSize(1)+1.0 )
+		yi = floor( 1.0000001*(y-this%min(2))/this%stepSize(2)+1.0 )
+		zi = floor( 1.0000001*(z-this%min(3))/this%stepSize(3)+1.0 )
 		
-		dx = mod( x - this.min(1) + 1.0000001*this.stepSize(1), this.stepSize(1) )/this.stepSize(1)
-		dy = mod( y - this.min(2) + 1.0000001*this.stepSize(2), this.stepSize(2) )/this.stepSize(2)
-		dz = mod( z - this.min(3) + 1.0000001*this.stepSize(3), this.stepSize(3) )/this.stepSize(3)
+		dx = mod( x - this%min(1) + 1.0000001*this%stepSize(1), this%stepSize(1) )/this%stepSize(1)
+		dy = mod( y - this%min(2) + 1.0000001*this%stepSize(2), this%stepSize(2) )/this%stepSize(2)
+		dz = mod( z - this%min(3) + 1.0000001*this%stepSize(3), this%stepSize(3) )/this%stepSize(3)
 
-#define p this.fArray
+#define p this%fArray
 		! Extract the local vocal values and calculate partial derivatives.
 		derivatives = [ &
 			! values of f(x,y,z) at each corner.
@@ -2084,7 +2084,7 @@
 		
 		output = cmplx( rOutput, iOutput )
 #else
-		call GOptions_error( "Unknown __ID_TYPE__", "NFunction3D.interpolate()" )
+		call GOptions_error( "Unknown __ID_TYPE__", "NFunction3D%interpolate()" )
 #endif
 		
 	end function interpolate
@@ -2102,18 +2102,18 @@
 		integer :: ix, iy, iz
 		
 		! Map x,y,z to a point dx,dy,dz in the cube [1,n1] x [1,n2] x [1,n3]
-		ix = floor( 1.0000001*(x-this.xyzGrid.min(1))/this.xyzGrid.stepSize(1)+1.0 )
-		iy = floor( 1.0000001*(y-this.xyzGrid.min(2))/this.xyzGrid.stepSize(2)+1.0 )
-		iz = floor( 1.0000001*(z-this.xyzGrid.min(3))/this.xyzGrid.stepSize(3)+1.0 )
+		ix = floor( 1.0000001*(x-this%xyzGrid%min(1))/this%xyzGrid%stepSize(1)+1.0 )
+		iy = floor( 1.0000001*(y-this%xyzGrid%min(2))/this%xyzGrid%stepSize(2)+1.0 )
+		iz = floor( 1.0000001*(z-this%xyzGrid%min(3))/this%xyzGrid%stepSize(3)+1.0 )
 		
 		if( &
-			ix < 1 .or. ix > this.xyzGrid.nPoints(1) .or. &
-			iy < 1 .or. iy > this.xyzGrid.nPoints(2) .or. &
-			iz < 1 .or. iz > this.xyzGrid.nPoints(3) &
+			ix < 1 .or. ix > this%xyzGrid%nPoints(1) .or. &
+			iy < 1 .or. iy > this%xyzGrid%nPoints(2) .or. &
+			iz < 1 .or. iz > this%xyzGrid%nPoints(3) &
 		) then
 			output = 0.0_8
 		else
-			output = this.fArray(ix,iy,iz)
+			output = this%fArray(ix,iy,iz)
 		end if
 	end function evaluateXYZ
 
@@ -2128,20 +2128,20 @@
 		
 		integer :: ival
 		
-		ival = floor( 1.0000001*(val-this.xyzGrid.min(coord))/this.xyzGrid.stepSize(coord)+1.0 )
+		ival = floor( 1.0000001*(val-this%xyzGrid%min(coord))/this%xyzGrid%stepSize(coord)+1.0 )
 		
-		if( ival < 1 .or. ival > this.xyzGrid.nPoints(coord) ) then
+		if( ival < 1 .or. ival > this%xyzGrid%nPoints(coord) ) then
 			output = 0.0_8
 		else
 			select case( coord )
 				case( 1 )
-					output = sum(this.fArray(ival,:,:))
+					output = sum(this%fArray(ival,:,:))
 				case( 2 )
-					output = sum(this.fArray(:,ival,:))
+					output = sum(this%fArray(:,ival,:))
 				case( 3 )
-					output = sum(this.fArray(:,:,ival))
+					output = sum(this%fArray(:,:,ival))
 				case default
-					write(*,*) "### ERROR ### NFunction3D.evaluateCoord() coord > 3"
+					write(*,*) "### ERROR ### NFunction3D%evaluateCoord() coord > 3"
 					stop
 			end select
 		end if
@@ -2177,42 +2177,42 @@
 		effDirZ = 1
 		if( present(dirz) ) effDirZ = dirz
 		
-		xyzGrid = this.xyzGrid
-		call xyzGrid.resize( dnx, dny, dnz, dirx, diry, dirz )
+		xyzGrid = this%xyzGrid
+		call xyzGrid%resize( dnx, dny, dnz, dirx, diry, dirz )
 		
-		oldN = this.xyzGrid.nPoints()
+		oldN = this%xyzGrid%nPoints()
 		
 		if( effDirX == 1 .and. effDirY == 1 .and. effDirZ == 1 ) then
 		
-			newN = xyzGrid.nPoints()
+			newN = xyzGrid%nPoints()
 			allocate( fArray(newN(1),newN(2),newN(3)) )
 			fArray = 0.0_8
 			
 !$omp parallel private(k)
 !$omp do schedule(dynamic,1)
 			do k=1,oldN(3); do j=1,oldN(2); do i=1,oldN(1)
-				fArray(i,j,k) = this.fArray(i,j,k)
+				fArray(i,j,k) = this%fArray(i,j,k)
 			end do; end do; end do
 !$omp end do nowait
 !$omp end parallel
 
 		else if( effDirX == -1 .and. effDirY == -1 .and. effDirZ == -1 ) then
 		
-			newN = xyzGrid.nPoints()
+			newN = xyzGrid%nPoints()
 			allocate( fArray(newN(1),newN(2),newN(3)) )
 			fArray = 0.0_8
 			
 !$omp parallel private(k)
 !$omp do schedule(dynamic,1)
 			do k=dnz+1,newN(3); do j=dny+1,newN(2); do i=dnx+1,newN(1)
-				fArray(i,j,k) = this.fArray(i-dnx,j-dny,k-dnz)
+				fArray(i,j,k) = this%fArray(i-dnx,j-dny,k-dnz)
 			end do; end do; end do
 !$omp end do nowait
 !$omp end parallel
 			
 		else if( effDirX == 0 .and. effDirY == 0 .and. effDirZ == 0 ) then
 			
-			newN = xyzGrid.nPoints()
+			newN = xyzGrid%nPoints()
 			allocate( fArray(newN(1),newN(2),newN(3)) )
 			fArray = 0.0_8
 			
@@ -2222,7 +2222,7 @@
 				do j=dny+1,dny+oldN(2)
 					ii=1
 					do i=dnx+1,dnx+oldN(1)
-						fArray(i,j,k) = this.fArray(ii,jj,kk)
+						fArray(i,j,k) = this%fArray(ii,jj,kk)
 						ii=ii+1
 					end do
 					jj = jj+1
@@ -2233,11 +2233,11 @@
 		else
 			call GOptions_error( &
 				"Bad value for dir. (+1|0|-1)", &
-				"NFunction3D.resize()" &
+				"NFunction3D%resize()" &
 			)
 		end if
 		
-		call this.init( xyzGrid, fArray )
+		call this%init( xyzGrid, fArray )
 		
 		deallocate( fArray )
 	end subroutine resize
@@ -2245,12 +2245,12 @@
 	!>
 	!! @brief
 	!!
-	pure function checkBox( this, other ) result( output )
+	function checkBox( this, other ) result( output )
 		class(NFunction3D), intent(in) :: this
 		class(NFunction3D), intent(in) :: other
 		logical :: output
 		
-		output = this.xyzGrid.isEqualTo( other.xyzGrid )
+		output = this%xyzGrid%isEqualTo( other%xyzGrid )
 	end function checkBox
 	
 	!>
@@ -2267,19 +2267,19 @@
 		effHermitian = .true.
 		if( present(hermitian) ) effHermitian = hermitian
 		
-! 		if( .not. this.xyzGrid.isEquallyspaced() ) then
+! 		if( .not. this%xyzGrid%isEquallyspaced() ) then
 ! 			write(6,*) "### ERROR ### The grid is not equally spaced"
 ! 			stop
 ! 		end if
 		
 #if __ID_TYPE__ == 1
 		if( effHermitian ) then
-			output = sum( conjg(this.fArray)*other.fArray )*this.xyzGrid.dV()
+			output = sum( conjg(this%fArray)*other%fArray )*this%xyzGrid%dV()
 		else
-			output = sum( this.fArray*other.fArray )*this.xyzGrid.dV()
+			output = sum( this%fArray*other%fArray )*this%xyzGrid%dV()
 		end if
 #else
-		output = sum( this.fArray*other.fArray )*this.xyzGrid.dV()
+		output = sum( this%fArray*other%fArray )*this%xyzGrid%dV()
 #endif
 	end function innerProductWithNFunction3D
 	
@@ -2297,19 +2297,19 @@
 		effHermitian = .true.
 		if( present(hermitian) ) effHermitian = hermitian
 		
-! 		if( .not. this.xyzGrid.isEquallyspaced() ) then
+! 		if( .not. this%xyzGrid%isEquallyspaced() ) then
 ! 			write(6,*) "### ERROR ### The grid is not equally spaced"
 ! 			stop
 ! 		end if
 		
 #if __ID_TYPE__ == 1
 		if( effHermitian ) then
-			output = sum( conjg(this.fArray)*other )*this.xyzGrid.dV()
+			output = sum( conjg(this%fArray)*other )*this%xyzGrid%dV()
 		else
-			output = sum( this.fArray*other )*this.xyzGrid.dV()
+			output = sum( this%fArray*other )*this%xyzGrid%dV()
 		end if
 #else
-		output = sum( this.fArray*other )*this.xyzGrid.dV()
+		output = sum( this%fArray*other )*this%xyzGrid%dV()
 #endif
 	end function innerProductWithRArray
 	
@@ -2327,19 +2327,19 @@
 		effHermitian = .true.
 		if( present(hermitian) ) effHermitian = hermitian
 		
-! 		if( .not. this.xyzGrid.isEquallyspaced() ) then
+! 		if( .not. this%xyzGrid%isEquallyspaced() ) then
 ! 			write(6,*) "### ERROR ### The grid is not equally spaced"
 ! 			stop
 ! 		end if
 		
 #if __ID_TYPE__ == 1
 		if( effHermitian ) then
-			output = sum( conjg(this.fArray)*other )*this.xyzGrid.dV()
+			output = sum( conjg(this%fArray)*other )*this%xyzGrid%dV()
 		else
-			output = sum( this.fArray*other )*this.xyzGrid.dV()
+			output = sum( this%fArray*other )*this%xyzGrid%dV()
 		end if
 #else
-		output = sum( this.fArray*other )*this.xyzGrid.dV()
+		output = sum( this%fArray*other )*this%xyzGrid%dV()
 #endif
 	end function innerProductWithCArray
 	
@@ -2357,8 +2357,8 @@
 #if __ID_TYPE__ == 1
 !$omp parallel private(k)
 !$omp do schedule(dynamic,1)
-		do k=1,this.xyzGrid.nPoints(3); do j=1,this.xyzGrid.nPoints(2); do i=1,this.xyzGrid.nPoints(1)
-			output.fArray(i,j,k) = conjg(this.fArray(i,j,k))
+		do k=1,this%xyzGrid%nPoints(3); do j=1,this%xyzGrid%nPoints(2); do i=1,this%xyzGrid%nPoints(1)
+			output%fArray(i,j,k) = conjg(this%fArray(i,j,k))
 		end do; end do; end do
 !$omp end do nowait
 !$omp end parallel
@@ -2379,16 +2379,16 @@
 #if __ID_TYPE__ == 1
 !$omp parallel private(k)
 !$omp do schedule(dynamic,1)
-		do k=1,this.xyzGrid.nPoints(3); do j=1,this.xyzGrid.nPoints(2); do i=1,this.xyzGrid.nPoints(1)
-			output.fArray(i,j,k) = abs(this.fArray(i,j,k))**2
+		do k=1,this%xyzGrid%nPoints(3); do j=1,this%xyzGrid%nPoints(2); do i=1,this%xyzGrid%nPoints(1)
+			output%fArray(i,j,k) = abs(this%fArray(i,j,k))**2
 		end do; end do; end do
 !$omp end do nowait
 !$omp end parallel
 #else
 !$omp parallel private(k)
 !$omp do schedule(dynamic,1)
-		do k=1,this.xyzGrid.nPoints(3); do j=1,this.xyzGrid.nPoints(2); do i=1,this.xyzGrid.nPoints(1)
-			output.fArray(i,j,k) = this.fArray(i,j,k)**2
+		do k=1,this%xyzGrid%nPoints(3); do j=1,this%xyzGrid%nPoints(2); do i=1,this%xyzGrid%nPoints(1)
+			output%fArray(i,j,k) = this%fArray(i,j,k)**2
 		end do; end do; end do
 !$omp end do nowait
 !$omp end parallel
@@ -2412,7 +2412,7 @@
 		real(8), allocatable :: cValues(:)
 		integer :: id(3,2)
 		
-		if( .not. this.xyzGrid.isEquallyspaced() ) then
+		if( .not. this%xyzGrid%isEquallyspaced() ) then
 			write(6,*) "### ERROR ### The grid is not equally spaced"
 			stop
 		end if
@@ -2421,26 +2421,26 @@
 		id(2,:) = [ 1, 3 ]
 		id(3,:) = [ 1, 2 ]
 		
-		dS = this.xyzGrid.stepSize( id(coord,1) )*this.xyzGrid.stepSize( id(coord,2) )
+		dS = this%xyzGrid%stepSize( id(coord,1) )*this%xyzGrid%stepSize( id(coord,2) )
 		
-		allocate( cValues(this.xyzGrid.nPoints(coord)) )
+		allocate( cValues(this%xyzGrid%nPoints(coord)) )
 		
-		do i=1,this.xyzGrid.nPoints(coord)
+		do i=1,this%xyzGrid%nPoints(coord)
 			select case( coord )
 				case( 1 )
-					cValues(i) = sum(this.fArray(i,:,:))
+					cValues(i) = sum(this%fArray(i,:,:))
 				case( 2 )
-					cValues(i) = sum(this.fArray(:,i,:))
+					cValues(i) = sum(this%fArray(:,i,:))
 				case( 3 )
-					cValues(i) = sum(this.fArray(:,:,i))
+					cValues(i) = sum(this%fArray(:,:,i))
 				
 				case default
-					write(*,*) "### ERROR ### NFunction3D.reducedFunction() coord > 3"
+					write(*,*) "### ERROR ### NFunction3D%reducedFunction() coord > 3"
 					stop
 			end select
 		end do
 		
-		call output.init( this.xyzGrid.component(coord), cValues*dS )
+		call output%init( this%xyzGrid%component(coord), cValues*dS )
 		
 		deallocate( cValues )
 		

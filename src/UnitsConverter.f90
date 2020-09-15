@@ -120,25 +120,25 @@ module UnitsConverter_
 	integer, private, parameter :: UnitsConverter_NUNITS = 19
 	
 	character(10), private, parameter :: UnitsConverter_NAME(UnitsConverter_NUNITS) = [ &
-		"amu", &
-		"angs", &
-		"eV", &
-		"cm1", &
-		"ryd", &
+		"    amu", &
+		"   angs", &
+		"     eV", &
+		"    cm1", &
+		"    ryd", &
 		"kcalMol", &
-		"kJMol", &
-		"bohr", &
-		"g", &
-		"kg", &
-		"au", &
-		"Eh", &
-		"Ha", &
-		"deg", &
-		"kelvin", &
-		"fs", &
-		"ps", &
-		"nm", &
-		"microm" &
+		"  kJMol", &
+		"   bohr", &
+		"      g", &
+		"     kg", &
+		"     au", &
+		"     Eh", &
+		"     Ha", &
+		"    deg", &
+		" kelvin", &
+		"     fs", &
+		"     ps", &
+		"     nm", &
+		" microm" &
 	]
 	
 	real(8), private, parameter :: UnitsConverter_VALUE(UnitsConverter_NUNITS) = [ &

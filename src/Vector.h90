@@ -130,18 +130,18 @@
 		__TYPE_ITEMVECTOR__, optional, intent(in) :: value
 		integer, optional, intent(in) :: resizeIncrement
 		
-		if( allocated(this.data) ) deallocate( this.data )
+		if( allocated(this%data) ) deallocate( this%data )
 		
-		this.nItems = 0
+		this%nItems = 0
 		if( present(initialSize) ) then
-			allocate( this.data(initialSize) )
-			this.nItems = initialSize
+			allocate( this%data(initialSize) )
+			this%nItems = initialSize
 			
-			if( present(value) ) this.data = value
+			if( present(value) ) this%data = value
 		end if
 		
-		this.resizeIncrement = 256
-		if( present(resizeIncrement) ) this.resizeIncrement = resizeIncrement
+		this%resizeIncrement = 256
+		if( present(resizeIncrement) ) this%resizeIncrement = resizeIncrement
 	end subroutine initVector
 	
 	!>
@@ -156,13 +156,13 @@
 		
 		integer :: i
 		
-		this.nItems = other.nItems
-		this.resizeIncrement = other.resizeIncrement
+		this%nItems = other%nItems
+		this%resizeIncrement = other%resizeIncrement
 		
-		if( allocated(this.data) ) deallocate( this.data )
-		allocate( this.data(other.capacity()) )
+		if( allocated(this%data) ) deallocate( this%data )
+		allocate( this%data(other%capacity()) )
 		
-		this.data = other.data
+		this%data = other%data
 	end subroutine copyVector
 	
 	!>
@@ -174,7 +174,7 @@
 	subroutine destroyVector( this )
 		type(Vector), intent(inout) :: this
 		
-		call this.clear()
+		call this%clear()
 	end subroutine destroyVector
 	
 	!>
@@ -213,7 +213,7 @@
 		
 		if( present(ofileName) ) then
 			call ofile.init( ofileName )
-			call this.toFStream( ofile )
+			call this%toFStream( ofile )
 			call ofile.close()
 		else
 			call toFStream( this )
@@ -231,23 +231,23 @@
 		
 		__TYPE_ITEMVECTOR__, allocatable :: dataBuffer(:)
 		
-		if( allocated(this.data) ) then
-			allocate( dataBuffer(this.size()) )
+		if( allocated(this%data) ) then
+			allocate( dataBuffer(this%size()) )
 			
-			dataBuffer = this.data(1:this.size())
+			dataBuffer = this%data(1:this%size())
 			
-			deallocate( this.data )
-			allocate( this.data( newSize ) )
+			deallocate( this%data )
+			allocate( this%data( newSize ) )
 			
-			this.data( 1:size(dataBuffer) ) = dataBuffer
+			this%data( 1:size(dataBuffer) ) = dataBuffer
 			
-			if( present(value) ) this.data( size(dataBuffer)+1:size(this.data) ) = value
+			if( present(value) ) this%data( size(dataBuffer)+1:size(this%data) ) = value
 			
 			deallocate( dataBuffer )
 		else
-			allocate( this.data( newSize ) )
+			allocate( this%data( newSize ) )
 			
-			if( present(value) ) this.data = value
+			if( present(value) ) this%data = value
 		end if
 	end subroutine resize
 	
@@ -258,7 +258,7 @@
 		class(Vector), intent(in) :: this
 		integer :: output
 		
-		output = this.nItems
+		output = this%nItems
 	end function ssize
 	
 	!>
@@ -269,7 +269,7 @@
 		integer :: output
 		
 		output = 0
-		if( allocated(this.data) ) output = size( this.data )
+		if( allocated(this%data) ) output = size( this%data )
 	end function capacity
 	
 	!>
@@ -279,7 +279,7 @@
 		class(Vector), intent(in) :: this
 		logical :: output
 		
-		output = ( this.nItems == 0 )
+		output = ( this%nItems == 0 )
 	end function isEmpty
 	
 	!>
@@ -289,14 +289,14 @@
 		class(Vector), intent(inout) :: this
 		__CLASS_ITEMVECTOR__, intent(in) :: item
 		
-		if ( this.nItems == 0 ) then
-			call this.resize( this.resizeIncrement )
-		else if ( this.nItems == this.capacity() ) then
-			call this.resize( this.capacity() + this.resizeIncrement )
+		if ( this%nItems == 0 ) then
+			call this%resize( this%resizeIncrement )
+		else if ( this%nItems == this%capacity() ) then
+			call this%resize( this%capacity() + this%resizeIncrement )
 		end if
 		
-		this.nItems = this.nItems + 1
-		this.data( this.nItems ) = item
+		this%nItems = this%nItems + 1
+		this%data( this%nItems ) = item
 	end subroutine appendValue
 	
 	!>
@@ -309,7 +309,7 @@
 		integer :: i
 		
 		do i=1,size(array)
-			call this.append( array(i) )
+			call this%append( array(i) )
 		end do
 	end subroutine appendFArray
 	
@@ -322,18 +322,18 @@
 		
 		integer :: i
 		
-		if ( this.nItems == 0 ) then
-			call this.resize( this.resizeIncrement )
-		else if ( this.nItems == this.capacity() ) then
-			call this.resize( this.capacity() + this.resizeIncrement )
+		if ( this%nItems == 0 ) then
+			call this%resize( this%resizeIncrement )
+		else if ( this%nItems == this%capacity() ) then
+			call this%resize( this%capacity() + this%resizeIncrement )
 		end if
 		
-		do i=this.size(),1,-1
-			this.data( i+1 ) = this.data( i )
+		do i=this%size(),1,-1
+			this%data( i+1 ) = this%data( i )
 		end do
-		this.data(1) = item
+		this%data(1) = item
 		
-		this.nItems = this.nItems + 1
+		this%nItems = this%nItems + 1
 	end subroutine prepend
 	
 	!>
@@ -366,10 +366,10 @@
 ! ! 			before.next => elem
 ! ! 		else
 ! ! 			before.next => elem
-! ! 			this.end => elem
+! ! 			this%end => elem
 ! ! 		end if
 ! ! 		
-! ! 		this.nItems = this.nItems+1 
+! ! 		this%nItems = this%nItems+1 
 ! 
 ! 		
 ! 		if ( associated(cBefore.next) ) then
@@ -385,9 +385,9 @@
 ! 			cBefore.next.prev => cBefore
 ! 			after.prev => cBefore.next
 ! 			
-! 			this.nItems = this.nItems+1 
+! 			this%nItems = this%nItems+1 
 ! 		else
-! 			call this.append( item )
+! 			call this%append( item )
 ! 		end if
 		
 	end subroutine insert
@@ -411,22 +411,22 @@
 ! 			cPtr.prev => null()
 ! 			cPtr.next => null()
 ! 		else if( ( .not. associated(cPtr.prev) ) .and. associated(cPtr.next) ) then ! < El elemento es la cabeza
-! 			this.begin => cPtr.next
+! 			this%begin => cPtr.next
 ! 			cPtr.next => null()
-! 			this.begin.prev => null()
+! 			this%begin.prev => null()
 ! 		else if( associated(cPtr.prev) .and. ( .not. associated(cPtr.next) ) ) then ! < El elemento es la cola
-! 			this.end => cPtr.prev
+! 			this%end => cPtr.prev
 ! 			cPtr.prev => null()
-! 			this.end.next => null()
+! 			this%end.next => null()
 ! 		end if
 ! 		
 ! 		deallocate(cPtr)
 ! 		
-! 		this.nItems = this.nItems-1 
+! 		this%nItems = this%nItems-1 
 ! 		
-! 		if( this.nItems == 0 ) then
-! 			this.begin => null()
-! 			this.end => null()
+! 		if( this%nItems == 0 ) then
+! 			this%begin => null()
+! 			this%end => null()
 ! 		end if
 	end subroutine eraseFromPtr
 	
@@ -439,12 +439,12 @@
 		
 		integer :: i
 		
-		if( this.size() > 0 ) then
-			do i=pos+1,this.size()
-				this.data(i-1) = this.data(i)
+		if( this%size() > 0 ) then
+			do i=pos+1,this%size()
+				this%data(i-1) = this%data(i)
 			end do
 			
-			this.nItems = this.nItems-1
+			this%nItems = this%nItems-1
 		end if
 	end subroutine eraseFromPos
 	
@@ -457,11 +457,11 @@
 		
 		integer :: i
 		
-		if( this.size() > 0 ) then
+		if( this%size() > 0 ) then
 			i = 1
-			do while( i <= this.size() )
-				if( this.data(i) == value ) then
-					call this.erase( i )
+			do while( i <= this%size() )
+				if( this%data(i) == value ) then
+					call this%erase( i )
 					i = 1
 				else
 					i = i+1
@@ -480,7 +480,7 @@
 		integer :: i
 		
 		do i=1,size(values)
-			call this.removeFromValue( values(i) )
+			call this%removeFromValue( values(i) )
 		end do
 	end subroutine removeFromValues
 	
@@ -497,9 +497,9 @@
 		
 		nItems = size(posVec)
 		
-		if( any( posVec > this.ssize() ) ) then
+		if( any( posVec > this%ssize() ) ) then
 			write(*,"(A)") "### ERROR ### Vector.eraseAllExcept( posVec ): There is one value X than X > size"
-			write(*,"(A,I3)")                 "                size = ", this.ssize()
+			write(*,"(A,I3)")                 "                size = ", this%ssize()
 			write(*,"(A,<size(posVec)>I3,A)") "              posVec = (", posVec, ")"
 			stop
 		end if
@@ -509,14 +509,14 @@
 		! @todo Probablemente tenga que organizar los valores de posVec
 		
 		do i=1,nItems
-			dataBuffer( i ) = this.data( posVec(i) )
+			dataBuffer( i ) = this%data( posVec(i) )
 		end do
 		
-		deallocate( this.data )
-		allocate( this.data(nItems) )
-		this.nItems = nItems
+		deallocate( this%data )
+		allocate( this%data(nItems) )
+		this%nItems = nItems
 			
-		this.data = dataBuffer
+		this%data = dataBuffer
 		
 		! @todo Actualizar apuntadores
 		
@@ -533,9 +533,9 @@
 		integer :: i
 		integer, allocatable :: ids(:)
 		
-		if( nItems > this.ssize() ) then
+		if( nItems > this%ssize() ) then
 			write(*,*) ""
-			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ Vector.eraseAllExceptFirst( nItems ). nItems > size (", nItems, " > ", this.size(), "). Vector is not affected."
+			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ Vector.eraseAllExceptFirst( nItems ). nItems > size (", nItems, " > ", this%size(), "). Vector is not affected."
 			return
 		end if
 		
@@ -545,7 +545,7 @@
 			ids(i) = i
 		end do
 		
-		call this.eraseAllExcept( ids )
+		call this%eraseAllExcept( ids )
 		
 		deallocate( ids )
 	end subroutine eraseAllExceptFirst
@@ -560,26 +560,26 @@
 		integer :: i, j
 		integer, allocatable :: ids(:)
 		
-		if( nItems > this.ssize() ) then
+		if( nItems > this%ssize() ) then
 			write(*,*) ""
-			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ Vector.eraseAllExceptLast( nItems ). nItems > size (", nItems, " > ", this.size(), "). Vector is not affected."
+			write(*,"(A,I5,A,I5,A)") "!!! WARNING ¡¡¡ Vector.eraseAllExceptLast( nItems ). nItems > size (", nItems, " > ", this%size(), "). Vector is not affected."
 			return
 		end if
 		
 		allocate( ids(nItems) )
 		
 ! 		j = 1
-! 		do i=this.size()-nItems,this.size()
+! 		do i=this%size()-nItems,this%size()
 ! 			ids(j) = i
 ! 			j = j+1
 ! 		end do
 		
-		j = this.size()-nItems
+		j = this%size()-nItems
 		do i=1,nItems
 			ids(i) = j+i
 		end do
 		
-		call this.eraseAllExcept( ids )
+		call this%eraseAllExcept( ids )
 		
 		deallocate( ids )
 	end subroutine eraseAllExceptLast
@@ -590,28 +590,28 @@
 	subroutine clear( this )
 		class(Vector), intent(inout) :: this
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		this.nItems = 0
+		if( allocated(this%data) ) deallocate(this%data)
+		this%nItems = 0
 		
 ! 		class(VectorIterator), pointer :: iter
 ! 		class(VectorIterator), pointer :: iterPos
 ! 		
-! 		if( .not. ( associated(this.begin) .and. associated(this.end) ) ) return
+! 		if( .not. ( associated(this%begin) .and. associated(this%end) ) ) return
 ! 		
-! 		iter => this.begin
+! 		iter => this%begin
 ! ! 		if( associated(iter.next) ) iterPos => iter.next
 ! 		
 ! 		do while ( associated(iter) )
-! 			call this.erase( iter )
-! 			iter => this.begin
+! 			call this%erase( iter )
+! 			iter => this%begin
 ! ! 			iter => iterPos
 ! 			
 ! ! 			if( associated(iterPos) ) iterPos => iter.next
 ! 		end do
 ! 		
-! ! 		this.nItems = 0
-! ! 		this.begin => null()
-! ! 		this.end => null()
+! ! 		this%nItems = 0
+! ! 		this%begin => null()
+! ! 		this%end => null()
 	end subroutine clear
 	
 	!>
@@ -622,7 +622,7 @@
 		integer, intent(in) :: pos
 		__TYPE_ITEMVECTOR__, intent(in) :: value
 		
-		this.data( pos ) = value
+		this%data( pos ) = value
 	end subroutine setFromPos
 	
 	!>
@@ -632,7 +632,7 @@
 		class(Vector), intent(in) :: this
 		__TYPE_ITEMVECTOR__ :: output
 		
-		output = this.data( 1 )
+		output = this%data( 1 )
 	end function first
 	
 	!>
@@ -642,7 +642,7 @@
 		class(Vector), intent(in) :: this
 		__TYPE_ITEMVECTOR__ :: output
 		
-		output = this.data( this.size() )
+		output = this%data( this%size() )
 	end function last
 	
 	!>
@@ -666,7 +666,7 @@
 		integer, intent(in) :: pos
 		__TYPE_ITEMVECTOR__ :: output
 		
-		output = this.data( pos )
+		output = this%data( pos )
 	end function atFromPos
 	
 	!>
@@ -689,7 +689,7 @@
 		integer, intent(in) :: pos
 		__TYPE_ITEMVECTOR__, intent(in) :: item
 		
-		this.data( pos ) = item
+		this%data( pos ) = item
 	end subroutine replaceFromPos
 	
 	!>
@@ -711,8 +711,8 @@
 		if( present(from) ) effFrom = from
 		
 		output=-1
-		do i=effFrom,this.size()
-			if( this.data(i) == value ) then
+		do i=effFrom,this%size()
+			if( this%data(i) == value ) then
 				output = i
 				exit
 			end if
@@ -735,12 +735,12 @@
 		
 		integer :: i
 		
-		effFrom = this.size()
+		effFrom = this%size()
 		if( present(from) ) effFrom = from
 		
 		output=-1
 		do i=effFrom,1,-1
-			if( this.data(i) == value ) then
+			if( this%data(i) == value ) then
 				output = i
 				exit
 			end if
@@ -756,7 +756,7 @@
 		logical :: output
 		
 		output = .false.
-		if( this.indexOf(value) /= -1 ) output = .true.
+		if( this%indexOf(value) /= -1 ) output = .true.
 	end function contains
 	
 	!>
@@ -773,7 +773,7 @@
 ! 		class(VectorIterator), pointer :: iter
 ! 		
 ! 		i=1
-! 		iter => this.begin
+! 		iter => this%begin
 ! 		do while ( associated(iter) )
 ! 			if( i==pos ) then
 ! 				output = iter
@@ -797,8 +797,8 @@
 		class(VectorIterator), pointer :: iter
 		
 		if( allocated(fArray) ) deallocate(fArray)
-		allocate( fArray(this.size()) )
+		allocate( fArray(this%size()) )
 		
-		fArray = this.data(1:this.nItems)
+		fArray = this%data(1:this%nItems)
 	end subroutine toFArray
 #endif

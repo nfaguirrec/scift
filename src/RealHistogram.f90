@@ -139,14 +139,14 @@ module RealHistogram_
 		call this%copyList( other )
 
 		this%rule = other%rule
-		this%algorithm = other.algorithm
+		this%algorithm = other%algorithm
 		
 		this%counts = other%counts
 		this%density = other%density
 		
-		this%n = other.n
-		this%s1 = other.s1
-		this%s2 = other.s2
+		this%n = other%n
+		this%s1 = other%s1
+		this%s2 = other%s2
 	end subroutine copyRealHistogram
 	
 	!>
@@ -313,13 +313,13 @@ module RealHistogram_
 		
 		!! En el peor de los casos cada
 		!! línea es un valor
-		allocate( data(ifile.numberOfLines) )
+		allocate( data(ifile%numberOfLines) )
 		
 		nData = 1
-		do while( .not. ifile.eof() )
+		do while( .not. ifile%eof() )
 			buffer = ifile%readLine( cCommentsEff )
 			
-			call buffer.split( tokens, " " )
+			call buffer%split( tokens, " " )
 			
 			if( columnEff <= size(tokens) ) then
 				if( len(trim(tokens(columnEff))) /= 0 ) then
@@ -332,7 +332,7 @@ module RealHistogram_
 		call this%addFArray( data(1:nData-1) )
 		
 		deallocate( data )
-		call ifile.close()
+		call ifile%close()
 	end subroutine addFile
 	
 	!>
@@ -461,7 +461,7 @@ module RealHistogram_
 						end if
 					end if
 					
-					iter => iter.next
+					iter => iter%next
 				end do
 				
 			end do
@@ -487,7 +487,7 @@ module RealHistogram_
 				
 ! 				write(6,"(i5,2f10.5,i5)") j, xGrid%at(j), iter%data, i
 				
-				iter => iter.next
+				iter => iter%next
 				j = j + 1
 			end do
 			
@@ -537,7 +537,7 @@ module RealHistogram_
 				do while( associated(iter) )
 					output = output + iter%data*weights(i)
 					
-					iter => iter.next
+					iter => iter%next
 					i = i+1
 				end do
 				
@@ -549,7 +549,7 @@ module RealHistogram_
 				do while( associated(iter) )
 					output = output + iter%data
 					
-					iter => iter.next
+					iter => iter%next
 					i = i+1
 				end do
 				
@@ -617,7 +617,7 @@ module RealHistogram_
 			do while( associated(iter) )
 				output = output + weights(i)*( iter%data - mean )**2
 				
-				iter => iter.next
+				iter => iter%next
 				i = i+1
 			end do
 			
@@ -631,7 +631,7 @@ module RealHistogram_
 			do while( associated(iter) )
 				output = output + ( iter%data - mean )**2
 				
-				iter => iter.next
+				iter => iter%next
 			end do
 			
 			! Bessel's correction
@@ -677,14 +677,14 @@ module RealHistogram_
 			call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "RealHistogram.build()" )
 		end if
 		
-		output = Math_INF
+		output = huge(0.0_8)
 		iter => this%begin
 		do while( associated(iter) )
 			if( iter%data < output ) then
 				output = iter%data
 			end if
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 	end function minimum
 	
@@ -702,14 +702,14 @@ module RealHistogram_
 			call GOptions_error( "Method not available with algorithm = Histogram_RUNNING, use algorithm = Histogram_STORING", "RealHistogram.build()" )
 		end if
 		
-		output = -Math_INF
+		output = -huge(0.0_8)
 		iter => this%begin
 		do while( associated(iter) )
 			if( iter%data > output ) then
 				output = iter%data
 			end if
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 	end function maximum
 	
@@ -762,7 +762,7 @@ module RealHistogram_
 			do while( associated(iter) )
 				output = output + iter%data
 				
-				iter => iter.next
+				iter => iter%next
 			end do
 			
 		end if
@@ -875,15 +875,15 @@ module RealHistogram_
 		!  [9] 27.57777 28.62222 29.66666
 
 		! @todo Parece que solo funciona con la combinación Histogram_STURGES y binsPrecision=1
-		call histogram.build( binsPrecision=3 )
-! 		call histogram.build()
+		call histogram%build( binsPrecision=3 )
+! 		call histogram%build()
 		
 		write(*,"(A20,I15)")   "    size = ", histogram%size()
-		write(*,"(A20,2F15.5)") "    mean = ", histogram.mean(), histogramRunning.mean()
-		write(*,"(A20,2F15.5)") "   stdev = ", histogram.stdev(), histogramRunning.stdev()
+		write(*,"(A20,2F15.5)") "    mean = ", histogram%mean(), histogramRunning%mean()
+		write(*,"(A20,2F15.5)") "   stdev = ", histogram%stdev(), histogramRunning%stdev()
 		write(*,"(A20,F15.5)") " minimum = ", histogram%minimum()
 		write(*,"(A20,F15.5)") " maximum = ", histogram%maximum()
-		write(*,"(A20,2F15.5)") "  stderr = ", histogram.stderr(), histogramRunning.stderr()
+		write(*,"(A20,2F15.5)") "  stderr = ", histogram%stderr(), histogramRunning%stderr()
 		
 		! plot "./counts.dat" w boxes, "./counts.dat" w p pt 7
 		call histogram%save("histData.dat")
@@ -897,12 +897,12 @@ module RealHistogram_
 		
 		write(*,"(A)")   ""
 		write(*,"(A20,I15)")   "    size = ", histogram%size()
-		write(*,"(A20,2F15.5)") "    mean = ", histogram.mean(), histogramRunning.mean()
+		write(*,"(A20,2F15.5)") "    mean = ", histogram%mean(), histogramRunning%mean()
 
-! 		write(*,"(A20,F15.5)") " mode = ", histogram.mode()
-! 		write(*,"(A20,F15.5)") "stdev = ", histogram.median()
-! 		mode = histogram.mode()
-! 		median = histogram.skewness()
+! 		write(*,"(A20,F15.5)") " mode = ", histogram%mode()
+! 		write(*,"(A20,F15.5)") "stdev = ", histogram%median()
+! 		mode = histogram%mode()
+! 		median = histogram%skewness()
 		
 		write(*,*) "LORENTZIAN DRESSING"
 		write(*,*) "-------------------"
@@ -910,7 +910,7 @@ module RealHistogram_
 		call histogram%init( Histogram_LORENTZIAN_DRESSING )
 		call histogram%add( "data/formats/ONE_COLUMN" )
 		call histogram%show()
-		call histogram.build( nBins=10000 )
+		call histogram%build( nBins=10000 )
 		call histogram%density%save("density.dat")
 		
 	end subroutine RealHistogram_test

@@ -270,16 +270,16 @@ module IntegerGraph_
 		class(IntegerGraph), intent(in) :: other
 		
 		if( allocated(this%name) ) deallocate(this%name)
-		this%name = other.name
+		this%name = other%name
 		
-		this%node2Neighbors = other.node2Neighbors
-		this%node2InEdges = other.node2InEdges
-		this%node2OutEdges = other.node2OutEdges
+		this%node2Neighbors = other%node2Neighbors
+		this%node2InEdges = other%node2InEdges
+		this%node2OutEdges = other%node2OutEdges
 		
 		this%nodeProperties = other%nodeProperties
-		this%edgeProperties = other.edgeProperties
+		this%edgeProperties = other%edgeProperties
 		
-		this%directed = other.directed
+		this%directed = other%directed
 		
 		this%sNode = other%sNode
 		
@@ -287,7 +287,7 @@ module IntegerGraph_
 		allocate( this%minDistance( size(other%minDistance) ) )
 		this%minDistance = other%minDistance
 		
-		this%previous = other.previous
+		this%previous = other%previous
 	end subroutine copyIntegerGraph
 	
 	!>
@@ -2149,7 +2149,7 @@ module IntegerGraph_
 		effCheckLabels = .false.
 		if( present(checkLabels) ) effCheckLabels = checkLabels
 		
-		if( this%nNodes() /= other%nNodes() .or. this%nEdges() /= other.nEdges() ) then
+		if( this%nNodes() /= other%nNodes() .or. this%nEdges() /= other%nEdges() ) then
 			output = .false.
 			return
 		end if
@@ -2193,7 +2193,7 @@ module IntegerGraph_
 		! Be Careful. Remember that undirected graphs include at least two directed edges for each undirected edge.
 ! 		if( .not. this%isDirected() .and. this%nNodes() == 2 ) then
 ! 			w1 = this%edgeProperties%data(i)%weight
-! 			w2 = other.edgeProperties%data(i)%weight
+! 			w2 = other%edgeProperties%data(i)%weight
 ! 			
 ! 			effSimilarity = 1.0_8 - abs( w1-w2 )/max(w1,w2)
 ! ! 			effSimilarity = 1.0_8/( 1.0_8+abs(w1-w2)/2 )

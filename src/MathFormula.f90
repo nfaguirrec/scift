@@ -162,20 +162,20 @@ module MathFormula_
 		class(MathFormula), intent(inout) :: this
 		class(MathFormula), intent(in) :: other
 		
-		this%parser = other.parser
-		this%formula = other.formula
+		this%parser = other%parser
+		this%formula = other%formula
 		
 		if( allocated(this%variables) ) deallocate(this%variables)
-		allocate(this%variables(other.nVariables()))
-		this%variables = other.variables
+		allocate(this%variables(other%nVariables()))
+		this%variables = other%variables
 		
 		if( allocated(this%constants) ) deallocate(this%constants)
-		allocate(this%constants(other.nConstants()))
-		this%constants = other.constants
+		allocate(this%constants(other%nConstants()))
+		this%constants = other%constants
 		
 		if( allocated(this%constantsValues) ) deallocate(this%constantsValues)
-		allocate(this%constantsValues(other.nConstants()))
-		this%constantsValues = other.constantsValues
+		allocate(this%constantsValues(other%nConstants()))
+		this%constantsValues = other%constantsValues
 	end subroutine copyMathFormula
 	
 	!>

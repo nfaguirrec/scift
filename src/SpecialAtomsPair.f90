@@ -89,7 +89,7 @@ module SpecialAtomsPair_
 		this%symbol1 = other%symbol1
 		this%symbol2 = other%symbol2
 		this%bondCutoff = other%bondCutoff
-		this%doubleBondCutoff = other.doubleBondCutoff
+		this%doubleBondCutoff = other%doubleBondCutoff
 	end subroutine copySpecialAtomsPair
 	
 	!>

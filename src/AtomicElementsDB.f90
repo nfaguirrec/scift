@@ -445,7 +445,7 @@ module AtomicElementsDB_
 		write(6,"(A10,A10,2A15)") "-------", "-------", "-------------", "--------------"
 		do i=1,size(specialPairs)
 			write(6,"(A10,A10,2F15.5)") trim(specialPairs(i)%symbol1), trim(specialPairs(i)%symbol2), &
-				specialPairs(i)%bondCutoff/angs, specialPairs(i).doubleBondCutoff/angs
+				specialPairs(i)%bondCutoff/angs, specialPairs(i)%doubleBondCutoff/angs
 		end do
 		write(6,"(A)") ""
 		
@@ -499,10 +499,10 @@ module AtomicElementsDB_
 ! 		write(*,*) "22 ", atomicDB%mass( 22 )
 ! 		write(*,*) "79 ", atomicDB.covalentRadius( 79 )
 		write(*,*) "mass    Ti = ", atomicDB%atomicMass( " Ti " )/amu
-		write(*,*) "cradius Ti = ", atomicDB.covalentRadius( " Ti " )/angs
-		write(*,*) "cradius  O = ", atomicDB.covalentRadius( " O " )/angs
-		write(*,*) "cradius Re = ", atomicDB.covalentRadius( " Re" )/angs
-		write(*,*) "cradius Au = ", atomicDB.covalentRadius( "Au" )/angs
+		write(*,*) "cradius Ti = ", atomicDB%covalentRadius( " Ti " )/angs
+		write(*,*) "cradius  O = ", atomicDB%covalentRadius( " O " )/angs
+		write(*,*) "cradius Re = ", atomicDB%covalentRadius( " Re" )/angs
+		write(*,*) "cradius Au = ", atomicDB%covalentRadius( "Au" )/angs
 		
 		write(*,*) "Using the singleton instance"
 		write(*,*) "----------------------------"

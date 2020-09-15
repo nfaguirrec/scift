@@ -104,16 +104,16 @@ module RNFunction_
 		end if
 		
 		! El peor de los casos es que todas las lineas sean datos
-		allocate( x(stream.numberOfLines) )
-		allocate( y(stream.numberOfLines) )
+		allocate( x(stream%numberOfLines) )
+		allocate( y(stream%numberOfLines) )
 		
 		nData = 1
-		do while( .not. stream.eof() )
+		do while( .not. stream%eof() )
 			line = stream%readLine( cCommentsEff )
 			
 			if( len(line) /= 0 ) then
-				call buffer.fromFString( line )
-				call buffer.split( tokens, " " )
+				call buffer%fromFString( line )
+				call buffer%split( tokens, " " )
 				
 				if( nData == 1 .and. .not. ( size(tokens) >= size(columnsEff) ) ) then
 					write(*,*) "### ERROR ### NFunction.fromFStream(): Number of columns in file ("&

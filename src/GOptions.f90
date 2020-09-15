@@ -40,6 +40,7 @@
 module GOptions_
 	use IOStream_
 	use Timer_
+        use String_
 	
 	implicit none
 	public
@@ -55,7 +56,7 @@ module GOptions_
 	! 1) NOTHING
 	! 2) INFO
 	! 3) INFO + WARNING
-	logical :: GOptions_debugLevel = 1
+	integer :: GOptions_debugLevel = 1
 	
 	integer :: GOptions_indentLength = 5
 	
@@ -204,9 +205,9 @@ module GOptions_
 		if( present(indent) ) effIndent = indent
 		
 		write(IO_STDOUT,"(A)") ""
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "| "//trim(message)//" |"
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
+		write(IO_STDOUT,"("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
+		write(IO_STDOUT,"("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A)") "| "//trim(message)//" |"
+		write(IO_STDOUT,"("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
 		write(IO_STDOUT,"(A)") ""
 	end subroutine GOptions_section
 	
@@ -223,9 +224,9 @@ module GOptions_
 		if( present(indent) ) effIndent = indent
 		
 		write(IO_STDOUT,"(A)") ""
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") " "//trim(message)//" "
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
+		write(IO_STDOUT,"("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A)") repeat("-",len_trim(message)+2)
+		write(IO_STDOUT,"("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A)") " "//trim(message)//" "
+		write(IO_STDOUT,"("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A)") repeat("-",len_trim(message)+2)
 		write(IO_STDOUT,"(A)") ""
 	end subroutine GOptions_subsection
 
@@ -242,8 +243,8 @@ module GOptions_
 		if( present(indent) ) effIndent = indent
 		
 		write(IO_STDOUT,"(A)") ""
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") " "//trim(message)//" "
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
+		write(IO_STDOUT,"("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A)") " "//trim(message)//" "
+		write(IO_STDOUT,"("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A)") repeat("-",len_trim(message)+2)
 		write(IO_STDOUT,"(A)") ""
 	end subroutine GOptions_paragraph
 	
@@ -380,7 +381,9 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,F20.5,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT, &
+                        "("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A10,F20.5,A8,5X,A)") &
+                        trim(varName), value, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_rValueReport
 	
 	!>
@@ -406,7 +409,9 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,L14,6X,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT, &
+                        "("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A10,L14,6X,A8,5X,A)") &
+                        trim(varName), value, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_lValueReport
 	
 	!>
@@ -432,7 +437,9 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,I14,6X,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT, &
+                        "("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A10,I14,6X,A8,5X,A)") &
+                        trim(varName), value, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_iValueReport
 
 	!>
@@ -453,7 +460,9 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,A20,A8,5X,A)") trim(varName), trim(value), trim(effMessage)
+		write(IO_STDOUT, &
+                        "("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A10,A20,A8,5X,A)") &
+                        trim(varName), trim(value), trim(effMessage)
 	end subroutine GOptions_sValueReport
 	
 	!>
@@ -479,7 +488,9 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,<size(values)>F15.5,A8,5X,A)") trim(varName), values, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT, &
+                        "("//FString_fromInteger(GOptions_indentLength*effIndent)//"X,A10,<size(values)>F15.5,A8,5X,A)") &
+                        trim(varName), values, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_rArrValueReport
 	
 	!>
@@ -505,7 +516,9 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(A10,<size(values)>I15,A8,5X,A)") trim(varName), values, trim(effUnits), trim(effMessage)
+		write(IO_STDOUT, &
+                        "(A10,"//FString_fromInteger(size(values))//"I15,A8,5X,A)") &
+                        trim(varName), values, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_iArrValueReport
 	
 end module GOptions_

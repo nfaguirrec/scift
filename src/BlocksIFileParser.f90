@@ -690,12 +690,12 @@ module BlocksIFileParser_
 		allocate( this%varUnit( size(tableBuffer) ) )
 
 		do i=1,size(tableBuffer)
-			call tableBuffer(i).split( tokens, "=" )
+			call tableBuffer(i)%split( tokens, "=" )
 			
 			this%varName(i) = trim(tokens(1))
 			
 			sBuffer = tokens(2)
-			call sBuffer.split( tokens, " " )
+			call sBuffer%split( tokens, " " )
 			
 ! 			this%varValue(i) = FString_toReal( tokens(1) )
 			this%varValue(i) = trim(tokens(1))
@@ -728,8 +728,8 @@ module BlocksIFileParser_
 		call parser%showContent()
 		
 		buffer = parser%get( "ICONS:betin", def="0.0" )
-		write(*,*) "betin = ", buffer.toReal()
-		write(*,*) "betin = ", buffer.toInteger()
+		write(*,*) "betin = ", buffer%toReal()
+		write(*,*) "betin = ", buffer%toInteger()
 		
 ! 		help = "This is a test to"//ENDL// &
 ! 		       "include in the feature "//ENDL

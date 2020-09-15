@@ -69,7 +69,7 @@ module NodeVector_
 		class(NodeVector), intent(in) :: other
 		logical :: output
 		
-! 		this%nItems = other.nItems
+! 		this%nItems = other%nItems
 ! 		this%resizeIncrement = other%resizeIncrement
 		
 ! 		output = all( this%data(1:this%size()) == other%data(1:other%size()) )
