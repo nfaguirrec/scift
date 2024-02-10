@@ -118,7 +118,7 @@ module StringHistogram_
 		call this.rCounts.clear()
 		this.totalCounts = 0
 		
-		call this.initList()
+		this.StringList = StringList()
 	end subroutine initStringHistogram
 	
 	!>
@@ -129,10 +129,10 @@ module StringHistogram_
 		class(StringHistogram), intent(in) :: other
 
 		this.algorithm = other.algorithm
-		
+
 		this.counts = other.counts
 		this.density = other.density
-		
+
 		this.rCounts = other.rCounts
 		this.totalCounts = other.totalCounts
 	end subroutine copyStringHistogram

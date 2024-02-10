@@ -80,7 +80,7 @@ program main
 		atomsNameArray(i) = trim(mol.atoms(i).symbol)
 	end do
 	
-	call fragmentsNameMap.init()
+	fragmentsNameMap = StringIntegerMap()
 	
 	fragmentsCounter = 1
 	do nAtoms=1,mol.nAtoms()

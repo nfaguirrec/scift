@@ -48,10 +48,8 @@
 		__CLASS_MAPITERATOR__, pointer :: end => null()
 		
 		contains
-			generic :: init => initDefault
 			generic :: assignment(=) => copyList
 			
-			procedure :: initDefault
 			procedure :: copyList
 			final :: destroyMap
 #ifndef MapBasicInterface
@@ -76,9 +74,8 @@
 			procedure :: atFromPtr
 			procedure :: atFromKey
 			procedure :: atFromPos
-			generic :: key => keyFromPtr, keyFromValue, keyFromPos
+			generic :: key => keyFromPtr, keyFromPos
 			procedure :: keyFromPtr
-			procedure :: keyFromValue
 			procedure :: keyFromPos
 			generic :: pair => pairFromPtr, pairFromKey, pairFromPos
 			procedure :: pairFromPtr
@@ -87,17 +84,21 @@
 			
 			__ADD_METHODS__
 	end type Map
+
+	interface Map
+		module procedure initDefault
+	end interface
 	
 	contains
 	
 	!>
 	!! @brief Constructor
 	!!
-	subroutine initDefault( this )
-		class(Map) :: this
-		
-		call this.list.init()
-	end subroutine initDefault
+	function initDefault() result( this )
+		type(Map) :: this
+
+		this.list = __MAPLIST__()
+	end function initDefault
 	
 	!>
 	!! @brief Copy constructor
@@ -441,19 +442,7 @@
 		
 		output = ptr.data.first
 	end function keyFromPtr
-	
-	!>
-	!! @brief
-	!!
-	function keyFromValue( this, value ) result( output )
-		class(Map), intent(in) :: this
-		integer, intent(in) :: value
-		type(String) :: output
-		
-		write(6,*) "### Error ### Map.keyFromValue: This function is not implemented"
-		stop
-	end function keyFromValue
-	
+
 	!>
 	!! @brief
 	!!

@@ -91,7 +91,7 @@ program main
 		columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 		
 		call iFile.init( iFileName.fstr )
-		call nFunc.fromFStream( iFile, columns=columns )
+		nFunc = RNFunction( iFile, columns=columns )
 		call iFile.close()
 	end if
 	

@@ -159,8 +159,8 @@ module StringIntegerPairList_
 		write(*,*) "Testing for empty constructor"
 		write(*,*) "-----------------------------"
 		
-		write(*,*) "call mylist.init()"
-		call mylist.init()
+		write(*,*) "mylist = StringIntegerPairList()"
+		mylist = StringIntegerPairList()
 		
 		iter => mylist.begin
 		do while( associated(iter) )
@@ -180,19 +180,19 @@ module StringIntegerPairList_
 		write(*,*)
 		
 		str = "Hello"
-		call mypair.init( str, 3 )
+		mypair = StringIntegerPair( str, 3 )
 		call mylist.append( mypair )
 		
 		str = "class"
-		call mypair.init( str, 2 )
+		mypair = StringIntegerPair( str, 2 )
 		call mylist.append( mypair )
 		
 		str = "string"
-		call mypair.init( str, 6 )
+		mypair = StringIntegerPair( str, 6 )
 		call mylist.append( mypair )
 		
 		str = "list"
-		call mypair.init( str, 9 )
+		mypair = StringIntegerPair( str, 9 )
 		call mylist.append( mypair )
 		
 		iter => mylist.begin
@@ -212,11 +212,11 @@ module StringIntegerPairList_
 		write(*,*)
 		
 		str = "day"
-		call mypair.init( str, 3 )
+		mypair = StringIntegerPair( str, 3 )
 		call mylist.prepend( mypair )
 		
 		str = "control"
-		call mypair.init( str, 2 )
+		mypair = StringIntegerPair( str, 2 )
 		call mylist.prepend( mypair )
 		
 		iter => mylist.begin
@@ -265,7 +265,7 @@ module StringIntegerPairList_
 		write(*,*) "call mylist.insert( iterPos, Prueba )"
 		
 		str = "Prueba"
-		call mypair.init( str, 15 )
+		mypair = StringIntegerPair( str, 15 )
 		call mylist.insert( iterPos, mypair )
 		
 		iter => mylist.begin
@@ -318,11 +318,11 @@ module StringIntegerPairList_
 		write(*,*) "call mylist.append( Hello2 bbbbb ccccc )"
 		
 		str = "Hello1 aaaaaa"
-		call mypair.init( str, 21 )
+		mypair = StringIntegerPair( str, 21 )
 		call mylist.append( mypair )
 		
 		str = "Hello2 bbbbb ccccc"
-		call mypair.init( str, 31 )
+		mypair = StringIntegerPair( str, 31 )
 		call mylist.append( mypair )
 		
 		iter => mylist.begin

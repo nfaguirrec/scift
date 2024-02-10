@@ -66,8 +66,8 @@ module CNFunction_
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromFStream( this, stream, columns, cComments, units )
-		class(CNFunction) :: this 
+	function fromFStream( stream, columns, cComments, units ) result( this )
+		type(CNFunction) :: this
 		type(IFStream), intent(in) :: stream
 		integer, optional, intent(in) :: columns(:)
 		character(*), optional, intent(in) :: cComments
@@ -164,7 +164,7 @@ module CNFunction_
 		deallocate(x)
 		deallocate(y)
 		deallocate(columnsEff)
-	end subroutine fromFStream
+	end function fromFStream
 	
 	!>
 	!! @brief String representation of the object
@@ -336,7 +336,7 @@ module CNFunction_
 		write(*,*) "Testing from function"
 		write(*,*) "---"
 		
-		call nFunc.fromFunction( xGrid, func=funcTest )
+		nFunc = CNFunction( xGrid, func=funcTest )
 		call nFunc.show()
 		call nFunc.save( "salida1", format=BLKS_FORMAT )
 		
@@ -364,7 +364,7 @@ module CNFunction_
 			data(i) = funcTest( xGrid.data(i) )
 		end do
 		
-		call nFunc.fromGridArray( xGrid, fArray=data )
+		nFunc = CNFunction( xGrid, fArray=data )
 		call nFunc.show()
 		call nFunc.save( "salida3", format=BLKS_FORMAT )
 		
@@ -375,7 +375,7 @@ module CNFunction_
 		write(*,*) "---"
 		
 		call ifile.init( "data/formats/TWO_COLUMNS" )
-		call nFunc.fromFStream( ifile, columns=[1,2] )
+		nFunc = CNFunction( ifile, columns=[1,2] )
 		call nFunc.show()
 		call ifile.close()
 		call nFunc.save( "salidaF0", format=BLKS_FORMAT )
@@ -428,7 +428,7 @@ module CNFunction_
 		write(*,*) ""
 		
 		call xGrid.init( 1.0_8, 10.0_8, 10 )
-		call nFunc.fromFunction( xGrid, func=funcTest )
+		nFunc = CNFunction( xGrid, func=funcTest )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = -1"
@@ -453,7 +453,7 @@ module CNFunction_
 		write(*,*) ""
 		
 		call xGrid.init( 1.0_8, 10.0_8, 10 )
-		call nFunc.fromFunction( xGrid, func=funcTest )
+		nFunc = CNFunction( xGrid, func=funcTest )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = 0"
@@ -481,11 +481,11 @@ module CNFunction_
 		
 		! plot "salidaFuncExact.dat" w l, "" u 1:3 w l, "salidaFunc.dat" w p pt 5, "" u 1:3 w lp, "salidaFunc2.dat" w p, "" u 1:3 w p lc rgb "magenta"
 		call xGrid.init( 1.0_8, 10.0_8, 1000 )
-		call nFunc.fromFunction( xGrid, func=funcTest )
+		nFunc = CNFunction( xGrid, func=funcTest )
 		call nFunc.save( "salidaFuncExact.dat" )
 		
 		call xGrid.init( 1.0_8, 10.0_8, 21 )
-		call nFunc.fromFunction( xGrid, func=funcTest )
+		nFunc = CNFunction( xGrid, func=funcTest )
 		call nFunc.save( "salidaFunc.dat" )
 		
 		call xGrid2.init( -2.0_8, 13.0_8, 41 )

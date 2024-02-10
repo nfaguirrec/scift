@@ -267,7 +267,7 @@ module MathFormula_
 	!>
 	!! @brief
 	!!
-	pure function nVariables( this ) result( output )
+	function nVariables( this ) result( output )
 		class(MathFormula), intent(in) :: this
 		integer :: output
 		
@@ -277,7 +277,7 @@ module MathFormula_
 	!>
 	!! @brief
 	!!
-	pure function nConstants( this ) result( output )
+	function nConstants( this ) result( output )
 		class(MathFormula), intent(in) :: this
 		integer :: output
 		
@@ -287,7 +287,7 @@ module MathFormula_
 	!>
 	!! @brief
 	!!
-	pure function evaluate( this, values ) result( output )
+	function evaluate( this, values ) result( output )
 		class(MathFormula), intent(in) :: this
 		real(8), intent(in) :: values(:)
 		real(8) :: output

@@ -295,7 +295,7 @@ module NDerivator_
 			dArray(i) = this.evaluateAPoint( this.func.xGrid.data(i), order )
 		end do
 		
-		call output.fromGridArray( this.func.xGrid, dArray )
+		output = RNFunction( this.func.xGrid, dArray )
 		
 		deallocate( dArray )
 	end function evaluateOnGrid
@@ -351,8 +351,8 @@ module NDerivator_
 		integer :: i, j
 		
 		call xGrid.init( 0.0_8, 10.0_8, 101 )
-		call func.fromFunction( xGrid, funcTest )
-		call dFunc.fromFunction( xGrid, dfuncTest )
+		func = RNFunction( xGrid, funcTest )
+		dFunc = RNFunction( xGrid, dfuncTest )
 		call derivator.init( func )
 		
 ! 		do i=1,xGrid.nPoints

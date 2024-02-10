@@ -166,7 +166,7 @@ module ThrularNumerovMethod_
 							 this.potential.xGrid.nPoints, this.potential.fArray, this.nStates, 1, &
 							 this.eigenValues, eigenFunctions, nBound )
 		do i=1,this.nStates
-			call this.eigenFunctions(i).fromGridArray( this.potential.xGrid, eigenFunctions(i,:) )
+			this.eigenFunctions(i) = RNFunction( this.potential.xGrid, eigenFunctions(i,:) )
 ! 			this.eigenFunctions(i).fArray(:) = eigenFunctions(i,:)
 		end do
 		
@@ -507,7 +507,7 @@ module ThrularNumerovMethod_
 		call rGrid.init( 1.0_8, 30.0_8, 1000 )
 		call rGrid.show()
 		
-		call potential.fromFunction( rGrid, funcTest )
+		potential = RNFunction( rGrid, funcTest )
 		call potential.show()
 ! 		call potential.save( "morse.out" )
 		

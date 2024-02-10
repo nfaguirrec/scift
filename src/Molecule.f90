@@ -103,18 +103,13 @@ module Molecule_
 		!---------------------------------------------------------------
 		
 		contains
-			generic :: init => initBase, fromFile, fromMolecules
-			generic :: assignment(=) => copyMolecule
-			procedure :: initBase
-			procedure :: fromFile
-			procedure :: fromMolecules
+! 			generic :: assignment(=) => copyMolecule
 			procedure :: copyMolecule
 			final :: destroyMolecule
 			procedure :: str
 			procedure :: show
 			procedure :: showCompositionVector
 			procedure :: showGraph
-			procedure :: load => fromFile
 			procedure :: loadXYZ
 			procedure :: loadGeomMOLDEN
 			procedure :: save
@@ -167,14 +162,22 @@ module Molecule_
 			procedure :: orient
 			procedure :: rotate
 	end type Molecule
+
+	interface Molecule
+		module procedure initBase, fromFile, fromMolecules
+	end interface
+
+	interface assignment(=)
+		module procedure copyMolecule
+	end interface
 	
 	contains
 	
 	!>
 	!! @brief Constructor
 	!!
-	subroutine initBase( this, nAtoms, name )
-		class(Molecule) :: this 
+	function initBase( nAtoms, name ) result( this )
+		type(Molecule) :: this
 		integer, intent(in) :: nAtoms
 		character(*), optional, intent(in) :: name
 		
@@ -197,13 +200,13 @@ module Molecule_
 		end do
 		
 		this.composition = -1
-	end subroutine initBase
+	end function initBase
 	
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromFile( this, fileName, format, loadName )
-		class(Molecule) :: this 
+	function fromFile( fileName, format, loadName ) result( this )
+		type(Molecule) :: this
 		character(*), intent(in) :: fileName
 		integer, optional, intent(in) :: format
 		logical, optional, intent(in) :: loadName
@@ -259,13 +262,13 @@ module Molecule_
 		
 		if( allocated(extension) ) deallocate( extension )
 		
-	end subroutine fromFile
+	end function fromFile
 	
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromMolecules( this, molecules, overlap, method )
-		class(Molecule) :: this
+	function fromMolecules( molecules, overlap, method ) result( this )
+		type(Molecule) :: this
 		class(Molecule), intent(in) :: molecules(:)
 		real(8), optional :: overlap
 		integer, optional :: method
@@ -296,7 +299,7 @@ module Molecule_
 				do i=1,nMolecules
 					nAtoms = nAtoms + molecules(i).nAtoms()
 				end do
-				call this.init( nAtoms )
+				this = Molecule( nAtoms )
 				
 				k = 1
 				position = 0.0_8
@@ -322,7 +325,7 @@ module Molecule_
 				
 		end select
 				
-	end subroutine fromMolecules
+	end function fromMolecules
 	
 	!>
 	!! @brief Copy constructor
@@ -674,7 +677,7 @@ module Molecule_
 			this.name = ifile.name
 		end if
 		
-		call geometryBlock.init()
+		geometryBlock = StringList()
 		
 		advance = .true.
 		do while( .not. ifile.eof() )
@@ -2711,7 +2714,7 @@ module Molecule_
 ! 	write(*,*) "( compA <= compC ) ==>", all( compA <= compC )
 ! 	write(*,*) "( compA >= compC ) ==>", all( compA >= compC )
 		
-		call mol1.init( 2 )
+		mol1 = Molecule( 2 )
 		call atom.init( " H", 0.0_8, 0.0_8, 0.3561_8 )
 		mol1.atoms(1) = atom
 		call atom.init( " H", 0.0_8, 0.0_8,-0.3561_8 )
@@ -2721,7 +2724,7 @@ module Molecule_
 		call mol1.setCenter( [1.0_8, 1.0_8, 1.0_8] )
 		call mol1.show( formatted=.true. )
 		
-		call mol1.init( 5 )
+		mol1 = Molecule( 5 )
 		
 		call atom1.init( " He", 0.15_8, 2.15_8, 1.15_8 )
 		call atom1.init( " He", 0.0_8, 0.0_8, 0.0_8 )
@@ -2744,9 +2747,9 @@ module Molecule_
 		write(*,*) ""
 		write(*,*) "Testing load procedures"
 		write(*,*) "======================="
-		call mol1.load( "data/formats/RXYZ", format=XYZ )
+		mol1 = Molecule( "data/formats/RXYZ", format=XYZ )
 		call mol1.show( formatted=.true. )
-		call mol1.load( "data/formats/MOLDEN", format=MOLDEN )
+		mol1 = Molecule( "data/formats/MOLDEN", format=MOLDEN )
 		call mol1.show( formatted=.true. )
 ! 		stop
 		
@@ -2775,7 +2778,7 @@ module Molecule_
 		write(*,"(A,3F10.5)") "mol2.geomCenter = ", mol2.center()
 ! 		call mol2.show(formatted=.true.)
 		
-		call mol1.init( 2 )
+		mol1 = Molecule( 2 )
 		mol1.atoms(1) = atom1
 		mol1.atoms(2) = atom2
 ! 		call mol1.fromFile( "prueba.xyz" )
@@ -2789,7 +2792,7 @@ module Molecule_
 		write(*,*) ""
 		write(*,*) "Testing rotation of molecule"
 		write(*,*) "============================"
-		call mol1.init( "data/formats/XYZ", format=XYZ )
+		mol1 = Molecule( "data/formats/XYZ", format=XYZ )
 ! 		call mol1.init( "prueba.xyz" )
 ! 		call mol1.init( "C9T-cyclic.xyz" )
 ! 		call mol1.init( "C2.xyz" )
@@ -2839,7 +2842,7 @@ module Molecule_
 		
 		write(*,*) "Composition vector"
 		write(*,*) "-------------------"
-		call mol1.init( "data/formats/XYZ", format=XYZ )
+		mol1 = Molecule( "data/formats/XYZ", format=XYZ )
 		call mol1.showCompositionVector()
 		
 		write(*,*) ""
@@ -2862,7 +2865,7 @@ module Molecule_
 		
 		write(*,*) "Testing rotation of molecule"
 		write(*,*) "============================"
-		call mol1.init( "data/formats/XYZ", format=XYZ )
+		mol1 = Molecule( "data/formats/XYZ", format=XYZ )
 ! 		call mol1.init( "prueba.xyz" )
 ! 		call mol1.init( "C9T-cyclic.xyz" )
 ! 		call mol1.init( "C2.xyz" )
@@ -2918,7 +2921,7 @@ module Molecule_
 		
 		call mol1.save("salida.xyz")
 		
-		call mol1.load( "data/formats/RXYZ", format=XYZ )
+		mol1 = Molecule( "data/formats/RXYZ", format=XYZ )
 		do i=1,1000000
 			call mol1.buildInertiaTensor( Im )
 			mol2 = mol1

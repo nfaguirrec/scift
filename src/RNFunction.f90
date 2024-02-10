@@ -66,8 +66,8 @@ module RNFunction_
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromFStream( this, stream, columns, cComments, units )
-		class(RNFunction) :: this 
+	function fromFStream( stream, columns, cComments, units ) result( this )
+		type(RNFunction) :: this
 		type(IFStream), intent(in) :: stream
 		integer, optional, intent(in) :: columns(:)
 		character(*), optional, intent(in) :: cComments
@@ -145,7 +145,7 @@ module RNFunction_
 		deallocate(x)
 		deallocate(y)
 		deallocate(columnsEff)
-	end subroutine fromFStream
+	end function fromFStream
 	
 	!>
 	!! @brief String representation of the object
@@ -315,7 +315,7 @@ module RNFunction_
 		write(*,*) "Testing from function"
 		write(*,*) "---"
 		
-		call nFunc.fromFunction( xGrid, func=funcTest )
+		nFunc = RNFunction( xGrid, func=funcTest )
 		call nFunc.show()
 ! 		call nFunc.save( "salida1" )
 		
@@ -343,7 +343,7 @@ module RNFunction_
 			data(i) = funcTest( xGrid.data(i) )
 		end do
 		
-		call nFunc.fromGridArray( xGrid, fArray=data )
+		nFunc = RNFunction( xGrid, fArray=data )
 		call nFunc.show()
 ! 		call nFunc.save( "salida3" )
 		
@@ -403,7 +403,7 @@ module RNFunction_
 
 		write(*,*) "===================================================================="
 		call xGrid.init( 1.0_8, 10.0_8, 10 )
-		call nFunc2.fromFunction( xGrid, func=funcTest )
+		nFunc2 = RNFunction( xGrid, func=funcTest )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid +10, dir = +1"
@@ -482,11 +482,11 @@ module RNFunction_
 		
 		! plot "salidaFuncExact.dat" w l, "" u 1:3 w l, "salidaFunc.dat" w p pt 5, "salidaFunc2.dat" w p
 		call xGrid.init( 1.0_8, 10.0_8, 1000 )
-		call nFunc.fromFunction( xGrid, func=funcTest )
+		nFunc = RNFunction( xGrid, func=funcTest )
 		call nFunc.save( "salidaFuncExact.dat" )
 		
 		call xGrid.init( 1.0_8, 10.0_8, 21 )
-		call nFunc.fromFunction( xGrid, func=funcTest )
+		nFunc = RNFunction( xGrid, func=funcTest )
 		call nFunc.save( "salidaFunc.dat" )
 		
 		call xGrid2.init( -2.0_8, 13.0_8, 41 )

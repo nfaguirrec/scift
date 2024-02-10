@@ -83,26 +83,26 @@ program main
 	fileTypeB = CNFunction_checkTypeN1DF( fileNameB )
 	
 	if( fileTypeB == 0 .and. fileTypeA == 0 ) then
-		call rFuncA.init( fileNameA )
-		call rFuncB.init( fileNameB )
+		rFuncA = RNFunction( fileNameA )
+		rFuncB = RNFunction( fileNameB )
 	else if( fileTypeA == 1 .and. fileTypeB == 0 ) then
-		call cFuncA.init( fileNameA )
-		call rFuncB.init( fileNameB )
+		cFuncA = CNFunction( fileNameA )
+		rFuncB = RNFunction( fileNameB )
 		
 		! @todo En el futuro esto debe estar internamente integrado en libscift. Convertir entre RNFunction y CNFunction, o cargar un CNFunction desde dos columnas
 ! 		call cFuncB.fromGridArray( cFuncB.xGrid, fArray=cmplx(rFuncB.fArray) )
-		call cFuncB.init( rFuncB.xGrid )
+		cFuncB = CNFunction( rFuncB.xGrid )
 		cFuncB.fArray = rFuncB.fArray
 	else if( fileTypeA == 0 .and. fileTypeB == 1 ) then
-		call rFuncA.init( fileNameA )
-		call cFuncB.init( fileNameB )
+		rFuncA = RNFunction( fileNameA )
+		cFuncB = CNFunction( fileNameB )
 		
 ! 		call cFuncA.fromGridArray( cFuncA.xGrid, fArray=rFuncA.fArray )
-		call cFuncA.init( rFuncA.xGrid )
+		cFuncA = CNFunction( rFuncA.xGrid )
 		cFuncA.fArray = rFuncA.fArray
 	else if( fileTypeB == 1 .and. fileTypeA == 1 ) then
-		call cFuncA.init( fileNameA )
-		call cFuncB.init( fileNameB )
+		cFuncA = CNFunction( fileNameA )
+		cFuncB = CNFunction( fileNameB )
 	else
 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameA)//" or "//trim(fileNameB)
 		stop

@@ -364,7 +364,7 @@ module NPeakFinder_
 		nPoints = this.func.xGrid.nPoints
 		
 		allocate( a(nPoints) )
-		call effPosVec.init()
+		effPosVec = IntegerList()
 		
 		!------------------------------------------------------------
 		! Compute peak function value for each of the N points in T
@@ -435,7 +435,7 @@ module NPeakFinder_
 			y(i) = this.func.at( effPosVec.at(i) )
 		end do
 		
-		call output.init( x, y )
+		output = RNFunction( x, y )
 		
 		deallocate( x )
 		deallocate( y )
@@ -510,7 +510,7 @@ module NPeakFinder_
 			tn = tn + dt
 		end do
 		
-		call output.init( x, y )
+		output = RNFunction( x, y )
 	end function NPeakFinder_generateSignal
 	
 	!>

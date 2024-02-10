@@ -62,10 +62,10 @@ program main
 	fileType = RNFunction_checkTypeN1DF( fileName )
 	
 	if( fileType == 0 ) then
-		call rFunc.init( fileName )
+		rFunc = RNFunction( fileName )
 		write(*,*) rFunc.norm()
 	else if( fileType == 1 ) then
-		call cFunc.init( fileName )
+		cFunc = CNFunction( fileName )
 		write(*,*) cFunc.norm()
 	else
 		write(0,*) "### ERROR ### unknown type for "//trim(fileName)

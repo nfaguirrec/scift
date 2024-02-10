@@ -1331,7 +1331,7 @@ module FourierTransform_
 		
 		allocate( array(effNPoints) )
 		array = iFunc.fArray( effIXRange(1):effIXRange(2) )
-		call tmpFunc.init( iFunc.xGrid.data( effIXRange(1):effIXRange(2) ), array )
+		tmpFunc = CNFunction( iFunc.xGrid.data( effIXRange(1):effIXRange(2) ), array )
 		deallocate( array )
 		
 		if( present(window) ) then
@@ -1349,22 +1349,22 @@ module FourierTransform_
 		
 		select case( type )
 			case( FourierTransform_NORM_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, abs(tmpFunc.fArray) )
+				oFunc = RNFunction( tmpFunc.xGrid, abs(tmpFunc.fArray) )
 				
 			case( FourierTransform_REALPART_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, real(tmpFunc.fArray) )
+				oFunc = RNFunction( tmpFunc.xGrid, real(tmpFunc.fArray) )
 				
 			case( FourierTransform_IMAGPART_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, aimag(tmpFunc.fArray) )
+				oFunc = RNFunction( tmpFunc.xGrid, aimag(tmpFunc.fArray) )
 				
 			case( FourierTransform_PHASE_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, atan2( aimag(tmpFunc.fArray), real(tmpFunc.fArray) ) )
+				oFunc = RNFunction( tmpFunc.xGrid, atan2( aimag(tmpFunc.fArray), real(tmpFunc.fArray) ) )
 				
 			case( FourierTransform_POWER_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, real(tmpFunc.fArray)**2+aimag(tmpFunc.fArray)**2 )
+				oFunc = RNFunction( tmpFunc.xGrid, real(tmpFunc.fArray)**2+aimag(tmpFunc.fArray)**2 )
 				
 			case default
-				call oFunc.init( tmpFunc.xGrid, abs(tmpFunc.fArray) )
+				oFunc = RNFunction( tmpFunc.xGrid, abs(tmpFunc.fArray) )
 		end select
 	end function FourierTransform_spectrumR
 	
@@ -1404,7 +1404,7 @@ module FourierTransform_
 		
 		allocate( array(effNPoints) )
 		array = iFunc.fArray( effIXRange(1):effIXRange(2) )
-		call tmpFunc.init( iFunc.xGrid.data( effIXRange(1):effIXRange(2) ), array )
+		tmpFunc = CNFunction( iFunc.xGrid.data( effIXRange(1):effIXRange(2) ), array )
 		deallocate( array )
 		
 		if( present(window) ) then
@@ -1443,22 +1443,22 @@ module FourierTransform_
 		
 		select case( type )
 			case( FourierTransform_NORM_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, abs(tmpFunc.fArray) )
+				oFunc = RNFunction( tmpFunc.xGrid, abs(tmpFunc.fArray) )
 				
 			case( FourierTransform_REALPART_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, real(tmpFunc.fArray) )
+				oFunc = RNFunction( tmpFunc.xGrid, real(tmpFunc.fArray) )
 				
 			case( FourierTransform_IMAGPART_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, aimag(tmpFunc.fArray) )
+				oFunc = RNFunction( tmpFunc.xGrid, aimag(tmpFunc.fArray) )
 				
 			case( FourierTransform_PHASE_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, atan2( aimag(tmpFunc.fArray), real(tmpFunc.fArray) ) )
+				oFunc = RNFunction( tmpFunc.xGrid, atan2( aimag(tmpFunc.fArray), real(tmpFunc.fArray) ) )
 				
 			case( FourierTransform_POWER_SPECTRUM )
-				call oFunc.init( tmpFunc.xGrid, real(tmpFunc.fArray)**2+aimag(tmpFunc.fArray)**2 )
+				oFunc = RNFunction( tmpFunc.xGrid, real(tmpFunc.fArray)**2+aimag(tmpFunc.fArray)**2 )
 				
 			case default
-				call oFunc.init( tmpFunc.xGrid, abs(tmpFunc.fArray) )
+				oFunc = RNFunction( tmpFunc.xGrid, abs(tmpFunc.fArray) )
 		end select
 	end function FourierTransform_spectrumC
 	

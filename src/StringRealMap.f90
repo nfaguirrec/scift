@@ -50,6 +50,7 @@ module StringRealMap_
 #define Map StringRealMap
 ! #define __CLASS_ITEMMAP__ class(String)
 #define __CLASS_MAPITERATOR__  class(StringRealMapIterator)
+#define __MAPLIST__            StringRealPairList
 #define __TYPE_MAPLIST__       type(StringRealPairList)
 #define __TYPE_MAPPAIR__       type(StringRealPair)
 #define __CLASS_MAPPAIR__      class(StringRealPair)
@@ -59,6 +60,7 @@ module StringRealMap_
 #define __ADD_METHODS__
 #include "Map.h90"
 #undef __CLASS_MAPITERATOR__
+#undef __MAPLIST__
 #undef __TYPE_MAPLIST__
 #undef __TYPE_MAPPAIR__
 #undef __CLASS_MAPPAIR__
@@ -188,7 +190,7 @@ module StringRealMap_
 		type(StringRealMap) :: mymap
 		class(StringRealMapIterator), pointer :: ptr
 		
-		call mymap.init()
+		mymap = StringRealMap()
 		
 		str = "Ademas"
 		call mymap.insert( str, 45.0_8 )

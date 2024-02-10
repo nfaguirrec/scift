@@ -64,10 +64,10 @@ module RealHistogram_
 		real(8), private :: s2
 		
 		contains
-			generic :: init => initRealHistogram
-			generic :: assignment(=) => copyRealHistogram
+! 			generic :: init => initRealHistogram
+! 			generic :: assignment(=) => copyRealHistogram
 			
-			procedure :: initRealHistogram
+! 			procedure :: initRealHistogram
 			procedure :: copyRealHistogram
 			final :: destroyRealHistogram
 			procedure :: str
@@ -92,6 +92,10 @@ module RealHistogram_
 			procedure :: summation
 			
 	end type RealHistogram
+
+	interface RealHistogram
+		module procedure initRealHistogram
+	end interface
 	
 	contains
 	
@@ -99,35 +103,36 @@ module RealHistogram_
 	!! @brief Constructor
 	!! @see http://stat.ethz.ch/R-manual/R-devel/library/graphics/html/hist.html
 	!!
-	subroutine initRealHistogram( this, rule, algorithm )
-		class(RealHistogram) :: this
+	function initRealHistogram( rule, algorithm ) result(this)
+		type(RealHistogram) :: this
 		integer, optional :: rule
 		integer, optional :: algorithm
-		
+
 		integer :: ruleEff
 		integer :: algorithmEff
-		
+
 		ruleEff = Histogram_SQUAREROOT
 		if( present(rule) ) ruleEff = rule
-		
+
 		algorithmEff = Histogram_STORING
 		if( present(algorithm) ) then
 			if( algorithm == Histogram_STORING .or. algorithm == Histogram_RUNNING ) then
 				algorithmEff = algorithm
 			else
-				call GOptions_error( "Wrong value for paramenter algorithm. Possible values Histogram_RUNNING,Histogram_STORING", "RealHistogram.initRealHistogram()" )		
+				call GOptions_error( "Wrong value for paramenter algorithm. Possible values Histogram_RUNNING,Histogram_STORING", "RealHistogram.initRealHistogram()" )
 			end if
 		end if
-		
+
 		this.rule = ruleEff
 		this.algorithm = algorithmEff
-		
+
 		this.n = 0
 		this.s1 = 0
 		this.s2 = 0
-		
-		call this.initList()
-	end subroutine initRealHistogram
+
+! 		call this.initList()
+		this%RealList = RealList()
+	end function initRealHistogram
 	
 	!>
 	!! @brief Copy constructor
@@ -440,7 +445,7 @@ module RealHistogram_
 		if( this.rule == Histogram_GAUSSIAN_DRESSING .or. this.rule == Histogram_LORENTZIAN_DRESSING ) then
 			
 			windowWidth = 3.0_8*h
-			call this.counts.init( xGrid, 0.0_8 )
+			this.counts = RNFunction( xGrid, 0.0_8 )
 			
 			
 			do i=1,xGrid.nPoints
@@ -496,8 +501,8 @@ module RealHistogram_
 				stop
 			end if
 			
-			call this.counts.init( xGrid, real(counts,8) )
-			call this.density.init( xGrid, real(counts,8)*h/real(this.size(),8) )
+			this.counts = RNFunction( xGrid, real(counts,8) )
+			this.density = RNFunction( xGrid, real(counts,8)*h/real(this.size(),8) )
 			
 			deallocate( counts )
 		end if
@@ -780,7 +785,8 @@ module RealHistogram_
 		
 ! 		call histogram.init()
 ! 		call histogram.init( Histogram_SQUAREROOT )
-		call histogram.init( Histogram_STURGES )
+		histogram = RealHistogram( Histogram_SQUAREROOT )
+! 		call histogram.init( rule=Histogram_STURGES, algorithm=Histogram_RUNNING )
 ! 		call histogram.init( Histogram_RICE )
 ! 		call histogram.init( Histogram_SCOTT )
 		
@@ -798,7 +804,7 @@ module RealHistogram_
 		call histogram.add( [25.00371_8, 23.40407_8, 21.82391_8, 24.25161_8, 24.28748_8, 24.17388_8, 21.20663_8, 26.66869_8] )
 		call histogram.add( [22.89491_8, 24.81186_8, 25.14049_8, 22.61879_8] )
 		
-		call histogramRunning.init( algorithm=Histogram_RUNNING )
+		histogramRunning = RealHistogram( rule=Histogram_STURGES, algorithm=Histogram_RUNNING )
 		call histogramRunning.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
 		call histogramRunning.add( [23.21883_8, 25.35600_8, 28.41117_8, 22.08219_8, 19.55053_8, 23.63690_8, 27.07390_8, 25.11683_8] )
 		call histogramRunning.add( [24.07832_8, 22.04728_8, 29.07267_8, 23.84218_8, 24.07261_8, 23.97873_8, 25.67417_8, 23.89337_8] )
@@ -907,7 +913,7 @@ module RealHistogram_
 		write(*,*) "LORENTZIAN DRESSING"
 		write(*,*) "-------------------"
 		call histogram.clear()
-		call histogram.init( Histogram_LORENTZIAN_DRESSING )
+		histogram = RealHistogram()
 		call histogram.add( "data/formats/ONE_COLUMN" )
 		call histogram.show()
 		call histogram.build( nBins=10000 )

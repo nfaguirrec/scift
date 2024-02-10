@@ -50,11 +50,13 @@ module RealList_
 #define ListIterator RealListIterator
 #define __CLASS_ITEMLIST__ real(8)
 #define __TYPE_ITEMLIST__ real(8)
+#define __ITEMLIST__ real(8)
 #include "List.h90"
 #undef List
 #undef ListIterator
 #undef __CLASS_ITEMLIST__
 #undef __TYPE_ITEMLIST__
+#undef __ITEMLIST__
 	
 	!>
 	!! @brief Converts to string
@@ -172,7 +174,7 @@ module RealList_
 		type(RealList) :: mylist
 		class(RealListIterator), pointer :: iter
 		
-		call mylist.init()
+		mylist = RealList()
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for append method"

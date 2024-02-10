@@ -130,14 +130,12 @@ module StringIntegerPair_
 		write(*,*) "call mypair1.init( str, 3 )"
 		
 		str = "Hola"
-! 		call mypair1.init( str, 3 )
 		mypair1 = StringIntegerPair( str, 3 )
 		call mypair1.show()
 		
 		write(*,*) "call mypair2.init( str, 4 )"
 		
 		str = "Entonces"
-! 		call mypair2.init( str, 4 )
 		mypair1 = StringIntegerPair( str, 4 )
 		call mypair2.show()
 		

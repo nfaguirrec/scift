@@ -88,7 +88,7 @@ module Morse_
 			V(i) = this.evaluate( rGrid.data(i) )
 		end do
 		
-		call this.fromGridArray( rGrid, V )
+		this = RNFunction( rGrid, V )
 		deallocate( V )
 	end subroutine initDefaultMorse
 		
@@ -118,7 +118,7 @@ module Morse_
 			V(i) = this.evaluate( rGrid.data(i) )
 		end do
 		
-		call this.fromGridArray( rGrid, V )
+		this = RNFunction( rGrid, V )
 		deallocate( V )
 	end subroutine fromExp
 	
@@ -138,7 +138,7 @@ module Morse_
 		class(Morse) :: this
 		type(RNFunction) :: output
 		
-		call output.fromGridArray( this.xGrid, this.fArray )
+		output = RNFunction( this.xGrid, this.fArray )
 	end function parent
 	
 	!>

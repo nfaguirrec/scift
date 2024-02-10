@@ -145,7 +145,7 @@ program main
 	contains
 	
 	function window( tprime ) result( output )
-		real(8) :: tprime
+		real(8), intent(in) :: tprime
 		real(8) :: output
 		
 		output = exp(-(tprime-t)**2/2.0_8/sigma**2)/sigma/sqrt(2.0_8*Math_PI)

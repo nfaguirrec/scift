@@ -78,7 +78,7 @@ program main
 	fileType = RNFunction_checkTypeN1DF( iFileName.fstr )
 	
 	if( fileType == 0 ) then
-		call riFunc.init( iFileName.fstr )
+		riFunc = RNFunction( iFileName.fstr )
 		
 		if( .not. riFunc.xGrid.isEquallyspaced ) then
 			!! Homogeniza el grid
@@ -90,7 +90,7 @@ program main
 		roFunc = riFunc.interpolate( xGrid, stencil=stencil, value=value )
 		call roFunc.save( oFileName.fstr )
 	else if( fileType == 1 ) then
-		call ciFunc.init( iFileName.fstr )
+		ciFunc = CNFunction( iFileName.fstr )
 		call xGrid.init( bFileName.fstr, column=1 )
 		coFunc = ciFunc.interpolate( xGrid, stencil=stencil, value=dcmplx(value) )
 		call coFunc.save( oFileName.fstr )

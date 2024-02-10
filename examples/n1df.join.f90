@@ -81,10 +81,10 @@ program main
 		
 		do i=1,nFiles
 			call get_command_argument( i, buffer )
-			call rFunc(i).init( buffer )
+			rFunc(i) = RNFunction( buffer )
 		end do
 		
-		call rFuncOut.fromGrid( rFunc(1).xGrid )
+		rFuncOut = RNFunction( rFunc(1).xGrid )
 		
 		do j=1,rFunc(1).nPoints()
 			write(*,"(E20.8)",advance="no") rFunc(1).x(j)
@@ -100,10 +100,10 @@ program main
 		
 		do i=1,nFiles
 			call get_command_argument( i, buffer )
-			call cFunc(i).init( buffer )
+			cFunc(i) = CNFunction( buffer )
 		end do
 		
-		call cFuncOut.fromGrid( cFunc(1).xGrid )
+		cFuncOut = CNFunction( cFunc(1).xGrid )
 		
 		do j=1,cFunc(1).nPoints()
 			write(*,"(E20.8)",advance="no") cFunc(1).x(j)

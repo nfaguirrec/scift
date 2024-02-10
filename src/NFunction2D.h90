@@ -389,7 +389,7 @@
 	!>
 	!! @brief Copy constructor
 	!!
-	pure subroutine copyFArray( this, other )
+	subroutine copyFArray( this, other )
 		class(NFunction2D), intent(inout) :: this
 		class(NFunction2D), intent(in) :: other
 		
@@ -1186,7 +1186,7 @@
 	!>
 	!! @brief
 	!!
-	pure function isEquallyspaced( this ) result( output )
+	function isEquallyspaced( this ) result( output )
 		class(NFunction2D), intent(in) :: this
 		logical :: output
 		
@@ -1365,7 +1365,7 @@
 	!>
 	!! @brief
 	!!
-	pure function checkBox( this, other ) result( output )
+	function checkBox( this, other ) result( output )
 		class(NFunction2D), intent(in) :: this
 		class(NFunction2D), intent(in) :: other
 		logical :: output
@@ -1540,7 +1540,7 @@
 			end select
 		end do
 		
-		call output.init( this.xyGrid.component(coord), cValues*dS )
+		output = RNFunction( this.xyGrid.component(coord), cValues*dS )
 		
 		deallocate( cValues )
 		

@@ -160,7 +160,7 @@ module StringRealPairList_
 		write(*,*) "-----------------------------"
 		
 		write(*,*) "call mylist.init()"
-		call mylist.init()
+		mylist = StringRealPairList()
 		
 		iter => mylist.begin
 		do while( associated(iter) )

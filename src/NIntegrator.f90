@@ -353,7 +353,7 @@ module NIntegrator_
 		call xGrid.init( -30.0_8, 30.0_8, 1000 )
 		call xGrid.show()
 		
-		call nFunc.init( xGrid, funcTest )
+		nFunc = RNFunction( xGrid, funcTest )
 		call nFunc.show()
 		
 		exactValue = 2.16780136532979_8

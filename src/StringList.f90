@@ -169,7 +169,7 @@ module StringList_
 		write(*,*) "-----------------------------"
 		
 		write(*,*) "call mylist.init()"
-		call mylist.init()
+		mylist = StringList()
 		
 		call showMyList( mylist )
 		

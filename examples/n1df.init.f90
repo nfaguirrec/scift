@@ -72,9 +72,9 @@ program main
 	if( iFileRef /= FString_NULL ) then
 		fileTypeA = CNFunction_checkTypeN1DF( iFileRef.fstr )
 		if( fileTypeA == 0 ) then
-			call rA.init( iFileRef.fstr )
+			rA = RNFunction( iFileRef.fstr )
 		else if( fileTypeA == 1 ) then
-			call cA.init( iFileRef.fstr )
+			cA = CNFunction( iFileRef.fstr )
 		else
 			write(0,*) "### ERROR ### unknown format for "//trim(iFileRef.fstr)
 			stop
@@ -83,12 +83,12 @@ program main
 		if( fileTypeA == 0 ) then
 			
 			rInitValue = parser.getReal( "-init", def=0.0_8 )
-			call rFunc.init( rA.xGrid, value=rInitValue )
+			rFunc = RNFunction( rA.xGrid, value=rInitValue )
 			
 		else if( fileTypeA == 1 ) then
 			
 			CInitValue = parser.getReal( "-init", def=0.0_8 )
-			call cFunc.init( cA.xGrid, value=cInitValue )
+			cFunc = CNFunction( cA.xGrid, value=cInitValue )
 			
 		end if
 	else
@@ -98,7 +98,7 @@ program main
 		call strBuffer.split( tokens, "," )
 		
 		rInitValue = parser.getReal( "-init", def=0.0_8 )
-		call rFunc.init( FString_toReal(tokens(1)), FString_toReal(tokens(2)), nPoints=FString_toInteger(tokens(3)), value=rInitValue )
+		rFunc = RNFunction( FString_toReal(tokens(1)), FString_toReal(tokens(2)), nPoints=FString_toInteger(tokens(3)), value=rInitValue )
 	end if
 	
 	!---------------------------------------------

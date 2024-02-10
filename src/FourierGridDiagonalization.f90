@@ -336,7 +336,7 @@ module FourierGridDiagonalization_
 		
 		this.eigenValues(1:nEigenFound) = eigenValues(1:nEigenFound)
 		do i=1,nEigenFound
-			call this.rEigenFunctions(i).fromGridArray( this.potential.xGrid, eigenVectors(:,i) )
+			this.rEigenFunctions(i) = RNFunction( this.potential.xGrid, eigenVectors(:,i) )
 		end do
 		
 		deallocate( work )
@@ -467,7 +467,7 @@ module FourierGridDiagonalization_
 		
 		this.eigenValues(1:nEigenFound) = eigenValues(1:nEigenFound)
 		do i=1,nEigenFound
-			call this.cEigenFunctions(i).fromGridArray( this.potential.xGrid, eigenVectors(:,i) )
+			this.cEigenFunctions(i) = CNFunction( this.potential.xGrid, eigenVectors(:,i) )
 		end do
 		
 		deallocate( nonzeroElements )
@@ -524,6 +524,7 @@ module FourierGridDiagonalization_
 		integer :: info
 
 		integer :: i, j, n
+		complex(8) :: zzero = dcmplx(0.0_8,0.0_8)
 		
 		! Default values: 10 states
 		charRange = "I"
@@ -579,12 +580,12 @@ module FourierGridDiagonalization_
 			T(i) = ( p(i) - effP0 )**2/2.0_8/this.rMass
 		end do
 		
-		call phi.fromGrid( this.potential.xGrid, dcmplx(0.0_8,0.0_8) )
+		phi = CNFunction( this.potential.xGrid, zzero )
 		call fft.init( phi )
 		
 		H = 0.0_8
 		do n=1,nPoints
-			call phi.fromGrid( this.potential.xGrid, dcmplx(0.0_8,0.0_8) )
+			phi = CNFunction( this.potential.xGrid, zzero )
 			call phi.set( n, dcmplx(1.0_8,0.0_8) )
 			
 			call fft.execute( sgn=FourierTransform_FORWARD )
@@ -614,7 +615,7 @@ module FourierGridDiagonalization_
 		
 		this.eigenValues(1:nEigenFound) = eigenValues(1:nEigenFound)
 		do i=1,nEigenFound
-			call this.cEigenFunctions(i).fromGridArray( this.potential.xGrid, eigenVectors(:,i) )
+			this.cEigenFunctions(i) = CNFunction( this.potential.xGrid, eigenVectors(:,i) )
 		end do
 		
 ! 		if( allocated(this.rEigenFunctions) ) deallocate( this.rEigenFunctions )
@@ -691,7 +692,7 @@ module FourierGridDiagonalization_
 		call rGrid.init( 0.0_8, 30.0_8, 219 )
 		call rGrid.show()
 		
-		call potential.fromFunction( rGrid, funcTest )
+		potential = RNFunction( rGrid, funcTest )
 		call potential.show()
 		call potential.save( "morse.dat" )
 		

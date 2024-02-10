@@ -52,6 +52,7 @@ module StringRealHistogramMap_
 #define Map StringRealHistogramMap
 ! #define __CLASS_ITEMMAP__ class(String)
 #define __CLASS_MAPITERATOR__  class(StringRealHistogramMapIterator)
+#define __MAPLIST__            StringRealHistogramPairList
 #define __TYPE_MAPLIST__       type(StringRealHistogramPairList)
 #define __TYPE_MAPPAIR__       type(StringRealHistogramPair)
 #define __CLASS_MAPPAIR__      class(StringRealHistogramPair)
@@ -64,6 +65,7 @@ module StringRealHistogramMap_
         procedure :: addArray
 #include "Map.h90"
 #undef __CLASS_MAPITERATOR__
+#undef __MAPLIST__
 #undef __TYPE_MAPLIST__
 #undef __TYPE_MAPPAIR__
 #undef __CLASS_MAPPAIR__
@@ -183,7 +185,7 @@ module StringRealHistogramMap_
 		if( this.find( key, ptr ) ) then
 			call ptr.data.second.add( array )
 		else
-			call hist.init( rule )
+			hist = RealHistogram( rule )
 			call hist.add( array )
 			call this.insert( key, hist )
 		end if
@@ -204,7 +206,7 @@ module StringRealHistogramMap_
 		if( this.find( key, ptr ) ) then
 			call ptr.data.second.add( value )
 		else
-			call hist.init( rule )
+			hist = RealHistogram( rule )
 			call hist.add( value )
 			call this.insert( key, hist )
 		end if
@@ -240,46 +242,46 @@ module StringRealHistogramMap_
 		class(StringRealHistogramMapIterator), pointer :: ptr
 		logical :: loc
 		
-		call mymap.init()
+		mymap = StringRealHistogramMap()
 		
 		str = "Ademas"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )
 		
 		str = "Amor"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Amor"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Entonces"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Corazon"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Hola"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Conejo"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )
@@ -328,20 +330,20 @@ module StringRealHistogramMap_
 		write(*,*) "Adicionando nuevas cosas"
 		
 		str = "Ademas"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )
 		
 		str = "Amor"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8] )
 		call mymap.insert( str, hist )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando el elemento Amor a size=2"
 		str = "Amor"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8] )
 		call mymap.set( str, hist )
 		call showMyMap( mymap )

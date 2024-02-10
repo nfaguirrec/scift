@@ -159,7 +159,7 @@ module IntegerList_
 		type(IntegerList) :: mylist
 		class(IntegerListIterator), pointer :: iter
 		
-		call mylist.init()
+		mylist = IntegerList()
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for append method"

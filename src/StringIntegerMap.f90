@@ -51,11 +51,14 @@ module StringIntegerMap_
 ! #define __CLASS_ITEMMAP__ class(String)
 #define __CLASS_MAPITERATOR__  class(StringIntegerMapIterator)
 #define __TYPE_MAPLIST__       type(StringIntegerPairList)
+#define __MAPLIST__       StringIntegerPairList
 #define __TYPE_MAPPAIR__       type(StringIntegerPair)
 #define __CLASS_MAPPAIR__      class(StringIntegerPair)
+#define __MAPPAIR__      StringIntegerPair
 ! #define __CLASS_MAPKEY__       class(String)
 #define __CLASS_MAPVALUE__     integer
 #define __TYPE_MAPVALUE__     integer
+#define __MAPVALUE__     integer
 #define __ADD_METHODS__
 #include "Map.h90"
 #undef Map
@@ -185,7 +188,7 @@ module StringIntegerMap_
 		type(StringIntegerMap) :: mymap
 		class(StringIntegerMapIterator), pointer :: ptr
 		
-		call mymap.init()
+		mymap = StringIntegerMap()
 		
 		str = "Ademas"
 		call mymap.insert( str, 45 )

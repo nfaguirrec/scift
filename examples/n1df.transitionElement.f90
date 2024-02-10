@@ -71,9 +71,9 @@ program main
 	!---------------------------------------------
 	fileTypeA = CNFunction_checkTypeN1DF( fileNameA )
 	if( fileTypeA == 0 ) then
-		call rFuncA.init( fileNameA )
+		rFuncA = RNFunction( fileNameA )
 	else if( fileTypeA == 1 ) then
-		call cFuncA.init( fileNameA )
+		cFuncA = CNFunction( fileNameA )
 	else
 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameA)
 		stop
@@ -86,10 +86,10 @@ program main
 	
 	if( fileTypeA == 0 ) then
 		call parser.parseFunction( formulaOper, [ 'x' ]  )
-		call rFuncOper.init( rFuncA.xGrid, evaluateFormulaR )
+		rFuncOper = RNFunction( rFuncA.xGrid, evaluateFormulaR )
 	else if( fileTypeA == 1 ) then
 		call parser.parseFunction( formulaOper, [ 'x' ]  )
-		call cFuncOper.init( cFuncA.xGrid, evaluateFormulaC )
+		cFuncOper = CNFunction( cFuncA.xGrid, evaluateFormulaC )
 	end if
 	
 	!---------------------------------------------
@@ -97,9 +97,9 @@ program main
 	!---------------------------------------------
 	fileTypeB = CNFunction_checkTypeN1DF( fileNameB )
 	if( fileTypeB == 0 ) then
-		call rFuncB.init( fileNameB )
+		rFuncB = RNFunction( fileNameB )
 	else if( fileTypeB == 1 ) then
-		call cFuncB.init( fileNameB )
+		cFuncB = CNFunction( fileNameB )
 	else
 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameB)
 		stop

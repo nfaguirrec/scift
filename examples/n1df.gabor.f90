@@ -334,7 +334,7 @@ program main
 	!----------------------------------------------------------------------	
 	
 	call ifile.init( iFileName.fstr )
-	call nFunc.fromFStream( ifile, columns=columns )
+	nFunc = CNFunction( ifile, columns=columns )
 	call ifile.close()
 	
 	if( nPoints == -1 ) nPoints = nFunc.nPoints()
@@ -352,7 +352,7 @@ program main
 	do while( t <= nFunc.xGrid.max )!-3.0_8*sigma )
 		write(*,"(A,F20.6,A)", advance="no") "Generating ", t, " ... "
 		
-		call nFuncWindow.fromFunction( nFunc.xGrid, window )
+		nFuncWindow = CNFunction( nFunc.xGrid, window )
 		
 		nFunc2 = nFuncWindow*nFunc
 		
@@ -380,7 +380,7 @@ program main
 	contains
 	
 	function window( tprime ) result( output )
-		real(8) :: tprime
+		real(8), intent(in) :: tprime
 		complex(8) :: output
 		
 		output = exp(-(tprime-t)**2/2.0_8/sigma**2)/sigma/sqrt(2.0_8*Math_PI)

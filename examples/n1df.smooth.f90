@@ -72,7 +72,7 @@ program main
 	fileType = RNFunction_checkTypeN1DF( iFileName.fstr )
 	
 	if( fileType == 0 ) then
-		call riFunc.init( iFileName.fstr )
+		riFunc = RNFunction( iFileName.fstr )
 		
 		call spl.init( riFunc )
 		riFuncSmooth = spl.smooth( smoothFactor )

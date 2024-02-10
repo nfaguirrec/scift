@@ -78,8 +78,8 @@ program main
 	
 	if( fileTypeA == 0 .and. fileTypeB == 0 ) then
 	
-		call rFuncA.init( fileNameA )
-		call rFuncB.init( fileNameB )
+		rFuncA = RNFunction( fileNameA )
+		rFuncB = RNFunction( fileNameB )
 		
 		rFuncB = rFuncB.interpolate( rFuncA.xGrid )
 		
@@ -89,8 +89,8 @@ program main
 		
 	else if( fileTypeA == 1 .and. fileTypeB == 1 ) then
 
-		call cFuncA.init( fileNameA )
-		call cFuncB.init( fileNameB )
+		cFuncA = CNFunction( fileNameA )
+		cFuncB = CNFunction( fileNameB )
 		
 		cFuncB = cFuncB.interpolate( cFuncA.xGrid )
 		

@@ -163,7 +163,7 @@ module StringRealHistogramPairList_
 		write(*,*) "-----------------------------"
 		
 		write(*,*) "call mylist.init()"
-		call mylist.init()
+		mylist = StringRealHistogramPairList()
 		
 		iter => mylist.begin
 		do while( associated(iter) )
@@ -183,28 +183,28 @@ module StringRealHistogramPairList_
 ! 		write(*,*)
 ! 		
 		str = "Hello"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
 		
 		call mypair.init( str, hist )
 		call mylist.append( mypair )
 		
 		str = "class"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8] )
 		
 		call mypair.init( str, hist )
 		call mylist.append( mypair )
 		
 		str = "string"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [27.82564_8] )
 		
 		call mypair.init( str, hist )
 		call mylist.append( mypair )
 		
 		str = "list"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [23.81071_8, 22.70389_8] )
 		
 		call mypair.init( str, hist )
@@ -280,7 +280,7 @@ module StringRealHistogramPairList_
 		write(*,*) "call mylist.insert( iterPos, Prueba )"
 		
 		str = "Prueba"
-		call hist.init( Histogram_STURGES )
+		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [23.81071_8, 22.70389_8, 22.70389_8, 22.70389_8] )
 		
 		call mypair.init( str, hist )

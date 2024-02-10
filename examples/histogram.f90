@@ -65,7 +65,7 @@ program main
 	iFileName = parser.getString( "-i" )
 	oFileName = parser.getString( "-o" )
 	
-	call hist.init( Histogram_LORENTZIAN_DRESSING )
+	hist = RealHistogram( Histogram_LORENTZIAN_DRESSING )
 	call hist.add( iFileName.fstr )
 	
 	minValue = parser.getReal( "-min", def=hist.minimum() )

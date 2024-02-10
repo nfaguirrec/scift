@@ -72,11 +72,11 @@ program main
 	fileType = RNFunction_checkTypeN1DF( iFileName.fstr )
 	
 	if( fileType == 0 ) then
-		call rFunc.init( iFileName.fstr )
+		rFunc = RNFunction( iFileName.fstr )
 		call rFunc.resize( addPoints, dir )
 		call rFunc.save( oFileName.fstr )
 	else if( fileType == 1 ) then
-		call cFunc.init( iFileName.fstr )
+		cFunc = CNFunction( iFileName.fstr )
 		call cFunc.resize( addPoints, dir )
 		call cFunc.save( oFileName.fstr )
 	else

@@ -195,7 +195,7 @@ module IntegerHyperList_
 		
 		integer :: i
 		
-		call hilist.init()
+		hilist = IntegerHyperList()
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for append method"
@@ -206,11 +206,11 @@ module IntegerHyperList_
 		write(*,*) "call hilist.append( [1,1] )"
 		write(*,*)
 		
-		call ilist.init( 3, value=1 )
+		ilist = IntegerList( 3, value=1 )
 		call hilist.append( ilist )
-		call ilist.init( 4, value=2 )
+		ilist = IntegerList( 4, value=2 )
 		call hilist.append( ilist )
-		call ilist.init( 2, value=1 )
+		ilist = IntegerList( 2, value=1 )
 		call hilist.append( ilist )
 		
 		call showMyHList( hilist )
@@ -224,11 +224,11 @@ module IntegerHyperList_
 		write(*,*) "call hilist.prepend( [8,8,8] )"
 		write(*,*)
 		
-		call ilist.init( 2, value=4 )
+		ilist = IntegerList( 2, value=4 )
 		call hilist.prepend( ilist )
-		call ilist.init( 4, value=5 )
+		ilist = IntegerList( 4, value=5 )
 		call hilist.prepend( ilist )
-		call ilist.init( 3, value=8 )
+		ilist = IntegerList( 3, value=8 )
 		call hilist.prepend( ilist )
 		
 		call showMyHList( hilist )
@@ -247,7 +247,7 @@ module IntegerHyperList_
 		iter => iter.next
 		iter => iter.next
 		
-		call ilist.init( 3, value=9 )
+		ilist = IntegerList( 3, value=9 )
 		
 		call hilist.insert( iter, ilist )
 		call showMyHList( hilist )
@@ -256,7 +256,7 @@ module IntegerHyperList_
 		write(*,*) "call hilist.insert( iter, [8, 8, 8, 8] )"
 		write(*,*)
 		
-		call ilist.init( 4, value=8 )
+		ilist = IntegerList( 4, value=8 )
 		
 		call hilist.insert( iter, ilist )
 		call showMyHList( hilist )
@@ -265,7 +265,7 @@ module IntegerHyperList_
 		write(*,*) "call hilist.insert( hilist.end, [7, 7] )"
 		write(*,*)
 				
-		call ilist.init( 2, value=7 )
+		ilist = IntegerList( 2, value=7 )
 		
 		call hilist.insert( hilist.end, ilist )
 		call showMyHList( hilist )

@@ -250,7 +250,7 @@ module Spline_
 			y(i) = this.evaluate( xGrid.data(i) )
 		end do
 		
-		call output.fromGridArray( xGrid, y )
+		output = RNFunction( xGrid, y )
 	end function smooth
 	
 	!>
@@ -314,7 +314,7 @@ module Spline_
 ! 		integer :: i
 		
 		call ifile.init( "morse.dat" )
-		call nFunc.fromFStream( ifile )
+		nFunc = RNFunction( ifile )
 		call nFunc.show()
 		call ifile.close()
 		

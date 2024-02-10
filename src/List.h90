@@ -135,16 +135,16 @@
 		class(ListIterator), pointer :: end => null()
 		
 		contains
-			generic :: init => initList
-			generic :: assignment(=) => copyList  !@todo ifort version >= 2.015. Does not allow to overwrite this method
+! 			generic :: init => initList
+! 			generic :: assignment(=) => copyList  !@todo ifort version >= 2.015. Does not allow to overwrite this method
 			generic :: operator(==) => equal
 			generic :: operator(/=) => nequal
 			
-			procedure :: initList
+! 			procedure :: initList
 			procedure :: copyList
 			final :: destroyList
-			procedure :: equal
-			procedure :: nequal
+			procedure, private :: equal
+			procedure, private :: nequal
 #ifndef ListBasicInterface
 			procedure :: str
 			procedure :: show
@@ -180,6 +180,10 @@
 			
 			! @todo Hay que implementar la interfaz publica de http://doc.qt.digia.com/qt/qlist.html#size_type-typedef
 	end type List
+
+	interface List
+		module procedure initList
+	end interface
 	
 	!>
 	!! Encapsulated ListIterator 
@@ -195,8 +199,8 @@
 	!!
 	!! Constructs an empty list
 	!!
-	subroutine initList( this, initialSize, value )
-		class(List) :: this
+	function initList( initialSize, value ) result(this)
+		type(List) :: this
 		integer, optional, intent(in) :: initialSize
 		__CLASS_ITEMLIST__, optional, intent(in) :: value
 		
@@ -211,7 +215,7 @@
 				call this.append( value )
 			end do
 		end if
-	end subroutine initList
+	end function initList
 	
 	!>
 	!! @brief Copy constructor
@@ -646,10 +650,10 @@
 			call this.erase( iter )
 			iter => this.begin
 ! 			iter => iterPos
-			
+
 ! 			if( associated(iterPos) ) iterPos => iter.next
 		end do
-		
+
 ! 		this.nItems = 0
 ! 		this.begin => null()
 ! 		this.end => null()

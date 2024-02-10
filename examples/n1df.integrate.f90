@@ -90,7 +90,7 @@ program main
 	smoothFactor = parser.getInteger( "-s", def=1 )
 	
 	call ifile.init( iFileName.fstr )
-	call nFunc.fromFStream( ifile, columns=columns )
+	nFunc = RNFunction( ifile, columns=columns )
 	call ifile.close()
 	
 	a = parser.getReal( "-a", def=nFunc.min() )

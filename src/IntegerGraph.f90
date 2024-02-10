@@ -710,7 +710,7 @@ module IntegerGraph_
 	!>
 	!! @brief
 	!!
-	pure function nNodes( this ) result( output )
+	function nNodes( this ) result( output )
 		class(IntegerGraph), intent(in) :: this
 		integer :: output
 		
@@ -720,7 +720,7 @@ module IntegerGraph_
 	!>
 	!! @brief
 	!!
-	pure function nEdges( this ) result( output )
+	function nEdges( this ) result( output )
 		class(IntegerGraph), intent(in) :: this
 		integer :: output
 		
@@ -734,7 +734,7 @@ module IntegerGraph_
 	!>
 	!! @brief
 	!!
-	pure function isDirected( this ) result( output )
+	function isDirected( this ) result( output )
 		class(IntegerGraph), intent(in) :: this
 		logical :: output
 		
@@ -2155,13 +2155,13 @@ module IntegerGraph_
 		end if
 		
 		if( effCheckLabels ) then
-			call labelsMapThis.init()
+			labelsMapThis = StringIntegerMap()
 			do i=1,this.nNodes()
 				sBuffer = trim(this.nodeProperties.data(i).label)
 				call labelsMapThis.set( sBuffer, labelsMapThis.at( sBuffer, defaultValue=0 )+1 )
 			end do
 			
-			call labelsMapOther.init()
+			labelsMapOther = StringIntegerMap()
 			do i=1,other.nNodes()
 				sBuffer = trim(other.nodeProperties.data(i).label)
 				call labelsMapOther.set( sBuffer, labelsMapOther.at( sBuffer, defaultValue=0 )+1 )

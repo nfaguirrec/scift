@@ -89,7 +89,7 @@ module NPotentialEnergyCurve_
 		class(NPotentialEnergyCurve) :: this
 		type(RNFunction) :: output
 		
-		call output.fromGridArray( this.xGrid, this.fArray )
+		output = RNFunction( this.xGrid, this.fArray )
 	end function parent
 	
 	subroutine run( this, rGrid, longRangeF, veryShortRangeF )
@@ -132,7 +132,7 @@ module NPotentialEnergyCurve_
 			
 		end do
 		
-		call this.fromGridArray( rGrid, y )
+		this.RNFunction = RNFunction( rGrid, y )
 	end subroutine run
 	
 	!>
@@ -207,7 +207,7 @@ module NPotentialEnergyCurve_
 ! 		call rGrid.init( 2.5_8, 8.0_8, size=20 )
 		call rGrid.show()
 		
-		call rawCurve.fromFunction( rGrid, shortRangeDefault )
+		rawCurve = RNFunction( rGrid, shortRangeDefault )
 		call rawCurve.save("rawCurve")
 		
 		call finalGrid.init( 1.0_8, 1000.0_8, nPoints=100000 )

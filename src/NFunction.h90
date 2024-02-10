@@ -42,14 +42,6 @@
 		__TYPE_VALUE__, allocatable :: fArray(:)
 		
 		contains
-			generic :: init => fromGrid, fromGridData, fromArrays, fromGridArray, fromFunction, fromFile, fromFStream
-			procedure :: fromGrid
-			procedure :: fromGridData
-			procedure :: fromArrays
-			procedure :: fromGridArray
-			procedure :: fromFunction
-			procedure :: fromFile
-			procedure :: fromFStream
 			generic :: assignment(=) => copyNFunction
 			procedure :: copy => copyNFunction
 			procedure :: copyNFunction
@@ -149,6 +141,10 @@
 			
 			__ADD_METHODS__
 	end type NFunction
+
+	interface NFunction
+		module procedure fromGrid, fromGridData, fromArrays, fromGridArray, fromFunction, fromFile, fromFStream
+	end interface
 	
 	interface
 		function prototypeFunction( x ) result( output )
@@ -162,8 +158,8 @@
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromGrid( this, xGrid, value )
-		class(NFunction) :: this 
+	function fromGrid( xGrid, value ) result( this )
+		type(NFunction) :: this
 		type(Grid), intent(in) :: xGrid
 		__TYPE_VALUE__, optional, intent(in) :: value
 		
@@ -180,17 +176,17 @@
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromGrid()" )
 		
 		this.fArray = effValue
-	end subroutine fromGrid
+	end function fromGrid
 	
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromGridData( this, min, max, nPoints, stepSize, value )
-		class(NFunction) :: this
-		real(8) :: min
-		real(8) :: max
-		integer, optional :: nPoints
-		real(8), optional :: stepSize
+	function fromGridData( min, max, nPoints, stepSize, value ) result( this )
+		type(NFunction) :: this
+		real(8), intent(in) :: min
+		real(8), intent(in) :: max
+		integer, optional, intent(in) :: nPoints
+		real(8), optional, intent(in) :: stepSize
 		__TYPE_VALUE__, optional, intent(in) :: value
 		
 		__TYPE_VALUE__ :: effValue
@@ -207,13 +203,13 @@
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromGridData()" )
 		
 		this.fArray = effValue
-	end subroutine fromGridData
+	end function fromGridData
 	
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromArrays( this, xArray, fArray, units, cutoff )
-		class(NFunction) :: this
+	function fromArrays( xArray, fArray, units, cutoff ) result( this )
+		type(NFunction) :: this
 		real(8), intent(in) :: xArray(:)
 		__TYPE_VALUE__, intent(in) :: fArray(:)
 		real(8), optional, intent(in) :: units(2)
@@ -252,13 +248,13 @@
 			this.fArray(i) = fArray(i)*effUnits(2)
 #endif
 		end do
-	end subroutine fromArrays
+	end function fromArrays
 	
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromGridArray( this, xGrid, fArray, units, cutoff )
-		class(NFunction) :: this 
+	function fromGridArray( xGrid, fArray, units, cutoff ) result( this )
+		type(NFunction) :: this
 		type(Grid), intent(in) :: xGrid
 		__TYPE_VALUE__, intent(in) :: fArray(:)
 		real(8), optional, intent(in) :: units(2)
@@ -299,13 +295,13 @@
 #endif
 		end do
 		
-	end subroutine fromGridArray
+	end function fromGridArray
 	
 	!>
 	!! @brief Constructor
 	!!
-	subroutine fromFunction( this, xGrid, func, units, cutoff )
-		class(NFunction) :: this 
+	function fromFunction( xGrid, func, units, cutoff ) result( this )
+		type(NFunction) :: this
 		type(Grid), intent(in) :: xGrid
 		procedure(prototypeFunction) :: func
 		real(8), optional, intent(in) :: units(2)
@@ -340,14 +336,14 @@
 			this.fArray(i) = func( xGrid.data(i) )*effUnits(2)
 #endif
 		end do
-	end subroutine fromFunction
-	
+	end function fromFunction
+
 	!>
 	!! @brief Reads from a file
 	!!
-	subroutine fromFile( this, fileName, format, cutoff )
-		class(NFunction) :: this
-		character(*), optional, intent(in) :: fileName
+	function fromFile( fileName, format, cutoff ) result( this )
+		type(NFunction) :: this
+		character(*), intent(in) :: fileName
 		integer, optional, intent(in) :: format
 		real(8), optional, intent(in) :: cutoff
 		
@@ -404,8 +400,8 @@
 				write(6,*) "### ERROR ### NFunction.fromFile(). The format is not supported (", effFormat, ")"
 				stop
 		end select
-	end subroutine fromFile
-	
+	end function fromFile
+
 	!>
 	!! @brief Copy constructor
 	!!
@@ -1011,7 +1007,7 @@
 	!! @todo Esto hay que dejarlo directamente como loadDAT y eliminar los fromStream de las clases hijas
 	!!
 	subroutine loadDAT( this, ifileName, columns, cComments, units )
-		class(NFunction) :: this 
+		class(NFunction) :: this
 		character(*), intent(in) :: ifileName
 		integer, allocatable, optional, intent(in) :: columns(:)
 		character(*), optional, intent(in) :: cComments
@@ -1027,7 +1023,10 @@
 		end if
 		
 		call ifile.init( ifileName )
-		call this.fromFStream( ifile, columns, cComments, units )
+		select type (this); type is (NFunction)
+			this = NFunction( ifile, columns, cComments, units )
+! 			this = fromFStream( ifile, columns, cComments, units )
+		end select
 		call ifile.close()
 	end subroutine loadDAT
 	
@@ -1178,7 +1177,7 @@
 		read(1) fArray
 		
 		call xGrid.init( min=xMin, max=xMax, nPoints=nx )
-		call this.fromGridArray( xGrid, fArray )
+		this = NFunction( xGrid, fArray )
 		
 		deallocate( fArray )
 		
@@ -1337,7 +1336,7 @@
 #endif
 		
 		call xGrid.init( min=xMin, max=xMax, nPoints=nx )
-		call this.fromGridArray( xGrid, fArray )
+		this = NFunction( xGrid, fArray )
 		
 		close(1)
 		
@@ -1526,7 +1525,7 @@
 	!>
 	!! @brief
 	!!
-	pure function checkBox( this, other ) result( output )
+	function checkBox( this, other ) result( output )
 		class(NFunction), intent(in) :: this
 		class(NFunction), intent(in) :: other
 		logical :: output
@@ -1653,7 +1652,7 @@
 			end if
 		end if
 		
-		call this.init( xGrid, fArray )
+		this = NFunction( xGrid, fArray )
 		
 		deallocate( fArray )
 	end subroutine resize
@@ -2239,7 +2238,7 @@
 			dArray(i) = this.interpolatePoint( xGrid.at(i), stencil=stencil, order=order, value=value )
 		end do
 		
-		call output.fromGridArray( xGrid, dArray )
+		output = NFunction( xGrid, dArray )
 		
 		deallocate( dArray )
 	end function interpolateOnGrid
@@ -2272,7 +2271,7 @@
 			dArray(i) = this.interpolatePoint( this.xGrid.at(i), stencil, effOrder )
 		end do
 		
-		call output.fromGridArray( this.xGrid, dArray )
+		output = NFunction( this.xGrid, dArray )
 		
 		deallocate( dArray )
 	end function derivative
