@@ -267,7 +267,7 @@ module IntegerGraph_
 	!!
 	subroutine copyIntegerGraph( this, other )
 		class(IntegerGraph), intent(inout) :: this
-		class(IntegerGraph), intent(in) :: other
+		type(IntegerGraph), intent(in) :: other
 		
 		if( allocated(this.name) ) deallocate(this.name)
 		this.name = other.name

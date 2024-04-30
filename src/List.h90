@@ -136,7 +136,7 @@
 		
 		contains
 ! 			generic :: init => initList
-! 			generic :: assignment(=) => copyList  !@todo ifort version >= 2.015. Does not allow to overwrite this method
+			generic :: assignment(=) => copyList
 			generic :: operator(==) => equal
 			generic :: operator(/=) => nequal
 			
@@ -225,7 +225,7 @@
 	!!
 	subroutine copyList( this, other )
 		class(List), intent(out) :: this
-		class(List), intent(in) :: other
+		type(List), intent(in) :: other
 		
 		class(ListIterator), pointer :: iter
 		

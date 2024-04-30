@@ -124,7 +124,7 @@ program main
 	write(*,"(A)")          "#"
 	
 	call ifile.init( fileName.fstr )
-	call nFunc.fromFStream( ifile, columns=columns )
+	nFunc = RNFunction( ifile, columns=columns )
 	call ifile.close()
 	
 	write(*,"(A,A)")        "# -------------- GRID INFORMATION -------------- "

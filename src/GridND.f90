@@ -55,8 +55,8 @@ module GridND_
 			procedure :: fromComponents
 			procedure :: fromArray
 			procedure :: fromFile
-			generic :: assignment(=) => copyGrid3D
-			procedure :: copyGrid3D
+			generic :: assignment(=) => copyGridND
+			procedure :: copyGridND
 			final :: destroyGrid3D
 			
 			procedure :: isEqualTo
@@ -184,16 +184,16 @@ module GridND_
 	!>
 	!! @brief Copy constructor
 	!!
-	subroutine copyGrid3D( this, other )
+	subroutine copyGridND( this, other )
 		class(GridND), intent(out) :: this
-		class(GridND), intent(in) :: other
+		type(GridND), intent(in) :: other
 		
 		integer :: i
 		
 		do i=1,3
 			this.component(i) = other.component(i)
 		end do
-	end subroutine copyGrid3D
+	end subroutine copyGridND
 	
 	!>
 	!! @brief Destructor

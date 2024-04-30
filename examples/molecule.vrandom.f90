@@ -148,7 +148,7 @@ program main
 		write(*,*) ""
 	end if
 	
-	call mol.init( iFileName.fstr )
+	mol = Molecule( iFileName.fstr )
 	call mol.orient()
 	
 	allocate( velocities(mol.nAtoms(),3) )

@@ -174,7 +174,7 @@ module ElementsDB_
 	!!
 	subroutine copyElementsDB( this, other )
 		class(ElementsDB), intent(inout) :: this
-		class(ElementsDB), intent(in) :: other
+		type(ElementsDB), intent(in) :: other
 
 	end subroutine copyElementsDB
 	

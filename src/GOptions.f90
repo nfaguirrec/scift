@@ -50,12 +50,12 @@ module GOptions_
 	! 2)
 	! 3)
 	! 4)
-	logical :: GOptions_printLevel = 1
+	integer :: GOptions_printLevel = 1
 	
 	! 1) NOTHING
 	! 2) INFO
 	! 3) INFO + WARNING
-	logical :: GOptions_debugLevel = 1
+	integer :: GOptions_debugLevel = 1
 	
 	integer :: GOptions_indentLength = 5
 	

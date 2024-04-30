@@ -102,7 +102,7 @@ program main
 	call get_command_argument( 8, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) oFileName = sBuffer
 	
-	call mol.init( iFileName.fstr )
+	mol = Molecule( iFileName.fstr )
 	call mol.distort( radius=radius, method=method, overlappingRadius=overlapping, useMassWeight=.true., alpha=alpha, thr=symthr, keepConnectivity=keepConnectivity )
 	
 	if( .not. oFileName.isEmpty() ) then

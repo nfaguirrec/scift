@@ -64,7 +64,7 @@ program main
 		charge = 0
 	end if
 	
-	call mol.init( iFileName.fstr )
+	mol = Molecule( iFileName.fstr )
 	
 	write(*,"(I5)") mol.minSpinMultiplicity( charge )
 end program main

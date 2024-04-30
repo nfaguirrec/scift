@@ -171,7 +171,7 @@ module RealList_
 	!! @brief Test method
 	!!
 	subroutine RealList_test()
-		type(RealList) :: mylist
+		type(RealList) :: mylist, mylist2
 		class(RealListIterator), pointer :: iter
 		
 		mylist = RealList()
@@ -190,6 +190,12 @@ module RealList_
 		call mylist.append( 1.0_8 )
 		
 		call showMyListForward( mylist )
+
+		write(*,*) "-------------------------"
+		write(*,*) "Testing copy method"
+		write(*,*) "-------------------------"
+		mylist2 = mylist
+		call showMyListForward( mylist2 )
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for prepend method"

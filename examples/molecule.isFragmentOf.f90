@@ -57,8 +57,8 @@ program main
 	call get_command_argument( 2, sBuffer )
 	iFileNameRef = sBuffer
 	
-	call molRef.init( iFileNameRef.fstr )
-	call molFrag.init( iFileNameFrag.fstr )
+	molRef = Molecule( iFileNameRef.fstr )
+	molFrag = Molecule( iFileNameFrag.fstr )
 	
 	if( molFrag.isFragmentOf( molRef ) ) then
 		write(*,"(A)") "OK"

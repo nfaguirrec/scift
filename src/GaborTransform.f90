@@ -83,7 +83,7 @@ module GaborTransform_
 	!!
 	subroutine copyGaborTransform( this, other )
 		class(GaborTransform), intent(inout) :: this
-		class(GaborTransform), intent(in) :: other
+		type(GaborTransform), intent(in) :: other
 
 		this.val = other.val
 	end subroutine copyGaborTransform

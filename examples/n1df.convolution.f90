@@ -136,11 +136,11 @@ program main
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
 	call ifile.init( iFileName1.fstr )
-	call nFunc1.fromFStream( ifile, columns=columns1 )
+	nFunc1 = CNFunction( ifile, columns=columns1 )
 	call ifile.close()
 	
 	call ifile.init( iFileName2.fstr )
-	call nFunc2.fromFStream( ifile, columns=columns2 )
+	nFunc2 = CNFunction( ifile, columns=columns2 )
 	call ifile.close()
 	
 	select case( idTypeOfMethod )

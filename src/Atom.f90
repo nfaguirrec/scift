@@ -118,7 +118,7 @@ module Atom_
 	!!
 	subroutine copyAtom( this, other )
 		class(Atom), target, intent(inout) :: this
-		class(Atom), intent(in) :: other
+		type(Atom), intent(in) :: other
 		
 		this.symbol = other.symbol
 		

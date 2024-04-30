@@ -110,8 +110,8 @@ program main
 	write(*,"(A,L)")     "Use Edge Weights = ", useEdgeWeights
 	write(*,*) ""
 	
-	call mol1.init( iFileName1.fstr )
-	call mol2.init( iFileName2.fstr )
+	mol1 = Molecule( iFileName1.fstr )
+	mol2 = Molecule( iFileName2.fstr )
 	
 	write(*,"(A)", advance="no") "Chemical formula ... "
 	if( mol1.compareFormula( mol2, debug=debug ) ) then

@@ -616,7 +616,7 @@
 	!!
 	subroutine copyNFunction3D( this, other )
 		class(NFunction3D), intent(inout) :: this
-		class(NFunction3D), intent(in) :: other
+		type(NFunction3D), intent(in) :: other
 		
 		integer :: i, j, k
 		

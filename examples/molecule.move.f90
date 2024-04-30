@@ -54,7 +54,7 @@ program main
 	y = parser.getReal( "-y", def=0.0_8 )*angs
 	z = parser.getReal( "-z", def=0.0_8 )*angs
 	
-	call mol.init( iFileName.fstr )
+	mol = Molecule( iFileName.fstr )
 	
 	call mol.setCenter( [x,y,z] )
 	

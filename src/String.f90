@@ -242,7 +242,7 @@ module String_
 	!!
 	subroutine copy( this, other )
 		class(String), intent(inout) :: this
-		class(String), intent(in) :: other
+		type(String), intent(in) :: other
 		
 		if( allocated(this.fstr) ) deallocate(this.fstr)
 		this.fstr = other.fstr

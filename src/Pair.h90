@@ -81,7 +81,7 @@
 	!!
 	subroutine copyPair( this, other )
 		class(Pair), intent(out) :: this
-		class(Pair), intent(in) :: other
+		type(Pair), intent(in) :: other
 		
 		this.first = other.first
 		this.second = other.second

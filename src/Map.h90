@@ -105,7 +105,7 @@
 	!!
 	subroutine copyList( this, other )
 		class(Map), intent(out) :: this
-		class(Map), intent(in) :: other
+		type(Map), intent(in) :: other
 		
 		this.list = other.list
 		this.begin => this.list.begin

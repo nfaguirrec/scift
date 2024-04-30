@@ -83,9 +83,9 @@ program main
 	!---------------------------------------------
 	fileTypeA = CNFunction_checkTypeN1DF( fileNameA )
 	if( fileTypeA == 0 ) then
-		call rA.init( fileNameA )
+		rA = RNFunction( fileNameA )
 	else if( fileTypeA == 1 ) then
-		call cA.init( fileNameA )
+		cA = CNFunction( fileNameA )
 	else
 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameA)
 		stop
@@ -95,10 +95,10 @@ program main
 	
 	if( fileTypeA == 0 ) then
 		call parser.parseFunction( formula, [ 'x' ]  )
-		call rFunc.init( rA.xGrid, evaluateFormulaR )
+		rFunc = RNFunction( rA.xGrid, evaluateFormulaR )
 	else if( fileTypeA == 1 ) then
 		call parser.parseFunction( formula, [ 'x' ]  )
-		call cFunc.init( cA.xGrid, evaluateFormulaC )
+		cFunc = CNFunction( cA.xGrid, evaluateFormulaC )
 	end if
 	
 	!---------------------------------------------

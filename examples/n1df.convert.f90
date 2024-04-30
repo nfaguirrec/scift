@@ -60,9 +60,9 @@ program main
 	fileType = CNFunction_checkTypeN1DF( iFileName.fstr )
 	
 	if( fileType == 0 ) then
-		call rNFunc.init( iFileName.fstr )
+		rNFunc = RNFunction( iFileName.fstr )
 	else if( fileType == 1 ) then
-		call cNFunc.init( iFileName.fstr )
+		cNFunc = CNFunction( iFileName.fstr )
 	else
 		write(0,*) "### ERROR ### unknown format for "//trim(iFileName.fstr)
 		stop

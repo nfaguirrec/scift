@@ -90,7 +90,7 @@ module Node_
 	!!
 	subroutine copy( this, other )
 		class(Node), intent(inout) :: this
-		class(Node), intent(in) :: other
+		type(Node), intent(in) :: other
 		
 		this.id = other.id
 		this.label = other.label

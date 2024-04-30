@@ -63,8 +63,8 @@ program main
 	call get_command_argument( 3, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) alpha = FString_toReal(sBuffer)
 	
-	call mol1.init( iFileNameMol1.fstr )
-	call mol2.init( iFileNameMol2.fstr )
+	mol1 = Molecule( iFileNameMol1.fstr )
+	mol2 = Molecule( iFileNameMol2.fstr )
 	
 	if( mol1.overlapping( mol2, alpha=alpha ) ) then
 		write(*,"(A)") "TRUE"

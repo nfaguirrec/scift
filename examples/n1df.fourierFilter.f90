@@ -120,7 +120,7 @@ program main
 ! 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
 	call ifile.init( iFileName.fstr )
-	call nFunc.fromFStream( ifile, columns=columns )
+	nFunc = CNFunction( ifile, columns=columns )
 	call ifile.close()
 	
 	FnFunc = FourierTransform_fft( nFunc, sgn=FourierTransform_FORWARD )

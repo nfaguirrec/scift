@@ -74,11 +74,11 @@ program main
 	columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 	
 	call ifile.init( iFileName.fstr )
-	call nFunc.fromFStream( ifile, columns=columns )
+	nFunc = RNFunction( ifile, columns=columns )
 	call ifile.close()
 	
-! 	call oFunc.init( nFunc.xGrid, value=0.0_8 )
-	call oFunc.init( nFunc.xGrid )
+! 	oFunc = RNFunction( nFunc.xGrid, value=0.0_8 )
+	oFunc = RNFunction( nFunc.xGrid )
 	
 	select case( trim(filter.fstr) )
 		case( ">0" )

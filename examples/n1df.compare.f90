@@ -71,7 +71,7 @@ program main
 ! 	if( fileTypeA == 0 ) then
 ! 		call rNFunc.init( fileNameA )
 ! 	else if( fileTypeA == 1 ) then
-		call cNFuncA.init( fileNameA )
+		cNFuncA = CNFunction( fileNameA )
 ! 	else
 ! 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameA)
 ! 		stop
@@ -80,7 +80,7 @@ program main
 ! 	if( fileTypeB == 0 ) then
 ! 		call rNFunc.init( fileNameB )
 ! 	else if( fileTypeB == 1 ) then
-		call cNFuncB.init( fileNameB )
+		cNFuncB = CNFunction( fileNameB )
 ! 	else
 ! 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameB)
 ! 		stop

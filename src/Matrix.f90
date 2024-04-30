@@ -296,7 +296,7 @@ module Matrix_
 	!!
 	subroutine copyMatrix( this, other )
 		class(Matrix), intent(inout) :: this
-		class(Matrix), intent(in) :: other
+		type(Matrix), intent(in) :: other
 		
 		this.nRows = other.nRows
 		this.nCols = other.nCols

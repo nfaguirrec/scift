@@ -91,7 +91,7 @@ program main
 	smoothFactor = parser.getInteger( "-s", def=1 )
 	
 	call ifile.init( iFileName.fstr )
-	call nFunc.fromFStream( ifile, columns=columns )
+	nFunc = RNFunction( ifile, columns=columns )
 	call ifile.close()
 	
 	a = parser.getReal( "-a", def=nFunc.min() )
@@ -132,7 +132,7 @@ program main
 	ixa = nFunc.xGrid.pos(a)
 	ixb = nFunc.xGrid.pos(b)
 	
-	call cnFunc.init( nFunc.xGrid )
+	cnFunc = RNFunction( nFunc.xGrid )
 	
 	do i=ixa,ixb
 		value = integrator.evaluate( a, nFunc.x( i ) )

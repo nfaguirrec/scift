@@ -163,7 +163,7 @@
 	!!
 	subroutine copyNVector( this, other )
 		class(NVector), intent(out) :: this
-		class(NVector), intent(in) :: other
+		type(NVector), intent(in) :: other
 		
 		this.nElems = other.nElems
 		

@@ -59,7 +59,7 @@ program main
 	nAtoms = 0
 	do i=1,command_argument_count()
 		call get_command_argument( i, sBuffer )
-		call molecules(i).init( sBuffer )
+		molecules(i) = Molecule( sBuffer )
 		
 		if( i>1 ) then
 			center = molecules(i-1).center()
@@ -69,7 +69,7 @@ program main
 		nAtoms = nAtoms + molecules(i).nAtoms()
 	end do
 	
-	call finalMolecule.init( nAtoms )
+	finalMolecule = Molecule( nAtoms )
 	
 	k=1
 	do i=1,size(molecules)

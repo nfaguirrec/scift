@@ -61,8 +61,8 @@ module GridBase_
 			procedure :: initDefault
 			procedure :: fromArray
 			procedure :: fromFile
-			generic :: assignment(=) => copy
-			procedure :: copy
+			generic :: assignment(=) => copyGridBase
+			procedure :: copyGridBase
 			final :: destroy
 			
 ! 			generic :: operator(==) => isEqualTo
@@ -245,9 +245,9 @@ module GridBase_
 	!>
 	!! @brief Copy constructor
 	!!
-	subroutine copy( this, other )
+	subroutine copyGridBase( this, other )
 		class(GridBase), intent(out) :: this
-		class(GridBase), intent(in) :: other
+		type(GridBase), intent(in) :: other
 		
 		this.min = other.min
 		this.max = other.max
@@ -259,7 +259,7 @@ module GridBase_
 		allocate( this.data(this.size) )
 		
 		this.data = other.data
-	end subroutine copy
+	end subroutine copyGridBase
 	
 	!>
 	!! @brief Destructor
@@ -322,7 +322,7 @@ module GridBase_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data + other.data
 	end function addition
 	
@@ -334,7 +334,7 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data+constant
 	end function additionFC
 	
@@ -351,7 +351,7 @@ module GridBase_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data - other.data
 	end function subtraction
 	
@@ -363,7 +363,7 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data-constant
 	end function subtractionFC
 	
@@ -380,7 +380,7 @@ module GridBase_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data*other.data
 		
 		! @todo Hay que hacer algo con el stepSize
@@ -394,7 +394,7 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data*constant
 		output.stepSize = this.stepSize*constant
 	end function multiplicationFC
@@ -412,7 +412,7 @@ module GridBase_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data/other.data
 	end function division
 	
@@ -424,7 +424,7 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data/constant
 	end function divisionFC
 	
@@ -441,7 +441,7 @@ module GridBase_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data**other.data
 	end function exponentiation
 	
@@ -453,7 +453,7 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copy( this )
+		call output.copyGridBase( this )
 		output.data = this.data**constant
 	end function exponentiationFC
 	
@@ -615,7 +615,7 @@ module GridBase_
 		write(*,*) "---"
 		write(*,*) "Testing copy constructor"
 		write(*,*) "---"
-		call rGridBase2.copy( rGridBase )
+		call rGridBase2.copyGridBase( rGridBase )
 		call rGridBase2.show()
 		do i=1,rGridBase2.size
 			write(*,"(i5,f10.5)") i, rGridBase2.data(i)

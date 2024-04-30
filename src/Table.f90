@@ -53,11 +53,11 @@ module Table_
 		
 		contains
 			generic :: init => initDefault, fromFile
-			generic :: assignment(=) => copy
+			generic :: assignment(=) => copyTable
 			
 			procedure :: initDefault
 			procedure :: fromFile
-			procedure :: copy
+			procedure :: copyTable
 			final :: destroy
 			procedure :: str
 			procedure :: show
@@ -137,11 +137,11 @@ module Table_
 	!*
 	! @brief Copy constructor
 	!*
-	subroutine copy( this, other )
+	subroutine copyTable( this, other )
 		class(Table), intent(out) :: this
-		class(Table), intent(in) :: other
+		type(Table), intent(in) :: other
 		
-	end subroutine copy
+	end subroutine copyTable
 	
 	!*
 	! @brief Destructor

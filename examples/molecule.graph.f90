@@ -77,7 +77,7 @@ program main
 	call get_command_argument( 4, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) call FString_split( trim(sBuffer), nodesSuffixes, "," )
 	
-	call mol.init( iFileName.fstr )
+	mol = Molecule( iFileName.fstr )
 	call mol.buildGraph( alpha=alpha )
 	
 ! 	do i=1,mol.molGraph.nEdges()

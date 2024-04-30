@@ -65,7 +65,7 @@ module RealHistogram_
 		
 		contains
 ! 			generic :: init => initRealHistogram
-! 			generic :: assignment(=) => copyRealHistogram
+			generic :: assignment(=) => copyRealHistogram
 			
 ! 			procedure :: initRealHistogram
 			procedure :: copyRealHistogram
@@ -139,9 +139,9 @@ module RealHistogram_
 	!!
 	subroutine copyRealHistogram( this, other )
 		class(RealHistogram), intent(out) :: this
-		class(RealHistogram), intent(in) :: other
+		type(RealHistogram), intent(in) :: other
 		
-		call this.copyList( other )
+		this.RealList = other.RealList
 
 		this.rule = other.rule
 		this.algorithm = other.algorithm
@@ -818,7 +818,7 @@ module RealHistogram_
 		call histogramRunning.add( [23.35024_8, 26.70019_8, 21.51930_8, 24.98537_8, 24.94632_8, 19.42552_8, 27.00687_8, 21.65142_8] )
 		call histogramRunning.add( [25.00371_8, 23.40407_8, 21.82391_8, 24.25161_8, 24.28748_8, 24.17388_8, 21.20663_8, 26.66869_8] )
 		call histogramRunning.add( [22.89491_8, 24.81186_8, 25.14049_8, 22.61879_8] )
-		
+
 		! ! http://en.wikipedia.org/wiki/Descriptive_statistics
 		! ! http://personality-project.org/r/html/describe.html
 		! ! http://www.statmethods.net/stats/descriptives.html
@@ -838,44 +838,44 @@ module RealHistogram_
 		!    23.35024, 26.70019, 21.51930, 24.98537, 24.94632, 19.42552, 27.00687, 21.65142,
 		!    25.00371, 23.40407, 21.82391, 24.25161, 24.28748, 24.17388, 21.20663, 26.66869,
 		!    22.89491, 24.81186, 25.14049, 22.61879 )
-		! 
+		!
 		! > mean(BMI)
 		! [1] 24.06056
-		! 
+		!
 		! > sd(BMI)
 		! [1] 2.030379
-		! 
+		!
 		! > summary(BMI)
-		!    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+		!    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 		!   18.73   22.69   24.09   24.06   25.42   29.07
-		! 
+		!
 		! b <- seq(18.7,30.24,1.044444)
 		! > b
 		!  [1] 18.70000 19.74444 20.78889 21.83333 22.87778 23.92222 24.96666 26.01111
 		!  [9] 27.05555 28.10000 29.14444 30.18888
-		! 
+		!
 		! > histinfo<-hist(BMI,breaks=b)
 		! > b
 		!  [1] 18.70000 19.74444 20.78889 21.83333 22.87778 23.92222 24.96666 26.01111
 		!  [9] 27.05555 28.10000 29.14444 30.18888
-		! 
+		!
 		! > histinfo<-hist(BMI,breaks=b)
 		! > histinfo
 		! $breaks
 		!  [1] 18.70000 19.74444 20.78889 21.83333 22.87778 23.92222 24.96666 26.01111
 		!  [9] 27.05555 28.10000 29.14444 30.18888
-		! 
+		!
 		! $counts
 		!  [1]  4  2  9 12 19 16 20 14  2  2  0
-		! 
+		!
 		! $intensities
 		!  [1] 0.03829789 0.01914894 0.08617025 0.11489367 0.18191497 0.15319155
 		!  [7] 0.19148944 0.13404261 0.01914894 0.01914894 0.00000000
-		! 
+		!
 		! $density
 		!  [1] 0.03829789 0.01914894 0.08617025 0.11489367 0.18191497 0.15319155
 		!  [7] 0.19148944 0.13404261 0.01914894 0.01914894 0.00000000
-		! 
+		!
 		! $mids
 		!  [1] 19.22222 20.26667 21.31111 22.35555 23.40000 24.44444 25.48889 26.53333
 		!  [9] 27.57777 28.62222 29.66666
@@ -883,24 +883,24 @@ module RealHistogram_
 		! @todo Parece que solo funciona con la combinación Histogram_STURGES y binsPrecision=1
 		call histogram.build( binsPrecision=3 )
 ! 		call histogram.build()
-		
+
 		write(*,"(A20,I15)")   "    size = ", histogram.size()
 		write(*,"(A20,2F15.5)") "    mean = ", histogram.mean(), histogramRunning.mean()
 		write(*,"(A20,2F15.5)") "   stdev = ", histogram.stdev(), histogramRunning.stdev()
 		write(*,"(A20,F15.5)") " minimum = ", histogram.minimum()
 		write(*,"(A20,F15.5)") " maximum = ", histogram.maximum()
 		write(*,"(A20,2F15.5)") "  stderr = ", histogram.stderr(), histogramRunning.stderr()
-		
+
 		! plot "./counts.dat" w boxes, "./counts.dat" w p pt 7
 		call histogram.save("histData.dat")
 		call histogram.counts.save("counts.dat")
 		call histogram.density.save("density.dat")
-		
+
 		do i=1,1000000
 			call histogram.add( 1.456_8 )
 			call histogramRunning.add( 1.456_8 )
 		end do
-		
+
 		write(*,"(A)")   ""
 		write(*,"(A20,I15)")   "    size = ", histogram.size()
 		write(*,"(A20,2F15.5)") "    mean = ", histogram.mean(), histogramRunning.mean()
@@ -909,7 +909,7 @@ module RealHistogram_
 ! 		write(*,"(A20,F15.5)") "stdev = ", histogram.median()
 ! 		mode = histogram.mode()
 ! 		median = histogram.skewness()
-		
+
 		write(*,*) "LORENTZIAN DRESSING"
 		write(*,*) "-------------------"
 		call histogram.clear()

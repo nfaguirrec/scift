@@ -117,7 +117,7 @@ program main
 	!----------------------------------------------------------------------	
 	
 	call ifile.init( iFileName.fstr )
-	call nFunc.fromFStream( ifile, columns=columns )
+	nFunc = RNFunction( ifile, columns=columns )
 	call ifile.close()
 	
 	if( nPoints == -1 ) nPoints = nFunc.nPoints()
@@ -130,7 +130,7 @@ program main
 	do while( t <= nFunc.xGrid.max )!-3.0_8*sigma )
 ! 		write(*,"(A,F20.6,A)", advance="no") "Generating ", t, " ... "
 		
-		call nFuncWindow.fromFunction( nFunc.xGrid, window )
+		nFuncWindow = RNFunction( nFunc.xGrid, window )
 		
 		nFunc2 = nFuncWindow*nFunc
 		

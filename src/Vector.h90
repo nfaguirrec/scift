@@ -152,7 +152,7 @@
 	!!
 	subroutine copyVector( this, other )
 		class(Vector), intent(out) :: this
-		class(Vector), intent(in) :: other
+		type(Vector), intent(in) :: other
 		
 		integer :: i
 		

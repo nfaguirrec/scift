@@ -55,7 +55,7 @@ program main
 	call get_command_argument( 1, sBuffer )
 	iFileName = sBuffer
 	
-	call mol.init( iFileName.fstr )
+	mol = Molecule( iFileName.fstr )
 	
 	write(*,"(F20.5)") mol.radius()/angs
 end program main

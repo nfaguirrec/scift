@@ -135,7 +135,7 @@ module BlocksIFileParser_
 	!!
 	subroutine copy( this, other )
 		class(BlocksIFileParser), intent(inout) :: this
-		class(BlocksIFileParser), intent(in) :: other
+		type(BlocksIFileParser), intent(in) :: other
 		
 		write(*,*) "### Error ### BlocksIFileParser.copy is not implemented"
 		stop

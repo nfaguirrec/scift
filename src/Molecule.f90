@@ -103,7 +103,7 @@ module Molecule_
 		!---------------------------------------------------------------
 		
 		contains
-! 			generic :: assignment(=) => copyMolecule
+			generic :: assignment(=) => copyMolecule
 			procedure :: copyMolecule
 			final :: destroyMolecule
 			procedure :: str
@@ -167,10 +167,6 @@ module Molecule_
 		module procedure initBase, fromFile, fromMolecules
 	end interface
 
-	interface assignment(=)
-		module procedure copyMolecule
-	end interface
-	
 	contains
 	
 	!>
@@ -332,7 +328,7 @@ module Molecule_
 	!!
 	subroutine copyMolecule( this, other )
 		class(Molecule), intent(inout) :: this
-		class(Molecule), intent(in) :: other
+		type(Molecule), intent(in) :: other
 		
 		integer :: i
 		

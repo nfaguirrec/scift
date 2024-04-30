@@ -141,7 +141,7 @@ program main
 		end if
 		
 		fileNames(i) = trim(ifile.readLine())
-		call molecules(i).init( fileNames(i).fstr )
+		molecules(i) = Molecule( fileNames(i).fstr )
 		call FString_split( molecules(i).name, tokens, " " )
 		
 		! @todo Cerificar que todas las moleculas tienen la energia definida. De lo contrario toca volver al esquema basico

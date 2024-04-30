@@ -198,7 +198,7 @@ module Grid3D_
 	!!
 	subroutine copyGrid3D( this, other )
 		class(Grid3D), intent(out) :: this
-		class(Grid3D), intent(in) :: other
+		type(Grid3D), intent(in) :: other
 		
 		integer :: i
 		

@@ -61,8 +61,8 @@ program main
 	call get_command_argument( 2, sBuffer )
 	iFileName2 = sBuffer
 	
-	call mol1.load( iFileName1.fstr )
-	call mol2.load( iFileName2.fstr )
+	mol1 = Molecule( iFileName1.fstr )
+	mol2 = Molecule( iFileName2.fstr )
 	
 	if( mol1.nAtoms() /= mol2.nAtoms() ) then
 		stop "### ERROR ### Mol1 and Mol2 have not the same number of atoms"

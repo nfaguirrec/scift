@@ -407,11 +407,11 @@
 	!!
 	subroutine copyNFunction( this, other )
 		class(NFunction), intent(inout) :: this
-		class(NFunction), intent(in) :: other
+		type(NFunction), intent(in) :: other
 		
 		integer :: allocStat
 		
-		call this.xGrid.copy( other.xGrid )
+		call this.xGrid.copyGrid( other.xGrid )
 		
 		if( allocated(this.fArray) ) deallocate( this.fArray )
 		allocate( this.fArray(this.nPoints()), stat=allocStat )

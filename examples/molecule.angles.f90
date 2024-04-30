@@ -74,7 +74,7 @@ program main
 	call get_command_argument( 3, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) oFileDOT = trim(sBuffer)
 	
-	call mol.init( iFileName.fstr )
+	mol = Molecule( iFileName.fstr )
 	call mol.buildGraph( alpha=alpha )
 	
 	molGraph = mol.molGraph

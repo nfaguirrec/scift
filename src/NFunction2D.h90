@@ -372,7 +372,7 @@
 	!!
 	subroutine copyNFunction2D( this, other )
 		class(NFunction2D), intent(inout) :: this
-		class(NFunction2D), intent(in) :: other
+		type(NFunction2D), intent(in) :: other
 		
 		integer :: i, j
 		

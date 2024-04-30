@@ -89,7 +89,7 @@ module Timer_
 	!!
 	subroutine copyTimer( this, other )
 		class(Timer), intent(out) :: this
-		class(Timer), intent(in) :: other
+		type(Timer), intent(in) :: other
 		
 		this.name = other.name
 		this.startTime = other.startTime

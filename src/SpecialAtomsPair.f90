@@ -84,7 +84,7 @@ module SpecialAtomsPair_
 	!!
 	subroutine copySpecialAtomsPair( this, other )
 		class(SpecialAtomsPair), intent(inout) :: this
-		class(SpecialAtomsPair), intent(in) :: other
+		type(SpecialAtomsPair), intent(in) :: other
 
 		this.symbol1 = other.symbol1
 		this.symbol2 = other.symbol2

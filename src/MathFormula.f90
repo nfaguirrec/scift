@@ -160,7 +160,7 @@ module MathFormula_
 	!!
 	subroutine copyMathFormula( this, other )
 		class(MathFormula), intent(inout) :: this
-		class(MathFormula), intent(in) :: other
+		type(MathFormula), intent(in) :: other
 		
 		this.parser = other.parser
 		this.formula = other.formula

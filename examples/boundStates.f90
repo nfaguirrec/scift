@@ -104,7 +104,7 @@ program boundStates
 	
 	call ifile.init( fileName.fstr )
 ! 	call nFunc.fromFStream( ifile, columns=columns, units=[angs,cm1] )
-	call nFunc.fromFStream( ifile, columns=columns )
+	nFunc = RNFunction( ifile, columns=columns )
 ! 	call nFunc.show()
 	call ifile.close()
 	

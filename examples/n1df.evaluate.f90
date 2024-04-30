@@ -74,10 +74,10 @@ program main
 	end if
 	
 	if( fileType == 0 ) then
-		call rFunc.init( fileName )
+		rFunc = RNFunction( fileName )
 		write(*,*) rFunc.interpolate( rx )
 	else if( fileType == 1 ) then
-		call cFunc.init( fileName )
+		cFunc = CNFunction( fileName )
 		write(0,*) "### ERROR ### Interpolation for complex functions is not implemented yet "//trim(fileName)
 		stop
 ! 		write(*,*) cFunc.interpolate( cx )

@@ -50,12 +50,12 @@ module Edge_
 		
 		contains
 			generic :: init => initDefault
-			generic :: assignment(=) => copy
+			generic :: assignment(=) => copyEdge
 			generic :: operator(==) => equal
 			generic :: operator(/=) => nequal
 			
 			procedure :: initDefault
-			procedure :: copy
+			procedure :: copyEdge
 			procedure :: equal
 			procedure :: nequal
 	end type Edge
@@ -109,9 +109,9 @@ module Edge_
 	!>
 	!! @brief Copy constructor
 	!!
-	subroutine copy( this, other )
+	subroutine copyEdge( this, other )
 		class(Edge), intent(inout) :: this
-		class(Edge), intent(in) :: other
+		type(Edge), intent(in) :: other
 		
 		this.sNode = other.sNode
 		this.tNode = other.tNode
@@ -119,7 +119,7 @@ module Edge_
 		this.label = other.label
 		this.weight = other.weight
 		this.directed = other.directed
-	end subroutine copy
+	end subroutine copyEdge
 
 	!>
 	!! @brief 

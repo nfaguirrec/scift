@@ -126,7 +126,7 @@ module StringHistogram_
 	!!
 	subroutine copyStringHistogram( this, other )
 		class(StringHistogram), intent(out) :: this
-		class(StringHistogram), intent(in) :: other
+		type(StringHistogram), intent(in) :: other
 
 		this.algorithm = other.algorithm
 

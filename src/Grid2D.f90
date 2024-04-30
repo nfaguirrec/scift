@@ -190,7 +190,7 @@ module Grid2D_
 	!!
 	subroutine copyGrid2D( this, other )
 		class(Grid2D), intent(out) :: this
-		class(Grid2D), intent(in) :: other
+		type(Grid2D), intent(in) :: other
 		
 		integer :: i
 		

@@ -63,8 +63,8 @@ module Grid_
 			procedure :: initDefault
 			procedure :: fromArray
 			procedure :: fromFile
-			generic :: assignment(=) => copy
-			procedure :: copy
+			generic :: assignment(=) => copyGrid
+			procedure :: copyGrid
 			final :: destroy
 			
 			procedure :: isEqualTo
@@ -257,9 +257,9 @@ module Grid_
 	!>
 	!! @brief Copy constructor
 	!!
-	subroutine copy( this, other )
+	subroutine copyGrid( this, other )
 		class(Grid), intent(out) :: this
-		class(Grid), intent(in) :: other
+		type(Grid), intent(in) :: other
 		
 		integer :: allocStat
 		
@@ -272,10 +272,10 @@ module Grid_
 		if( allocated(this.data) ) deallocate(this.data)
 		allocate( this.data(this.nPoints), stat=allocStat )
 		
-		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.copy()" )
+		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.copyGrid()" )
 		
 		this.data = other.data
-	end subroutine copy
+	end subroutine copyGrid
 	
 	!>
 	!! @brief Destructor
@@ -366,7 +366,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data + other.data
 	end function addition
 	
@@ -378,7 +378,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data+constant
 	end function additionFC
 	
@@ -395,7 +395,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data - other.data
 	end function subtraction
 	
@@ -407,7 +407,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data-constant
 	end function subtractionFC
 	
@@ -424,7 +424,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data*other.data
 		
 		! @todo Hay que hacer algo con el stepSize
@@ -438,7 +438,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data*constant
 		output.stepSize = this.stepSize*constant
 	end function multiplicationFC
@@ -456,7 +456,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data/other.data
 	end function division
 	
@@ -468,7 +468,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data/constant
 	end function divisionFC
 	
@@ -485,7 +485,7 @@ module Grid_
 			stop
 		end if
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data**other.data
 	end function exponentiation
 	
@@ -497,7 +497,7 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copy( this )
+		call output.copyGrid( this )
 		output.data = this.data**constant
 	end function exponentiationFC
 	
@@ -871,7 +871,7 @@ module Grid_
 		write(*,*) "---"
 		write(*,*) "Testing copy constructor"
 		write(*,*) "---"
-		call rGrid2.copy( rGrid )
+		call rGrid2.copyGrid( rGrid )
 		call rGrid2.show()
 		do i=1,rGrid2.nPoints
 			write(*,"(i5,f10.5)") i, rGrid2.data(i)
@@ -879,7 +879,7 @@ module Grid_
 		
 		write(*,*) "===================================================================="
 		
-		call rGrid2.copy( rGrid )
+		call rGrid2.copyGrid( rGrid )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = +1 "
@@ -903,7 +903,7 @@ module Grid_
 		write(*,*) " TESTING RESIZE"
 		write(*,*) "===================================================================="
 		
-		call rGrid2.copy( rGrid )
+		call rGrid2.copyGrid( rGrid )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = -1"
@@ -925,7 +925,7 @@ module Grid_
 		
 		write(*,*) "===================================================================="
 		
-		call rGrid2.copy( rGrid )
+		call rGrid2.copyGrid( rGrid )
 		
 		write(*,*) ""
 		write(*,*) " Testing resize grid 5, dir = 0"

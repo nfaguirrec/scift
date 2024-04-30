@@ -67,7 +67,7 @@ program main
 	
 	iFileName = parser.getString( "-i", def=FString_NULL )
 	if( iFileName /= FString_NULL ) then
-		call mol.init( iFileName.fstr )
+		mol = Molecule( iFileName.fstr )
 	else
 		call get_command_argument( 1, sBuffer )
 		strFormula = sBuffer
@@ -93,7 +93,7 @@ program main
 		end do
 		deallocate( tokens )
 		
-		call mol.init( nAtoms, trim(strFormula.fstr)//" ( Random geometry )" )
+		mol = Molecule( nAtoms, trim(strFormula.fstr)//" ( Random geometry )" )
 		
 		nAtoms = 1
 		call strFormula.split( tokens, "," )

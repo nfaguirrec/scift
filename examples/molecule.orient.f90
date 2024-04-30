@@ -55,7 +55,7 @@ program main
 ! 	gamma = parser.getReal( "-gamma", def=0.0_8 )
 ! 	random = parser.getLogical( "-random", def=.false. )
 	
-	call mol.init( iFileName.fstr )
+	mol = Molecule( iFileName.fstr )
 	call mol.orient()
 	
 ! 	if( .not. random ) then
