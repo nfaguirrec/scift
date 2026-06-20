@@ -48,8 +48,6 @@ module Spline_
 #define _B this.b
 #define _N this.size
 	
-	public :: &
-		Spline_test
 	
 	type, public :: Spline
 		integer :: size
@@ -299,33 +297,5 @@ module Spline_
 		end do
 
 	end subroutine save
-	
-	!>
-	!! @brief
-	!!
-	subroutine Spline_test()
-		use TestUtils_
-		type(IFStream) :: ifile
-		type(RNFunction) :: nFunc
-		type(RNFunction) :: nFuncSmooth
-		type(Spline) :: nFuncSpline
-		integer :: i
-		
-		call ifile.init( "morse.dat" )
-		nFunc = RNFunction( ifile )
-		call ifile.close()
-		
-		call nFuncSpline.init( nFunc )
-		
-		call assert_equal( nFuncSpline%size, nFunc%nPoints(), "Spline_test: size match" )
-		
-		do i=1,nFunc%nPoints()
-			call assert_true( abs(nFuncSpline%evaluate(nFunc%x(i)) - nFunc%at(i)) < 1e-10_8, "Spline_test: evaluate node" )
-		end do
-		
-		nFuncSmooth = nFuncSpline.smooth( 10 )
-		call assert_equal( nFuncSmooth%nPoints(), nFunc%nPoints() * 10, "Spline_test: smooth size" )
-		
-	end subroutine Spline_test
 	
 end module Spline_

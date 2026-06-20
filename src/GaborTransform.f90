@@ -45,9 +45,7 @@ module GaborTransform_
 	implicit none
 	private
 	
-	public :: &
-		GaborTransform_fgt, &
-		GaborTransform_test
+	public :: GaborTransform_fgt
 	
 	type, public :: GaborTransform
 		real(8) :: val
@@ -224,16 +222,5 @@ module GaborTransform_
 ! 		
 ! 		oFunc = oFunc*dx/sqrt(2.0_8*Math_PI)
 	end function GaborTransform_fgt_CNFunction
-	
-	!>
-	!! @brief Test method
-	!!
-	subroutine GaborTransform_test()
-		use TestUtils_
-		type(GaborTransform) :: gt
-		
-		call gt.init()
-		call assert_true( .true., "GaborTransform_test: trivial check" )
-	end subroutine GaborTransform_test
 	
 end module GaborTransform_

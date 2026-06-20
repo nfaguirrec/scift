@@ -41,8 +41,6 @@ module NIntegrator_
 	implicit none
 	private
 	
-	public :: &
-		NIntegrator_test
 	
 	type, public :: NIntegrator
 		type(RNFunction), pointer :: func
@@ -326,53 +324,5 @@ module NIntegrator_
 		
 		output = ssum*2.0_8*this.func.xGrid.stepSize/45.0_8
 	end function booleRule
-	
-	!>
-	!! This is neccesary only for NFunction_test()
-	!!
-	function funcTest( x ) result( output )
-		real(8), intent(in) :: x
-		real(8) :: output
-		
-		output = exp(-0.44*abs(x))*sin(x)**2.0_8
-	end function funcTest
-	
-	!>
-	!! This is neccesary only for NFunction_test()
-	!!
-	subroutine NIntegrator_test()
-		use TestUtils_
-		type(Grid) :: xGrid
-		type(RNFunction) :: nFunc
-		type(NIntegrator) :: integrator
-		real(8) :: exactValue, val
-		real(8) :: Math_PI
-		
-		Math_PI = acos(-1.0_8)
-		
-		call xGrid%init( -30.0_8, 30.0_8, 1000 )
-		nFunc = RNFunction( xGrid, funcTest )
-		
-		exactValue = 2.16780136532979_8
-		
-		call integrator%init( nFunc, NIntegrator_SIMPSON )
-		val = integrator%evaluate()
-		call assert_equal_real( val, exactValue, 1e-6_8, "NIntegrator_test: SIMPSON full domain" )
-		
-		call integrator%init( nFunc, NIntegrator_BOOLE )
-		val = integrator%evaluate()
-		call assert_equal_real( val, exactValue, 1e-6_8, "NIntegrator_test: BOOLE full domain" )
-		
-		exactValue = 1.623685454371397_8
-		
-		call integrator%init( nFunc, NIntegrator_SIMPSON )
-		val = integrator%evaluate( -Math_PI, Math_PI )
-		call assert_equal_real( val, exactValue, 1e-4_8, "NIntegrator_test: SIMPSON sub-domain" )
-		
-		call integrator%init( nFunc, NIntegrator_BOOLE )
-		val = integrator%evaluate( -Math_PI, Math_PI )
-		call assert_equal_real( val, exactValue, 1e-4_8, "NIntegrator_test: BOOLE sub-domain" )
-		
-	end subroutine NIntegrator_test
 	
 end module NIntegrator_

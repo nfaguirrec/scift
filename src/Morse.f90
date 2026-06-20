@@ -43,8 +43,6 @@ module Morse_
 	implicit none
 	private
 	
-	public :: &
-		Morse_test
 	
 	type, public, extends( RNFunction ):: Morse
 		real(8) :: De
@@ -226,42 +224,5 @@ module Morse_
 		
 		output = we*(dble(nu)+0.5_8)-wexe*(dble(nu)+0.5_8)**2.0_8-this.De
 	end function exactEigenValues
-	
-	!>
-	!! @brief Write the string
-	!! representation of the object in a
-	!! selected unit
-	!!
-	subroutine Morse_test()
-		use TestUtils_
-		real(8) :: Re, we, wexe, rMass
-		type(Morse) :: morse
-		type(Grid) :: rGrid
-		type(ThrularNumerovMethod) :: solver
-		integer :: i
-		
-		Re = 1.9879_8*angs
-		we = 559.72_8*cm1
-		wexe = 2.675_8*cm1
-		rMass = 0.5_8*35.4257_8*amu
-		
-		call rGrid%init( 0.5_8, 20.0_8, 10000 )
-		call morse%fromExp( rGrid, Re, we, wexe, rMass )
-		
-		call assert_equal_real( morse%Re, Re, 1e-6_8, "Morse_test: Re" )
-		
-		call solver%init( morse%parent(), 10, rMass )
-		call solver%run()
-		
-		do i=1,solver%nStates
-			if ( solver%eigenValues(i) < 0.0_8 ) then
-				call assert_equal_real( solver%eigenValues(i), morse%exactEigenValues(i-1, rMass), 1e-6_8, "Morse_test: eigenvalue" )
-			end if
-		end do
-		
-		call morse%destroy()
-		call solver%destroy()
-		
-	end subroutine Morse_test
 	
 end module Morse_

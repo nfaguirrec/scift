@@ -37,9 +37,9 @@
 module IVector_
 	implicit none
 	private
+	public :: COLUMN_VECTOR
+	public :: ROW_VECTOR
 	
-	public :: &
-		IVector_test
 	
 #define NVector IVector
 #define __TYPE_VALUE__ integer
@@ -48,34 +48,5 @@ module IVector_
 #undef __ID_TYPE__
 #undef __TYPE_VALUE__
 #undef NVector
-	
-	!>
-	!! @brief Test method
-	!!
-	subroutine IVector_test()
-		use TestUtils_
-		type(IVector) :: A, B, C
-		integer :: i
-		
-		call A%init( 12, 1 )
-		call assert_equal( A%nElems, 12, "IVector_test: A size" )
-		call assert_equal( A%type, ROW_VECTOR, "IVector_test: A type default" )
-		do i = 1, 12
-			call assert_equal( A%get(i), 1, "IVector_test: A elem" )
-		end do
-		
-		call B%random( 12, type=COLUMN_VECTOR )
-		call assert_equal( B%nElems, 12, "IVector_test: B size" )
-		call assert_equal( B%type, COLUMN_VECTOR, "IVector_test: B type" )
-		
-		A = A*2
-		do i = 1, 12
-			call assert_equal( A%get(i), 2, "IVector_test: A*2 elem" )
-		end do
-		
-		call B%random( 12, type=ROW_VECTOR )
-		call assert_equal( B%nElems, 12, "IVector_test: B row size" )
-		call assert_equal( B%type, ROW_VECTOR, "IVector_test: B row type" )
-	end subroutine IVector_test
 
 end module IVector_

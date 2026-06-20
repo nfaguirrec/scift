@@ -44,8 +44,6 @@ module ElementsDB_
 	implicit none
 	private
 	
-	public :: &
-		ElementsDB_test
 		
 	type, public :: Isotope
 		integer :: massNumber
@@ -313,20 +311,5 @@ module ElementsDB_
 			end if
 		end do
 	end function atomicMassFromSymbol
-	
-	!>
-	!! @brief Test method
-	!!
-	subroutine ElementsDB_test()
-		use TestUtils_
-		type(ElementsDB) :: db
-		
-		call db.init()
-		call assert_equal( db.nElements(), 1, "db.nElements" )
-		call assert_equal_real( db.atomicMass( 1 )/amu, 1.00782503207_8, 1e-10_8, "Hydrogen atomic mass" )
-		call assert_equal_real( db.atomicMass( "H" )/amu, 1.00782503207_8, 1e-10_8, "Hydrogen atomic mass by symbol" )
-		
-		write(*,*) "All ElementsDB tests PASSED"
-	end subroutine ElementsDB_test
 	
 end module ElementsDB_

@@ -44,8 +44,6 @@ module MoldenParser_
 	implicit none
 	private
 	
-	public :: &
-		MoldenParser_test
 	
 	type, public :: MoldenParser
 		real(8) :: val
@@ -181,17 +179,5 @@ module MoldenParser_
 		call ifile%close()
 
 	end subroutine load
-	
-	!*
-	! @brief Test method
-	!*
-	subroutine MoldenParser_test()
-		use TestUtils_
-		type(MoldenParser) :: parser
-		
-		call parser%init()
-		call parser%load( "data/formats/MOLDEN" )
-		call assert_true( .true., "MoldenParser_test: load success" )
-	end subroutine MoldenParser_test
 	
 end module MoldenParser_
