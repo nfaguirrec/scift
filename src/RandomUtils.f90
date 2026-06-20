@@ -566,180 +566,52 @@ module RandomUtils_
 	!! @brief Test method
 	!!
 	subroutine RandomUtils_test()
+		use TestUtils_
 		integer, allocatable :: iArray(:), iComb(:)
 		character(10), allocatable :: strArray(:), sComb(:)
-		real(8), allocatable :: rArray(:), rArray2(:)
+		integer :: i, rValInt
+		real(8) :: rValReal
+		logical :: has_a
 		
-		integer, allocatable :: items(:,:)
-		
-		integer :: i, j
-		
-		write(*,*) ""
-		write(*,*) "Random walkers"
-		write(*,*) "=============="
-		
-		allocate( rArray(9) )
-		rArray = [ 0.456, 1.156, 2.126, 3.126, 4.126, 5.126, 6.126, 7.126, 8.126, 9.126 ]
-		
-		write(*,*) ""
-		write(*,*) "Randomize vectors"
-		write(*,*) "================="
-		
+		! 1. Shuffling test
 		allocate( iArray(5) )
-		
 		iArray = [ 1, 2, 3, 4, 5 ]
-		write(*,"(A,5I3,A)") "  original vector = [", iArray, " ]"
 		call RandomUtils_randomizeVector( iArray )
-		write(*,"(A,5I3,A)") "randomized vector = [", iArray, " ]"
-		
+		call assert_equal( size(iArray), 5, "RandomUtils_test: randomized vector size" )
+		call assert_equal( sum(iArray), 15, "RandomUtils_test: randomized vector sum" )
+		call assert_equal( sum(iArray**2), 55, "RandomUtils_test: randomized vector sum of squares" )
 		deallocate( iArray )
 		
-		write(*,*) ""
-		write(*,*) "Uniform distribution"
-		write(*,*) "===================="
-		write(*,*) ""
-		write(*,*) "RandomUtils_uniform( [1.0_8,7.5_8] )"
-		do i=1,10
-			write(*,"(I5,F10.5)") i, RandomUtils_uniform( [1.0_8,7.5_8] )
-		end do
-		write(*,*) ""
-		write(*,*) "RandomUtils_uniform( [1,7] )"
-		do i=1,10
-			write(*,"(I5,I5)") i, RandomUtils_uniform( [1,7] )
+		! 2. Uniform random distribution test
+		do i=1,100
+			rValReal = RandomUtils_uniform( [1.0_8, 7.5_8] )
+			call assert_true( rValReal >= 1.0_8 .and. rValReal <= 7.5_8, "RandomUtils_test: uniform real range" )
+			
+			rValInt = RandomUtils_uniform( [1, 7] )
+			call assert_true( rValInt >= 1 .and. rValInt <= 7, "RandomUtils_test: uniform int range" )
 		end do
 		
-		write(*,*) ""
-		write(*,*) "Random string multiset"
-		write(*,*) "======================"
-
+		! 3. Random string multiset test
 		allocate( strArray(7) )
 		strArray = [ "a", "b", "c", "d", "e", "f", "g" ]
-		
-		write(*,*) "set = [ 'a', 'b', 'c', 'd', 'e', 'f', 'g' ]"
-		write(*,*)
-		
 		call RandomUtils_randomMultiset( strArray, 3, sComb, myStrConstrain )
-		write(*,*) ""
-		write(*,*) "The constraint is: The multiset must have the letter a in any position"
-		write(*,*) "RandomUtils_randomMultiset( nElems, 3 ) = ", ( trim(sComb(i)), i=1,3 )
 		
-		!#######################################################
-		! To check using a histogram
-! 		write(*,*) ""
-! 		write(*,"(A)", advance="no") "Generation of 1000000 random multiset with the same constraint ... "
-! 		
-! 		open( 10, file="strSalida" )
-! 		do i=1,1000000
-! 			call RandomUtils_randomMultiset( strArray, 3, sComb, myStrConstrain )
-! 			write(10,*) ( trim(sComb(j)), j=1,3 )
-! 		end do
-! 		close( 10 )
-! 		
-! 		write(*,*) "OK"
-! 		write(*,*) ""
-! 		write(*,*) "You can check it using the following awk command:"
-! #define cc achar(34)//achar(34)
-! 		write(*,"(A)") "awk 'BEGIN{nData=0}{n=split($1,arr,"//cc//"); asort(arr); s="//cc//"; for(i=1;i<=n;i++){s=s"//cc//"arr[i]}; if(s in map){ map[s] = map[s]+1 }else{ map[s]=1 }; nData+=1}END{ for(k in map) print k, map[k]/nData }' strSalida"
-! #undef cc
-		!#######################################################
-		
+		has_a = .false.
+		do i=1,3
+			if ( trim(sComb(i)) == "a" ) has_a = .true.
+		end do
+		call assert_true( has_a, "RandomUtils_test: string multiset contains a" )
 		deallocate( strArray )
 		deallocate( sComb )
 		
-		write(*,*) ""
-		write(*,*) "Random integer multiset"
-		write(*,*) "======================="
-
+		! 4. Random integer multiset test
 		allocate( MyiArray(3) )
 		MyiArray = [ 1, 3, 5 ]
+		call RandomUtils_randomMultiset( MyiArray, 3, iComb, myIntConstrain )
+		call assert_true( sum(iComb) <= 8, "RandomUtils_test: integer multiset sum" )
 		
-		write(*,*) "set = [ 1, 3, 5 ]"
-		write(*,*)
-		
-		write(*,*) ""
-		write(*,*) "The constraint is: The sum of all elements cannot be greater than 8"
-! 		call RandomUtils_RandomMultiset( MyiArray, 3, iComb, myIntConstrainDebug, sorted=.false. )
-		call RandomUtils_RandomMultiset( MyiArray, 3, iComb, myIntConstrainDebug )
-		write(*,"(A,<size(iComb)>I)") "RandomUtils_randomMultiset( nElems, 3, sorted=.false. ) = ", ( iComb(i), i=1,size(iComb) )
-! 		call RandomUtils_RandomMultiset( MyiArray, 3, iComb, myIntConstrainDebug, sorted=.true. )
-		call RandomUtils_RandomMultiset( MyiArray, 3, iComb, myIntConstrainDebug )
-		write(*,"(A,<size(iComb)>I)") "RandomUtils_randomMultiset( nElems, 3, sorted=.true. ) = ", ( iComb(i), i=1,size(iComb) )
-		
-		deallocate(MyiArray)
-		
-		!#######################################################
-		! To check using a histogram
-		write(*,*) ""
-! 		allocate( MyiArray(7) )
-! 		MyiArray = [ 1, 3, 5, 7, 2, 4, 6 ]
-! 		write(*,*) "set = [ 1, 3, 5, 7, 2, 4, 6 ]"
-! 		allocate( MyiArray(3) )
-! 		MyiArray = [ 1, 3, 5 ]
-! 		write(*,*) "set = [ 1, 3, 5 ]"
-		allocate( MyiArray(2) )
-		MyiArray = [ 1, 2 ]
-		write(*,*) "set = [ 1, 2 ]"
-		
-		write(*,*) "The constraint is: The sum of all elements cannot be greater than 8"
-		write(*,"(A)", advance="no") "Generation of 2000000 random unsorted multiset"
-		
-		open( 10, file="intSalida" )
-		do i=1,2000000
-! 			call RandomUtils_randomMultiset( MyiArray, 3, iComb, myIntConstrain, sorted=.false. )
-			call RandomUtils_randomMultiset( MyiArray, 3, iComb, myIntConstrain )
-			write(10,"(3I1)") ( iComb(j), j=1,3 )
-! 			call RandomUtils_randomMultiset( MyiArray, 2, iComb, myIntConstrain )
-! 			write(10,"(3I1)") ( iComb(j), j=1,2 )
-		end do
-		close( 10 )
-		
-		write(*,*) "OK"
-		write(*,*) ""
-		write(*,*) "You can check it using the following awk command:"
-#define cc achar(34)//achar(34)
-		write(*,"(A)") "awk 'BEGIN{nData=0}{n=split($1,arr,"//cc//"); asort(arr); s="//cc//"; for(i=1;i<=n;i++){s=s"//cc//"arr[i]}; if(s in map){ map[s] = map[s]+1 }else{ map[s]=1 }; nData+=1}END{ for(k in map) print k, map[k]/nData }' intSalida"
-! awk 'BEGIN{nData=0}{s=$1; if(s in map){ map[s] = map[s]+1 }else{ map[s]=1 }; nData++}END{ for(k in map) print k, map[k]/nData }' intSalida | sort
-#undef cc
-		
-		write(*,*) "The constraint is: The sum of all elements cannot be greater than 8"
-		write(*,"(A)", advance="no") "Generation of 2000000 random sorted multiset with the same constraint ... "
-		
-		open( 10, file="intSalidaSorted" )
-		do i=1,2000000
-! 			call RandomUtils_randomMultiset( MyiArray, 3, iComb, myIntConstrain, sorted=.true. )
-			call RandomUtils_randomMultiset( MyiArray, 3, iComb, myIntConstrain )
-			write(10,"(3I1)") ( iComb(j), j=1,3 )
-! 			call RandomUtils_randomMultiset( MyiArray, 2, iComb, myIntConstrain, sorted=.true. )
-! 			write(10,"(3I1)") ( iComb(j), j=1,2 )
-		end do
-		close( 10 )
-		
-		write(*,*) "OK"
-		write(*,*) ""
-		write(*,*) "You can check it using the following awk command:"
-#define cc achar(34)//achar(34)
-		write(*,"(A)") "awk 'BEGIN{nData=0}{n=split($1,arr,"//cc//"); asort(arr); s="//cc//"; for(i=1;i<=n;i++){s=s"//cc//"arr[i]}; if(s in map){ map[s] = map[s]+1 }else{ map[s]=1 }; nData+=1}END{ for(k in map) print k, map[k]/nData }' intSalidaSorted"
-		write(*,"(A)") "or"
-		write(*,"(A)") "awk 'BEGIN{nData=0}{s=$1; if(s in map){ map[s] = map[s]+1 }else{ map[s]=1 }; nData+=1}END{ for(k in map) print k, map[k]/nData }' intSalidaSorted"
-! awk 'BEGIN{nData=0}{s=$1; if(s in map){ map[s] = map[s]+1 }else{ map[s]=1 }; nData++}END{ for(k in map) print k, map[k]/nData }' intSalidaSorted | sort
-#undef cc
-		!#######################################################
-		
-! 		call Math_multisets( size(MyiArray), 3, items  )
-! 		
-! 		j=1
-! 		do i=1,size(items,dim=1)
-! 			if( sum(MyiArray( items(i,:) )) < 8  ) then
-! 				write(*,"(I5,A,<size(items,dim=2)>I1)") j, " --> ", MyiArray( items(i,:) )
-! 				j = j+1
-! 			end if
-! 		end do
-! 		
-! 		deallocate( items )
-		
-		deallocate(MyiArray)
+		deallocate( MyiArray )
 		deallocate( iComb )
-
 	end subroutine RandomUtils_test
 	
 end module RandomUtils_

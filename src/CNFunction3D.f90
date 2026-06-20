@@ -229,6 +229,8 @@ module CNFunction3D_
 	!! @brief Testing the CNFunction2D class
 	!!
 	subroutine CNFunction3D_test()
+		use TestUtils_
+		use Grid3D_
 		type(CNFunction3D) :: func, func2
 		
 		real(8) :: xVec(3)
@@ -250,74 +252,34 @@ module CNFunction3D_
 		fArray(2,:,2) = [ 7.0, 0.0 ]
 		fArray(3,:,2) = [ 2.0, 1.0 ]
 		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing constructors"
-		write(*,*) "----------------------------"
-		
-		write(*,*) "> func.init( xVec, yVec, zVec, fArray )"
 		call func.init( xVec, yVec, zVec, fArray )
-		call func.show()
-		write(*,*) ""
+		call assert_equal( func.size(), 12, "func size init" )
+		call assert_equal_real( func.xyzGrid.min(1), 1.0_8, 1e-10_8, "func min(1) init" )
+		call assert_equal_real( func.xyzGrid.max(2), 0.0_8, 1e-10_8, "func max(2) init" )
 		
-		write(*,*) "> func.init( xyzGrid, fArray )"
 		call xyzGrid.init( xVec, yVec, zVec )
 		call func.init( xyzGrid, fArray )
-		call func.show()
-		write(*,*) ""
+		call assert_equal( func.size(), 12, "func size init Grid" )
 		
-		write(*,*) "> func.init( 'data/formats/complex-N3DF', format=N3DF_FORMAT )"
 		call func.init( "data/formats/complex-N3DF", format=N3DF_FORMAT )
-		call func.show()
-		write(*,*) ""
+		call assert_equal( func.size(), 125000, "complex-N3DF size" )
 		
-		write(*,*) "> func.init( 'data/formats/CUBE', format=CUBE_FORMAT )"
 		call func.init( "data/formats/CUBE", format=CUBE_FORMAT )
-		call func.show()
-		write(*,*) ""
+		call assert_equal( func.size(), 125000, "CUBE format size" )
 		
-		write(*,*) "> func.init( xyzGrid, funcTest )"
 		call xyzGrid.init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[200,200,200] )
 		call func.init( xyzGrid, funcTest )
-		call func.show()
-		write(*,*) ""
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing copy constructors"
-		write(*,*) "----------------------------"
+		call assert_equal( func.size(), 8000000, "funcTest formula size" )
 		
 		func2 = func
-		call func2.show()
+		call assert_equal( func2.size(), 8000000, "copy constructor size" )
 		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing I/O methods"
-		write(*,*) "----------------------------"
-		
-		write(*,*) "> func.save( 'salida.cube', format=CUBE_FORMAT )"
 		call func.save( "salida.cube", format=CUBE_FORMAT )
-		write(*,*) ""
-		
-		write(*,*) "> func.save( 'salida.rcube', format=RCUBE_FORMAT )"
 		call func.save( "salida.rcube", format=RCUBE_FORMAT )
-		write(*,*) ""
-		
-		write(*,*) "> func.save( 'salida.icube', format=ICUBE_FORMAT )"
 		call func.save( "salida.icube", format=ICUBE_FORMAT )
-		write(*,*) ""
-		
-		write(*,*) "> func.save( 'salida.n3df', format=N3DF_FORMAT )"
 		call func.save( "salida.n3df", format=N3DF_FORMAT )
-		write(*,*) ""
 		
-! 		call func.load( "salida.cube", format=CUBE_FORMAT )
-! 		call func.save( "salida2.cube", format=CUBE_FORMAT )
-! 		call func.show()
-! 		
-! 		call func.load( "salida.n3df", format=N3DF_FORMAT )
-! 		call func.save( "salida3.cube", format=CUBE_FORMAT )
-! 		call func.show()
+		write(*,*) "All CNFunction3D tests PASSED"
 	end subroutine CNFunction3D_test
 	
 	subroutine kernel( k, ny, nx, fArray )

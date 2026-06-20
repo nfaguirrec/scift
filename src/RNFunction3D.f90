@@ -213,6 +213,7 @@ module RNFunction3D_
 	!! @brief Test method
 	!!
 	subroutine RNFunction3D_test()
+		use TestUtils_
 		type(RNFunction3D) :: func, func2
 		
 		real(8) :: xVec(3)
@@ -224,7 +225,7 @@ module RNFunction3D_
 	
 		xVec(:) = [ 1.0, 2.0, 3.0 ]
 		yVec(:) = [-1.0, 0.0 ]
-		zVec(:) = [ 2.0, 1.0 ]
+		zVec(:) = [ 1.0, 2.0 ]
 		
 		fArray(1,:,1) = [ 0.0, 4.0 ]
 		fArray(2,:,1) = [ 2.0, 2.0 ]
@@ -234,61 +235,49 @@ module RNFunction3D_
 		fArray(2,:,2) = [ 7.0, 0.0 ]
 		fArray(3,:,2) = [ 2.0, 1.0 ]
 		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing constructors"
-		write(*,*) "----------------------------"
-		
 		call func.init( xVec, yVec, zVec, fArray )
-		call func.show()
+		call assert_equal( func%nPoints(1), 3, "RNFunction3D_test: nPoints(1)" )
+		call assert_equal( func%nPoints(2), 2, "RNFunction3D_test: nPoints(2)" )
+		call assert_equal( func%nPoints(3), 2, "RNFunction3D_test: nPoints(3)" )
+		call assert_true( abs(func%at(1,1,1) - 0.0_8) < 1e-12_8, "RNFunction3D_test: at(1,1,1)" )
+		call assert_true( abs(func%at(3,2,2) - 1.0_8) < 1e-12_8, "RNFunction3D_test: at(3,2,2)" )
 		
 		call xyzGrid.init( xVec, yVec, zVec )
 		call func.init( xyzGrid, fArray )
-		call func.show()
+		call assert_equal( func%nPoints(1), 3, "RNFunction3D_test: Grid3D nPoints(1)" )
+		call assert_true( abs(func%at(3,2,2) - 1.0_8) < 1e-12_8, "RNFunction3D_test: Grid3D at(3,2,2)" )
 		
 		call xyzGrid.init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[50,50,50] )
 		call func.init( xyzGrid, funcTest )
-		call func.show()
+		call assert_equal( func%nPoints(1), 50, "RNFunction3D_test: funcTest nPoints(1)" )
+		call assert_true( abs(func%at(25,25,25) - funcTest(func%x(25), func%y(25), func%z(25))) < 1e-12_8, "RNFunction3D_test: funcTest value" )
 		
 		call func.init( "data/formats/real-N3DF", format=N3DF_FORMAT )
-		call func.show()
+		call assert_equal( func%nPoints(1), 50, "RNFunction3D_test: N3DF load nPoints(1)" )
 		
 		call func.init( "data/formats/CUBE", format=CUBE_FORMAT )
-		call func.show()
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing copy constructors"
-		write(*,*) "----------------------------"
+		call assert_equal( func%nPoints(1), 50, "RNFunction3D_test: CUBE load nPoints(1)" )
 		
 		func2 = func
-		call func2.show()
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing I/O methods"
-		write(*,*) "----------------------------"
+		call assert_equal( func2%nPoints(1), 50, "RNFunction3D_test: copy nPoints(1)" )
+		call assert_true( abs(func2%at(1,1,1) - func%at(1,1,1)) < 1e-12_8, "RNFunction3D_test: copy at(1,1,1)" )
 		
 		call func.save( "salida.cube", format=CUBE_FORMAT )
 		call func.save( "salida.n3df", format=N3DF_FORMAT )
 		
 		call func.load( "salida.cube", format=CUBE_FORMAT )
 		call func.save( "salida2.cube", format=CUBE_FORMAT )
-		call func.show()
+		call assert_equal( func%nPoints(1), 50, "RNFunction3D_test: load CUBE nPoints(1)" )
 		
 		call func.load( "salida.n3df", format=N3DF_FORMAT )
 		call func.save( "salida3.cube", format=CUBE_FORMAT )
-		call func.show()
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing resize(+3,+2,+1)"
-		write(*,*) "----------------------------"
+		call assert_equal( func%nPoints(1), 50, "RNFunction3D_test: load N3DF nPoints(1)" )
 		
 		call func.init( xVec, yVec, zVec, fArray )
-		call func.show()
 		call func.resize( 3, 2, 1, +1, +1, +1 )
-		call func.show()
+		call assert_equal( func%nPoints(1), 6, "RNFunction3D_test: resize nPoints(1)" )
+		call assert_equal( func%nPoints(2), 4, "RNFunction3D_test: resize nPoints(2)" )
+		call assert_equal( func%nPoints(3), 3, "RNFunction3D_test: resize nPoints(3)" )
 		
 	end subroutine RNFunction3D_test
 	

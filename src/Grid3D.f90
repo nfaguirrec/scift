@@ -862,9 +862,9 @@ module Grid3D_
 	!! @brief Test method
 	!!
 	subroutine Grid3D_test()
+		use TestUtils_
 		type(Grid3D) :: xyzGrid, xyzGrid2
 		
-		integer :: i, j
 		real(8) :: rMin(3), rMax(3)
 		integer :: gridSize(3)
 		
@@ -872,58 +872,21 @@ module Grid3D_
 		rMax = [ 5.0_8, 5.0_8, 10.0_8]
 		gridSize = [10, 10, 20]
 		
-		call xyzGrid.init( rMin, rMax, gridSize )
+		call xyzGrid%init( rMin, rMax, gridSize )
+		call assert_equal( xyzGrid%nPoints(1), 10, "Grid3D_test: init dim 1" )
+		call assert_equal( xyzGrid%nPoints(2), 10, "Grid3D_test: init dim 2" )
+		call assert_equal( xyzGrid%nPoints(3), 20, "Grid3D_test: init dim 3" )
+		call assert_equal_real( xyzGrid%min(1), -5.0_8, 1e-10_8, "Grid3D_test: min dim 1" )
+		call assert_equal_real( xyzGrid%max(3), 10.0_8, 1e-10_8, "Grid3D_test: max dim 3" )
 		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing constructor"
-		write(*,*) "----------------------------"
-		call xyzGrid.show()
-		call showtest( xyzGrid )
+		xyzGrid2 = xyzGrid
+		call assert_equal( xyzGrid2%nPoints(1), 10, "Grid3D_test: copy dim 1" )
+		call assert_equal( xyzGrid2%nPoints(3), 20, "Grid3D_test: copy dim 3" )
 		
-! 		write(*,*) ""
-! 		write(*,*) "----------------------------"
-! 		write(*,*) "Testing copy constructor"
-! 		write(*,*) "----------------------------"
-! 		
-! 		xyzGrid2 = xyzGrid
-! 		call xyzGrid2.show()
-! 		call showtest( xyzGrid2 )
-! 		
-! 		write(*,*) ""
-! 		write(*,*) "----------------------------"
-! 		write(*,*) "Testing save method"
-! 		write(*,*) "----------------------------"
-! 		call xyzGrid.save()
-! 		
-! 		write(*,*) ""
-! 		write(*,*) "----------------------------"
-! 		write(*,*) "Testing operators"
-! 		write(*,*) "----------------------------"
-! 		xyzGrid2 = xyzGrid*2.0_8
-! 		call xyzGrid.save()
-! 		call xyzGrid2.save()
-! 		
-! 		xyzGrid2 = xyzGrid*xyzGrid
-! 		call xyzGrid.save()
-! 		call xyzGrid2.save()
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing resize"
-		write(*,*) "----------------------------"
-		call xyzGrid.init( rMin, rMax, gridSize )
-		call xyzGrid.show()
-		call showtest( xyzGrid )
-		
-		write(*,*) "resize (+5,-5,+5)"
-		write(*,*) "-----------------"
-		write(*,*) ""
-		call xyzGrid.resize( 5, 5, 5, +1, -1, +1 )
-		call xyzGrid.show()
-		call showtest( xyzGrid )
-		
-		write(*,*) ""
+		call xyzGrid%resize( 5, 5, 5, +1, -1, +1 )
+		call assert_equal( xyzGrid%nPoints(1), 15, "Grid3D_test: resize dim 1" )
+		call assert_equal( xyzGrid%nPoints(2), 15, "Grid3D_test: resize dim 2" )
+		call assert_equal( xyzGrid%nPoints(3), 25, "Grid3D_test: resize dim 3" )
 	end subroutine Grid3D_test
 	
 end module Grid3D_

@@ -186,128 +186,33 @@ module IntegerHyperVector_
 	!! @brief Test method
 	!!
 	subroutine IntegerHyperVector_test()
+		use TestUtils_
 		type(IntegerHyperVector) :: hvec
-! 		class(IntegerHyperVectorIterator), pointer :: iter
-
 		type(IntegerVector) :: ivec
-		integer :: id
 		
-		type(Matrix) :: dMatrix
+		call hvec%init()
 		
-		integer :: i
+		! Testing append
+		call ivec%init( 3, value=1 )
+		call hvec%append( ivec )
+		call ivec%init( 4, value=2 )
+		call hvec%append( ivec )
+		call ivec%init( 2, value=1 )
+		call hvec%append( ivec )
+		call assert_equal( hvec%size(), 3, "IntegerHyperVector_test: size after append" )
 		
-		call hvec.init()
+		! Testing prepend
+		call ivec%init( 2, value=4 )
+		call hvec%prepend( ivec )
+		call ivec%init( 4, value=5 )
+		call hvec%prepend( ivec )
+		call ivec%init( 3, value=8 )
+		call hvec%prepend( ivec )
+		call assert_equal( hvec%size(), 6, "IntegerHyperVector_test: size after prepend" )
 		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for append method"
-		write(*,*) "-------------------------"
-		
-		write(*,*) "call hvec.append( [1,1,1] )"
-		write(*,*) "call hvec.append( [2,2,2,2] )"
-		write(*,*) "call hvec.append( [1,1] )"
-		write(*,*)
-		
-		call ivec.init( 3, value=1 )
-		call hvec.append( ivec )
-		call ivec.init( 4, value=2 )
-		call hvec.append( ivec )
-		call ivec.init( 2, value=1 )
-		call hvec.append( ivec )
-		
-		call showMyHVector( hvec )
-		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for prepend method"
-		write(*,*) "-------------------------"
-		
-		write(*,*) "call hvec.prepend( [4,4] )"
-		write(*,*) "call hvec.prepend( [5,5,5,5] )"
-		write(*,*) "call hvec.prepend( [8,8,8] )"
-		write(*,*)
-		
-		call ivec.init( 2, value=4 )
-		call hvec.prepend( ivec )
-		call ivec.init( 4, value=5 )
-		call hvec.prepend( ivec )
-		call ivec.init( 3, value=8 )
-		call hvec.prepend( ivec )
-		
-		call showMyHVector( hvec )
-
-! ! 		write(*,*) "-------------------------"
-! ! 		write(*,*) "Testing for insert method"
-! ! 		write(*,*) "-------------------------"
-! ! 		
-! ! 		write(*,*) "iter => hvec.begin"
-! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "call hvec.insert( iter, 1 )"
-! ! 		write(*,*)
-! ! 		
-! ! 		iter => hvec.begin
-! ! 		iter => iter.next
-! ! 		iter => iter.next
-! ! 		
-! ! 		call hvec.insert( iter, 1 )
-! ! 		call showMyGraph( hvec )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call hvec.insert( iter, 2 )"
-! ! 		write(*,*)
-! ! 		
-! ! 		call hvec.insert( iter, 2 )
-! ! 		call showMyGraph( hvec )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call hvec.insert( hvec.end, 9 )"
-! ! 		write(*,*)
-! ! 				
-! ! 		call hvec.insert( hvec.end, 9 )
-! ! 		call showMyGraph( hvec )
-! 
-! 		write(*,*) "------------------------"
-! 		write(*,*) "Testing for erase method"
-! 		write(*,*) "------------------------"
-! 		
-! 		write(*,*) "call hvec.erase( 2 )"
-! 		write(*,*)
-! 		
-! 		call hvec.erase( 2 )
-! 		call showMyGraph( hvec )
-! 
-! ! 		write(*,*) "iter => hvec.begin"
-! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "call hvec.erase( iter )"
-! ! 		write(*,*)
-! ! 		
-! ! 		iter => hvec.begin
-! ! 		iter => iter.next
-! ! 		
-! ! 		call hvec.erase( iter )
-! ! 		call showMyGraph( hvec )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call hvec.erase( hvec.begin )"
-! ! 		write(*,*)
-! ! 		
-! ! 		call hvec.erase( hvec.begin )
-! ! 		call showMyGraph( hvec )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call hvec.erase( hvec.end )"
-! ! 		write(*,*)
-! ! 		call hvec.erase( hvec.end )
-! ! 		call showMyGraph( hvec )
-		
-		write(*,*) "------------------------"
-		write(*,*) "Testing for clear method"
-		write(*,*) "------------------------"
-		
-		write(*,*) "call hvec.clear()"
-		write(*,*)
-		call hvec.clear()
-		call showMyHVector( hvec )
-
+		! Testing clear
+		call hvec%clear()
+		call assert_equal( hvec%size(), 0, "IntegerHyperVector_test: size after clear" )
 	end subroutine IntegerHyperVector_test
 	
 end module IntegerHyperVector_

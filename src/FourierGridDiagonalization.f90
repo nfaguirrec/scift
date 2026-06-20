@@ -662,6 +662,7 @@ module FourierGridDiagonalization_
 	! Test
 	!!
 	subroutine FourierGridDiagonalization_test()
+		use TestUtils_
 		type(Grid) :: rGrid
 		type(RNFunction) :: potential
 		type(FourierGridDiagonalization) :: solver
@@ -669,44 +670,36 @@ module FourierGridDiagonalization_
 		integer :: i
 		
 		exactEigenValues = [&
-			0.00986922, &
-			0.02874535, &
-			0.04647172, &
-			0.06304833, &
-			0.07847518, &
-			0.09275227, &
-			0.10587960, &
-			0.11785717, &
-			0.12868498, &
-			0.13836303, &
-			0.14689132, &
-			0.15426985, &
-			0.16049862, &
-			0.16557763, &
-			0.16950689, &
-			0.17228638, &
-			0.17391611  &
+			0.00986922_8, &
+			0.02874535_8, &
+			0.04647172_8, &
+			0.06304833_8, &
+			0.07847518_8, &
+			0.09275227_8, &
+			0.10587960_8, &
+			0.11785717_8, &
+			0.12868498_8, &
+			0.13836303_8, &
+			0.14689132_8, &
+			0.15426985_8, &
+			0.16049862_8, &
+			0.16557763_8, &
+			0.16950689_8, &
+			0.17228638_8, &
+			0.17391611_8  &
 		]
 		
-! 		call rGrid.init( 0.0_8, 30.0_8, 1001 )
 		call rGrid.init( 0.0_8, 30.0_8, 219 )
-		call rGrid.show()
 		
 		potential = RNFunction( rGrid, funcTest )
-		call potential.show()
-		call potential.save( "morse.dat" )
 		
 		call solver.init( potential, rMass=1836.15280477874_8/2.0_8 )  ! mass from NIST for proton mp = 1.672621898e-27*kg
 		call solver.run( nStates=17 )
 		
-		write(*,*) "solver.nStates() = ", solver.nStates()
-		write(*,*) ""
-		write(*,"(A5,3A20)") "", "value", "exact", "|error|"
+		call assert_equal( solver.nStates(), 17, "FourierGridDiagonalization_test: nStates == 17" )
 		do i=1,solver.nStates()
-			write(*,"(I5,3F20.10)") i, solver.eigenValues(i), exactEigenValues(i), abs(solver.eigenValues(i)-exactEigenValues(i))
+			call assert_equal_real( solver.eigenValues(i), exactEigenValues(i), 1e-5_8, "FourierGridDiagonalization_test: eigenValues match" )
 		end do
-		
-! 		call solver.eigenfunction(7).save( "salida" )
 	end subroutine FourierGridDiagonalization_test
 
 end module FourierGridDiagonalization_

@@ -149,6 +149,7 @@ module StringRealHistogramPairList_
 	!! @brief Test method
 	!!
 	subroutine StringRealHistogramPairList_test()
+		use TestUtils_
 		type(String) :: str
 		type(RealHistogram) :: hist
 		type(StringRealHistogramPair) :: mypair
@@ -156,203 +157,84 @@ module StringRealHistogramPairList_
 		class(StringRealHistogramPairListIterator), pointer :: iter
 		class(StringRealHistogramPairListIterator), pointer :: iterPos
 		
-		integer :: i
-		
-		write(*,*) "------------------------------"
-		write(*,*) "Testing for empty constructor"
-		write(*,*) "-----------------------------"
-		
-		write(*,*) "call mylist.init()"
 		mylist = StringRealHistogramPairList()
+		call assert_equal( mylist%size(), 0, "StringRealHistogramPairList_test: empty size" )
 		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second.str()
-			
-			iter => iter.next
-		end do
-		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for append method"
-		write(*,*) "-------------------------"
-		
-		write(*,*) "call mylist.append( Hello, hist )"
-! 		write(*,*) "call mylist.append( class, 2 )"
-! 		write(*,*) "call mylist.append( string, 6 )"
-! 		write(*,*) "call mylist.append( list, 9 )"
-! 		write(*,*)
-! 		
 		str = "Hello"
 		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
-		
 		call mypair.init( str, hist )
 		call mylist.append( mypair )
 		
 		str = "class"
 		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [24.15162_8, 19.56235_8, 27.82564_8] )
-		
 		call mypair.init( str, hist )
 		call mylist.append( mypair )
 		
 		str = "string"
 		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [27.82564_8] )
-		
 		call mypair.init( str, hist )
 		call mylist.append( mypair )
 		
 		str = "list"
 		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [23.81071_8, 22.70389_8] )
-		
 		call mypair.init( str, hist )
 		call mylist.append( mypair )
 		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, "   =>   ", iter.data.second.str()
-			
-			iter => iter.next
-		end do
-		write(*,*)
-		
-! 		write(*,*) "--------------------------"
-! 		write(*,*) "Testing for prepend method"
-! 		write(*,*) "--------------------------"
-! 		
-! 		write(*,*) "call mylist.prepend( day )"
-! 		write(*,*) "call mylist.prepend( control )"
-! 		write(*,*)
-! 		
-! 		str = "day"
-! 		call mypair.init( str, 3.0_8 )
-! 		call mylist.prepend( mypair )
-! 		
-! 		str = "control"
-! 		call mypair.init( str, 2.0_8 )
-! 		call mylist.prepend( mypair )
-! 		
-! 		iter => mylist.begin
-! 		do while( associated(iter) )
-! 			write(*,*) iter.data.first.fstr, iter.data.second
-! 			
-! 			iter => iter.next
-! 		end do
-! 		write(*,*)
-! 		
-! 		iter => mylist.begin
-! 		iter => iter.next
-! 		
-		write(*,*) "--------------------------"
-		write(*,*) "Testing the access methods"
-		write(*,*) "--------------------------"
-		
-		write(*,*) "mylist.size() = ", mylist.size()
+		call assert_equal( mylist%size(), 4, "StringRealHistogramPairList_test: size after append" )
 		
 		mypair = mylist.at( mylist.begin )
-		write(*,*) "mylist.at( mylist.begin ) = ", mypair.first.fstr, mypair.second.str()
+		call assert_equal( mypair%first%fstr, "Hello", "StringRealHistogramPairList_test: at begin key" )
+		call assert_equal( mypair%second%size(), 8, "StringRealHistogramPairList_test: at begin val size" )
+		
 		mypair = mylist.at( 1 )
-		write(*,*) "mylist.at( 1 ) = ", mypair.first.fstr, mypair.second.str()
+		call assert_equal( mypair%first%fstr, "Hello", "StringRealHistogramPairList_test: at 1 key" )
 		
 		iter => mylist.begin
 		iter => iter.next
 		iter => iter.next
-		iterPos => iter
-		iter => iter.next
+		iterPos => iter ! Should point to "string", size 1
+		
 		mypair = mylist.at( iterPos )
-		write(*,*) "iter => mylist.begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iterPos => iter"
-		write(*,*) "mylist.at( iterPos ) = ", mypair.first.fstr, mypair.second.str()
+		call assert_equal( mypair%first%fstr, "string", "StringRealHistogramPairList_test: at iterPos key" )
+		call assert_equal( mypair%second%size(), 1, "StringRealHistogramPairList_test: at iterPos val size" )
 		
 		mypair = mylist.at( mylist.end )
-		write(*,*) "mylist.at( mylist.end ) = ", mypair.first.fstr, mypair.second.str()
+		call assert_equal( mypair%first%fstr, "list", "StringRealHistogramPairList_test: at end key" )
+		call assert_equal( mypair%second%size(), 2, "StringRealHistogramPairList_test: at end val size" )
+		
 		mypair = mylist.at( mylist.size() )
-		write(*,*) "mylist.at( mylist.size() ) = ", mypair.first.fstr, mypair.second.str()
-		
-		write(*,*) "--------------------------------"
-		write(*,*) "Testing insert and erase methods"
-		write(*,*) "--------------------------------"
-		
-		write(*,*) "call mylist.insert( iterPos, Prueba )"
+		call assert_equal( mypair%first%fstr, "list", "StringRealHistogramPairList_test: at size key" )
 		
 		str = "Prueba"
 		hist = RealHistogram( Histogram_STURGES )
 		call hist.add( [23.81071_8, 22.70389_8, 22.70389_8, 22.70389_8] )
-		
 		call mypair.init( str, hist )
-		call mylist.insert( iterPos, mypair )
+		call mylist.insert( iterPos, mypair ) ! Inserts after iterPos (string)
+		call assert_equal( mylist%size(), 5, "StringRealHistogramPairList_test: size after insert" )
 		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, "   =>   ", iter.data.second.str()
-			
-			iter => iter.next
-		end do
-		write(*,*)
+		mypair = mylist.at( 4 )
+		call assert_equal( mypair%first%fstr, "Prueba", "StringRealHistogramPairList_test: inserted key" )
+		call assert_equal( mypair%second%size(), 4, "StringRealHistogramPairList_test: inserted val size" )
 		
-		write(*,*) "iter => mylist.begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iterPos => iter"
-		write(*,*) "call mylist.erase( iterPos )"
-		
+		! Reset iterPos to point to index 4 (Prueba)
 		iter => mylist.begin
 		iter => iter.next
 		iter => iter.next
 		iter => iter.next
 		iterPos => iter
+		
 		call mylist.erase( iterPos )
+		call assert_equal( mylist%size(), 4, "StringRealHistogramPairList_test: size after erase" )
 		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, "   =>   ", iter.data.second.str()
-			
-			iter => iter.next
-		end do
-		write(*,*)
-		
-		write(*,*) "--------------------"
-		write(*,*) "Testing clear method"
-		write(*,*) "--------------------"
-		
-		write(*,*) "call mylist.clear()"
+		mypair = mylist.at( 4 )
+		call assert_equal( mypair%first%fstr, "list", "StringRealHistogramPairList_test: key after erase" )
 		
 		call mylist.clear()
-		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, "   =>   ", iter.data.second.str()
-			
-			iter => iter.next
-		end do
-		write(*,*)
-		
-! 		write(*,*) "call mylist.append( Hello1 aaaaaa )"
-! 		write(*,*) "call mylist.append( Hello2 bbbbb ccccc )"
-! 		
-! 		str = "Hello1 aaaaaa"
-! 		call mypair.init( str, 21.0_8 )
-! 		call mylist.append( mypair )
-! 		
-! 		str = "Hello2 bbbbb ccccc"
-! 		call mypair.init( str, 31.0_8 )
-! 		call mylist.append( mypair )
-! 		
-! 		iter => mylist.begin
-! 		do while( associated(iter) )
-! 			write(*,*) iter.data.first.fstr, iter.data.second
-! 			
-! 			iter => iter.next
-! 		end do
-! 		write(*,*)
-! 		
-! 		write(*,*) "call mylist.clear()"
-! 		call mylist.clear()
+		call assert_equal( mylist%size(), 0, "StringRealHistogramPairList_test: size after clear" )
 		
 	end subroutine StringRealHistogramPairList_test
 

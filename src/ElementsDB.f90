@@ -49,8 +49,8 @@ module ElementsDB_
 		
 	type, public :: Isotope
 		integer :: massNumber
-		integer :: abundance
-		integer :: atomicMass
+		real(8) :: abundance
+		real(8) :: atomicMass
 	end type Isotope
 		
 	!>
@@ -153,19 +153,27 @@ module ElementsDB_
 		type(Element) :: elem
 		type(Isotope), allocatable :: isot(:)
 		
+		allocate( this.elements(1) )
+		
 		elem.atomicNumber = 1
 		elem.symbol = "H"
 		elem.name = "Hydrogen"
-		elem.atomicWeight = 1.00794
+		elem.atomicWeight = 1.00794_8
 		elem.mostStableIsotopeMassNumber = 1
-		allocate( isot(1:7) )
-			isot(1).massNumber = 1
-			isot(1).abundance  = 0.999885
-			isot(1).atomicMass = 1.00782503207
-			
-			isot(2).massNumber = 2
-			isot(2).abundance  = 0.000115
-			isot(2).atomicMass = 2.0141017778
+		allocate( isot(2) )
+		isot(1).massNumber = 1
+		isot(1).abundance  = 0.999885_8
+		isot(1).atomicMass = 1.00782503207_8
+		
+		isot(2).massNumber = 2
+		isot(2).abundance  = 0.000115_8
+		isot(2).atomicMass = 2.0141017778_8
+		
+		allocate( elem.isotopes(2) )
+		elem.isotopes = isot
+		
+		this.elements(1) = elem
+		
 		deallocate( isot )
 	end subroutine initElementsDB
 	
@@ -310,23 +318,15 @@ module ElementsDB_
 	!! @brief Test method
 	!!
 	subroutine ElementsDB_test()
-! 		type(Element) :: a
-! 		type(Isotope) :: b
-! 		
-! 		a = ElementsDB_instance.get( 16 )
-! 		write(*,*) "atomic mass = ", a.mass()
-! 		write(*,*) "electrons = ", a.electrons()
-! 		write(*,*) "symbol = ", a.symbol()
-! 		write(*,*) "name = ", a.name()
-! 		write(*,*) "covalentRadius = ", a.covalentRadius()
-! 		write(*,*) "atomicRadius = ", a.atomicRadius()
-! 		write(*,*) "vdWRadius = ", a.vdWRadius()
-! 		write(*,*) "electronegativity = ", a.property( "electronegativity" )
-! 		write(*,*) "electronegativity = ", a.property( "electronegativity" )
-! 		write(*,*) "isotope = ", a.property( "electronegativity" )
-! 		
-! 		b = a.isotope( 18 )
+		use TestUtils_
+		type(ElementsDB) :: db
 		
+		call db.init()
+		call assert_equal( db.nElements(), 1, "db.nElements" )
+		call assert_equal_real( db.atomicMass( 1 )/amu, 1.00782503207_8, 1e-10_8, "Hydrogen atomic mass" )
+		call assert_equal_real( db.atomicMass( "H" )/amu, 1.00782503207_8, 1e-10_8, "Hydrogen atomic mass by symbol" )
+		
+		write(*,*) "All ElementsDB tests PASSED"
 	end subroutine ElementsDB_test
 	
 end module ElementsDB_

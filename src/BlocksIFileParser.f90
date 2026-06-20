@@ -717,43 +717,36 @@ module BlocksIFileParser_
 	!! @brief Testing the BlocksIFileParser class
 	!!
 	subroutine BlocksIFileParser_test()
+		use TestUtils_
 		type(BlocksIFileParser) :: parser
 		type(String) :: buffer
 		type(String), allocatable :: block(:)
 		integer :: i
-		real(8) :: rarray(3)
-		real(8) :: iarray(4)
 		
 		call parser.init( "data/formats/BLOCKIFILE", notifyGetMethods=.true. )
-		call parser.showContent()
 		
 		buffer = parser.get( "ICONS:betin", def="0.0" )
-		write(*,*) "betin = ", buffer.toReal()
-		write(*,*) "betin = ", buffer.toInteger()
+		call assert_equal_real( buffer.toReal(), -500.0_8, 1e-10_8, "betin real value" )
+		call assert_equal( buffer.toInteger(), -500, "betin integer value" )
 		
-! 		help = "This is a test to"//ENDL// &
-! 		       "include in the feature "//ENDL
-! 		buffer = parser.getString( "ICONS:hola", def="kk", help=help.fstr )
+		call assert_equal_real( String_toReal( parser.get( "ICONS:rsys", def="0.0" ) ), 20.0_8, 1e-10_8, "rsys ICONS real value" )
 		
-		write(*,*) "rsys = ", String_toReal( parser.get( "ICONS:rsys", def="0.0" ) )
+		call assert_equal_real( String_toReal( parser.get( "STEP2ROUTINES:rsys", def="0.0" ) ), 0.0_8, 1e-10_8, "rsys STEP2ROUTINES default real value" )
 		
-! 		rarray = parser.getRealArray( "ICONS:rarray", def=[1.0_8,1.0_8,1.0_8] )
-! 		write(*,*) "rarray = ", rarray
-		
-		write(*,*) "rsys = ", String_toReal( parser.get( "STEP2ROUTINES:rsys", def="0.0" ) )
 		buffer = parser.get( "STEP2ROUTINES:file", def="xxx" )
-		write(*,*) "file = ", buffer.fstr
-		
-		
-! 		buffer = parser.get( "STEP2ROUTINES:rsys" )
-! 		write(*,*) "rsys = ", buffer.fstr
+		call assert_equal( buffer.fstr, "/home/pepito/hola/hola.dat", "file path string value" )
 		
 		call parser.getBlock( "TABLE", block )
-		write(*,*) "Block TABLE"
-		do i=1,size(block)
-			write(*,*) i, trim(block(i).fstr)
-		end do
+		call assert_equal( size(block), 6, "Block TABLE size" )
+		call assert_equal( block(1).fstr, "prueba de tabla 1", "Block TABLE line 1" )
+		call assert_equal( block(2).fstr, "prueba de tabla 2", "Block TABLE line 2" )
+		call assert_equal( block(3).fstr, "prueba de tabla 3", "Block TABLE line 3" )
+		call assert_equal( block(4).fstr, "prueba de tabla 4", "Block TABLE line 4" )
+		call assert_equal( block(5).fstr, "prueba de tabla 5", "Block TABLE line 5" )
+		call assert_equal( block(6).fstr, "prueba de tabla 6", "Block TABLE line 6" )
+		
 		deallocate( block )
+		write(*,*) "All BlocksIFileParser tests PASSED"
 	end subroutine BlocksIFileParser_test
 	
 end module BlocksIFileParser_

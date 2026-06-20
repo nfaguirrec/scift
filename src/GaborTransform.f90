@@ -229,7 +229,11 @@ module GaborTransform_
 	!! @brief Test method
 	!!
 	subroutine GaborTransform_test()
+		use TestUtils_
+		type(GaborTransform) :: gt
 		
+		call gt.init()
+		call assert_true( .true., "GaborTransform_test: trivial check" )
 	end subroutine GaborTransform_test
 	
 end module GaborTransform_

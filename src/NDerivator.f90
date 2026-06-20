@@ -343,40 +343,20 @@ module NDerivator_
 	!! @bief test
 	!!
 	subroutine NDerivator_test()
+		use TestUtils_
 		type(Grid) :: xGrid
-		type(RNFunction), target :: func, dFunc, ndFunc
+		type(RNFunction), target :: func
 		type(NDerivator) :: derivator
-		real(8) :: exactValue
-		real(8) :: value
-		integer :: i, j
 		
-		call xGrid.init( 0.0_8, 10.0_8, 101 )
+		call xGrid%init( 0.0_8, 10.0_8, 101 )
 		func = RNFunction( xGrid, funcTest )
-		dFunc = RNFunction( xGrid, dfuncTest )
-		call derivator.init( func )
+		call derivator%init( func )
 		
-! 		do i=1,xGrid.nPoints
-! 			write(*,"(3F15.5)") xGrid.data(i), dnFunc.fArray(i), derivator.evaluate( xGrid.data(i), 2 )
-! 		end do
-! 		
-! 		write(*,*)
-! 		write(*,*)
-! 		
-! 		call nFunc.fromFunction( xGrid, dfuncTest )
-! 		do i=1,xGrid.nPoints
-! 			write(*,"(3F15.5)") xGrid.data(i), dnFunc.fArray(i), derivator.evaluate( xGrid.data(i), 1 )
-! 		end do
+		call assert_equal_real( derivator%evaluate( 1.0_8, 1 ), dfuncTest(1.0_8), 1e-4_8, "NDerivator_test: 1st derivative at 1.0" )
+		call assert_equal_real( derivator%evaluate( 5.0_8, 1 ), dfuncTest(5.0_8), 1e-4_8, "NDerivator_test: 1st derivative at 5.0" )
 		
-		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		! Para verificar:
-		!   $ make && ./test > salida
-		!   gnuplot> plot "salida.dat" w l, "salida1.dat" w l, "salida2.dat" w p pt 7
-		! verde y azul deben dar igual
-		ndFunc = derivator.evaluate( order=0 )
-		call func.save( "salida.dat" )
-		call dFunc.save( "salida1.dat" )
-		call ndFunc.save( "salida2.dat" )
-		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		call assert_equal_real( derivator%evaluate( 1.0_8, 2 ), d2funcTest(1.0_8), 1e-4_8, "NDerivator_test: 2nd derivative at 1.0" )
+		call assert_equal_real( derivator%evaluate( 5.0_8, 2 ), d2funcTest(5.0_8), 1e-4_8, "NDerivator_test: 2nd derivative at 5.0" )
 		
 	end subroutine NDerivator_test
 	

@@ -100,8 +100,8 @@ module Table_
 		
 		call ifile.init( fileName )
 		
-		allocate( rawData( ifile.numberOfLines, ifile.minNColumns ) )
-		allocate( currentRow(ifile.minNColumns) )
+		allocate( rawData( ifile.numberOfLines, ifile.maxNColumns ) )
+		allocate( currentRow(ifile.maxNColumns) )
 		
 		nCol = 1
 		do while( .not. ifile.eof() )
@@ -123,11 +123,10 @@ module Table_
 			end if
 		end do
 		
-		allocate( this.data( nCol-1, nRow-1 ) )
-		this.data = rawData
+		this.data = rawData( 1:nCol-1, 1:nRow-1 )
 		
-		this.nRows = nRow-1
-		this.nCols = nCol-1
+		this.nRows = nCol-1
+		this.nCols = nRow-1
 		
 		deallocate( currentRow )
 		
@@ -141,6 +140,13 @@ module Table_
 		class(Table), intent(out) :: this
 		type(Table), intent(in) :: other
 		
+		this.nRows = other.nRows
+		this.nCols = other.nCols
+		if ( allocated(other.data) ) then
+			if ( allocated(this.data) ) deallocate(this.data)
+			allocate(this.data(size(other.data,1), size(other.data,2)))
+			this.data = other.data
+		end if
 	end subroutine copyTable
 	
 	!*
@@ -148,7 +154,7 @@ module Table_
 	!*
 	subroutine destroy( this )
 		type(Table) :: this
-		
+		if ( allocated(this.data) ) deallocate(this.data)
 	end subroutine destroy
 	
 	!*
@@ -225,11 +231,24 @@ module Table_
 	! @brief Test method
 	!*
 	subroutine Table_test()
-		type(Table) :: table
+		use TestUtils_
+		type(Table) :: myTable
+		type(Table) :: myTable2
 		
-		call table.init( "data/formats/TABLE" )
-		call table.show()
-		call table.showContent()
+		call myTable.init( "data/formats/TABLE" )
+		call assert_equal( myTable%nRows, 4, "Table_test: nRows" )
+		call assert_equal( myTable%nCols, 4, "Table_test: nCols" )
+		
+		call assert_equal( myTable%data(1,1)%fstr, "symbol", "Table_test: data(1,1)" )
+		call assert_equal( myTable%data(2,1)%fstr, "Ti", "Table_test: data(2,1)" )
+		call assert_equal( myTable%data(2,2)%fstr, "-1.4774433", "Table_test: data(2,2)" )
+		call assert_equal( myTable%data(4,4)%fstr, "4.4324773", "Table_test: data(4,4)" )
+		
+		myTable2 = myTable
+		call assert_equal( myTable2%nRows, 4, "Table_test: copy nRows" )
+		call assert_equal( myTable2%nCols, 4, "Table_test: copy nCols" )
+		call assert_equal( myTable2%data(2,2)%fstr, "-1.4774433", "Table_test: copy data(2,2)" )
+		
 	end subroutine Table_test
 	
 end module Table_

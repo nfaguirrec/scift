@@ -594,32 +594,25 @@ module GridBase_
 	!! @brief
 	!!
 	subroutine GridBase_test()
+		use TestUtils_
 		real(8) :: rMin, rMax
 		integer :: gridSize
 		type(GridBase) :: rGridBase
 		type(GridBase) :: rGridBase2
-		
-		integer :: i
 			
 		rMin=0.0_8
 		rMax=5.0_8
 		gridSize=10
 		
-		call rGridBase.init( rMin, rMax, gridSize )
-		call rGridBase.show()
+		call rGridBase%init( rMin, rMax, gridSize )
+		call assert_equal( rGridBase%size, 10, "GridBase_test: rGridBase size" )
+		call assert_equal_real( rGridBase%min, 0.0_8, 1e-10_8, "GridBase_test: rGridBase min" )
+		call assert_equal_real( rGridBase%max, 5.0_8, 1e-10_8, "GridBase_test: rGridBase max" )
 		
-		do i=1,rGridBase.size
-			write(*,"(i5,f10.5)") i, rGridBase.data(i)
-		end do
-		
-		write(*,*) "---"
-		write(*,*) "Testing copy constructor"
-		write(*,*) "---"
-		call rGridBase2.copyGridBase( rGridBase )
-		call rGridBase2.show()
-		do i=1,rGridBase2.size
-			write(*,"(i5,f10.5)") i, rGridBase2.data(i)
-		end do
+		call rGridBase2%copyGridBase( rGridBase )
+		call assert_equal( rGridBase2%size, 10, "GridBase_test: copy size" )
+		call assert_equal_real( rGridBase2%min, 0.0_8, 1e-10_8, "GridBase_test: copy min" )
+		call assert_equal_real( rGridBase2%max, 5.0_8, 1e-10_8, "GridBase_test: copy max" )
 	end subroutine GridBase_test
 	
 end module GridBase_

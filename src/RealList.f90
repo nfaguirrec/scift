@@ -171,6 +171,7 @@ module RealList_
 	!! @brief Test method
 	!!
 	subroutine RealList_test()
+		use TestUtils_
 		type(RealList) :: mylist, mylist2
 		class(RealListIterator), pointer :: iter
 		
@@ -190,12 +191,17 @@ module RealList_
 		call mylist.append( 1.0_8 )
 		
 		call showMyListForward( mylist )
+		call assert_equal( mylist%size(), 3, "List size after append" )
+		call assert_equal_real( mylist.at(1), 8.0_8, 1e-10_8, "List at(1) after append" )
+		call assert_equal_real( mylist.at(3), 1.0_8, 1e-10_8, "List at(3) after append" )
 
 		write(*,*) "-------------------------"
 		write(*,*) "Testing copy method"
 		write(*,*) "-------------------------"
 		mylist2 = mylist
 		call showMyListForward( mylist2 )
+		call assert_equal( mylist2%size(), 3, "Copied list size" )
+		call assert_equal_real( mylist2.at(1), 8.0_8, 1e-10_8, "Copied list at(1)" )
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for prepend method"
@@ -211,6 +217,8 @@ module RealList_
 		call mylist.prepend( 0.0_8 )
 		
 		call showMyListForward( mylist )
+		call assert_equal( mylist%size(), 6, "List size after prepend" )
+		call assert_equal_real( mylist.at(1), 0.0_8, 1e-10_8, "List at(1) after prepend" )
 		
 		write(*,*) "-------------------------"
 		write(*,*) "Testing for insert method"
@@ -228,6 +236,8 @@ module RealList_
 		
 		call mylist.insert( iter, 1.0_8 )
 		call showMyListForward( mylist )
+		call assert_equal( mylist%size(), 7, "List size after insert" )
+		call assert_equal_real( mylist.at(4), 1.0_8, 1e-10_8, "List at(4) after insert" )
 		
 		write(*,*)
 		write(*,*) "call mylist.insert( iter, 2.0 )"
@@ -279,6 +289,7 @@ module RealList_
 		write(*,*)
 		call mylist.clear()
 		call showMyListForward( mylist )
+		call assert_equal( mylist%size(), 0, "List size after clear" )
 		
 		write(*,*) "call mylist.clear()"
 		write(*,"(A)") "call mylist.append( ( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8], 8 )"
@@ -288,18 +299,7 @@ module RealList_
 		call mylist.append( [ 1.0_8, 2.0_8, 3.0_8, 4.0_8, 5.0_8, 6.0_8, 7.0_8, 8.0_8] )
 		call showMyListForward( mylist )
 		call showMyListBackward( mylist )
-		
-! 		iter => mylist.begin
-! 		do while( associated(iter) )
-! 			if( iter.data > 1.5_8 .and. iter.data < 3.5_8 ) then
-! 				call mylist.erase( iter )
-! 				iter => mylist.begin
-! 			else
-! 				iter => iter.next
-! 			end if
-! 		end do
-! 		
-! 		call showMyListForward( mylist )
+		call assert_equal( mylist%size(), 8, "List size after bulk append" )
 		
 		write(*,*)
 		write(*,*) "call mylist.clear()"
@@ -309,6 +309,7 @@ module RealList_
 		write(*,*) "call mylist.eraseAllExcept( [1,3,5] )"
 		call mylist.eraseAllExcept( [1,3,5] )
 		call showMyListForward( mylist )
+		call assert_equal( mylist%size(), 3, "List size after eraseAllExcept" )
 		
 		write(*,*)
 		write(*,*) "call mylist.clear()"
@@ -318,6 +319,7 @@ module RealList_
 		write(*,*) "call mylist.eraseAllExceptFirst( 4 )"
 		call mylist.eraseAllExceptFirst( 4 )
 		call showMyListForward( mylist )
+		call assert_equal( mylist%size(), 4, "List size after eraseAllExceptFirst" )
 		
 		write(*,*)
 		write(*,*) "call mylist.clear()"
@@ -327,6 +329,7 @@ module RealList_
 		write(*,*) "call mylist.eraseAllExceptLast( 4 )"
 		call mylist.eraseAllExceptLast( 4 )
 		call showMyListForward( mylist )
+		call assert_equal( mylist%size(), 4, "List size after eraseAllExceptLast" )
 		
 		write(*,*) "------------------------"
 		write(*,*) "Testing for get methods"
@@ -335,6 +338,7 @@ module RealList_
 		write(*,*) "call mylist.at(3) ==>", mylist.at(3)
 		write(*,*) "call mylist.at(1) ==>", mylist.at(1)
 		
+		write(*,*) "All RealList tests PASSED"
 	end subroutine RealList_test
 
 end module RealList_

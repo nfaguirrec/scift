@@ -211,20 +211,32 @@ module UnitsConverter_
 	!! @brief Test method
 	!!
 	subroutine UnitsConverter_test()
-! 		write(*,*) "         Lenght = ", 0.528e-8*cm
-! 		write(*,*) "       Velocity = ", 2.18e8*cm/sec
-		write(*,*) "         Energy = ", 27.21*eV
-! 		write(*,*) "           Time = ", 24.2*asec
-		write(*,*) "           Mass = ", 9.10938188e-31*kg
-! 		write(*,*) "      Frequency = ", 4.13e16/sec
-! 		write(*,*) " Electric field = ", 5.14e9*Volt/cm
-! 		write(*,*) " Magnetic field = ", 2.35e5*Tesla
-! 		write(*,*) "      Frequency = ", 6.6e-7*eV/GHz
-! 		write(*,*) "Laser Intensity = ", 3.51e16*Wcm2
-		write(*,*) ""
-		write(*,*) "Lennard Jones units (argon)"
-! 		write(*,*) "     Temperature = ", 120*K/LJ_T
-! 		write(*,*) "Angular momentum = ", 0.02944*LJ_j
+		use TestUtils_
+		real(8) :: val
+		
+		val = sUnit("eV")
+		call assert_equal_real( val, eV, 1e-12_8, "UnitsConverter_test: sUnit eV" )
+		
+		val = sUnit("angs")
+		call assert_equal_real( val, angs, 1e-12_8, "UnitsConverter_test: sUnit angs" )
+		
+		val = sUnit("amu")
+		call assert_equal_real( val, amu, 1e-12_8, "UnitsConverter_test: sUnit amu" )
+		
+		val = sUnit("Eh")
+		call assert_equal_real( val, Eh, 1e-12_8, "UnitsConverter_test: sUnit Eh" )
+		
+		val = sUnit("kelvin")
+		call assert_equal_real( val, kelvin, 1e-12_8, "UnitsConverter_test: sUnit kelvin" )
+		
+		val = sUnit("fs")
+		call assert_equal_real( val, fs, 1e-12_8, "UnitsConverter_test: sUnit fs" )
+		
+		val = sUnit("non-existent")
+		call assert_equal_real( val, 1.0_8, 1e-12_8, "UnitsConverter_test: sUnit non-existent" )
+		
+		call assert_equal_real( 27.21_8 * eV, 0.999948659468975_8, 1e-6_8, "UnitsConverter_test: Energy eV" )
+		call assert_equal_real( 9.10938188e-31_8 * kg, 5.485798935660015e-4_8, 1e-9_8, "UnitsConverter_test: Mass kg" )
 	end subroutine UnitsConverter_test
 	
 end module UnitsConverter_

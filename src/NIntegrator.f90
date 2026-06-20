@@ -341,56 +341,37 @@ module NIntegrator_
 	!! This is neccesary only for NFunction_test()
 	!!
 	subroutine NIntegrator_test()
+		use TestUtils_
 		type(Grid) :: xGrid
 		type(RNFunction) :: nFunc
 		type(NIntegrator) :: integrator
-		real(8) :: exactValue
-		real(8) :: value, Math_PI
-		integer :: i
+		real(8) :: exactValue, val
+		real(8) :: Math_PI
 		
 		Math_PI = acos(-1.0_8)
 		
-		call xGrid.init( -30.0_8, 30.0_8, 1000 )
-		call xGrid.show()
-		
+		call xGrid%init( -30.0_8, 30.0_8, 1000 )
 		nFunc = RNFunction( xGrid, funcTest )
-		call nFunc.show()
 		
 		exactValue = 2.16780136532979_8
 		
-		write(*,*) "NIntegrator_SIMPSON"
-		write(*,*) "======="
-		call integrator.init( nFunc, NIntegrator_SIMPSON )
-		write(*,'(A,F30.8)') "Exact     = ", exactValue
-		write(*,'(A,F30.8)') "Numerical = ", integrator.evaluate()
-		write(*,'(A,F27.5,A3)') "Error(%)  = ", 100.0_8*( integrator.evaluate()-exactValue )/exactValue, "%"
-		write(*,*) ""
+		call integrator%init( nFunc, NIntegrator_SIMPSON )
+		val = integrator%evaluate()
+		call assert_equal_real( val, exactValue, 1e-6_8, "NIntegrator_test: SIMPSON full domain" )
 		
-		write(*,*) "NIntegrator_BOOLE"
-		write(*,*) "====="
-		call integrator.init( nFunc, NIntegrator_BOOLE )
-		write(*,'(A,F30.8)') "Exact     = ", exactValue
-		write(*,'(A,F30.8)') "Numerical = ", integrator.evaluate()
-		write(*,'(A,F27.5,A3)') "Error(%)  = ", 100.0_8*( integrator.evaluate()-exactValue )/exactValue, "%"
-		write(*,*) ""
+		call integrator%init( nFunc, NIntegrator_BOOLE )
+		val = integrator%evaluate()
+		call assert_equal_real( val, exactValue, 1e-6_8, "NIntegrator_test: BOOLE full domain" )
 		
 		exactValue = 1.623685454371397_8
 		
-		write(*,*) "NIntegrator_SIMPSON"
-		write(*,*) "======="
-		call integrator.init( nFunc, NIntegrator_SIMPSON )
-		write(*,'(A,F30.8)') "Exact     = ", exactValue
-		write(*,'(A,F30.8)') "Numerical = ", integrator.evaluate( -Math_PI, Math_PI )
-		write(*,'(A,F27.5,A3)') "Error(%)  = ", 100.0_8*( integrator.evaluate( -Math_PI, Math_PI )-exactValue )/exactValue, "%"
-		write(*,*) ""
+		call integrator%init( nFunc, NIntegrator_SIMPSON )
+		val = integrator%evaluate( -Math_PI, Math_PI )
+		call assert_equal_real( val, exactValue, 1e-4_8, "NIntegrator_test: SIMPSON sub-domain" )
 		
-		write(*,*) "NIntegrator_BOOLE"
-		write(*,*) "====="
-		call integrator.init( nFunc, NIntegrator_BOOLE )
-		write(*,'(A,F30.8)') "Exact     = ", exactValue
-		write(*,'(A,F30.8)') "Numerical = ", integrator.evaluate( -Math_PI, Math_PI )
-		write(*,'(A,F27.5,A3)') "Error(%)  = ", 100.0_8*( integrator.evaluate( -Math_PI, Math_PI )-exactValue )/exactValue, "%"
-		write(*,*) ""
+		call integrator%init( nFunc, NIntegrator_BOOLE )
+		val = integrator%evaluate( -Math_PI, Math_PI )
+		call assert_equal_real( val, exactValue, 1e-4_8, "NIntegrator_test: BOOLE sub-domain" )
 		
 	end subroutine NIntegrator_test
 	

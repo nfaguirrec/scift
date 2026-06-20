@@ -457,75 +457,35 @@ module AtomicElementsDB_
 	!! @brief Testing the AtomicElementsDB class
 	!!
 	subroutine AtomicElementsDB_test()
+		use TestUtils_
 		type(AtomicElementsDB) :: atomicDB
 		character(20) :: upperSymb
-		type(String) :: tmpStr
-		integer, allocatable :: hashTableList(:)
-		integer :: i, nBits
 		
-		write(*,*) ""
-		write(*,*) "Symbol to atomic number"
-		write(*,*) "-----------------------"
 		call upper( "   Ti ", upperSymb )
-		write(*,*) upperSymb, atomicDB.atomicNumber( upperSymb )
+		call assert_equal( atomicDB.atomicNumber( upperSymb ), 22, "Ti upperSymb atomic number" )
+		call assert_equal( atomicDB.atomicNumber( " Ti " ), 22, "Ti atomic number" )
+		call assert_equal( atomicDB.atomicNumber( "TI" ), 22, "TI atomic number" )
 		
-		write(*,*) " Ti ", atomicDB.atomicNumber( " Ti " )
-		write(*,*) "TI ", atomicDB.atomicNumber( "TI" )
-		
-		write(*,*) ""
-		write(*,*) "Symbol to atomic mass"
-		write(*,*) "---------------------"
 		call upper( "   Ti ", upperSymb )
-		write(*,*) upperSymb, atomicDB.atomicMass( upperSymb )/amu, " amu"
+		call assert_equal_real( atomicDB.atomicMass( upperSymb )/amu, 47.9478988647461_8, 1e-6_8, "Ti upperSymb atomic mass" )
+		call assert_equal_real( atomicDB.atomicMass( " He " )/amu, 4.00260019302368_8, 1e-6_8, "He atomic mass" )
+		call assert_equal_real( atomicDB.atomicMass( " Ti " )/amu, 47.9478988647461_8, 1e-6_8, "Ti atomic mass" )
+		call assert_equal_real( atomicDB.atomicMass( "AU" )/amu, 196.966598510742_8, 1e-6_8, "Au atomic mass" )
+		call assert_equal_real( atomicDB.atomicMass( "AR" )/amu, 39.9623985290527_8, 1e-6_8, "Ar atomic mass" )
 		
-		write(*,*) " He ", atomicDB.atomicMass( " He " )/amu, " amu"
-		write(*,*) " Ti ", atomicDB.atomicMass( " Ti " )/amu, " amu"
-		write(*,*) "AU ", atomicDB.atomicMass( "AU" )/amu, " amu"
-		write(*,*) "AR ", atomicDB.atomicMass( "AR" )/amu, " amu"
+		call assert_equal( atomicDB.symbol( 22 ), "Ti", "symbol(22)" )
+		call assert_equal( atomicDB.symbol( 22, .true. ), "TI", "symbol(22, .true.)" )
+		call assert_equal( atomicDB.symbol( 12 ), "Mg", "symbol(12)" )
+		call assert_equal( atomicDB.symbol( 79 ), "Au", "symbol(79)" )
 		
-		write(*,*) ""
-		write(*,*) "Atomic number to symbol"
-		write(*,*) "-----------------------"
+		call assert_equal_real( atomicDB.covalentRadius( " Ti " )/angs, 1.36000001430511_8, 1e-6_8, "Ti covalent radius" )
+		call assert_equal_real( atomicDB.covalentRadius( " O " )/angs, 0.740000009536743_8, 1e-6_8, "O covalent radius" )
+		call assert_equal_real( atomicDB.covalentRadius( " Re" )/angs, 0.0_8, 1e-6_8, "Re covalent radius" )
+		call assert_equal_real( atomicDB.covalentRadius( "Au" )/angs, 0.0_8, 1e-6_8, "Au covalent radius" )
 		
-		write(*,*) "22 ", atomicDB.symbol( 22 )
-		write(*,*) "22 ", atomicDB.symbol( 22, .true. )
-		write(*,*) "12 ", atomicDB.symbol( 12 )
-		write(*,*) "79 ", atomicDB.symbol( 79 )
+		call assert_equal( AtomicElementsDB_instance.symbol(22), "Ti", "singleton symbol(22)" )
 		
-		write(*,*) ""
-		write(*,*) "Atomic properties"
-		write(*,*) "-----------------------"
-		
-! 		write(*,*) "22 ", atomicDB.mass( 22 )
-! 		write(*,*) "79 ", atomicDB.covalentRadius( 79 )
-		write(*,*) "mass    Ti = ", atomicDB.atomicMass( " Ti " )/amu
-		write(*,*) "cradius Ti = ", atomicDB.covalentRadius( " Ti " )/angs
-		write(*,*) "cradius  O = ", atomicDB.covalentRadius( " O " )/angs
-		write(*,*) "cradius Re = ", atomicDB.covalentRadius( " Re" )/angs
-		write(*,*) "cradius Au = ", atomicDB.covalentRadius( "Au" )/angs
-		
-		write(*,*) "Using the singleton instance"
-		write(*,*) "----------------------------"
-		write(*,*) AtomicElementsDB_instance.symbol(22)
-		
-! 		write(*,*)
-! 		write(*,*) "Testing hash key for atomic labels"
-! 		write(*,*) "----------------------------------"
-! 		nBits = 32
-! 		allocate( hashTableList(AtomicElementsDB_instance.nElements()) )
-! 		hashTableList = -1
-! 		do i=1,AtomicElementsDB_instance.nElements()
-! 			tmpStr = AtomicElementsDB_instance.symbol( i )
-! 			
-! 			if( any( hashTableList-tmpStr.hashKey(nBits) == 0 ) ) then
-! 				write(*,*) "Hashkey replicated"
-! 				stop
-! 			end if
-! 				
-! 			hashTableList(i) = tmpStr.hashKey(nBits)
-! 			write(*,*) i, tmpStr.fstr, " ==> ", tmpStr.hashKey(nBits)
-! 		end do
-! 		write(*,*) "key range = ", minval(hashTableList), maxval(hashTableList)
+		write(*,*) "All AtomicElementsDB tests PASSED"
 	end subroutine AtomicElementsDB_test
 	
 end module AtomicElementsDB_

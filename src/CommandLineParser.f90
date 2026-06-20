@@ -257,27 +257,28 @@ module CommandLineParser_
 	!! @brief Test method
 	!!
 	subroutine CommandLineParser_test()
+		use TestUtils_
 		type(CommandLineParser) :: parser
 		type(String) :: buffer
 		real(8) :: realBuffer
 		integer :: intBuffer
+		logical :: logBuffer
 		
-		buffer = parser.get( "-d" )
-		write(*,*) "Parameter -d"
-		write(*,*) "------------"
-		write(*,*) trim(buffer.fstr)
-		write(*,*) buffer.toReal()
-		write(*,*) buffer.toInteger()
+		buffer = parser.get( "-d", def="10" )
+		call assert_equal( buffer.toInteger(), 10, "-d default integer" )
+		call assert_equal_real( buffer.toReal(), 10.0_8, 1e-10_8, "-d default real" )
+		call assert_equal( buffer.fstr, "10", "-d default string" )
 		
 		realBuffer = parser.getReal( "-f", def=-3.0_8 )
-		write(*,*) "Parameter -f"
-		write(*,*) "------------"
-		write(*,*) realBuffer
+		call assert_equal_real( realBuffer, -3.0_8, 1e-10_8, "-f default real" )
 		
-		intBuffer = parser.getInteger( "-g" )
-		write(*,*) "Parameter -g"
-		write(*,*) "------------"
-		write(*,*) intBuffer
+		intBuffer = parser.getInteger( "-g", def=2 )
+		call assert_equal( intBuffer, 2, "-g default integer" )
+		
+		logBuffer = parser.getLogical( "-l", def=.true. )
+		call assert_true( logBuffer, "-l default logical" )
+		
+		write(*,*) "All CommandLineParser tests PASSED"
 	end subroutine CommandLineParser_test
 	
 end module CommandLineParser_

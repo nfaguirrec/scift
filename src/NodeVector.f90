@@ -173,163 +173,93 @@ module NodeVector_
 	!! @brief Test method
 	!!
 	subroutine NodeVector_test()
+		use TestUtils_
 		type(NodeVector) :: myvector
-		class(NodeVectorIterator), pointer :: iter
+		type(Node) :: nd1, nd2, nd3
+		type(Node) :: tmpNode
 		
-! 		call myvector.init()
-! 		
-! 		write(*,*) "-------------------------"
-! 		write(*,*) "Testing for append method"
-! 		write(*,*) "-------------------------"
-! 		
-! 		write(*,*) "call myvector.append( 8 )"
-! 		write(*,*) "call myvector.append( 5 )"
-! 		write(*,*) "call myvector.append( 1 )"
-! 		write(*,*)
-! 		
-! 		call myvector.append( 8 )
-! 		call myvector.append( 5 )
-! 		call myvector.append( 1 )
-! 		
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "--------------------------"
-! 		write(*,*) "Testing for prepend method"
-! 		write(*,*) "--------------------------"
-! 		
-! 		write(*,*) "call myvector.prepend( 8 )"
-! 		write(*,*) "call myvector.prepend( 5 )"
-! 		write(*,*) "call myvector.prepend( 1 )"
-! 		write(*,*)
-! 		
-! 		call myvector.prepend( 8 )
-! 		call myvector.prepend( 5 )
-! 		call myvector.prepend( 1 )
-! 		
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "------------------------"
-! 		write(*,*) "Testing for erase method"
-! 		write(*,*) "------------------------"
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 2 )"
-! 		call myvector.erase( 2 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 3 )"
-! 		write(*,*)
-! 		call myvector.erase( 3 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		write(*,*)
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		write(*,*)
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		write(*,*)
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		write(*,*)
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 
-! ! 		
-! ! 		write(*,*) "-------------------------"
-! ! 		write(*,*) "Testing for insert method"
-! ! 		write(*,*) "-------------------------"
-! ! 		
-! ! 		write(*,*) "iter => myvector.begin"
-! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "call myvector.insert( iter, 1 )"
-! ! 		write(*,*)
-! ! 		
-! ! 		iter => myvector.begin
-! ! 		iter => iter.next
-! ! 		iter => iter.next
-! ! 		
-! ! 		call myvector.insert( iter, 1 )
-! ! 		call showMyVector( myvector )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call myvector.insert( iter, 2 )"
-! ! 		write(*,*)
-! ! 		
-! ! 		call myvector.insert( iter, 2 )
-! ! 		call showMyVector( myvector )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call myvector.insert( myvector.end, 9 )"
-! ! 		write(*,*)
-! ! 				
-! ! 		call myvector.insert( myvector.end, 9 )
-! ! 		call showMyVector( myvector )
-! 
-! 		write(*,*) "------------------------"
-! 		write(*,*) "Testing for erase method"
-! 		write(*,*) "------------------------"
-! 		
-! 		write(*,*) "call myvector.erase( 2 )"
-! 		write(*,*)
-! 		
-! 		call myvector.erase( 2 )
-! 		call showMyVector( myvector )
-! 
-! ! 		write(*,*) "iter => myvector.begin"
-! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "call myvector.erase( iter )"
-! ! 		write(*,*)
-! ! 		
-! ! 		iter => myvector.begin
-! ! 		iter => iter.next
-! ! 		
-! ! 		call myvector.erase( iter )
-! ! 		call showMyVector( myvector )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call myvector.erase( myvector.begin )"
-! ! 		write(*,*)
-! ! 		
-! ! 		call myvector.erase( myvector.begin )
-! ! 		call showMyVector( myvector )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call myvector.erase( myvector.end )"
-! ! 		write(*,*)
-! ! 		call myvector.erase( myvector.end )
-! ! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "------------------------"
-! 		write(*,*) "Testing for clear method"
-! 		write(*,*) "------------------------"
-! 		
-! 		write(*,*) "call myvector.clear()"
-! 		write(*,*)
-! 		call myvector.clear()
-! 		call showMyVector( myvector )
-! 
-! 		write(*,*) "call myvector.append( 1 )"
-! 		write(*,*) "call myvector.append( 2 )"
-! 		write(*,*) "call myvector.append( 3 )"
-! 		write(*,*)
-! 		
-! 		call myvector.append( 1 )
-! 		call myvector.append( 2 )
-! 		call myvector.append( 3 )
-! 		call showMyVector( myvector )
-
+		call nd1%init( id=8 )
+		call nd2%init( id=5 )
+		call nd3%init( id=1 )
+		
+		call myvector%init()
+		call assert_equal( myvector%size(), 0, "NodeVector_test: initial size" )
+		
+		call myvector%append( nd1 )
+		call myvector%append( nd2 )
+		call myvector%append( nd3 )
+		call assert_equal( myvector%size(), 3, "NodeVector_test: size after append" )
+		tmpNode = myvector%at(1)
+		call assert_equal( tmpNode%id, 8, "NodeVector_test: append elem 1" )
+		tmpNode = myvector%at(2)
+		call assert_equal( tmpNode%id, 5, "NodeVector_test: append elem 2" )
+		tmpNode = myvector%at(3)
+		call assert_equal( tmpNode%id, 1, "NodeVector_test: append elem 3" )
+		
+		call myvector%prepend( nd1 )
+		call myvector%prepend( nd2 )
+		call myvector%prepend( nd3 )
+		call assert_equal( myvector%size(), 6, "NodeVector_test: size after prepend" )
+		tmpNode = myvector%at(1)
+		call assert_equal( tmpNode%id, 1, "NodeVector_test: prepend elem 1" )
+		tmpNode = myvector%at(2)
+		call assert_equal( tmpNode%id, 5, "NodeVector_test: prepend elem 2" )
+		tmpNode = myvector%at(3)
+		call assert_equal( tmpNode%id, 8, "NodeVector_test: prepend elem 3" )
+		tmpNode = myvector%at(4)
+		call assert_equal( tmpNode%id, 8, "NodeVector_test: prepend elem 4" )
+		tmpNode = myvector%at(5)
+		call assert_equal( tmpNode%id, 5, "NodeVector_test: prepend elem 5" )
+		tmpNode = myvector%at(6)
+		call assert_equal( tmpNode%id, 1, "NodeVector_test: prepend elem 6" )
+		
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 5, "NodeVector_test: size after erase 1" )
+		tmpNode = myvector%at(1)
+		call assert_equal( tmpNode%id, 5, "NodeVector_test: elem 1 after erase 1" )
+		
+		call myvector%erase( 2 )
+		call assert_equal( myvector%size(), 4, "NodeVector_test: size after erase 2" )
+		tmpNode = myvector%at(2)
+		call assert_equal( tmpNode%id, 8, "NodeVector_test: elem 2 after erase 2" )
+		
+		call myvector%erase( 3 )
+		call assert_equal( myvector%size(), 3, "NodeVector_test: size after erase 3" )
+		tmpNode = myvector%at(3)
+		call assert_equal( tmpNode%id, 1, "NodeVector_test: elem 3 after erase 3" )
+		
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 2, "NodeVector_test: size after erase 4" )
+		tmpNode = myvector%at(1)
+		call assert_equal( tmpNode%id, 8, "NodeVector_test: elem 1 after erase 4" )
+		
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 1, "NodeVector_test: size after erase 5" )
+		tmpNode = myvector%at(1)
+		call assert_equal( tmpNode%id, 1, "NodeVector_test: elem 1 after erase 5" )
+		
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 0, "NodeVector_test: size after erase 6" )
+		
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 0, "NodeVector_test: size after erase 7" )
+		
+		call myvector%erase( 2 )
+		call assert_equal( myvector%size(), 0, "NodeVector_test: size after erase 8" )
+		
+		call myvector%clear()
+		call assert_equal( myvector%size(), 0, "NodeVector_test: size after clear" )
+		
+		call myvector%append( nd3 )
+		call myvector%append( nd2 )
+		call myvector%append( nd1 )
+		call assert_equal( myvector%size(), 3, "NodeVector_test: size after final append" )
+		tmpNode = myvector%at(1)
+		call assert_equal( tmpNode%id, 1, "NodeVector_test: final append elem 1" )
+		tmpNode = myvector%at(2)
+		call assert_equal( tmpNode%id, 5, "NodeVector_test: final append elem 2" )
+		tmpNode = myvector%at(3)
+		call assert_equal( tmpNode%id, 8, "NodeVector_test: final append elem 3" )
 	end subroutine NodeVector_test
 
 end module NodeVector_

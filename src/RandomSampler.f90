@@ -569,36 +569,22 @@ module RandomSampler_
 	!! @brief Test method
 	!!
 	subroutine RandomSampler_test()
+		use TestUtils_
 		type(RandomSampler) :: rs
 		real(8), allocatable :: sample(:,:)
-		integer :: i, j
-		real(8) :: rnd
+		integer :: i
 		integer :: nDim, nPoints
 		real(8) :: a, b, theta, Rot(2,2), Sigma(2,2), Amatrix(2,2)
-		
-		open( 10,file="salida" )
+		real(8) :: val
 		
 		nDim = 2
-		nPoints = 10000
+		nPoints = 1000
 		allocate( sample(nDim,nPoints) )
 		call rs.init( nDim )
-		
-! 		call rs.setRange( 1, [1.0_8,2.0_8] )
-! 		call rs.setRange( 2, [2.0_8,3.0_8] )
-! 		call rs.uniform( sample )
-
-! 		call rs.setRange( 1, [-10.0_8,10.0_8] )
-! 		call rs.setRange( 2, [-10.0_8,10.0_8] )
-! 		call rs.normal( sample, stdev=[1.0_8,2.0_8], aver=[4.0_8,4.0_8] )
-			
-			
-! 		call rs.setRange( 1, [-1.0_8,1.0_8] )
-! 		call rs.setRange( 2, [-1.0_8,1.0_8] )
 		
 		a = 1.0_8
 		b = 2.0_8
 		theta = -Math_PI/4.0_8
-! 		theta = 0.0_8
 		
 		Sigma(1,:) = [ 1.0_8/a, 0.0_8 ]
 		Sigma(2,:) = [ 0.0_8, 1.0_8/b ]
@@ -608,34 +594,12 @@ module RandomSampler_
 		
 		Amatrix = matmul(Rot,matmul(Sigma**2,transpose(Rot)))
 		
-		do i=1,2
-			do j=1,2
-				write(*,"(F10.5)",advance="no") Amatrix(i,j)
-			end do
-			write(*,*) ""
-		end do
-! 		call rs.normal( sample, cov=cov, aver=[0.0_8,0.0_8] )
 		call rs.uniformEllipsoid( sample, A=Amatrix )
 		
-		write(10,*) "# Uniform distribution"
 		do i=1,nPoints
-			write(10,'(<nDim>F10.5)') sample(:,i)
+			val = dot_product(sample(:,i), matmul(Amatrix, sample(:,i)))
+			call assert_true( val <= 1.0_8 + 1e-12_8, "RandomSampler_test: point outside ellipsoid" )
 		end do
-		write(10,*) ""
-		write(10,*) ""
-		
-! 		call rs.init( nDim=3 )
-! ! 		call rs.setRange( 1, [0.0_8,10.0_8] )
-! ! 		call rs.setRange( 2, [0.0_8,10.0_8] )
-! ! 		call rs.setRange( 3, [0.0_8,10.0_8] )
-! 		call rs.buildSample( sample, dist )
-! 		
-! 		write(10,*) "# XXXX distribution"
-! 		do i=1,size(sample,dim=2)
-! 			write(10,'(3F10.5)') sample(1,i), sample(2,i), sample(3,i)
-! 		end do
-		
-		close(10)
 		
 		deallocate( sample )
 	end subroutine RandomSampler_test

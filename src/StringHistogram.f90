@@ -468,9 +468,10 @@ module StringHistogram_
 	!! @brief Test method
 	!!
 	subroutine StringHistogram_test()
+		use TestUtils_
 		type(StringHistogram) :: histogram
 		type(StringHistogram) :: histogramRunning
-		integer :: i
+		type(String) :: keyA
 		
 		class(StringRealMapIterator), pointer :: iter, iterRunning
 		type(StringRealPair) :: pair, pairRunning
@@ -500,38 +501,25 @@ module StringHistogram_
 		call histogramRunning.add( ["A", "P", "B", "I", "D", "H", "J", "G", "L", "R", "I"] )
 		call histogramRunning.add( ["S", "R", "Q", "M", "L", "S", "D", "J", "I", "U", "O"] )
 		
-		write(*,"(A20,I15)")   "    size = ", histogram.size()
-! 		write(*,"(A20,F15.5)") "    mean = ", histogram.mean()
-! 		write(*,"(A20,F15.5)") "   stdev = ", histogram.stdev()
-! 		write(*,"(A20,F15.5)") "  stderr = ", histogram.stderr()
-! 		
-		! plot "./counts.out" w boxes, "./counts.out" w p pt 7
-		call histogram.counts.save("counts.out")
-		call histogram.density.save("density.out")
+		call assert_equal( histogram%size(), 110, "StringHistogram_test: size Storing" )
+		call assert_equal( histogramRunning%totalCounts, 110, "StringHistogram_test: size Running" )
+		
+		keyA = "A"
+		call assert_equal( histogram%counts%at( keyA ), 5, "StringHistogram_test: count of A" )
+		call assert_equal( histogramRunning%counts%at( keyA ), 5, "StringHistogram_test: count of A running" )
 		
 		call histogram.densityBegin( iter )
 		call histogramRunning.densityBegin( iterRunning )
 		do while( associated(iter) )
 			pair = histogram.pair( iter )
 			pairRunning = histogramRunning.pair( iterRunning )
-			write(*,"(A15,F15.5,5X,A15,F15.5)") pair.first.fstr, pair.second, pairRunning.first.fstr, pairRunning.second
+			
+			call assert_equal( pair%first%fstr, pairRunning%first%fstr, "StringHistogram_test: keys match" )
+			call assert_true( abs(pair%second - pairRunning%second) < 1e-12_8, "StringHistogram_test: density match" )
 			
 			iter => iter.next
 			iterRunning => iterRunning.next
 		end do
-		
-! 		do i=1,1000000
-! 			call histogram.add( 1.456_8 )
-! 		end do
-! 		
-! 		write(*,"(A)")   ""
-! 		write(*,"(A20,I15)")   "    size = ", histogram.size()
-! 		write(*,"(A20,F15.5)") "    mean = ", histogram.mean()
-! 
-! ! 		write(*,"(A20,F15.5)") " mode = ", histogram.mode()
-! ! 		write(*,"(A20,F15.5)") "stdev = ", histogram.median()
-! ! 		mode = histogram.mode()
-! ! 		median = histogram.skewness()
 		
 	end subroutine StringHistogram_test
 	

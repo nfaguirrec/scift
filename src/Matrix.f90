@@ -1569,8 +1569,10 @@ module Matrix_
 	!! @brief Test method
 	!!
 	subroutine Matrix_test()
-		type(Matrix) :: A, B, C
+		use TestUtils_
+		type(Matrix) :: A, B, C, I
 		real(8), allocatable :: lA(:)
+		real(8) :: detB
 		
 		write(*,*) ""
 		write(*,*) "Testing contructors"
@@ -1579,11 +1581,18 @@ module Matrix_
 		write(*,*) ""
 		call A.init( 12, 12, 1.0_8 )
 		call A.show( 6, .true. )
+		call assert_equal( A.nRows, 12, "Matrix A rows" )
+		call assert_equal( A.nCols, 12, "Matrix A columns" )
+		call assert_equal_real( A.data(1,1), 1.0_8, 1e-10_8, "Matrix A(1,1)" )
+		
 		write(*,*) ""
 		write(*,*) "Initialization of a matrix 12x12 with random values"
 		write(*,*) ""
 		call B.random( 12, 12, symmetric=.true. )
 		call B.show( 6, .true. )
+		call assert_equal( B.nRows, 12, "Matrix B rows" )
+		call assert_equal( B.nCols, 12, "Matrix B columns" )
+		call assert_equal_real( B.data(1,2), B.data(2,1), 1e-10_8, "Matrix B symmetry" )
 		
 		write(*,*) ""
 		write(*,*) "Initialization with elements Inf"
@@ -1601,19 +1610,12 @@ module Matrix_
 		B.data(2,2) = Math_NAN
 		call B.show( 6, .true. )
 		
-! 		call A.init( 12, 12, 1.0_8 )
-! 		call A.show( 6, .true. )
-! 		write(*,*) ""
-! 		write(*,*) "Initialization of a matrix 12x12 with random values"
-! 		write(*,*) ""
-! 		call B.random( 12, 12, symmetric=.true. )
-! 		call B.show( 6, .true. )
-		
 		write(*,*) ""
 		write(*,*) "Testing inverse"
 		write(*,*) "==============="
 		write(*,*) ""
 		write(*,*) "B ="
+		call B.random( 12, 12, symmetric=.true. )
 		call B.show( 6, .true. )
 		C = B.inverse()
 		write(*,*) ""
@@ -1623,6 +1625,9 @@ module Matrix_
 		write(*,*) ""
 		write(*,*) "B*B^{-1} ="
 		call A.show( 6, .true. )
+		! Check if A is identity
+		call assert_equal_real( A.data(1,1), 1.0_8, 1e-8_8, "B*B^-1 diagonal element" )
+		call assert_equal_real( A.data(1,2), 0.0_8, 1e-8_8, "B*B^-1 off-diagonal element" )
 		
 		write(*,*) ""
 		write(*,*) "Testing inverse for small matrices"
@@ -1642,6 +1647,7 @@ module Matrix_
 		write(*,*) ""
 		write(*,*) "B*B^{-1} ="
 		call A.show( 6, .true. )
+		call assert_equal_real( A.data(2,2), 1.0_8, 1e-10_8, "Identity diagonal element" )
 		
 		write(*,*) ""
 		write(*,*) "B ="
@@ -1657,6 +1663,7 @@ module Matrix_
 		write(*,*) ""
 		write(*,*) "B*B^{-1} ="
 		call A.show( 6, .true. )
+		call assert_equal_real( A.data(1,1), 1.0_8, 1e-10_8, "2x2 Identity diagonal element" )
 		
 		write(*,*) ""
 		write(*,*) "Approximately singular matrix "
@@ -1666,7 +1673,9 @@ module Matrix_
 		B.data(2,:) = [  97467.773498,    212028.341745,     27139.351856 ]
 		B.data(3,:) = [ -54790.146796,     27139.351856,    245051.310679 ]
 		write(*,*) ""
-		write(*,*) "det(B) =", B.determinant3x3()
+		detB = B.determinant3x3()
+		write(*,*) "det(B) =", detB
+		call assert_true( abs(detB) > 0.0_8, "Determinant is not exactly zero" )
 		write(*,*) ""
 		call B.show( 6, .true. )
 		C = B.inverse()
@@ -1694,6 +1703,7 @@ module Matrix_
 		write(*,*) ""
 		write(*,*) "B/B ="
 		call A.show( 6, .true. )
+		call assert_equal_real( A.data(2,2), 1.0_8, 1e-10_8, "B/B diagonal element" )
 		
 		write(*,*) ""
 		write(*,*) "Testing linearization"
@@ -1707,34 +1717,13 @@ module Matrix_
 		write(*,*) ""
 		write(*,*) "linearize(A) ="
 		write(*,"(5X,<size(lA)>F10.6)") lA
+		call assert_equal( size(lA), 6, "Linearized size" )
+		call assert_equal_real( lA(1), A.data(1,1), 1e-10_8, "Linearize first elem" )
 		deallocate(lA)
 		
 		write(*,*) ""
 		write(*,*) "Testing eigenvalues and eigenvectors"
 		write(*,*) "===================================="
-		
-		!-----------------------------------------------------------------------------
-		! Ejemplo tomado de
-		!
-		! http://software.intel.com/sites/products/documentation/doclib/mkl_sa/11/mkl_lapack_examples/dsyev_ex.f.htm
-		! *
-		! * Matrix
-		! *    1.96  -6.49  -0.47  -7.20  -0.65
-		! *   -6.49   3.80  -6.39   1.50  -6.34
-		! *   -0.47  -6.39   4.17  -1.51   2.67
-		! *   -7.20   1.50  -1.51   5.70   1.80
-		! *   -0.65  -6.34   2.67   1.80  -7.10
-		! *
-		! * Eigenvalues
-		! * -11.07  -6.23   0.86   8.87  16.09
-		! *
-		! * Eigenvectors (stored columnwise)
-		! *  -0.30  -0.61   0.40  -0.37   0.49
-		! *  -0.51  -0.29  -0.41  -0.36  -0.61
-		! *  -0.08  -0.38  -0.66   0.50   0.40
-		! *   0.00  -0.45   0.46   0.62  -0.46
-		! *  -0.80   0.45   0.17   0.31   0.16
-		!-----------------------------------------------------------------------------
 		
 		call A.init(5,5)
 		A.data(1,:) = [  1.96,  -6.49,  -0.47,  -7.20,  -0.65 ]
@@ -1760,6 +1749,8 @@ module Matrix_
 		write(*,*) ""
 		write(*,*) "eigenvalues ="
 		call C.show( 6, .true. )
+		! Check sorted
+		call assert_true( C.data(1,1) <= C.data(2,2), "Eigenvalues sorted" )
 		
 		write(*,*) ""
 		write(*,*) " Not sorted"
@@ -1786,6 +1777,7 @@ module Matrix_
 		write(*,*) ""
 		write(*,*) "A = "
 		call A.show( formatted=.true. )
+		call assert_equal_real( A.data(2,1), 0.7071_8, 1e-10_8, "Column vector set" )
 		
 		! These axis are equivalent to a rotation with alpha=45º and beta=45º
 		call B.init(3,3)
@@ -1819,6 +1811,10 @@ module Matrix_
 		write(*,*) "A.isZero() = ", A.isZero()
 		write(*,*) "A.isZero( tol=1d-12 ) = ", A.isZero( tol=1d-12 )
 		
+		call assert_true( .not. A.isZero(), "isZero with default tol" )
+		call assert_true( A.isZero( tol=1d-11 ), "isZero with custom tol" )
+		
+		write(*,*) "All Matrix tests PASSED"
 	end subroutine Matrix_test
 	
 end module Matrix_

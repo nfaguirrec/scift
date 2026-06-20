@@ -780,9 +780,9 @@ module Grid2D_
 	!! @brief Test method
 	!!
 	subroutine Grid2D_test()
+		use TestUtils_
 		type(Grid2D) :: xyzGrid, xyzGrid2
 		
-		integer :: i, j
 		real(8) :: rMin(2), rMax(2)
 		integer :: gridSize(2)
 		
@@ -790,58 +790,24 @@ module Grid2D_
 		rMax = [ 5.0_8, 5.0_8]
 		gridSize = [10, 10]
 		
-		call xyzGrid.init( rMin, rMax, gridSize )
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing constructor"
-		write(*,*) "----------------------------"
-		call xyzGrid.show()
-		call showtest( xyzGrid )
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing copy constructor"
-		write(*,*) "----------------------------"
+		call xyzGrid%init( rMin, rMax, gridSize )
+		call assert_equal( xyzGrid%nPoints(1), 10, "Grid2D_test: init dim 1" )
+		call assert_equal( xyzGrid%nPoints(2), 10, "Grid2D_test: init dim 2" )
+		call assert_equal_real( xyzGrid%min(1), -5.0_8, 1e-10_8, "Grid2D_test: min dim 1" )
+		call assert_equal_real( xyzGrid%max(2), 5.0_8, 1e-10_8, "Grid2D_test: max dim 2" )
 		
 		xyzGrid2 = xyzGrid
-		call xyzGrid2.show()
-		call showtest( xyzGrid2 )
+		call assert_equal( xyzGrid2%nPoints(1), 10, "Grid2D_test: copy dim 1" )
+		call assert_equal( xyzGrid2%nPoints(2), 10, "Grid2D_test: copy dim 2" )
 		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing save method"
-		write(*,*) "----------------------------"
-		call xyzGrid.save()
+		xyzGrid2 = xyzGrid * 2.0_8
+		call assert_equal_real( xyzGrid2%min(1), -5.0_8, 1e-10_8, "Grid2D_test: operator * min" )
+		call assert_equal_real( xyzGrid2%component(1)%data(1), -10.0_8, 1e-10_8, "Grid2D_test: operator * data(1)" )
 		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing operators"
-		write(*,*) "----------------------------"
-		xyzGrid2 = xyzGrid*2.0_8
-		call xyzGrid.save()
-		call xyzGrid2.save()
-		
-		xyzGrid2 = xyzGrid*xyzGrid
-		call xyzGrid.save()
-		call xyzGrid2.save()
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing resize"
-		write(*,*) "----------------------------"
-		call xyzGrid.init( rMin, rMax, gridSize )
-		call xyzGrid.show()
-		call showtest( xyzGrid )
-		
-		write(*,*) "resize (+5,-5)"
-		write(*,*) "-----------------"
-		write(*,*) ""
-		call xyzGrid.resize( 5, 5, +1, -1 )
-		call xyzGrid.show()
-		call showtest( xyzGrid )
-		
-		write(*,*) ""
+		call xyzGrid%init( rMin, rMax, gridSize )
+		call xyzGrid%resize( 5, 5, +1, -1 )
+		call assert_equal( xyzGrid%nPoints(1), 15, "Grid2D_test: resize dim 1" )
+		call assert_equal( xyzGrid%nPoints(2), 15, "Grid2D_test: resize dim 2" )
 	end subroutine Grid2D_test
 	
 end module Grid2D_

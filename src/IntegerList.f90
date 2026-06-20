@@ -156,119 +156,38 @@ module IntegerList_
 	!! @brief Test method
 	!!
 	subroutine IntegerList_test()
+		use TestUtils_
 		type(IntegerList) :: mylist
 		class(IntegerListIterator), pointer :: iter
 		
 		mylist = IntegerList()
 		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for append method"
-		write(*,*) "-------------------------"
+		! Testing append
+		call mylist%append( 8 )
+		call mylist%append( 5 )
+		call mylist%append( 1 )
+		call assert_equal( mylist%size(), 3, "IntegerList_test: size after append" )
 		
-		write(*,*) "call mylist.append( 8 )"
-		write(*,*) "call mylist.append( 5 )"
-		write(*,*) "call mylist.append( 1 )"
-		write(*,*)
+		! Testing erase
+		iter => mylist%begin
+		iter => iter%next
+		call mylist%erase( iter )
+		call assert_equal( mylist%size(), 2, "IntegerList_test: size after erase iter" )
 		
-		call mylist.append( 8 )
-		call mylist.append( 5 )
-		call mylist.append( 1 )
+		call mylist%erase( mylist%begin )
+		call assert_equal( mylist%size(), 1, "IntegerList_test: size after erase begin" )
 		
-		call showMyList( mylist )
+		call mylist%erase( mylist%end )
+		call assert_equal( mylist%size(), 0, "IntegerList_test: size after erase end" )
 		
-		write(*,*) "-------------------------"
-! 		write(*,*) "Testing for prepend method"
-! 		write(*,*) "-------------------------"
-! 		
-! 		write(*,*) "call mylist.prepend( 2 )"
-! 		write(*,*) "call mylist.prepend( 7 )"
-! 		write(*,*) "call mylist.prepend( 0 )"
-! 		write(*,*)
-! 		
-! 		call mylist.prepend( 2 )
-! 		call mylist.prepend( 7 )
-! 		call mylist.prepend( 0 )
-! 		
-! 		call showMyList( mylist )
-! 		
-! 		write(*,*) "-------------------------"
-! 		write(*,*) "Testing for insert method"
-! 		write(*,*) "-------------------------"
-! 		
-! 		write(*,*) "iter => mylist.begin"
-! 		write(*,*) "iter => iter.next"
-! 		write(*,*) "iter => iter.next"
-! 		write(*,*) "call mylist.insert( iter, 1 )"
-! 		write(*,*)
-! 		
-! 		iter => mylist.begin
-! 		iter => iter.next
-! 		iter => iter.next
-! 		
-! 		call mylist.insert( iter, 1 )
-! 		call showMyList( mylist )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call mylist.insert( iter, 2 )"
-! 		write(*,*)
-! 		
-! 		call mylist.insert( iter, 2 )
-! 		call showMyList( mylist )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call mylist.insert( mylist.end, 9 )"
-! 		write(*,*)
-! 				
-! 		call mylist.insert( mylist.end, 9 )
-! 		call showMyList( mylist )
-
-		write(*,*) "------------------------"
-		write(*,*) "Testing for erase method"
-		write(*,*) "------------------------"
+		! Testing clear
+		call mylist%clear()
+		call assert_equal( mylist%size(), 0, "IntegerList_test: size after clear" )
 		
-		write(*,*) "iter => mylist.begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "call mylist.erase( iter )"
-		write(*,*)
-		
-		iter => mylist.begin
-		iter => iter.next
-		
-		call mylist.erase( iter )
-		call showMyList( mylist )
-		
-		write(*,*)
-		write(*,*) "call mylist.erase( mylist.begin )"
-		write(*,*)
-		
-		call mylist.erase( mylist.begin )
-		call showMyList( mylist )
-		
-		write(*,*)
-		write(*,*) "call mylist.erase( mylist.end )"
-		write(*,*)
-		call mylist.erase( mylist.end )
-		call showMyList( mylist )
-		
-		write(*,*) "------------------------"
-		write(*,*) "Testing for clear method"
-		write(*,*) "------------------------"
-		
-		write(*,*) "call mylist.clear()"
-		write(*,*)
-		call mylist.clear()
-		call showMyList( mylist )
-
-		write(*,*) "call mylist.append( 1 )"
-		write(*,*) "call mylist.append( 2 )"
-		write(*,*) "call mylist.append( 3 )"
-		write(*,*)
-		
-		call mylist.append( 1 )
-		call mylist.append( 2 )
-		call mylist.append( 3 )
-		call showMyList( mylist )
-
+		call mylist%append( 1 )
+		call mylist%append( 2 )
+		call mylist%append( 3 )
+		call assert_equal( mylist%size(), 3, "IntegerList_test: size after final append" )
 	end subroutine IntegerList_test
-
+	
 end module IntegerList_

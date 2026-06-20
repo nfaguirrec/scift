@@ -287,6 +287,7 @@ module MDIntegrator_
 	!! @brief Test method
 	!!
 	subroutine MDIntegrator_test()
+		use TestUtils_
 		integer :: nParticles
 		integer :: nDimensions
 		real(8), allocatable :: positions(:,:)
@@ -296,9 +297,7 @@ module MDIntegrator_
 		type(MDIntegrator) :: solver
 		real(8) :: t0
 		real(8) :: dt
-		integer :: step
 		
-		real(8) :: r0
 		real(8) :: omega, T
 		
 		omega = 0.057_8
@@ -312,29 +311,26 @@ module MDIntegrator_
 		dt = 0.01_8
 		
 		t0 = 0.0_8
+		
+		call solver%init( positions, velocities, accelerations )
+		
+		positions = 0.0_8
+		velocities = 0.0_8
+		accelerations = 0.0_8
+		solver%time = t0
+		solver%timeStep = 0.01_8
+		
 		do while( .true. )
-			if( t0 > 0.2_8*T ) exit
-			
-			call solver.init( positions, velocities, accelerations )
-			
-			positions = 0.0_8
-			velocities = 0.0_8
-			accelerations = 0.0_8
-			solver.time = t0
-			solver.timeStep = 0.01_8
-			
-			do while( .true. )
-				if( solver.time > T ) exit
-				write(*,"(2F20.5)") solver.time, positions
-				
-				call solver.iterate( computeForcesTest )
-			end do
-			
-			write(*,*) ""
-			write(*,*) ""
-			
-			t0 = t0 + 0.02_8*T
+			if( solver%time > T ) exit
+			call solver%iterate( computeForcesTest )
 		end do
+		
+		call assert_equal_real( solver%time, 110.24000_8, 1e-5_8, "MDIntegrator_test: final time" )
+		call assert_equal_real( positions(1,1), 89.454615_8, 1e-5_8, "MDIntegrator_test: final position" )
+		
+		deallocate( positions )
+		deallocate( velocities )
+		deallocate( accelerations )
 		
 	end subroutine MDIntegrator_test
 

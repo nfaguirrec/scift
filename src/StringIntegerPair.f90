@@ -117,36 +117,24 @@ module StringIntegerPair_
 	! @brief Test method
 	!*
 	subroutine StringIntegerPair_test()
+		use TestUtils_
 		type(String) :: str
 		type(StringIntegerPair) :: mypair1
 		type(StringIntegerPair) :: mypair2
 		
-		integer :: i
-		
-		write(*,*) "------------------------------"
-		write(*,*) "Testing for empty constructor"
-		write(*,*) "-----------------------------"
-		
-		write(*,*) "call mypair1.init( str, 3 )"
-		
 		str = "Hola"
 		mypair1 = StringIntegerPair( str, 3 )
-		call mypair1.show()
-		
-		write(*,*) "call mypair2.init( str, 4 )"
+		call assert_equal( mypair1%first%fstr, "Hola", "StringIntegerPair_test: mypair1 key" )
+		call assert_equal( mypair1%second, 3, "StringIntegerPair_test: mypair1 value" )
 		
 		str = "Entonces"
-		mypair1 = StringIntegerPair( str, 4 )
-		call mypair2.show()
-		
-		write(*,*) "------------------------------"
-		write(*,*) "Testing for copy constructor"
-		write(*,*) "-----------------------------"
-		
-		write(*,*) "mypair1 = mypair2"
+		mypair2 = StringIntegerPair( str, 4 )
+		call assert_equal( mypair2%first%fstr, "Entonces", "StringIntegerPair_test: mypair2 key" )
+		call assert_equal( mypair2%second, 4, "StringIntegerPair_test: mypair2 value" )
 		
 		mypair1 = mypair2
-		call mypair1.show()
+		call assert_equal( mypair1%first%fstr, "Entonces", "StringIntegerPair_test: copy key" )
+		call assert_equal( mypair1%second, 4, "StringIntegerPair_test: copy value" )
 	end subroutine StringIntegerPair_test
 
 end module StringIntegerPair_

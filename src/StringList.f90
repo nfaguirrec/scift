@@ -157,175 +157,118 @@ module StringList_
 	!! @brief Test method
 	!!
 	subroutine StringList_test()
+		use TestUtils_
 		type(String) :: str
 		type(StringList) :: mylist
 		class(StringListIterator), pointer :: iter
 		class(StringListIterator), pointer :: iterPos
 		
-		integer :: i
-		
-		write(*,*) "------------------------------"
-		write(*,*) "Testing for empty constructor"
-		write(*,*) "-----------------------------"
-		
-		write(*,*) "call mylist.init()"
 		mylist = StringList()
-		
-		call showMyList( mylist )
-		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for append method"
-		write(*,*) "-------------------------"
-		
-		write(*,*) "call mylist.append( Hello )"
-		write(*,*) "call mylist.append( class )"
-		write(*,*) "call mylist.append( string )"
-		write(*,*) "call mylist.append( list )"
-		write(*,*)
+		call assert_equal( mylist%size(), 0, "StringList_test: empty size" )
 		
 		str = "Hello"
-		call mylist.append( str )  ! 1
+		call mylist.append( str )
 		str = "class"
-		call mylist.append( str )  ! 2
+		call mylist.append( str )
 		str = "string"
-		call mylist.append( str )  ! 3
+		call mylist.append( str )
 		str = "list"
-		call mylist.append( str )  ! 4
+		call mylist.append( str )
 		
-		call showMyList( mylist )
-		
-		write(*,*) "--------------------------"
-		write(*,*) "Testing for prepend method"
-		write(*,*) "--------------------------"
-		
-		write(*,*) "call mylist.prepend( day )"
-		write(*,*) "call mylist.prepend( control )"
-		write(*,*)
+		call assert_equal( mylist%size(), 4, "StringList_test: size after append" )
 		
 		str = "day"
 		call mylist.prepend( str )
 		str = "control"
 		call mylist.prepend( str )
 		
-		call showMyList( mylist )
+		call assert_equal( mylist%size(), 6, "StringList_test: size after prepend" )
 		
-		iter => mylist.begin
-		iter => iter.next
-		
-		write(*,*) "--------------------------"
-		write(*,*) "Testing the access methods"
-		write(*,*) "--------------------------"
-		
-		write(*,*) "mylist.size() = ", mylist.size()
-		
+		! List: control, day, Hello, class, string, list
 		str = mylist.at( mylist.begin )
-		write(*,*) "mylist.at( mylist.begin ) = ", str.fstr
+		call assert_equal( str%fstr, "control", "StringList_test: at begin" )
+		
 		str = mylist.at( 1 )
-		write(*,*) "mylist.at( 1 ) = ", str.fstr
+		call assert_equal( str%fstr, "control", "StringList_test: at 1" )
 		
 		iter => mylist.begin
 		iter => iter.next
 		iter => iter.next
-		iterPos => iter
-		iter => iter.next
+		iterPos => iter ! Should point to "Hello" (index 3)
+		
 		str = mylist.at( iterPos )
-		write(*,*) "iter => mylist.begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iterPos => iter"
-		write(*,*) "mylist.at( iterPos ) = ", str.fstr
+		call assert_equal( str%fstr, "Hello", "StringList_test: at iterPos" )
 		
-		str = mylist.at( mylist.begin )
-		write(*,*) "mylist.at( mylist.begin ) = ", str.fstr
 		str = mylist.at( mylist.end )
-		write(*,*) "mylist.at( mylist.end ) = ", str.fstr
+		call assert_equal( str%fstr, "list", "StringList_test: at end" )
+		
 		str = mylist.at( mylist.size() )
-		write(*,*) "mylist.at( mylist.size() ) = ", str.fstr
-		
-		call showMyList( mylist )
-		
-		write(*,*) "-----------------------------------------"
-		write(*,*) "Testing insert, replace and erase methods"
-		write(*,*) "-----------------------------------------"
-		
-		write(*,*) "call mylist.insert( iterPos, Prueba )"
+		call assert_equal( str%fstr, "list", "StringList_test: at size" )
 		
 		str = "Prueba"
-		call mylist.insert( iterPos, str )
-		call showMyList( mylist )
+		call mylist.insert( iterPos, str ) ! Inserts after Hello
+		call assert_equal( mylist%size(), 7, "StringList_test: size after insert Prueba" )
 		
-		write(*,*) "call mylist.insert( end, Prueba2 )"
+		str = mylist.at( 4 )
+		call assert_equal( str%fstr, "Prueba", "StringList_test: at 4" )
 		
 		str = "Prueba2"
-		call mylist.insert( mylist.end, str )
-		call showMyList( mylist )
+		call mylist.insert( mylist.end, str ) ! Inserts after list
+		call assert_equal( mylist%size(), 8, "StringList_test: size after insert Prueba2" )
 		
-		write(*,*) "call mylist.insert( begin, Corazon )"
+		str = mylist.at( 8 )
+		call assert_equal( str%fstr, "Prueba2", "StringList_test: at 8" )
 		
 		str = "Corazon"
-		call mylist.insert( mylist.begin, str )
-		call showMyList( mylist )
+		call mylist.insert( mylist.begin, str ) ! Inserts after control
+		call assert_equal( mylist%size(), 9, "StringList_test: size after insert Corazon" )
 		
-		write(*,*) "iter => mylist.begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iterPos => iter"
+		str = mylist.at( 2 )
+		call assert_equal( str%fstr, "Corazon", "StringList_test: at 2" )
 		
+		! Reset iterPos to index 4 (which is Hello in: control, Corazon, day, Hello, Prueba, ...)
 		iter => mylist.begin
 		iter => iter.next
 		iter => iter.next
 		iter => iter.next
 		iterPos => iter
 		
-		write(*,*) "call mylist.replace( iterPos, PruebaRep )"
+		str = mylist.at( iterPos )
+		call assert_equal( str%fstr, "Hello", "StringList_test: Hello position check" )
+		
 		str = "PruebaRep"
 		call mylist.replace( iterPos, str )
-		call showMyList( mylist )
 		
-		write(*,*) "call mylist.erase( iterPos )"
+		str = mylist.at( iterPos )
+		call assert_equal( str%fstr, "PruebaRep", "StringList_test: after replace" )
+		
 		call mylist.erase( iterPos )
-		call showMyList( mylist )
+		call assert_equal( mylist%size(), 8, "StringList_test: size after erase" )
 		
-		write(*,*) "call mylist.erase( begin )"
+		str = mylist.at( 4 )
+		call assert_equal( str%fstr, "Prueba", "StringList_test: index 4 after erase" )
+		
 		call mylist.erase( mylist.begin )
-		call showMyList( mylist )
+		call assert_equal( mylist%size(), 7, "StringList_test: size after erase begin" )
+		str = mylist.at( 1 )
+		call assert_equal( str%fstr, "Corazon", "StringList_test: begin element after erase" )
 		
-		write(*,*) "call mylist.erase( end )"
 		call mylist.erase( mylist.end )
-		call showMyList( mylist )
-		
-		write(*,*) "--------------------"
-		write(*,*) "Testing clear method"
-		write(*,*) "--------------------"
-		
-		write(*,*) "call mylist.clear()"
+		call assert_equal( mylist%size(), 6, "StringList_test: size after erase end" )
+		str = mylist.at( mylist.end )
+		call assert_equal( str%fstr, "list", "StringList_test: end element after erase" )
 		
 		call mylist.clear()
-		
-		call showMyList( mylist )
-		
-		write(*,*) "call mylist.append( Hello1 aaaaaa )"
-		write(*,*) "call mylist.append( Hello2 bbbbb ccccc )"
+		call assert_equal( mylist%size(), 0, "StringList_test: size after clear" )
 		
 		str = "Hello1 aaaaaa"
-		call mylist.append( str )  ! 1
+		call mylist.append( str )
 		str = "Hello2 bbbbb ccccc"
-		call mylist.append( str )  ! 2
+		call mylist.append( str )
+		call assert_equal( mylist%size(), 2, "StringList_test: size after second append" )
 		
-		call showMyList( mylist )
-		
-		write(*,*) "call mylist.clear()"
 		call mylist.clear()
-		
-		call showMyList( mylist )
-		
-! 		@todo Hay que implementar esto
-! 			it = task.begin()
-! 			do while( it /= task.end() )
-! 				write(*,*) task.get(i)
-! 				it.next()
-! 			end do
+		call assert_equal( mylist%size(), 0, "StringList_test: size after second clear" )
 		
 	end subroutine StringList_test
 

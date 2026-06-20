@@ -170,163 +170,71 @@ module IntegerVector_
 	!! @brief Test method
 	!!
 	subroutine IntegerVector_test()
+		use TestUtils_
 		type(IntegerVector) :: myvector
-		class(IntegerVectorIterator), pointer :: iter
 		
-		call myvector.init()
+		call myvector%init()
+		call assert_equal( myvector%size(), 0, "IntegerVector_test: initial size" )
 		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for append method"
-		write(*,*) "-------------------------"
+		call myvector%append( 8 )
+		call myvector%append( 5 )
+		call myvector%append( 1 )
+		call assert_equal( myvector%size(), 3, "IntegerVector_test: size after append" )
+		call assert_equal( myvector%at(1), 8, "IntegerVector_test: append elem 1" )
+		call assert_equal( myvector%at(2), 5, "IntegerVector_test: append elem 2" )
+		call assert_equal( myvector%at(3), 1, "IntegerVector_test: append elem 3" )
 		
-		write(*,*) "call myvector.append( 8 )"
-		write(*,*) "call myvector.append( 5 )"
-		write(*,*) "call myvector.append( 1 )"
-		write(*,*)
+		call myvector%prepend( 8 )
+		call myvector%prepend( 5 )
+		call myvector%prepend( 1 )
+		call assert_equal( myvector%size(), 6, "IntegerVector_test: size after prepend" )
+		call assert_equal( myvector%at(1), 1, "IntegerVector_test: prepend elem 1" )
+		call assert_equal( myvector%at(2), 5, "IntegerVector_test: prepend elem 2" )
+		call assert_equal( myvector%at(3), 8, "IntegerVector_test: prepend elem 3" )
+		call assert_equal( myvector%at(4), 8, "IntegerVector_test: prepend elem 4" )
+		call assert_equal( myvector%at(5), 5, "IntegerVector_test: prepend elem 5" )
+		call assert_equal( myvector%at(6), 1, "IntegerVector_test: prepend elem 6" )
 		
-		call myvector.append( 8 )
-		call myvector.append( 5 )
-		call myvector.append( 1 )
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 5, "IntegerVector_test: size after erase 1" )
+		call assert_equal( myvector%at(1), 5, "IntegerVector_test: elem 1 after erase 1" )
 		
-		call showMyVector( myvector )
+		call myvector%erase( 2 )
+		call assert_equal( myvector%size(), 4, "IntegerVector_test: size after erase 2" )
+		call assert_equal( myvector%at(2), 8, "IntegerVector_test: elem 2 after erase 2" )
 		
-		write(*,*) "--------------------------"
-		write(*,*) "Testing for prepend method"
-		write(*,*) "--------------------------"
+		call myvector%erase( 3 )
+		call assert_equal( myvector%size(), 3, "IntegerVector_test: size after erase 3" )
+		call assert_equal( myvector%at(3), 1, "IntegerVector_test: elem 3 after erase 3" )
 		
-		write(*,*) "call myvector.prepend( 8 )"
-		write(*,*) "call myvector.prepend( 5 )"
-		write(*,*) "call myvector.prepend( 1 )"
-		write(*,*)
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 2, "IntegerVector_test: size after erase 4" )
+		call assert_equal( myvector%at(1), 8, "IntegerVector_test: elem 1 after erase 4" )
 		
-		call myvector.prepend( 8 )
-		call myvector.prepend( 5 )
-		call myvector.prepend( 1 )
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 1, "IntegerVector_test: size after erase 5" )
+		call assert_equal( myvector%at(1), 1, "IntegerVector_test: elem 1 after erase 5" )
 		
-		call showMyVector( myvector )
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 0, "IntegerVector_test: size after erase 6" )
 		
-		write(*,*) "------------------------"
-		write(*,*) "Testing for erase method"
-		write(*,*) "------------------------"
+		call myvector%erase( 1 )
+		call assert_equal( myvector%size(), 0, "IntegerVector_test: size after erase 7" )
 		
-		write(*,*) "call myvector.erase( 1 )"
-		call myvector.erase( 1 )
-		call showMyVector( myvector )
+		call myvector%erase( 2 )
+		call assert_equal( myvector%size(), 0, "IntegerVector_test: size after erase 8" )
 		
-		write(*,*) "call myvector.erase( 2 )"
-		call myvector.erase( 2 )
-		call showMyVector( myvector )
+		call myvector%clear()
+		call assert_equal( myvector%size(), 0, "IntegerVector_test: size after clear" )
 		
-		write(*,*) "call myvector.erase( 3 )"
-		write(*,*)
-		call myvector.erase( 3 )
-		call showMyVector( myvector )
+		call myvector%append( 1 )
+		call myvector%append( 2 )
+		call myvector%append( 3 )
+		call assert_equal( myvector%size(), 3, "IntegerVector_test: size after final append" )
+		call assert_equal( myvector%at(1), 1, "IntegerVector_test: final append elem 1" )
+		call assert_equal( myvector%at(2), 2, "IntegerVector_test: final append elem 2" )
+		call assert_equal( myvector%at(3), 3, "IntegerVector_test: final append elem 3" )
 		
-		write(*,*) "call myvector.erase( 1 )"
-		write(*,*)
-		call myvector.erase( 1 )
-		call showMyVector( myvector )
-		
-		write(*,*) "call myvector.erase( 1 )"
-		write(*,*)
-		call myvector.erase( 1 )
-		call showMyVector( myvector )
-		
-		write(*,*) "call myvector.erase( 1 )"
-		write(*,*)
-		call myvector.erase( 1 )
-		call showMyVector( myvector )
-		
-		write(*,*) "call myvector.erase( 1 )"
-		write(*,*)
-		call myvector.erase( 1 )
-		call showMyVector( myvector )
-
-! 		
-! 		write(*,*) "-------------------------"
-! 		write(*,*) "Testing for insert method"
-! 		write(*,*) "-------------------------"
-! 		
-! 		write(*,*) "iter => myvector.begin"
-! 		write(*,*) "iter => iter.next"
-! 		write(*,*) "iter => iter.next"
-! 		write(*,*) "call myvector.insert( iter, 1 )"
-! 		write(*,*)
-! 		
-! 		iter => myvector.begin
-! 		iter => iter.next
-! 		iter => iter.next
-! 		
-! 		call myvector.insert( iter, 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call myvector.insert( iter, 2 )"
-! 		write(*,*)
-! 		
-! 		call myvector.insert( iter, 2 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call myvector.insert( myvector.end, 9 )"
-! 		write(*,*)
-! 				
-! 		call myvector.insert( myvector.end, 9 )
-! 		call showMyVector( myvector )
-
-		write(*,*) "------------------------"
-		write(*,*) "Testing for erase method"
-		write(*,*) "------------------------"
-		
-		write(*,*) "call myvector.erase( 2 )"
-		write(*,*)
-		
-		call myvector.erase( 2 )
-		call showMyVector( myvector )
-
-! 		write(*,*) "iter => myvector.begin"
-! 		write(*,*) "iter => iter.next"
-! 		write(*,*) "call myvector.erase( iter )"
-! 		write(*,*)
-! 		
-! 		iter => myvector.begin
-! 		iter => iter.next
-! 		
-! 		call myvector.erase( iter )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call myvector.erase( myvector.begin )"
-! 		write(*,*)
-! 		
-! 		call myvector.erase( myvector.begin )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call myvector.erase( myvector.end )"
-! 		write(*,*)
-! 		call myvector.erase( myvector.end )
-! 		call showMyVector( myvector )
-		
-		write(*,*) "------------------------"
-		write(*,*) "Testing for clear method"
-		write(*,*) "------------------------"
-		
-		write(*,*) "call myvector.clear()"
-		write(*,*)
-		call myvector.clear()
-		call showMyVector( myvector )
-
-		write(*,*) "call myvector.append( 1 )"
-		write(*,*) "call myvector.append( 2 )"
-		write(*,*) "call myvector.append( 3 )"
-		write(*,*)
-		
-		call myvector.append( 1 )
-		call myvector.append( 2 )
-		call myvector.append( 3 )
-		call showMyVector( myvector )
-
 	end subroutine IntegerVector_test
 
 end module IntegerVector_

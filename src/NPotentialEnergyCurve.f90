@@ -193,6 +193,7 @@ module NPotentialEnergyCurve_
 	!! @todo Hay que revisar que el valor del estado ligado es correcto
 	!!
 	subroutine NPotentialEnergyCurve_test()
+		use TestUtils_
 		implicit none
 		type(Grid) :: rGrid
 		type(Grid) :: finalGrid
@@ -200,32 +201,25 @@ module NPotentialEnergyCurve_
 		type(NPotentialEnergyCurve) :: pECurve
 		type(ThrularNumerovMethod) :: solver
 		
-		integer :: i
 		real(8) :: rMass = 30.0_8*0.5_8*35.4257_8*amu
 		
 		call rGrid.fromFile( "data/formats/GRID2D" )
-! 		call rGrid.init( 2.5_8, 8.0_8, size=20 )
-		call rGrid.show()
 		
 		rawCurve = RNFunction( rGrid, shortRangeDefault )
-		call rawCurve.save("rawCurve")
 		
 		call finalGrid.init( 1.0_8, 1000.0_8, nPoints=100000 )
 		
 		call pECurve.init( rawCurve )
 		call pECurve.run( finalGrid, longRangeDefault, veryShortRangeDefault )
-		call pECurve.show()
-		call pECurve.save("pECurve")
 		call pECurve.setUnits( [angs,cm1] )
 		
 		call solver.init( pECurve, rMass=rMass )
 		call solver.run()
 		
-		do i=1,solver.nStates
-				write(*,"(i5,f20.10)") i, solver.eigenValues(i)/cm1
-		end do
-		
-! 		call solver.eigenfunction(1).save( "solverWF1", units=[angs,1.0_8] )
+		call assert_equal( solver%nStates, 3, "NPotentialEnergyCurve_test: number of bound states" )
+		call assert_true( abs(solver%eigenValues(1)/cm1 - (-0.0820573553_8)) < 1e-6_8, "NPotentialEnergyCurve_test: state 1" )
+		call assert_true( abs(solver%eigenValues(2)/cm1 - (-0.0165778739_8)) < 1e-6_8, "NPotentialEnergyCurve_test: state 2" )
+		call assert_true( abs(solver%eigenValues(3)/cm1 - (-0.0000098428_8)) < 1e-6_8, "NPotentialEnergyCurve_test: state 3" )
 		
 		call solver.destroy()
 	end subroutine NPotentialEnergyCurve_test

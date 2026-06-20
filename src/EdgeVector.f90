@@ -173,163 +173,64 @@ module EdgeVector_
 	!! @brief Test method
 	!!
 	subroutine EdgeVector_test()
+		use TestUtils_
 		type(EdgeVector) :: myvector
-		class(EdgeVectorIterator), pointer :: iter
+		type(Edge) :: edge1, edge2, edge3
+		type(Edge) :: tempEdge
 		
-! 		call myvector.init()
-! 		
-! 		write(*,*) "-------------------------"
-! 		write(*,*) "Testing for append method"
-! 		write(*,*) "-------------------------"
-! 		
-! 		write(*,*) "call myvector.append( 8 )"
-! 		write(*,*) "call myvector.append( 5 )"
-! 		write(*,*) "call myvector.append( 1 )"
-! 		write(*,*)
-! 		
-! 		call myvector.append( 8 )
-! 		call myvector.append( 5 )
-! 		call myvector.append( 1 )
-! 		
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "--------------------------"
-! 		write(*,*) "Testing for prepend method"
-! 		write(*,*) "--------------------------"
-! 		
-! 		write(*,*) "call myvector.prepend( 8 )"
-! 		write(*,*) "call myvector.prepend( 5 )"
-! 		write(*,*) "call myvector.prepend( 1 )"
-! 		write(*,*)
-! 		
-! 		call myvector.prepend( 8 )
-! 		call myvector.prepend( 5 )
-! 		call myvector.prepend( 1 )
-! 		
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "------------------------"
-! 		write(*,*) "Testing for erase method"
-! 		write(*,*) "------------------------"
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 2 )"
-! 		call myvector.erase( 2 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 3 )"
-! 		write(*,*)
-! 		call myvector.erase( 3 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		write(*,*)
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		write(*,*)
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		write(*,*)
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "call myvector.erase( 1 )"
-! 		write(*,*)
-! 		call myvector.erase( 1 )
-! 		call showMyVector( myvector )
-! 
-! ! 		
-! ! 		write(*,*) "-------------------------"
-! ! 		write(*,*) "Testing for insert method"
-! ! 		write(*,*) "-------------------------"
-! ! 		
-! ! 		write(*,*) "iter => myvector.begin"
-! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "call myvector.insert( iter, 1 )"
-! ! 		write(*,*)
-! ! 		
-! ! 		iter => myvector.begin
-! ! 		iter => iter.next
-! ! 		iter => iter.next
-! ! 		
-! ! 		call myvector.insert( iter, 1 )
-! ! 		call showMyVector( myvector )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call myvector.insert( iter, 2 )"
-! ! 		write(*,*)
-! ! 		
-! ! 		call myvector.insert( iter, 2 )
-! ! 		call showMyVector( myvector )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call myvector.insert( myvector.end, 9 )"
-! ! 		write(*,*)
-! ! 				
-! ! 		call myvector.insert( myvector.end, 9 )
-! ! 		call showMyVector( myvector )
-! 
-! 		write(*,*) "------------------------"
-! 		write(*,*) "Testing for erase method"
-! 		write(*,*) "------------------------"
-! 		
-! 		write(*,*) "call myvector.erase( 2 )"
-! 		write(*,*)
-! 		
-! 		call myvector.erase( 2 )
-! 		call showMyVector( myvector )
-! 
-! ! 		write(*,*) "iter => myvector.begin"
-! ! 		write(*,*) "iter => iter.next"
-! ! 		write(*,*) "call myvector.erase( iter )"
-! ! 		write(*,*)
-! ! 		
-! ! 		iter => myvector.begin
-! ! 		iter => iter.next
-! ! 		
-! ! 		call myvector.erase( iter )
-! ! 		call showMyVector( myvector )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call myvector.erase( myvector.begin )"
-! ! 		write(*,*)
-! ! 		
-! ! 		call myvector.erase( myvector.begin )
-! ! 		call showMyVector( myvector )
-! ! 		
-! ! 		write(*,*)
-! ! 		write(*,*) "call myvector.erase( myvector.end )"
-! ! 		write(*,*)
-! ! 		call myvector.erase( myvector.end )
-! ! 		call showMyVector( myvector )
-! 		
-! 		write(*,*) "------------------------"
-! 		write(*,*) "Testing for clear method"
-! 		write(*,*) "------------------------"
-! 		
-! 		write(*,*) "call myvector.clear()"
-! 		write(*,*)
-! 		call myvector.clear()
-! 		call showMyVector( myvector )
-! 
-! 		write(*,*) "call myvector.append( 1 )"
-! 		write(*,*) "call myvector.append( 2 )"
-! 		write(*,*) "call myvector.append( 3 )"
-! 		write(*,*)
-! 		
-! 		call myvector.append( 1 )
-! 		call myvector.append( 2 )
-! 		call myvector.append( 3 )
-! 		call showMyVector( myvector )
-
+		call edge1.init( sNode=1, tNode=2, id=1, label="edge1", weight=1.5_8, directed=.true. )
+		call edge2.init( sNode=2, tNode=3, id=2, label="edge2", weight=2.5_8, directed=.false. )
+		call edge3.init( sNode=3, tNode=4, id=3, label="edge3", weight=3.5_8, directed=.true. )
+		
+		call myvector.init()
+		call assert_equal( myvector.size(), 0, "Initial size is 0" )
+		call assert_true( myvector.isEmpty(), "Vector is initially empty" )
+		
+		! Test append
+		call myvector.append( edge1 )
+		call myvector.append( myvector.last() )  ! dummy self-append just to test
+		call myvector.replace( 2, edge2 )        ! replace with edge2
+		call assert_equal( myvector.size(), 2, "Size after 2 elements" )
+		call assert_true( .not. myvector.isEmpty(), "Vector is not empty" )
+		
+		! Test at
+		tempEdge = myvector.at(1)
+		call assert_equal( tempEdge%sNode, 1, "Element 1 sNode" )
+		call assert_equal_real( tempEdge%weight, 1.5_8, 1e-10_8, "Element 1 weight" )
+		
+		tempEdge = myvector.at(2)
+		call assert_equal( tempEdge%sNode, 2, "Element 2 sNode" )
+		call assert_equal_real( tempEdge%weight, 2.5_8, 1e-10_8, "Element 2 weight" )
+		
+		! Test prepend
+		call myvector.prepend( edge3 )
+		call assert_equal( myvector.size(), 3, "Size after prepend" )
+		
+		tempEdge = myvector.at(1)
+		call assert_equal( tempEdge%sNode, 3, "Element 1 after prepend sNode" )
+		
+		tempEdge = myvector.at(2)
+		call assert_equal( tempEdge%sNode, 1, "Element 2 after prepend sNode" )
+		
+		tempEdge = myvector.at(3)
+		call assert_equal( tempEdge%sNode, 2, "Element 3 after prepend sNode" )
+		
+		! Test erase
+		call myvector.erase( 2 ) ! Erases second element
+		call assert_equal( myvector.size(), 2, "Size after erase" )
+		
+		tempEdge = myvector.at(1)
+		call assert_equal( tempEdge%sNode, 3, "Element 1 after erase sNode" )
+		
+		tempEdge = myvector.at(2)
+		call assert_equal( tempEdge%sNode, 2, "Element 2 after erase sNode" )
+		
+		! Test clear
+		call myvector.clear()
+		call assert_equal( myvector.size(), 0, "Size after clear" )
+		call assert_true( myvector.isEmpty(), "Vector is empty after clear" )
+		
+		write(*,*) "All EdgeVector tests PASSED"
 	end subroutine EdgeVector_test
 
 end module EdgeVector_

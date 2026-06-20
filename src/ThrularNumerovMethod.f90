@@ -201,7 +201,7 @@ module ThrularNumerovMethod_
 		call givhoa(G,ngridr,Ebound,nbound)
 		
 		nb=0
-		do i=1,ngridr
+		do i=1,nbound
 			Ebound(i)=-Z*Ebound(i)/dr/dr
 			if (Ebound(i) < 0.d0) then
 				nb=nb+1
@@ -280,19 +280,23 @@ module ThrularNumerovMethod_
 	!     PROCEED UNTIL THE INTERVAL (L,U) CAN BE MADE NO SMALLER.
 		IF ((LAMBDA.EQ.L).OR.(LAMBDA.EQ.U)) GO TO  30
 	!     BEGIN COMPUTATION OF NUMBER OF SIGN AGREEMENTS,AG.
-		AG=0
-		I=1
-	16 S=C(I)-LAMBDA
-	18 IF(S.GE.0.D0) AG=AG+1
-		IF(S.EQ.0.D0) GO TO 20
-		I=I+1
-		IF(I.GT.N) GO TO 22
-		S=C(I)-LAMBDA-W(I-1)/S
-		IF(II.LT.10000) GO TO 18
-		AG=AG+1
-		I=I-1
-	20 I=I+2
-		IF(I.LE.N) GO TO 16
+		AG = 0
+		S = 0.0D0
+		I = 1
+		DO WHILE (I <= N)
+			IF (S .NE. 0.0D0) THEN
+				S = C(I) - LAMBDA - W(I-1)/S
+			ELSE
+				S = C(I) - LAMBDA
+			END IF
+			IF (S .GE. 0.0D0) AG = AG + 1
+			IF (S .EQ. 0.0D0) THEN
+				I = I + 2
+				S = 0.0D0
+			ELSE
+				I = I + 1
+			END IF
+		END DO
 	!     THE COMPUTATION OF AG IS COMPLETE.  ADJUST INTERVAL.
 	22 IF(AG.GE.K) GO TO 24
 		U=LAMBDA
@@ -499,26 +503,28 @@ module ThrularNumerovMethod_
 	! Test
 	!!
 	subroutine ThrularNumerovMethod_test()
+		use TestUtils_
 		type(Grid) :: rGrid
 		type(RNFunction) :: potential
 		type(ThrularNumerovMethod) :: solver
-		integer :: i
 		
 		call rGrid.init( 1.0_8, 30.0_8, 1000 )
-		call rGrid.show()
 		
 		potential = RNFunction( rGrid, funcTest )
-		call potential.show()
-! 		call potential.save( "morse.out" )
 		
 		call solver.init( potential, rMass=5.0_8 )
 		call solver.run()
 		
-		do i=1,solver.nStates
-			write(*,"(i5,f20.10)") i, solver.eigenValues(i)
-		end do
+		call assert_equal( solver%nStates, 7, "ThrularNumerovMethod_test: nStates" )
+		call assert_equal_real( solver%rMass, 5.0_8, 1e-12_8, "ThrularNumerovMethod_test: rMass" )
 		
-! 		call solver.eigenFunctions(7).save( "salida" )
+		call assert_equal_real( solver%eigenValues(1), -4.3178702854_8, 1e-8_8, "ThrularNumerovMethod_test: eigenValues(1)" )
+		call assert_equal_real( solver%eigenValues(2), -3.1035619836_8, 1e-8_8, "ThrularNumerovMethod_test: eigenValues(2)" )
+		call assert_equal_real( solver%eigenValues(3), -2.0891620216_8, 1e-8_8, "ThrularNumerovMethod_test: eigenValues(3)" )
+		call assert_equal_real( solver%eigenValues(4), -1.2747349806_8, 1e-8_8, "ThrularNumerovMethod_test: eigenValues(4)" )
+		call assert_equal_real( solver%eigenValues(5), -0.6604098819_8, 1e-8_8, "ThrularNumerovMethod_test: eigenValues(5)" )
+		call assert_equal_real( solver%eigenValues(6), -0.2462924742_8, 1e-8_8, "ThrularNumerovMethod_test: eigenValues(6)" )
+		call assert_equal_real( solver%eigenValues(7), -0.0323844666_8, 1e-8_8, "ThrularNumerovMethod_test: eigenValues(7)" )
 	end subroutine ThrularNumerovMethod_test
 
 end module ThrularNumerovMethod_

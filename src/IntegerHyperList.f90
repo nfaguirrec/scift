@@ -185,134 +185,65 @@ module IntegerHyperList_
 	!! @brief Test method
 	!!
 	subroutine IntegerHyperList_test()
+		use TestUtils_
 		type(IntegerHyperList) :: hilist
 		class(IntegerHyperListIterator), pointer :: iter
-
 		type(IntegerList) :: ilist
-		integer :: id
-		
-		type(Matrix) :: dMatrix
-		
-		integer :: i
 		
 		hilist = IntegerHyperList()
 		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for append method"
-		write(*,*) "-------------------------"
-		
-		write(*,*) "call hilist.append( [1,1,1] )"
-		write(*,*) "call hilist.append( [2,2,2,2] )"
-		write(*,*) "call hilist.append( [1,1] )"
-		write(*,*)
-		
+		! Testing append
 		ilist = IntegerList( 3, value=1 )
-		call hilist.append( ilist )
+		call hilist%append( ilist )
 		ilist = IntegerList( 4, value=2 )
-		call hilist.append( ilist )
+		call hilist%append( ilist )
 		ilist = IntegerList( 2, value=1 )
-		call hilist.append( ilist )
+		call hilist%append( ilist )
+		call assert_equal( hilist%size(), 3, "IntegerHyperList_test: size after append" )
 		
-		call showMyHList( hilist )
-		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for prepend method"
-		write(*,*) "-------------------------"
-		
-		write(*,*) "call hilist.prepend( [4,4] )"
-		write(*,*) "call hilist.prepend( [5,5,5,5] )"
-		write(*,*) "call hilist.prepend( [8,8,8] )"
-		write(*,*)
-		
+		! Testing prepend
 		ilist = IntegerList( 2, value=4 )
-		call hilist.prepend( ilist )
+		call hilist%prepend( ilist )
 		ilist = IntegerList( 4, value=5 )
-		call hilist.prepend( ilist )
+		call hilist%prepend( ilist )
 		ilist = IntegerList( 3, value=8 )
-		call hilist.prepend( ilist )
+		call hilist%prepend( ilist )
+		call assert_equal( hilist%size(), 6, "IntegerHyperList_test: size after prepend" )
 		
-		call showMyHList( hilist )
-
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for insert method"
-		write(*,*) "-------------------------"
-		
-		write(*,*) "iter => hilist.begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "call hilist.insert( iter, [9, 9, 9] )"
-		write(*,*)
-		
-		iter => hilist.begin
-		iter => iter.next
-		iter => iter.next
-		
+		! Testing insert
+		iter => hilist%begin
+		iter => iter%next
+		iter => iter%next
 		ilist = IntegerList( 3, value=9 )
-		
-		call hilist.insert( iter, ilist )
-		call showMyHList( hilist )
-		
-		write(*,*)
-		write(*,*) "call hilist.insert( iter, [8, 8, 8, 8] )"
-		write(*,*)
+		call hilist%insert( iter, ilist )
+		call assert_equal( hilist%size(), 7, "IntegerHyperList_test: size after insert 1" )
 		
 		ilist = IntegerList( 4, value=8 )
+		call hilist%insert( iter, ilist )
+		call assert_equal( hilist%size(), 8, "IntegerHyperList_test: size after insert 2" )
 		
-		call hilist.insert( iter, ilist )
-		call showMyHList( hilist )
-		
-		write(*,*)
-		write(*,*) "call hilist.insert( hilist.end, [7, 7] )"
-		write(*,*)
-				
 		ilist = IntegerList( 2, value=7 )
+		call hilist%insert( hilist%end, ilist )
+		call assert_equal( hilist%size(), 9, "IntegerHyperList_test: size after insert 3" )
 		
-		call hilist.insert( hilist.end, ilist )
-		call showMyHList( hilist )
-
-		write(*,*) "------------------------"
-		write(*,*) "Testing for erase method"
-		write(*,*) "------------------------"
+		! Testing erase
+		call hilist%erase( 2 )
+		call assert_equal( hilist%size(), 8, "IntegerHyperList_test: size after erase index 2" )
 		
-		write(*,*) "call hilist.erase( 2 )"
-		write(*,*)
+		iter => hilist%begin
+		iter => iter%next
+		call hilist%erase( iter )
+		call assert_equal( hilist%size(), 7, "IntegerHyperList_test: size after erase iter" )
 		
-		call hilist.erase( 2 )
-		call showMyHList( hilist )
-
-		write(*,*) "iter => hilist.begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "call hilist.erase( iter )"
-		write(*,*)
+		call hilist%erase( hilist%begin )
+		call assert_equal( hilist%size(), 6, "IntegerHyperList_test: size after erase begin" )
 		
-		iter => hilist.begin
-		iter => iter.next
+		call hilist%erase( hilist%end )
+		call assert_equal( hilist%size(), 5, "IntegerHyperList_test: size after erase end" )
 		
-		call hilist.erase( iter )
-		call showMyHList( hilist )
-		
-		write(*,*)
-		write(*,*) "call hilist.erase( hilist.begin )"
-		write(*,*)
-		
-		call hilist.erase( hilist.begin )
-		call showMyHList( hilist )
-		
-		write(*,*)
-		write(*,*) "call hilist.erase( hilist.end )"
-		write(*,*)
-		call hilist.erase( hilist.end )
-		call showMyHList( hilist )
-		
-		write(*,*) "------------------------"
-		write(*,*) "Testing for clear method"
-		write(*,*) "------------------------"
-		
-		write(*,*) "call hilist.clear()"
-		write(*,*)
-		call hilist.clear()
-		call showMyHList( hilist )
-
+		! Testing clear
+		call hilist%clear()
+		call assert_equal( hilist%size(), 0, "IntegerHyperList_test: size after clear" )
 	end subroutine IntegerHyperList_test
 	
 end module IntegerHyperList_

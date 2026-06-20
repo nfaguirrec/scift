@@ -233,46 +233,34 @@ module Morse_
 	!! selected unit
 	!!
 	subroutine Morse_test()
+		use TestUtils_
 		real(8) :: Re, we, wexe, rMass
 		type(Morse) :: morse
 		type(Grid) :: rGrid
 		type(ThrularNumerovMethod) :: solver
-		type(RNFunction) :: nf
-		type(OFStream) :: ofile
-		integer :: i ! dummy variable
+		integer :: i
 		
-		!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		!! Cl2 X¹Σg+ 
-		!! NIST Standard Reference Data Program
-		!! -------------------------------------
-		!! re    = 1.9879 Å
-		!! ωe    = 559.72 cm⁻¹
-		!! ωexe  = 2.675 cm⁻¹
-		!! m(Cl) = 35.4257 amu
-		!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		Re = 1.9879_8*angs
 		we = 559.72_8*cm1
 		wexe = 2.675_8*cm1
 		rMass = 0.5_8*35.4257_8*amu
 		
-		call rGrid.init( 0.5_8, 20.0_8, 10000 )
-		call morse.fromExp( rGrid, Re, we, wexe, rMass )
-		call morse.show()
+		call rGrid%init( 0.5_8, 20.0_8, 10000 )
+		call morse%fromExp( rGrid, Re, we, wexe, rMass )
 		
-		call solver.init( morse.parent(), 10, rMass )
-		call solver.run()
+		call assert_equal_real( morse%Re, Re, 1e-6_8, "Morse_test: Re" )
 		
-		write(*,"(a5,a20,a20)") "\nu", "exact", "numeric"
-		do i=1,solver.nStates
-			if ( solver.eigenValues(i) < 0.0_8 ) then
-					write(*,"(i5,f20.10,f20.10)") i, morse.exactEigenValues(i-1, rMass), solver.eigenValues(i)
+		call solver%init( morse%parent(), 10, rMass )
+		call solver%run()
+		
+		do i=1,solver%nStates
+			if ( solver%eigenValues(i) < 0.0_8 ) then
+				call assert_equal_real( solver%eigenValues(i), morse%exactEigenValues(i-1, rMass), 1e-6_8, "Morse_test: eigenvalue" )
 			end if
 		end do
 		
-		call solver.eigenFunctions(7).save( "salida" )
-		
-		call morse.destroy()
-		call solver.destroy()
+		call morse%destroy()
+		call solver%destroy()
 		
 	end subroutine Morse_test
 	

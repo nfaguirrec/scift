@@ -188,6 +188,7 @@ module CNFunction2D_
 	!! @brief Testing the CNFunction2D class
 	!!
 	subroutine CNFunction2D_test()
+		use TestUtils_
 		type(CNFunction2D) :: func, func2
 		
 		real(8) :: xVec(3)
@@ -199,58 +200,49 @@ module CNFunction2D_
 		xVec(:) = [ 1.0, 2.0, 3.0 ]
 		yVec(:) = [-1.0, 0.0 ]
 		
-		fArray(1,:) = [ 0.0, 4.0 ]
-		fArray(2,:) = [ 2.0, 2.0 ]
-		
 		fArray(1,:) = [ 6.0,-1.0 ]
 		fArray(2,:) = [ 7.0, 0.0 ]
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing constructors"
-		write(*,*) "----------------------------"
+		fArray(3,:) = [ 0.0, 0.0 ]
 		
 		call func.init( xVec, yVec, fArray )
-		call func.show()
+		call assert_equal( func.nPoints(1), 3, "func.nPoints(1)" )
+		call assert_equal( func.nPoints(2), 2, "func.nPoints(2)" )
+		call assert_equal_real( func.xyGrid.min(1), 1.0_8, 1e-10_8, "func min(1)" )
+		call assert_equal_real( func.xyGrid.max(2), 0.0_8, 1e-10_8, "func max(2)" )
 		
 		call xyGrid.fromArray( xVec, yVec )
 		call func.init( xyGrid, fArray )
-		call func.show()
+		call assert_equal( func.nPoints(1), 3, "func.nPoints(1) xyGrid" )
+		call assert_equal( func.nPoints(2), 2, "func.nPoints(2) xyGrid" )
 		
 		call xyGrid.init( min=[-5.0_8,-5.0_8], max=[5.0_8,5.0_8], size=[100,100] )
 		call func.init( xyGrid, funcTest )
-		call func.show()
+		call assert_equal( func.nPoints(1), 100, "func.nPoints(1) formula" )
+		call assert_equal( func.nPoints(2), 100, "func.nPoints(2) formula" )
 		
 		call func.init( "data/formats/complex-N2DF", format=N2DF_FORMAT )
-		call func.show()
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing copy constructors"
-		write(*,*) "----------------------------"
+		call assert_equal( func.nPoints(1), 100, "func.nPoints(1) load N2DF" )
+		call assert_equal( func.nPoints(2), 100, "func.nPoints(2) load N2DF" )
 		
 		func2 = func
-		call func2.show()
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing I/O methods"
-		write(*,*) "----------------------------"
+		call assert_equal( func2.nPoints(1), 100, "func2.nPoints(1) copy" )
+		call assert_equal( func2.nPoints(2), 100, "func2.nPoints(2) copy" )
+		call assert_equal_real( dble(func2.at(10,10)), dble(func.at(10,10)), 1e-10_8, "copy at(10,10) real" )
+		call assert_equal_real( imag(func2.at(10,10)), imag(func.at(10,10)), 1e-10_8, "copy at(10,10) imag" )
 		
 		call func.save( "salida.n2df", format=N2DF_FORMAT )
 		call func.load( "salida.n2df", format=N2DF_FORMAT )
-		call func.show()
-		
-		write(*,*) ""
-		write(*,*) "----------------------------"
-		write(*,*) "Testing resize(+3,+2)"
-		write(*,*) "----------------------------"
+		call assert_equal( func.nPoints(1), 100, "func.nPoints(1) reload" )
+		call assert_equal( func.nPoints(2), 100, "func.nPoints(2) reload" )
 		
 		call func.init( xVec, yVec, fArray )
-		call func.show()
 		call func.resize( 3, 2, +1, +1 )
-		call func.show()
-				
+		call assert_equal( func.nPoints(1), 6, "resized nPoints(1)" )
+		call assert_equal( func.nPoints(2), 4, "resized nPoints(2)" )
+		call assert_equal_real( func.xyGrid.max(1), 6.0_8, 1e-10_8, "resized max(1)" )
+		call assert_equal_real( func.xyGrid.max(2), 2.0_8, 1e-10_8, "resized max(2)" )
+		
+		write(*,*) "All CNFunction2D tests PASSED"
 	end subroutine CNFunction2D_test
 	
 end module CNFunction2D_

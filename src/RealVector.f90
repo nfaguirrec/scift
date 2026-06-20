@@ -170,162 +170,67 @@ module RealVector_
 	!! @brief Test method
 	!!
 	subroutine RealVector_test()
+		use TestUtils_
 		type(RealVector) :: myvector
-		class(RealVectorIterator), pointer :: iter
 		
 		call myvector.init()
-		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for append method"
-		write(*,*) "-------------------------"
-		
-		write(*,*) "call myvector.append( 8.0 )"
-		write(*,*) "call myvector.append( 5.0 )"
-		write(*,*) "call myvector.append( 1.0 )"
-		write(*,*)
+		call assert_equal( myvector%size(), 0, "RealVector_test: size init" )
 		
 		call myvector.append( 8.0_8 )
 		call myvector.append( 5.0_8 )
 		call myvector.append( 1.0_8 )
-		
-		call showMyVector( myvector )
-		
-		write(*,*) "--------------------------"
-		write(*,*) "Testing for prepend method"
-		write(*,*) "--------------------------"
-		
-		write(*,*) "call myvector.prepend( 8.0 )"
-		write(*,*) "call myvector.prepend( 5.0 )"
-		write(*,*) "call myvector.prepend( 1.0 )"
-		write(*,*)
+		call assert_equal( myvector%size(), 3, "RealVector_test: size append" )
+		call assert_true( abs(myvector%at(1) - 8.0_8) < 1e-12_8, "RealVector_test: append 1" )
+		call assert_true( abs(myvector%at(2) - 5.0_8) < 1e-12_8, "RealVector_test: append 2" )
+		call assert_true( abs(myvector%at(3) - 1.0_8) < 1e-12_8, "RealVector_test: append 3" )
 		
 		call myvector.prepend( 8.0_8 )
 		call myvector.prepend( 5.0_8 )
 		call myvector.prepend( 1.0_8 )
+		call assert_equal( myvector%size(), 6, "RealVector_test: size prepend" )
+		call assert_true( abs(myvector%at(1) - 1.0_8) < 1e-12_8, "RealVector_test: prepend 1" )
+		call assert_true( abs(myvector%at(2) - 5.0_8) < 1e-12_8, "RealVector_test: prepend 2" )
+		call assert_true( abs(myvector%at(3) - 8.0_8) < 1e-12_8, "RealVector_test: prepend 3" )
+		call assert_true( abs(myvector%at(4) - 8.0_8) < 1e-12_8, "RealVector_test: prepend 4" )
+		call assert_true( abs(myvector%at(5) - 5.0_8) < 1e-12_8, "RealVector_test: prepend 5" )
+		call assert_true( abs(myvector%at(6) - 1.0_8) < 1e-12_8, "RealVector_test: prepend 6" )
 		
-		call showMyVector( myvector )
-		
-		write(*,*) "------------------------"
-		write(*,*) "Testing for erase method"
-		write(*,*) "------------------------"
-		
-		write(*,*) "call myvector.erase( 1 )"
 		call myvector.erase( 1 )
-		call showMyVector( myvector )
+		call assert_equal( myvector%size(), 5, "RealVector_test: size erase 1" )
+		call assert_true( abs(myvector%at(1) - 5.0_8) < 1e-12_8, "RealVector_test: erase 1" )
 		
-		write(*,*) "call myvector.erase( 2 )"
 		call myvector.erase( 2 )
-		call showMyVector( myvector )
+		call assert_equal( myvector%size(), 4, "RealVector_test: size erase 2" )
+		call assert_true( abs(myvector%at(2) - 8.0_8) < 1e-12_8, "RealVector_test: erase 2" )
 		
-		write(*,*) "call myvector.erase( 3 )"
-		write(*,*)
 		call myvector.erase( 3 )
-		call showMyVector( myvector )
+		call assert_equal( myvector%size(), 3, "RealVector_test: size erase 3" )
+		call assert_true( abs(myvector%at(3) - 1.0_8) < 1e-12_8, "RealVector_test: erase 3" )
 		
-		write(*,*) "call myvector.erase( 1 )"
-		write(*,*)
 		call myvector.erase( 1 )
-		call showMyVector( myvector )
+		call assert_equal( myvector%size(), 2, "RealVector_test: size erase 4" )
+		call assert_true( abs(myvector%at(1) - 8.0_8) < 1e-12_8, "RealVector_test: erase 4" )
 		
-		write(*,*) "call myvector.erase( 1 )"
-		write(*,*)
 		call myvector.erase( 1 )
-		call showMyVector( myvector )
+		call assert_equal( myvector%size(), 1, "RealVector_test: size erase 5" )
+		call assert_true( abs(myvector%at(1) - 1.0_8) < 1e-12_8, "RealVector_test: erase 5" )
 		
-		write(*,*) "call myvector.erase( 1 )"
-		write(*,*)
 		call myvector.erase( 1 )
-		call showMyVector( myvector )
+		call assert_equal( myvector%size(), 0, "RealVector_test: size erase 6" )
 		
-		write(*,*) "call myvector.erase( 1 )"
-		write(*,*)
 		call myvector.erase( 1 )
-		call showMyVector( myvector )
-
-! 		
-! 		write(*,*) "-------------------------"
-! 		write(*,*) "Testing for insert method"
-! 		write(*,*) "-------------------------"
-! 		
-! 		write(*,*) "iter => myvector.begin"
-! 		write(*,*) "iter => iter.next"
-! 		write(*,*) "iter => iter.next"
-! 		write(*,*) "call myvector.insert( iter, 1 )"
-! 		write(*,*)
-! 		
-! 		iter => myvector.begin
-! 		iter => iter.next
-! 		iter => iter.next
-! 		
-! 		call myvector.insert( iter, 1 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call myvector.insert( iter, 2 )"
-! 		write(*,*)
-! 		
-! 		call myvector.insert( iter, 2 )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call myvector.insert( myvector.end, 9 )"
-! 		write(*,*)
-! 				
-! 		call myvector.insert( myvector.end, 9 )
-! 		call showMyVector( myvector )
-
-		write(*,*) "------------------------"
-		write(*,*) "Testing for erase method"
-		write(*,*) "------------------------"
+		call assert_equal( myvector%size(), 0, "RealVector_test: size erase 7" )
 		
-		write(*,*) "call myvector.erase( 2 )"
-		write(*,*)
-		
-		call myvector.erase( 2 )
-		call showMyVector( myvector )
-
-! 		write(*,*) "iter => myvector.begin"
-! 		write(*,*) "iter => iter.next"
-! 		write(*,*) "call myvector.erase( iter )"
-! 		write(*,*)
-! 		
-! 		iter => myvector.begin
-! 		iter => iter.next
-! 		
-! 		call myvector.erase( iter )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call myvector.erase( myvector.begin )"
-! 		write(*,*)
-! 		
-! 		call myvector.erase( myvector.begin )
-! 		call showMyVector( myvector )
-! 		
-! 		write(*,*)
-! 		write(*,*) "call myvector.erase( myvector.end )"
-! 		write(*,*)
-! 		call myvector.erase( myvector.end )
-! 		call showMyVector( myvector )
-		
-		write(*,*) "------------------------"
-		write(*,*) "Testing for clear method"
-		write(*,*) "------------------------"
-		
-		write(*,*) "call myvector.clear()"
-		write(*,*)
 		call myvector.clear()
-		call showMyVector( myvector )
-
-		write(*,*) "call myvector.append( 1.0 )"
-		write(*,*) "call myvector.append( 2.0 )"
-		write(*,*) "call myvector.append( 3.0 )"
-		write(*,*)
+		call assert_equal( myvector%size(), 0, "RealVector_test: size clear" )
 		
 		call myvector.append( 1.0_8 )
 		call myvector.append( 2.0_8 )
 		call myvector.append( 3.0_8 )
-		call showMyVector( myvector )
+		call assert_equal( myvector%size(), 3, "RealVector_test: size final append" )
+		call assert_true( abs(myvector%at(1) - 1.0_8) < 1e-12_8, "RealVector_test: final append 1" )
+		call assert_true( abs(myvector%at(2) - 2.0_8) < 1e-12_8, "RealVector_test: final append 2" )
+		call assert_true( abs(myvector%at(3) - 3.0_8) < 1e-12_8, "RealVector_test: final append 3" )
 
 	end subroutine RealVector_test
 

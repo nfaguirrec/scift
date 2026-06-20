@@ -72,6 +72,35 @@ The basic environmental variables that SciFT needs can be loaded just adding the
 source <PATH_TO_SCIFT>/SCIFTvars.sh
 ```
 
+## Running Tests
+
+SciFT comes with a comprehensive suite of unit tests for its classes and routines. To compile and run the full test suite, perform the following steps:
+
+1. **Set Up the Environment**: Add the custom build tools to your path:
+   ```bash
+   export PATH=$PATH:<PATH_TO_SCIFT>/utils
+   ```
+2. **Compile the Library**: Rebuild/update the core library inside the `src` directory:
+   ```bash
+   cd <PATH_TO_SCIFT>/src
+   make
+   ```
+3. **Compile the Test Suite**: Go to the `tests` directory and compile all individual test executables and the test runner:
+   ```bash
+   cd <PATH_TO_SCIFT>/tests
+   make
+   ```
+4. **Execute All Tests**: Run the main test orchestrator:
+   ```bash
+   ./run_tests.exe
+   ```
+
+You can also run individual test suites directly from the `tests` directory, for example:
+```bash
+./src_tests/test_UnitsConverter.exe
+./src_tests/test_ElementsDB.exe
+```
+
 ## Usage
 
 The following are some examples of how to use some important classes available in SciFT

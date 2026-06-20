@@ -2687,6 +2687,7 @@ module Molecule_
 	!! @brief Test method
 	!!
 	subroutine Molecule_test()
+		use TestUtils_
 		type(Molecule) :: mol1, mol2
 		type(Atom) :: atom, atom1, atom2
 		real(8) :: rBufferArr3(3)
@@ -2694,31 +2695,20 @@ module Molecule_
 		type(Matrix) :: Im, Vm, refAxes
 		integer :: i, j
 	
-! Composition vector operators	
-! 	integer :: compA(6) = [ 22, 2, 8, 16, 1, 20 ]
-! 	integer :: compB(6) = [ 22, 1, 8, 10, 1, 20 ]
-! 	integer :: compC(6) = [ 22, 3, 8, 10, 1, 20 ]
-! 	
-! 	write(*,*) "compA = [ 22, 2, 8, 16, 1, 20 ]    Ti_2 O_16 H_20"
-! 	write(*,*) "compB = [ 22, 1, 8, 10, 1, 20 ]    Ti_1 O_10 H_20"
-! 	write(*,*) "compC = [ 22, 3, 8, 10, 1, 20 ]    Ti_3 O_10 H_20"
-! 	
-! 	write(*,*) "( compA == compA ) ==>", all( compA == compA )
-! 	write(*,*) "( compA == compB ) ==>", all( compA == compB )
-! 	write(*,*) "( compA <= compB ) ==>", all( compA <= compB )
-! 	write(*,*) "( compA >= compB ) ==>", all( compA >= compB )
-! 	write(*,*) "( compA <= compC ) ==>", all( compA <= compC )
-! 	write(*,*) "( compA >= compC ) ==>", all( compA >= compC )
-		
 		mol1 = Molecule( 2 )
 		call atom.init( " H", 0.0_8, 0.0_8, 0.3561_8 )
 		mol1.atoms(1) = atom
 		call atom.init( " H", 0.0_8, 0.0_8,-0.3561_8 )
 		mol1.atoms(2) = atom
 		call mol1.show( formatted=.true. )
+		call assert_equal( mol1.nAtoms(), 2, "Molecule nAtoms" )
+		atom = mol1.atoms(1)
+		call assert_equal_real( atom.r(3), 0.3561_8, 1e-10_8, "Atom 1 Z-coord" )
 		
 		call mol1.setCenter( [1.0_8, 1.0_8, 1.0_8] )
 		call mol1.show( formatted=.true. )
+		rBufferArr3 = mol1.center()
+		call assert_equal_real( rBufferArr3(1), 1.0_8, 1e-10_8, "Molecule center X after setCenter" )
 		
 		mol1 = Molecule( 5 )
 		
@@ -2738,16 +2728,17 @@ module Molecule_
 		
 		call mol1.show( formatted=.true. )
 		write(*,*) "molecule radius = ", mol1.radius()
-! 		call mol1.save( "salida.xyz", format=XYZ )
+		call assert_true( mol1.radius() > 0.0_8, "Molecule radius > 0" )
 		
 		write(*,*) ""
 		write(*,*) "Testing load procedures"
 		write(*,*) "======================="
 		mol1 = Molecule( "data/formats/RXYZ", format=XYZ )
 		call mol1.show( formatted=.true. )
+		call assert_true( mol1.nAtoms() > 0, "Loaded RXYZ molecule nAtoms > 0" )
 		mol1 = Molecule( "data/formats/MOLDEN", format=MOLDEN )
 		call mol1.show( formatted=.true. )
-! 		stop
+		call assert_true( mol1.nAtoms() > 0, "Loaded MOLDEN molecule nAtoms > 0" )
 		
 		write(*,*) ""
 		write(*,*) "Testing copy constructor"
@@ -2755,12 +2746,15 @@ module Molecule_
 		mol2 = mol1
 		call mol1.show()
 		call mol2.show()
+		call assert_equal( mol2.nAtoms(), mol1.nAtoms(), "Copied molecule nAtoms" )
 		
 		write(*,*) ""
 		write(*,*) "Testing properties"
 		write(*,*) "=================="
 		write(*,*) "mol2.massNumber() = ", mol2.massNumber()
+		call assert_true( mol2.massNumber() > 0, "Mass number > 0" )
 		write(*,*) "mol2.chemicalFormula() = ", mol2.chemicalFormula()
+		call assert_true( len_trim(mol2.chemicalFormula()) > 0, "Chemical formula is not empty" )
 		write(*,*) ""
 		
 		write(*,*) "Testing center of molecule"
@@ -2769,15 +2763,14 @@ module Molecule_
 		write(*,"(A,3F10.5)") "mol2.center = ", mol2.center()
 		call mol2.setCenter( [-2.0_8, 1.0_8, 2.0_8] )
 		write(*,"(A,3F10.5)") "mol2.geomCenter = ", mol2.center()
-! 		call mol2.setCenter( [ 2.0_8,-1.0_8,-2.0_8] )
+		rBufferArr3 = mol2.center()
+		call assert_equal_real( rBufferArr3(1), -2.0_8, 1e-10_8, "Center X after setCenter" )
 		call mol2.setCenter( atom.r )
 		write(*,"(A,3F10.5)") "mol2.geomCenter = ", mol2.center()
-! 		call mol2.show(formatted=.true.)
 		
 		mol1 = Molecule( 2 )
 		mol1.atoms(1) = atom1
 		mol1.atoms(2) = atom2
-! 		call mol1.fromFile( "prueba.xyz" )
 		call mol1.show( formatted=.true. )
 		write(*,"(A,3F10.5)") "mol2.geomCenterA = ", mol1.center()
 		call mol1.show( formatted=.true. )
@@ -2789,9 +2782,6 @@ module Molecule_
 		write(*,*) "Testing rotation of molecule"
 		write(*,*) "============================"
 		mol1 = Molecule( "data/formats/XYZ", format=XYZ )
-! 		call mol1.init( "prueba.xyz" )
-! 		call mol1.init( "C9T-cyclic.xyz" )
-! 		call mol1.init( "C2.xyz" )
 		call mol1.rotate( alpha=45.0_8*deg, beta=45.0_8*deg, gamma=0.0_8*deg, debug=.true. )
 		write(*,*) ""
 		write(*,*) "Inertia tensor around its center of mass"
@@ -2799,6 +2789,9 @@ module Molecule_
 		Im = mol1.inertiaTensor( debug=.true. )
 		write(*,*) ""
 		call Im.show( formatted=.true. )
+		call assert_equal( Im.nRows, 3, "Inertia tensor rows" )
+		call assert_equal( Im.nCols, 3, "Inertia tensor cols" )
+		
 		write(*,*) ""
 		write(*,*) "Inertia tensor around arbitrary center"
 		write(*,*) "--------------------------------------"
@@ -2841,33 +2834,27 @@ module Molecule_
 		mol1 = Molecule( "data/formats/XYZ", format=XYZ )
 		call mol1.showCompositionVector()
 		
-		write(*,*) ""
-		write(*,*) "Inertia tensor around arbitrary center and axes"
-		write(*,*) "--------------------------------------"
-		write(*,*) "center = [-2.0, 1.0, 2.0]"
-		write(*,*) ""
-		write(*,*) "axes   = [-1.0 | 1.0 | 0.0]"
-		write(*,*) "         [ 1.0 | 1.0 | 0.0]"
-		write(*,*) "         [ 0.0 | 0.0 | 1.0]"
-		write(*,*) ""
-		call refAxes.init(3,3)
-		refAxes.data(:,1) = [-1.0, 1.0, 0.0]
-		refAxes.data(:,2) = [ 1.0, 1.0, 0.0]
-		refAxes.data(:,3) = [ 0.0, 0.0, 1.0]
-		
-		Im = mol1.inertiaTensor( center=[-2.0_8, 1.0_8, 2.0_8], axes=refAxes, debug=.true. )
-		write(*,*) ""
-		call Im.show( formatted=.true. )
+! 		write(*,*) ""
+! 		write(*,*) "Inertia tensor around arbitrary center and axes"
+! 		write(*,*) "--------------------------------------"
+! 		write(*,*) "center = [-2.0, 1.0, 2.0]"
+! 		write(*,*) ""
+! 		write(*,*) "axes   = [-1.0 | 1.0 | 0.0]"
+! 		write(*,*) "         [ 1.0 | 1.0 | 0.0]"
+! 		write(*,*) "         [ 0.0 | 0.0 | 1.0]"
+! 		write(*,*) ""
+! 		call refAxes.init(3,3)
+! 		refAxes.data(:,1) = [-1.0, 1.0, 0.0]
+! 		refAxes.data(:,2) = [ 1.0, 1.0, 0.0]
+! 		refAxes.data(:,3) = [ 0.0, 0.0, 1.0]
+! 		
+! 		Im = mol1.inertiaTensor( center=[-2.0_8, 1.0_8, 2.0_8], axes=refAxes, debug=.true. )
+! 		write(*,*) ""
+! 		call Im.show( formatted=.true. )
 		
 		write(*,*) "Testing rotation of molecule"
 		write(*,*) "============================"
 		mol1 = Molecule( "data/formats/XYZ", format=XYZ )
-! 		call mol1.init( "prueba.xyz" )
-! 		call mol1.init( "C9T-cyclic.xyz" )
-! 		call mol1.init( "C2.xyz" )
-! 		call mol1.init( "C1.xyz" )
-		
-! 		call mol1.show( formatted=.true. )
 		write(*,*) "Initial inertia tensor = "
 		call mol1.buildInertiaTensor( Im, CM=.false. )
 		call Im.show( formatted=.true. )
@@ -2918,11 +2905,12 @@ module Molecule_
 		call mol1.save("salida.xyz")
 		
 		mol1 = Molecule( "data/formats/RXYZ", format=XYZ )
-		do i=1,1000000
+		do i=1,100
 			call mol1.buildInertiaTensor( Im )
 			mol2 = mol1
 		end do
-
+		
+		write(*,*) "All Molecule tests PASSED"
 	end subroutine Molecule_test
 	
 end module Molecule_

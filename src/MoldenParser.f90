@@ -109,7 +109,8 @@ module MoldenParser_
 		
 ! 		type(StringList) :: geometryBlock
 		
-		buffer = ifile.readLine()
+		call ifile%init( iFileName )
+		buffer = ifile%readLine()
 		
 		if( buffer /= "[Molden Format]" ) then
 			write(*,*) "### ERROR ### bad format in MOLDEN file"
@@ -117,18 +118,18 @@ module MoldenParser_
 		end if
 		
 		advance = .true.
-		do while( .not. ifile.eof() )
+		do while( .not. ifile%eof() )
 			if( advance ) then
-				buffer = ifile.readLine()
-				call buffer.split( tokens, " " )
+				buffer = ifile%readLine()
+				call buffer%split( tokens, " " )
 				advance = .true.
 			end if
 			
 			!-----------------------------------
 			! search for title line
 			!-----------------------------------
-! 			if( tokens(1) == "[Title]" ) then
-! 				write(*,*) "NNN = ", trim(tokens(1))
+			! if( tokens(1) == "[Title]" ) then
+			! 	write(*,*) "NNN = ", trim(tokens(1))
 				
 			!-----------------------------------
 			! search for Atoms data
@@ -142,40 +143,42 @@ module MoldenParser_
 					geometryUnits = bohr
 				end if
 				
-				do while( .not. ifile.eof() )
-					buffer = ifile.readLine()
-					call buffer.split( tokens, " " )
+				do while( .not. ifile%eof() )
+					buffer = ifile%readLine()
+					call buffer%split( tokens, " " )
 					
 					if( index( tokens(1), "[" ) == 1 ) then
 						advance = .false.
 						exit
 					end if
 					
-					write(*,*) "MMM = ", trim(tokens(1))
+					! write(*,*) "MMM = ", trim(tokens(1))
 				end do
 			
 			!-----------------------------------
 			! search for Atoms data
 			!-----------------------------------
 			else if( tokens(1) == "[FREQ]" ) then
-				do while( .not. ifile.eof() )
-					buffer = ifile.readLine()
-					call buffer.split( tokens, " " )
+				do while( .not. ifile%eof() )
+					buffer = ifile%readLine()
+					call buffer%split( tokens, " " )
 					
 					if( index( tokens(1), "[" ) == 1 ) then
 						advance = .false.
 						exit
 					end if
 					
-					write(*,*) "KKK = ", trim(tokens(1))
+					! write(*,*) "KKK = ", trim(tokens(1))
 				end do
 			end if
 			
 			if( .not. advance ) then
-				buffer = ifile.readLine()
-				call buffer.split( tokens, " " )
+				buffer = ifile%readLine()
+				call buffer%split( tokens, " " )
 			end if
 		end do
+		
+		call ifile%close()
 
 	end subroutine load
 	
@@ -183,10 +186,12 @@ module MoldenParser_
 	! @brief Test method
 	!*
 	subroutine MoldenParser_test()
+		use TestUtils_
 		type(MoldenParser) :: parser
 		
-! 		call parser.load( "data/formats/MOLDEN" )
-! 		call parser.getBlock( "[FREQ]" )
+		call parser%init()
+		call parser%load( "data/formats/MOLDEN" )
+		call assert_true( .true., "MoldenParser_test: load success" )
 	end subroutine MoldenParser_test
 	
 end module MoldenParser_

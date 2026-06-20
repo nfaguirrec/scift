@@ -1200,122 +1200,42 @@ module Math_
 	!! @brief Test method
 	!!
 	subroutine Math_test()
+		use TestUtils_
 		real(8), allocatable :: rArray(:)
 		integer, allocatable :: iArray(:)
 		integer, allocatable :: indexes(:)
 		integer, allocatable :: iComb(:), iCombOld(:,:)
 		character(10), allocatable :: strArray(:), sComb(:)
-! 		character(10), allocatable :: comb(:)
 		real(8) :: x
 		
 		integer :: i, j, k, l
 		integer :: nFrag
+		integer :: ssum
 		
-! 		write(*,*) ""
-! 		write(*,*) "Sorting vectors"
-! 		write(*,*) "==============="
-! 		allocate( rArray(19) )
-! 		allocate( indexes(19) )
-! 		
-! 		rArray = [ -33.89007, -33.89007, -35.21007, -35.42677, -35.90699, &
-! 			  -33.67374, -34.15396, -33.27902, -33.27902, -34.04338, &
-! 			  -34.04338, -31.81726, -31.81726, -33.49329, -33.97351, &
-! 			  -32.91849, -33.39871, -33.24224, -33.24224 ]
-! 			  
-! 		call Math_sort( rArray, indexes )
-! 		
-! 		write(*,"(5X,2A15)") "original", "sorted"
-! 		write(*,"(5X,2A15)") "--------", "------"
-! 		do i=1,size(rArray)
-! 			write(*,"(I5,2F15.5)") i, rArray(i), rArray( indexes(i) )
-! 		end do
-! 		
-! 		allocate( iArray(19) )
-! 		
-! 		iArray = [ -35, -33, -35, -35, -31, &
-! 			     -32, -34, -33, -34, -32, &
-! 			     -39, -31, -31, -31, -33, &
-! 			     -31, -33, -33, -30 ]
-! 			     
-! 		call Math_sort( iArray, indexes )
-! 		
-! 		write(*,"(A)") ""
-! 		write(*,"(5X,2A15)") "original", "sorted"
-! 		write(*,"(5X,2A15)") "--------", "------"
-! 		do i=1,size(rArray)
-! 			write(*,"(I5,2I15)") i, iArray(i), iArray( indexes(i) )
-! 		end do
-! 			  
-! 		deallocate( rArray )
-! 		deallocate( iArray )
-! 		deallocate( indexes )
-! 		
-! 		write(*,*) ""
-! 		write(*,*) "3j symbols"
-! 		write(*,*) "=========="
-! 		
-! 		write(*,*) "(3/2  0  3/2;    0  0    0) = ", Math_wigner3j( 1.5_8, 0.0_8, 1.5_8, 0.0_8, 0.0_8, 0.0_8 )
-! 		write(*,*) "(3/2  0  3/2;  1/2  0 -1/2) = ", Math_wigner3j( 1.5_8, 0.0_8, 1.5_8, 0.5_8, 0.0_8,-0.5_8 )
-! 		write(*,*) "(3/2  0  3/2; -1/2  0  1/2) = ", Math_wigner3j( 1.5_8, 0.0_8, 1.5_8,-0.5_8, 0.0_8, 0.5_8 )
-! 		write(*,*) "(3/2  0  3/2;  3/2  0 -3/2) = ", Math_wigner3j( 1.5_8, 0.0_8, 1.5_8, 1.5_8, 0.0_8,-1.5_8 )
-! 		write(*,*) "(3/2  0  3/2; -3/2  0  3/2) = ", Math_wigner3j( 1.5_8, 0.0_8, 1.5_8,-1.5_8, 0.0_8, 1.5_8 )
-		
-		write(*,*) ""
-		write(*,*) "Combinatorial"
-		write(*,*) "============="
-		
-		write(*,*) "Gamma(0.5) = ", Gamma(0.5_8)
-		write(*,*) "log_Gamma(0.5) = ", log_Gamma(0.5_8)
-		write(*,*) "Gamma(7+1) = ", Gamma(8.0_8)
-		write(*,*) "Math_fact(7) = ", Math_fact(7)
-		write(*,*) "Math_comb(7,2) = ", Math_comb(7,2)
-		write(*,*) "Math_multisetNumber(7,2) = ", Math_multisetNumber( 7, 2 )
-		write(*,*) ""
-				
-! 		deallocate( comb )
-		!--------------------------------------------------------
+		call assert_equal_real( Gamma(0.5_8), 1.772453850905516_8, 1e-10_8, "Math_test: Gamma(0.5)" )
+		call assert_equal_real( log_Gamma(0.5_8), 0.572364942924700_8, 1e-10_8, "Math_test: log_Gamma(0.5)" )
+		call assert_equal_real( Gamma(8.0_8), 5040.0_8, 1e-10_8, "Math_test: Gamma(8.0)" )
+		call assert_equal( Math_fact(7), 5040, "Math_test: Math_fact(7)" )
+		call assert_equal( int(Math_comb(7,2)), 21, "Math_test: Math_comb(7,2)" )
+		call assert_equal( int(Math_multisetNumber(7,2)), 28, "Math_test: Math_multisetNumber(7,2)" )
 		
 		allocate( strArray(3) )
 		strArray = ["a", "b", "c"]
 		
-		write(*,*)
-		write(*,"(A,3A2,A)") " set = { ", strArray, "}"
-		write(*,*) "Math_multisetNumber( nElems, 3 ) = "
 		call Math_multisets( 3, 3, iCombOld, myStrConstrain )
-		
-		do i=1,size(iCombOld,dim=1)
-			write(*,"(I5,A)", advance="no") i, ")   "
-			do j=1,3
-				write(*,"(A)", advance="no") trim(strArray( iCombOld(i,j) ))
-			end do
-			write(*,*) ""
-		end do
-		
+		call assert_equal( size(iCombOld, dim=1), 6, "Math_test: size of str multisets" )
 		deallocate( strArray )
 		deallocate( iCombOld )
 		
-		!-----------------------------------------------------------------
 		allocate( MyiArray(3) )
 		MyiArray = [1, 3, 5]
 		
-		write(*,*)
-		write(*,"(A,3I2,A)") " set = { ", MyiArray, " }"
-		write(*,*) "Math_multisetNumber( nElems, 3 ) = ", Math_multisetNumber( 3, 3 )
+		call assert_equal( int(Math_multisetNumber(3,3)), 10, "Math_test: Math_multisetNumber(3,3)" )
 		call Math_multisets( 3, 3, iCombOld, myIntConstrain )
-! 		call Math_multisets( 3, 3, iCombOld, myIntConstrainDebug )
-		
-		do i=1,size(iCombOld,dim=1)
-			write(*,"(I5,A)", advance="no") i, ")   "
-			do j=1,3
-				write(*,"(I1)", advance="no") MyiArray( iCombOld(i,j) )
-			end do
-			write(*,*) ""
-		end do
+		call assert_equal( size(iCombOld, dim=1), 4, "Math_test: size of int multisets" )
 		
 		deallocate( MyiArray )
 		deallocate( iCombOld )
-
-		!--------------------------------------------------------
 		
 		allocate( strArray(8) )
 		strArray = ["H", "C", "CH", "C2", "H2", "C2H", "CH2", "C2H2"]
@@ -1323,54 +1243,31 @@ module Math_
 		allocate( MyiArray(8) )
 		MyiArray = [1, 6, 7, 12, 2, 13, 8, 14]
 		
-		write(*,*)
-		write(*,"(A,<size(strArray)>A5,A)") " set = { ", strArray, " }"
-		
 		k=1
 		do nFrag=1,size(strArray)
 			call Math_multisets( size(strArray), nFrag, iCombOld, myMassConstrain )
 			
 			do i=1,size(iCombOld,dim=1)
-				write(*,"(I5,A)", advance="no") k, ")   "
-				do j=1,nFrag-1
-					write(*,"(A)", advance="no") trim(strArray( iCombOld(i,j) ))//"+"
+				ssum = 0
+				do j=1,nFrag
+					ssum = ssum + MyiArray( iCombOld(i,j) )
 				end do
-				write(*,"(A)", advance="no") trim(strArray( iCombOld(i,nFrag) ))
-				write(*,*) ""
-				
+				call assert_true( ssum <= 14, "Math_test: mass constraint <= 14" )
 				k=k+1
 			end do
 		end do
 		
 		deallocate( strArray )
+		deallocate( MyiArray )
 		deallocate( iCombOld )
 		
-		!--------------------------------------------------------
-		
-! 		x = -0.99999_8
-! 		do while( x < 1.0_8 )
-! 			write(*,*) x, Math_erfinv(x)
-! 			x = x+0.001_8
-! 		end do
-		
-! 		write(*,"(3F15.6)") Math_erfinv(0.5_8), Math_erfinv(0.33_8), Math_erfinv(-1.0_8/3.0_8)
-! 		write(*,"(3F15.6)") 0.4769362762, 0.3013321461, -0.3045701942
-! 		write(*,"(3F15.6)") Math_erfinv(0.5_8)-0.4769362762, Math_erfinv(0.33_8)-0.3013321461, Math_erfinv(-1.0_8/3.0_8)-(-0.3045701942)
-
-		write(*,*) ""
-		write(*,*) "Testing IEEE support"
-		write(*,*) "===================="
-		write(*,*) "isNaN( 2.0 ) = ", Math_isNaN( 2.0_8 )
-		write(*,*) "isNaN( 1.0d500 ) = ", Math_isNaN( 1.0d500 )
-		write(*,*) "isNaN( sqrt(-1.0_8) ) = ", Math_isNaN( sqrt(-1.0_8) )
-		write(*,*) "1.0_8/Math_INF = ", 1.0_8/Math_INF
-		write(*,"(A,F10.5)") "Math_INF = ", Math_INF
-		write(*,*) "isInf( 1.0d56 ) = ", Math_isInf( 1.0d56 )
-		write(*,*) "isInf( 1.0_8/0.0_8 ) = ", Math_isInf( 1.0_8/0.0_8 )
-		write(*,*) "isInf( 1.0_8/0.0_8+10.0_8 ) = ", Math_isInf( 1.0_8/0.0_8+10.0_8 )
-		write(*,*) "isInf( 1.0_8/0.0_8-10.0_8 ) = ", Math_isInf( 1.0_8/0.0_8-10.0_8 )
+		call assert_true( .not. Math_isNaN( 2.0_8 ), "Math_test: isNaN(2.0)" )
+		call assert_true( Math_isNaN( sqrt(-1.0_8) ), "Math_test: isNaN(sqrt(-1))" )
+		call assert_true( .not. Math_isInf( 1.0d56 ), "Math_test: isInf(1.0d56)" )
+		call assert_true( Math_isInf( 1.0_8/0.0_8 ), "Math_test: isInf(1/0)" )
+		call assert_true( Math_isInf( 1.0_8/0.0_8 + 10.0_8 ), "Math_test: isInf(1/0+10)" )
+		call assert_true( Math_isInf( 1.0_8/0.0_8 - 10.0_8 ), "Math_test: isInf(1/0-10)" )
 		
 	end subroutine Math_test
 	
 end module Math_
-

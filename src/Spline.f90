@@ -304,44 +304,27 @@ module Spline_
 	!! @brief
 	!!
 	subroutine Spline_test()
+		use TestUtils_
 		type(IFStream) :: ifile
-		type(OFStream) :: ofile
 		type(RNFunction) :: nFunc
 		type(RNFunction) :: nFuncSmooth
 		type(Spline) :: nFuncSpline
-! 		type(ThrularNumerovMethod) :: solver
-		
-! 		integer :: i
+		integer :: i
 		
 		call ifile.init( "morse.dat" )
 		nFunc = RNFunction( ifile )
-		call nFunc.show()
 		call ifile.close()
 		
 		call nFuncSpline.init( nFunc )
-		call nFuncSpline.show()
 		
-		call ofile.init( "spline.out" )
-		call nFuncSpline.save( ofile )
-		call ofile.close()
+		call assert_equal( nFuncSpline%size, nFunc%nPoints(), "Spline_test: size match" )
+		
+		do i=1,nFunc%nPoints()
+			call assert_true( abs(nFuncSpline%evaluate(nFunc%x(i)) - nFunc%at(i)) < 1e-10_8, "Spline_test: evaluate node" )
+		end do
 		
 		nFuncSmooth = nFuncSpline.smooth( 10 )
-		
-		call ofile.init( "smooth.out" )
-! 		call nFuncSmooth.toFStream( ofile )
-		call ofile.close()
-		
-! 		call solver.init( nFuncSmooth, rMass=0.5_8*34.9689_8*amu )
-! 		call solver.run()
-! 		
-! 		stop
-! 		
-! 		write(*,"(a5,a20,a20)") "\nu", "eigenValue"
-! 		do i=1,solver.nStates
-! 			if ( solver.eigenValue(i) < 0.0_8 ) then
-! 					write(*,"(i5,f20.10)") i, solver.eigenValue(i)
-! 			end if
-! 		end do
+		call assert_equal( nFuncSmooth%nPoints(), nFunc%nPoints() * 10, "Spline_test: smooth size" )
 		
 	end subroutine Spline_test
 	

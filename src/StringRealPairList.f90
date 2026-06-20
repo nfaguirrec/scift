@@ -147,37 +147,15 @@ module StringRealPairList_
 	!! @brief Test method
 	!!
 	subroutine StringRealPairList_test()
+		use TestUtils_
 		type(String) :: str
 		type(StringRealPair) :: mypair
 		type(StringRealPairList) :: mylist
 		class(StringRealPairListIterator), pointer :: iter
 		class(StringRealPairListIterator), pointer :: iterPos
 		
-		integer :: i
-		
-		write(*,*) "------------------------------"
-		write(*,*) "Testing for empty constructor"
-		write(*,*) "-----------------------------"
-		
-		write(*,*) "call mylist.init()"
 		mylist = StringRealPairList()
-		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
-			
-			iter => iter.next
-		end do
-		
-		write(*,*) "-------------------------"
-		write(*,*) "Testing for append method"
-		write(*,*) "-------------------------"
-		
-		write(*,*) "call mylist.append( Hello, 3 )"
-		write(*,*) "call mylist.append( class, 2 )"
-		write(*,*) "call mylist.append( string, 6 )"
-		write(*,*) "call mylist.append( list, 9 )"
-		write(*,*)
+		call assert_equal( mylist%size(), 0, "StringRealPairList_test: empty size" )
 		
 		str = "Hello"
 		call mypair.init( str, 3.0_8 )
@@ -195,21 +173,7 @@ module StringRealPairList_
 		call mypair.init( str, 9.0_8 )
 		call mylist.append( mypair )
 		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
-			
-			iter => iter.next
-		end do
-		write(*,*)
-		
-		write(*,*) "--------------------------"
-		write(*,*) "Testing for prepend method"
-		write(*,*) "--------------------------"
-		
-		write(*,*) "call mylist.prepend( day )"
-		write(*,*) "call mylist.prepend( control )"
-		write(*,*)
+		call assert_equal( mylist%size(), 4, "StringRealPairList_test: size after append" )
 		
 		str = "day"
 		call mypair.init( str, 3.0_8 )
@@ -219,103 +183,56 @@ module StringRealPairList_
 		call mypair.init( str, 2.0_8 )
 		call mylist.prepend( mypair )
 		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
-			
-			iter => iter.next
-		end do
-		write(*,*)
+		call assert_equal( mylist%size(), 6, "StringRealPairList_test: size after prepend" )
 		
-		iter => mylist.begin
-		iter => iter.next
-		
-		write(*,*) "--------------------------"
-		write(*,*) "Testing the access methods"
-		write(*,*) "--------------------------"
-		
-		write(*,*) "mylist.size() = ", mylist.size()
-		
+		! List: control, day, Hello, class, string, list
 		mypair = mylist.at( mylist.begin )
-		write(*,*) "mylist.at( mylist.begin ) = ", mypair.first.fstr, mypair.second
+		call assert_equal( mypair%first%fstr, "control", "StringRealPairList_test: at begin key" )
+		call assert_true( abs(mypair%second - 2.0_8) < 1e-12_8, "StringRealPairList_test: at begin val" )
+		
 		mypair = mylist.at( 1 )
-		write(*,*) "mylist.at( 1 ) = ", mypair.first.fstr, mypair.second
+		call assert_equal( mypair%first%fstr, "control", "StringRealPairList_test: at 1 key" )
 		
 		iter => mylist.begin
 		iter => iter.next
 		iter => iter.next
-		iterPos => iter
-		iter => iter.next
+		iterPos => iter ! points to "Hello", 3.0
+		
 		mypair = mylist.at( iterPos )
-		write(*,*) "iter => mylist.begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iterPos => iter"
-		write(*,*) "mylist.at( iterPos ) = ", mypair.first.fstr, mypair.second
+		call assert_equal( mypair%first%fstr, "Hello", "StringRealPairList_test: at iterPos key" )
+		call assert_true( abs(mypair%second - 3.0_8) < 1e-12_8, "StringRealPairList_test: at iterPos val" )
 		
 		mypair = mylist.at( mylist.end )
-		write(*,*) "mylist.at( mylist.end ) = ", mypair.first.fstr, mypair.second
+		call assert_equal( mypair%first%fstr, "list", "StringRealPairList_test: at end key" )
+		call assert_true( abs(mypair%second - 9.0_8) < 1e-12_8, "StringRealPairList_test: at end val" )
+		
 		mypair = mylist.at( mylist.size() )
-		write(*,*) "mylist.at( mylist.size() ) = ", mypair.first.fstr, mypair.second
-		
-		write(*,*) "--------------------------------"
-		write(*,*) "Testing insert and erase methods"
-		write(*,*) "--------------------------------"
-		
-		write(*,*) "call mylist.insert( iterPos, Prueba )"
+		call assert_equal( mypair%first%fstr, "list", "StringRealPairList_test: at size key" )
 		
 		str = "Prueba"
 		call mypair.init( str, 15.0_8 )
-		call mylist.insert( iterPos, mypair )
+		call mylist.insert( iterPos, mypair ) ! Inserts after iterPos (Hello)
+		call assert_equal( mylist%size(), 7, "StringRealPairList_test: size after insert" )
 		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
-			
-			iter => iter.next
-		end do
-		write(*,*)
+		mypair = mylist.at( 4 )
+		call assert_equal( mypair%first%fstr, "Prueba", "StringRealPairList_test: inserted key" )
+		call assert_true( abs(mypair%second - 15.0_8) < 1e-12_8, "StringRealPairList_test: inserted val" )
 		
-		write(*,*) "iter => mylist.begin"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iter => iter.next"
-		write(*,*) "iterPos => iter"
-		write(*,*) "call mylist.erase( iterPos )"
-		
+		! Reset iterPos to point to index 4 (Prueba)
 		iter => mylist.begin
 		iter => iter.next
 		iter => iter.next
 		iter => iter.next
 		iterPos => iter
+		
 		call mylist.erase( iterPos )
+		call assert_equal( mylist%size(), 6, "StringRealPairList_test: size after erase" )
 		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
-			
-			iter => iter.next
-		end do
-		write(*,*)
-		
-		write(*,*) "--------------------"
-		write(*,*) "Testing clear method"
-		write(*,*) "--------------------"
-		
-		write(*,*) "call mylist.clear()"
+		mypair = mylist.at( 4 )
+		call assert_equal( mypair%first%fstr, "class", "StringRealPairList_test: key after erase" )
 		
 		call mylist.clear()
-		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
-			
-			iter => iter.next
-		end do
-		write(*,*)
-		
-		write(*,*) "call mylist.append( Hello1 aaaaaa )"
-		write(*,*) "call mylist.append( Hello2 bbbbb ccccc )"
+		call assert_equal( mylist%size(), 0, "StringRealPairList_test: size after clear" )
 		
 		str = "Hello1 aaaaaa"
 		call mypair.init( str, 21.0_8 )
@@ -325,16 +242,10 @@ module StringRealPairList_
 		call mypair.init( str, 31.0_8 )
 		call mylist.append( mypair )
 		
-		iter => mylist.begin
-		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second
-			
-			iter => iter.next
-		end do
-		write(*,*)
+		call assert_equal( mylist%size(), 2, "StringRealPairList_test: size after second append" )
 		
-		write(*,*) "call mylist.clear()"
 		call mylist.clear()
+		call assert_equal( mylist%size(), 0, "StringRealPairList_test: size after second clear" )
 		
 	end subroutine StringRealPairList_test
 

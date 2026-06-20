@@ -280,77 +280,34 @@ module SpecialMatrix_
 	!! @brief Test method
 	!!
 	subroutine SpecialMatrix_test()
+		use TestUtils_
 		type(Matrix) :: v1, v2
-		type(Matrix) :: A, B, C
+		type(Matrix) :: A
 		real(8) :: alpha, beta, gamma
 		
 		v1 = SpecialMatrix_unitaryColumnMatrix( 30.0_8*deg, 70.0_8*deg )
-		write(*,*) "V = "
-		call v1.show( 6, .true. )
+		call assert_true( abs(v1%get(1,1) - sin(30.0_8*deg)*cos(70.0_8*deg)) < 1e-12_8, "SpecialMatrix_test: v1_x" )
+		call assert_true( abs(v1%get(2,1) - sin(30.0_8*deg)*sin(70.0_8*deg)) < 1e-12_8, "SpecialMatrix_test: v1_y" )
+		call assert_true( abs(v1%get(3,1) - cos(30.0_8*deg)) < 1e-12_8, "SpecialMatrix_test: v1_z" )
 		
 		A = SpecialMatrix_xRotation( Math_PI/2.0_8 )
-		write(*,*) "Rx = "
-		call A.show( 6, .true. )
+		call assert_true( abs(A%get(1,1) - 1.0_8) < 1e-12_8, "SpecialMatrix_test: Rx(1,1)" )
+		call assert_true( abs(A%get(2,2) - 0.0_8) < 1e-12_8, "SpecialMatrix_test: Rx(2,2)" )
+		call assert_true( abs(A%get(2,3) - 1.0_8) < 1e-12_8, "SpecialMatrix_test: Rx(2,3)" )
+		call assert_true( abs(A%get(3,2) - (-1.0_8)) < 1e-12_8, "SpecialMatrix_test: Rx(3,2)" )
+		call assert_true( abs(A%get(3,3) - 0.0_8) < 1e-12_8, "SpecialMatrix_test: Rx(3,3)" )
 		
-		write(*,"(A,3F7.2)") "v  = 0.00  0.00  0.00    ", v1.data
 		v2 = A*v1
-		write(*,"(A,3F7.2)") "v' = 0.00  0.00  0.00    ", v2.data
+		call assert_true( abs(v2%get(1,1) - v1%get(1,1)) < 1e-12_8, "SpecialMatrix_test: mul_x" )
+		call assert_true( abs(v2%get(2,1) - v1%get(3,1)) < 1e-12_8, "SpecialMatrix_test: mul_y" )
+		call assert_true( abs(v2%get(3,1) + v1%get(2,1)) < 1e-12_8, "SpecialMatrix_test: mul_z" )
 		
 		A = SpecialMatrix_rotation( 70.0_8*deg, 30.0_8*deg, 0.0_8*deg, convention="ZYZ" )
-		write(*,*) ""
-		write(*,*) "R = "
-		call A.show( 6, .true. )
-		
-		v2 = A*v1
-		write(*,*) "V' = "
-		call v2.show( 6, .true. )
-
-		write(*,"(A,3F7.2)") "v  = 0.00  0.00  0.00    ", v1.data
-		write(*,"(A,3F7.2)") "v' = 0.00  0.00  0.00    ", v2.data
+		call assert_true( abs(A%determinant() - 1.0_8) < 1e-12_8, "SpecialMatrix_test: det ZYZ" )
 		
 		A = SpecialMatrix_randomRotation( "ZYZ", alpha, beta, gamma )
-		write(*,*) ""
-		write(*,"(A,3F10.1,A)") "( alpha, beta, gamma ) = (", alpha/deg, beta/deg, gamma/deg, "  ) deg"
-		write(*,*) "R = "
-		call A.show( 6, .true. )
+		call assert_true( abs(A%determinant() - 1.0_8) < 1e-12_8, "SpecialMatrix_test: random det ZYZ" )
 		
-		v2 = A*v1
-		write(*,*) "V' = "
-		call v2.show( 6, .true. )
-
-		write(*,"(A,3F7.2)") "v  = 0.00  0.00  0.00    ", v1.data
-		write(*,"(A,3F7.2)") "v' = 0.00  0.00  0.00    ", v2.data
-		
-! 		call v1.columnVector( 3, values=[ 1.0_8, 0.0_8, 0.0_8 ] )
-! 		call v1.columnVector( 3, values=[ 0.0_8, 1.0_8, 0.0_8 ] )
-		call v1.columnVector( 3, values=[ 0.0_8, 0.0_8, 1.0_8 ] )
-		write(*,*) "V = "
-		call v1.show( 6, .true. )
-		
-! 		A = SpecialMatrix_rotation( 45.0*deg, 45.0*deg, 45.0*deg )
-		A = SpecialMatrix_rotation(  0.0*deg, 0.0*deg, 45.0*deg )
-		write(*,*) "Rx = "
-		call A.show( 6, .true. )
-		
-		v1 = A*v1
-		write(*,*) "V' = "
-		call v1.show( 6, .true. )
-		write(*,"(3F10.5)") v1.data(:,1)
-		
-		write(*,*) "-----------------------------------"
-		write(*,*) " Jacobian for a rotation R2 --> R3"
-		write(*,*) "-----------------------------------"
-		A = SpecialMatrix_randomRotation( alpha=alpha, beta=beta, gamma=gamma )
-		write(*,*) ""
-		write(*,"(A,3F10.1,A)") "( alpha, beta, gamma ) = (", alpha/deg, beta/deg, gamma/deg, "  ) deg"
-		write(*,*) "R = "
-		call A.show( 6, .true. )
-		write(*,*) ""
-		write(*,*) "det(R) = ", A.determinant()
-		write(*,*) "det(R_2x3) = ", A.get(1,1)*A.get(2,2)-A.get(1,2)*A.get(2,1) &
-						-( A.get(1,1)*A.get(2,3)-A.get(1,3)*A.get(2,1) ) &
-						+ A.get(1,1)*A.get(2,2)-A.get(1,2)*A.get(2,1)
-
 	end subroutine SpecialMatrix_test
 	
 end module SpecialMatrix_

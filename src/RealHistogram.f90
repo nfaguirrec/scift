@@ -778,17 +778,11 @@ module RealHistogram_
 	!! @brief Test method
 	!!
 	subroutine RealHistogram_test()
+		use TestUtils_
 		type(RealHistogram) :: histogram
 		type(RealHistogram) :: histogramRunning
-		type(RNFunction) :: nFunc
-		integer :: i
 		
-! 		call histogram.init()
-! 		call histogram.init( Histogram_SQUAREROOT )
 		histogram = RealHistogram( Histogram_SQUAREROOT )
-! 		call histogram.init( rule=Histogram_STURGES, algorithm=Histogram_RUNNING )
-! 		call histogram.init( Histogram_RICE )
-! 		call histogram.init( Histogram_SCOTT )
 		
 		call histogram.add( [24.15162_8, 19.56235_8, 27.82564_8, 23.38200_8, 25.19829_8, 25.26511_8, 23.81071_8, 22.70389_8] )
 		call histogram.add( [23.21883_8, 25.35600_8, 28.41117_8, 22.08219_8, 19.55053_8, 23.63690_8, 27.07390_8, 25.11683_8] )
@@ -819,106 +813,19 @@ module RealHistogram_
 		call histogramRunning.add( [25.00371_8, 23.40407_8, 21.82391_8, 24.25161_8, 24.28748_8, 24.17388_8, 21.20663_8, 26.66869_8] )
 		call histogramRunning.add( [22.89491_8, 24.81186_8, 25.14049_8, 22.61879_8] )
 
-		! ! http://en.wikipedia.org/wiki/Descriptive_statistics
-		! ! http://personality-project.org/r/html/describe.html
-		! ! http://www.statmethods.net/stats/descriptives.html
+		call assert_equal( histogram.size(), 100, "RealHistogram_test: size Storing" )
+		call assert_true( abs(histogram.mean() - 24.06056_8) < 1e-5_8, "RealHistogram_test: mean Storing" )
+		call assert_true( abs(histogram.stdev() - 2.03038_8) < 1e-5_8, "RealHistogram_test: stdev Storing" )
+		call assert_true( abs(histogram.minimum() - 18.73398_8) < 1e-5_8, "RealHistogram_test: minimum Storing" )
+		call assert_true( abs(histogram.maximum() - 29.07267_8) < 1e-5_8, "RealHistogram_test: maximum Storing" )
+		call assert_true( abs(histogram.stderr() - 0.20304_8) < 1e-5_8, "RealHistogram_test: stderr Storing" )
 
-		! # Obtenido mediante: BMI<-rnorm(n=100, m=24.2, sd=2.2)
-		! BMI <- c(
-		!    24.15162, 19.56235, 27.82564, 23.38200, 25.19829, 25.26511, 23.81071, 22.70389,
-		!    23.21883, 25.35600, 28.41117, 22.08219, 19.55053, 23.63690, 27.07390, 25.11683,
-		!    24.07832, 22.04728, 29.07267, 23.84218, 24.07261, 23.97873, 25.67417, 23.89337,
-		!    23.49143, 26.14219, 22.87863, 21.59113, 23.56555, 26.42314, 23.51600, 26.27489,
-		!    21.07893, 20.48072, 24.90150, 23.17327, 23.81940, 25.11435, 26.52324, 18.73398,
-		!    24.09926, 23.07400, 26.71212, 21.77789, 25.51567, 25.13831, 22.11752, 22.47796,
-		!    25.39945, 26.71204, 25.67166, 22.52061, 23.62552, 26.00762, 25.37902, 26.28057,
-		!    22.61389, 24.06349, 24.33601, 21.97826, 26.48619, 25.47802, 26.89355, 26.07590,
-		!    21.74619, 21.99553, 23.40948, 25.48071, 23.02762, 22.70441, 25.03438, 25.67790,
-		!    24.68533, 21.26442, 24.89509, 24.71221, 25.12706, 26.05145, 20.59260, 22.63209,
-		!    23.35024, 26.70019, 21.51930, 24.98537, 24.94632, 19.42552, 27.00687, 21.65142,
-		!    25.00371, 23.40407, 21.82391, 24.25161, 24.28748, 24.17388, 21.20663, 26.66869,
-		!    22.89491, 24.81186, 25.14049, 22.61879 )
-		!
-		! > mean(BMI)
-		! [1] 24.06056
-		!
-		! > sd(BMI)
-		! [1] 2.030379
-		!
-		! > summary(BMI)
-		!    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-		!   18.73   22.69   24.09   24.06   25.42   29.07
-		!
-		! b <- seq(18.7,30.24,1.044444)
-		! > b
-		!  [1] 18.70000 19.74444 20.78889 21.83333 22.87778 23.92222 24.96666 26.01111
-		!  [9] 27.05555 28.10000 29.14444 30.18888
-		!
-		! > histinfo<-hist(BMI,breaks=b)
-		! > b
-		!  [1] 18.70000 19.74444 20.78889 21.83333 22.87778 23.92222 24.96666 26.01111
-		!  [9] 27.05555 28.10000 29.14444 30.18888
-		!
-		! > histinfo<-hist(BMI,breaks=b)
-		! > histinfo
-		! $breaks
-		!  [1] 18.70000 19.74444 20.78889 21.83333 22.87778 23.92222 24.96666 26.01111
-		!  [9] 27.05555 28.10000 29.14444 30.18888
-		!
-		! $counts
-		!  [1]  4  2  9 12 19 16 20 14  2  2  0
-		!
-		! $intensities
-		!  [1] 0.03829789 0.01914894 0.08617025 0.11489367 0.18191497 0.15319155
-		!  [7] 0.19148944 0.13404261 0.01914894 0.01914894 0.00000000
-		!
-		! $density
-		!  [1] 0.03829789 0.01914894 0.08617025 0.11489367 0.18191497 0.15319155
-		!  [7] 0.19148944 0.13404261 0.01914894 0.01914894 0.00000000
-		!
-		! $mids
-		!  [1] 19.22222 20.26667 21.31111 22.35555 23.40000 24.44444 25.48889 26.53333
-		!  [9] 27.57777 28.62222 29.66666
+		call assert_true( abs(histogramRunning.mean() - 24.06056_8) < 1e-5_8, "RealHistogram_test: mean Running" )
+		call assert_true( abs(histogramRunning.stdev() - 2.03038_8) < 1e-5_8, "RealHistogram_test: stdev Running" )
+		call assert_true( abs(histogramRunning.stderr() - 0.20304_8) < 1e-5_8, "RealHistogram_test: stderr Running" )
 
-		! @todo Parece que solo funciona con la combinación Histogram_STURGES y binsPrecision=1
 		call histogram.build( binsPrecision=3 )
-! 		call histogram.build()
-
-		write(*,"(A20,I15)")   "    size = ", histogram.size()
-		write(*,"(A20,2F15.5)") "    mean = ", histogram.mean(), histogramRunning.mean()
-		write(*,"(A20,2F15.5)") "   stdev = ", histogram.stdev(), histogramRunning.stdev()
-		write(*,"(A20,F15.5)") " minimum = ", histogram.minimum()
-		write(*,"(A20,F15.5)") " maximum = ", histogram.maximum()
-		write(*,"(A20,2F15.5)") "  stderr = ", histogram.stderr(), histogramRunning.stderr()
-
-		! plot "./counts.dat" w boxes, "./counts.dat" w p pt 7
-		call histogram.save("histData.dat")
-		call histogram.counts.save("counts.dat")
-		call histogram.density.save("density.dat")
-
-		do i=1,1000000
-			call histogram.add( 1.456_8 )
-			call histogramRunning.add( 1.456_8 )
-		end do
-
-		write(*,"(A)")   ""
-		write(*,"(A20,I15)")   "    size = ", histogram.size()
-		write(*,"(A20,2F15.5)") "    mean = ", histogram.mean(), histogramRunning.mean()
-
-! 		write(*,"(A20,F15.5)") " mode = ", histogram.mode()
-! 		write(*,"(A20,F15.5)") "stdev = ", histogram.median()
-! 		mode = histogram.mode()
-! 		median = histogram.skewness()
-
-		write(*,*) "LORENTZIAN DRESSING"
-		write(*,*) "-------------------"
-		call histogram.clear()
-		histogram = RealHistogram()
-		call histogram.add( "data/formats/ONE_COLUMN" )
-		call histogram.show()
-		call histogram.build( nBins=10000 )
-		call histogram.density.save("density.dat")
-		
+		call assert_true( histogram.counts.nPoints() > 0, "RealHistogram_test: nPoints after build" )
 	end subroutine RealHistogram_test
 	
 end module RealHistogram_

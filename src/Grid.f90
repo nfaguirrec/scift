@@ -850,175 +850,71 @@ module Grid_
 	!! @brief
 	!!
 	subroutine Grid_test()
+		use TestUtils_
 		real(8) :: rMin, rMax
 		integer :: gridSize
 		type(Grid) :: rGrid
 		type(Grid) :: rGrid2
-		
-		integer :: i
+		real(8) :: stepSize
 			
 		rMin=0.0_8
 		rMax=5.0_8
 		gridSize=10
 		
-		call rGrid.init( rMin, rMax, gridSize )
-		call rGrid.show()
+		call rGrid%init( rMin, rMax, gridSize )
+		stepSize = rGrid%stepSize
 		
-		do i=1,rGrid.nPoints
-			write(*,"(i5,f10.5)") i, rGrid.data(i)
-		end do
+		call assert_equal( rGrid%nPoints, 10, "Grid_test: rGrid nPoints" )
+		call assert_equal_real( rGrid%min, 0.0_8, 1e-10_8, "Grid_test: rGrid min" )
+		call assert_equal_real( rGrid%max, 5.0_8, 1e-10_8, "Grid_test: rGrid max" )
 		
-		write(*,*) "---"
-		write(*,*) "Testing copy constructor"
-		write(*,*) "---"
-		call rGrid2.copyGrid( rGrid )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
+		call rGrid2%copyGrid( rGrid )
+		call assert_equal( rGrid2%nPoints, 10, "Grid_test: copyGrid nPoints" )
+		call assert_equal_real( rGrid2%min, 0.0_8, 1e-10_8, "Grid_test: copyGrid min" )
+		call assert_equal_real( rGrid2%max, 5.0_8, 1e-10_8, "Grid_test: copyGrid max" )
 		
-		write(*,*) "===================================================================="
+		! Testing resize dir = +1
+		call rGrid2%resize( 5, +1 )
+		call assert_equal( rGrid2%nPoints, 15, "Grid_test: resize +5 dir +1 nPoints" )
+		call assert_equal_real( rGrid2%min, 0.0_8, 1e-10_8, "Grid_test: resize +5 dir +1 min" )
+		call assert_equal_real( rGrid2%max, 0.0_8 + 14.0_8*stepSize, 1e-10_8, "Grid_test: resize +5 dir +1 max" )
 		
-		call rGrid2.copyGrid( rGrid )
+		call rGrid2%resize( -5, +1 )
+		call assert_equal( rGrid2%nPoints, 10, "Grid_test: resize -5 dir +1 nPoints" )
+		call assert_equal_real( rGrid2%min, 0.0_8, 1e-10_8, "Grid_test: resize -5 dir +1 min" )
+		call assert_equal_real( rGrid2%max, 5.0_8, 1e-10_8, "Grid_test: resize -5 dir +1 max" )
 		
-		write(*,*) ""
-		write(*,*) " Testing resize grid 5, dir = +1 "
-		write(*,*) "---------------------------------"
-		call rGrid2.resize( 5, +1 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
+		! Testing resize dir = -1
+		call rGrid2%resize( 5, -1 )
+		call assert_equal( rGrid2%nPoints, 15, "Grid_test: resize +5 dir -1 nPoints" )
+		call assert_equal_real( rGrid2%min, -5.0_8*stepSize, 1e-10_8, "Grid_test: resize +5 dir -1 min" )
+		call assert_equal_real( rGrid2%max, 5.0_8, 1e-10_8, "Grid_test: resize +5 dir -1 max" )
 		
-		write(*,*) ""
-		write(*,*) " Testing resize grid -5, dir = +1 "
-		write(*,*) "----------------------------------"
-		call rGrid2.resize( -5, +1 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
+		call rGrid2%resize( -5, -1 )
+		call assert_equal( rGrid2%nPoints, 10, "Grid_test: resize -5 dir -1 nPoints" )
+		call assert_equal_real( rGrid2%min, 0.0_8, 1e-10_8, "Grid_test: resize -5 dir -1 min" )
+		call assert_equal_real( rGrid2%max, 5.0_8, 1e-10_8, "Grid_test: resize -5 dir -1 max" )
 		
-		write(*,*) "===================================================================="
-		write(*,*) " TESTING RESIZE"
-		write(*,*) "===================================================================="
+		! Testing resize dir = 0
+		call rGrid2%resize( 5, 0 )
+		call assert_equal( rGrid2%nPoints, 20, "Grid_test: resize +5 dir 0 nPoints" )
+		call assert_equal_real( rGrid2%min, -5.0_8*stepSize, 1e-10_8, "Grid_test: resize +5 dir 0 min" )
 		
-		call rGrid2.copyGrid( rGrid )
+		call rGrid2%resize( -5, 0 )
+		call assert_equal( rGrid2%nPoints, 10, "Grid_test: resize -5 dir 0 nPoints" )
+		call assert_equal_real( rGrid2%min, 0.0_8, 1e-10_8, "Grid_test: resize -5 dir 0 min" )
+		call assert_equal_real( rGrid2%max, 5.0_8, 1e-10_8, "Grid_test: resize -5 dir 0 max" )
 		
-		write(*,*) ""
-		write(*,*) " Testing resize grid 5, dir = -1"
-		write(*,*) "---------------------------------"
-		call rGrid2.resize( 5, -1 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
+		! Testing even/odd points initialization from stepSize
+		call rGrid2%init( rMin, rMax, nPoints=10 )
+		call rGrid2%resize( 5, 0 )
+		call rGrid2%init( rGrid2%min, rGrid2%max, stepSize=rGrid2%stepSize )
+		call assert_equal( rGrid2%nPoints, 20, "Grid_test: even points init from stepSize" )
 		
-		write(*,*) ""
-		write(*,*) " Testing resize grid -5, dir = -1"
-		write(*,*) "----------------------------------"
-		call rGrid2.resize( -5, -1 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) "===================================================================="
-		
-		call rGrid2.copyGrid( rGrid )
-		
-		write(*,*) ""
-		write(*,*) " Testing resize grid 5, dir = 0"
-		write(*,*) "--------------------------------"
-		call rGrid2.resize( 5, 0 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) ""
-		write(*,*) " Testing resize grid -5, dir = 0"
-		write(*,*) "---------------------------------"
-		call rGrid2.resize( -5, 0 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) "===================================================================="
-		write(*,*) " Even number of points"
-		write(*,*) "===================================================================="		
-		
-		call rGrid2.init( rMin, rMax, nPoints=10 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) ""
-		write(*,*) " Resized grid "
-		write(*,*) "--------------"
-		call rGrid2.resize( 5, 0 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) ""
-		write(*,*) " Generated grid from nPoints"
-		write(*,*) "-----------------------------"
-		call rGrid2.init( rGrid2.min, rGrid2.max, rGrid2.nPoints )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) ""
-		write(*,*) " Generated grid from stepSize"
-		write(*,*) "------------------------------"
-		call rGrid2.init( rGrid2.min, rGrid2.max, stepSize=rGrid2.stepSize )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) "===================================================================="
-		write(*,*) " Odd number of points"
-		write(*,*) "===================================================================="		
-		
-		call rGrid2.init( rMin, rMax, nPoints=11 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) ""
-		write(*,*) " Resized grid "
-		write(*,*) "--------------"
-		call rGrid2.resize( 5, 0 )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) ""
-		write(*,*) " Generated grid from nPoints"
-		write(*,*) "-----------------------------"
-		call rGrid2.init( rGrid2.min, rGrid2.max, rGrid2.nPoints )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-		
-		write(*,*) ""
-		write(*,*) " Generated grid from stepSize"
-		write(*,*) "------------------------------"
-		call rGrid2.init( rGrid2.min, rGrid2.max, stepSize=rGrid2.stepSize )
-		call rGrid2.show()
-		do i=1,rGrid2.nPoints
-			write(*,"(i5,f10.5)") i, rGrid2.data(i)
-		end do
-
+		call rGrid2%init( rMin, rMax, nPoints=11 )
+		call rGrid2%resize( 5, 0 )
+		call rGrid2%init( rGrid2%min, rGrid2%max, stepSize=rGrid2%stepSize )
+		call assert_equal( rGrid2%nPoints, 21, "Grid_test: odd points init from stepSize" )
 	end subroutine Grid_test
 	
 end module Grid_

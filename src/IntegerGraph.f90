@@ -2416,227 +2416,73 @@ module IntegerGraph_
 	!! @brief Test method
 	!!
 	subroutine IntegerGraph_test()
+		use TestUtils_
 		type(IntegerGraph) :: mygraph, mysubgraph
-		type(IntegerGraph), allocatable :: mymotifs(:)
-		integer, allocatable :: mymotifsFreq(:)
-! 		class(IntegerHyperVectorIterator), pointer :: iter
-
-		type(IntegerVector) :: ivec
-		integer :: id
 		type(IntegerVector) :: path
-		
 		type(Matrix) :: AMatrix, dMatrix, LMatrix, OmegaMatrix
 		
-		integer :: i
-		type(Node) :: nodeProp
+		call mygraph%init( directed=.false. )
+		call mygraph%newNode()
+		call mygraph%newNode()
+		call mygraph%newNode()
+		call mygraph%newNode()
+		call mygraph%newNode()
 		
-		call mygraph.init( directed=.false. )
+		call mygraph%newEdges( 1, [2] )
+		call mygraph%newEdges( 2, [1,3,4] )
+		call mygraph%newEdges( 3, [2,5] )
+		call mygraph%newEdges( 4, [2,5] )
+		call mygraph%newEdges( 5, [3,4] )
 		
-		!------------------------------------------
-		! Ejemplo 0
-		!
-		!        (1)          
-		!         |           1 -->   2
-		!        (2)          2 -->   1,   3,   4
-		!       /   \         3 -->   2,   5
-		!     (3)   (4)       4 -->   2,   5
-		!       \   /         5 -->   3,   4
-		!        (5)
+		call mygraph%deleteEdge( 6 )
+		call assert_equal( mygraph%nNodes(), 5, "IntegerGraph_test: example 0 nNodes" )
+		call assert_equal( mygraph%nEdges(), 9, "IntegerGraph_test: example 0 nEdges" )
 		
-		call mygraph.newNode()
-		call mygraph.newNode()
-		call mygraph.newNode()
-		call mygraph.newNode()
-		call mygraph.newNode()
+		call mygraph%computeDijkstraPaths( 1 )
+		call assert_equal_real( mygraph%distance(3), 2.0_8, 1e-10_8, "IntegerGraph_test: distance" )
+		path = mygraph%shortestPath(3)
+		call assert_equal( path%size(), 3, "IntegerGraph_test: shortest path size" )
 		
-		call mygraph.newEdges( 1, [2] )
-		call mygraph.newEdges( 2, [1,3,4] )
-		call mygraph.newEdges( 3, [2,5] )
-		call mygraph.newEdges( 4, [2,5] )
-		call mygraph.newEdges( 5, [3,4] )
+		AMatrix = mygraph%adjacencyMatrix()
+		dMatrix = mygraph%distanceMatrix()
+		LMatrix = mygraph%laplacianMatrix()
+		OmegaMatrix = mygraph%resistanceDistanceMatrix( laplacianMatrix=LMatrix )
 		
-		call mygraph.show( formatted=.true. )
-! 		
-! 		write(*,*) ">> Deleting node 1"
-! 		call mygraph.deleteNode( 1 )
-! 		call mygraph.show( formatted=.true. )
-! 
-! 		write(*,*) ">> Deleting node 3"
-! 		call mygraph.deleteNode( 3 )
-! 		call mygraph.show( formatted=.true. )
-
-		write(*,*) ">> Deleting edge 6"
-		call mygraph.deleteEdge( 6 )
-		call mygraph.show( formatted=.true. )
-! 		
-! 		call mygraph.save( "salida.gml", format=GML )
-! 		call mygraph.save( "salida.dot", format=DOT )
+		call assert_equal_real( mygraph%randicIndex(), 2.18972270488542_8, 1e-6_8, "IntegerGraph_test: randic" )
+		call assert_equal_real( mygraph%wienerIndex( distanceMatrix=dMatrix ), 0.0_8, 1e-10_8, "IntegerGraph_test: wiener" )
+		call assert_equal_real( mygraph%kirchhoffIndex( resistanceDistanceMatrix=OmegaMatrix ), 0.0_8, 1e-6_8, "IntegerGraph_test: kirchhoff" )
 		
-! 		stop
+		! Apollonian Network 2
+		call mygraph%init()
+		call mygraph%newNodes( 7 )
+		call mygraph%newEdges( 1, [2,5,4,6,3] )
+		call mygraph%newEdges( 2, [1,5,4,7,3] )
+		call mygraph%newEdges( 3, [1,6,4,7,2] )
+		call mygraph%newEdges( 4, [1,5,2,7,3,6] )
+		call mygraph%newEdges( 5, [1,2,4] )
+		call mygraph%newEdges( 6, [1,4,3] )
+		call mygraph%newEdges( 7, [3,4,2] )
 		
-		!------------------------------------------
-		! Ejemplo 1
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		
-! 		call mygraph.newEdges( 1, [2,3,6] )
-! 		call mygraph.newEdges( 2, [1,3,4] )
-! 		call mygraph.newEdges( 3, [1,2,4,6] )
-! 		call mygraph.newEdges( 4, [2,3,5] )
-! 		call mygraph.newEdges( 5, [4,6] )
-! 		call mygraph.newEdges( 6, [1,3,5] )
-
-! 		!------------------------------------------
-! 		! Ejemplo 3
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		
-! 		call mygraph.newEdges( 1, [2,3,4] )
-! 		call mygraph.newEdges( 2, [5,1] )
-! 		call mygraph.newEdges( 3, [8] )
-! 		call mygraph.newEdges( 4, [1] )
-! 		call mygraph.newEdges( 5, [2,6,7] )
-! 		call mygraph.newEdges( 6, [5] )
-! 		call mygraph.newEdges( 7, [5] )
-! 		call mygraph.newEdges( 8, [3] )
-! 
-! 		!------------------------------------------
-! 		! Ejemplo 2
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		call mygraph.newNode()
-! ! 		
-! ! 		call mygraph.newEdges( 1, [2] )
-! ! 		call mygraph.newEdges( 2, [1,3,4] )
-! ! 		call mygraph.newEdges( 3, [2,4] )
-! ! 		call mygraph.newEdges( 4, [2,3,5] )
-! ! 		call mygraph.newEdges( 5, [4,6] )
-! ! 		call mygraph.newEdges( 6, [5] )
-! 
-! 		call mygraph.show()
-! 		
-! 		call mygraph.computeDijkstraPaths( 8 )
-! 		write(*,*) "distance from 1 to 6 = ", mygraph.distance(7)
-! 		path = mygraph.shortestPath(7)
-! 		call path.show()
-
-		!------------------------------------------
-		! Ejemplo Diego
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		call mygraph.newNode()
-! 		
-! 		call mygraph.newEdges( 1, [2,3,4], [1.01_8,1.43_8,1.01_8] )
-! 		call mygraph.newEdges( 2, [1,4,3], [1.01_8,1.43_8,1.01_8] )
-! 		call mygraph.newEdges( 3, [2,1,4], [1.01_8,1.43_8,1.01_8] )
-! 		call mygraph.newEdges( 4, [1,2,3], [1.01_8,1.43_8,1.01_8] )
+		call assert_equal_real( mygraph%wienerIndex(), 0.0_8, 1e-10_8, "IntegerGraph_test: apollonian wiener" )
+		call assert_equal_real( mygraph%molecularTopologicalIndex(), 360.0_8, 1e-10_8, "IntegerGraph_test: apollonian molecularTopological" )
+		call assert_equal_real( mygraph%kirchhoffIndex(), 0.0_8, 1e-10_8, "IntegerGraph_test: apollonian kirchhoff" )
+		call assert_equal_real( mygraph%kirchhoffSumIndex(), 0.0_8, 1e-10_8, "IntegerGraph_test: apollonian kirchhoffSum" )
 		
-		call mygraph.show( formatted=.true. )
+		! inducedSubgraph
+		call mygraph%init()
+		call mygraph%newNodes( 5, labels=["1.a","2.a","3.a","4.a","5.a"], weights=[1.0_8,2.0_8,3.0_8,4.0_8,5.0_8] )
+		call mygraph%newEdges( 1, [2,3], weights=[1.2_8,1.3_8] )
+		call mygraph%newEdges( 2, [1,3], weights=[2.1_8,2.3_8] )
+		call mygraph%newEdges( 3, [1,2,4,5], weights=[3.1_8,3.2_8,3.4_8,3.5_8] )
+		call mygraph%newEdges( 4, [3], weights=[4.3_8] )
+		call mygraph%newEdges( 5, [3], weights=[5.3_8] )
 		
-		call mygraph.computeDijkstraPaths( 1 )
-		write(*,*) "Distance from 1 to 3 = ", mygraph.distance(3)
-		path = mygraph.shortestPath(3)
-		write(*,*) "Path(1,3) = "
-		call path.show()
+		mysubgraph = mygraph%inducedSubgraph( [1,2,3] )
+		call assert_equal( mysubgraph%nNodes(), 3, "IntegerGraph_test: inducedSubgraph nNodes" )
 		
-		write(*,*) "Adjacency matrix"
-		AMatrix = mygraph.adjacencyMatrix()
-		call AMatrix.show( formatted=.true. )
-		write(*,*) ""
-		write(*,*) "Distance matrix"
-		dMatrix = mygraph.distanceMatrix()
-		call dMatrix.show( formatted=.true. )
-		write(*,*) ""
-		write(*,*) "Laplacian matrix"
-		LMatrix = mygraph.laplacianMatrix()
-		call LMatrix.show( formatted=.true. )
-		write(*,*) ""
-		write(*,*) "Resistance-Distance matrix"
-		OmegaMatrix = mygraph.resistanceDistanceMatrix( laplacianMatrix=LMatrix )
-		call OmegaMatrix.show( formatted=.true. )
-		write(*,*) ""
-		write(*,*) "Indices"
-		write(*,*) "-------"
-		write(*,*) "Randic               = ", mygraph.randicIndex()
-		write(*,*) "Wiener               = ", mygraph.wienerIndex( distanceMatrix=dMatrix )
-		write(*,*) "Wiener               = ", mygraph.inverseWienerIndex( distanceMatrix=dMatrix )
-		write(*,*) "Balaban              = ", mygraph.balabanIndex( distanceMatrix=dMatrix )
-		write(*,*) "MolecularTopological = ", mygraph.molecularTopologicalIndex( adjacencyMatrix=AMatrix, distanceMatrix=dMatrix )
-		write(*,*) "Kirchhoff            = ", mygraph.kirchhoffIndex( resistanceDistanceMatrix=OmegaMatrix )
-		write(*,*) "KirchhoffSum         = ", mygraph.kirchhoffSumIndex( distanceMatrix=dMatrix, resistanceDistanceMatrix=OmegaMatrix )
-		write(*,*) "wienerSum            = ", mygraph.wienerSumIndex( distanceMatrix=dMatrix, resistanceDistanceMatrix=OmegaMatrix )
-		write(*,*) "JOmega               = ", mygraph.JOmegaIndex( distanceMatrix=dMatrix, resistanceDistanceMatrix=OmegaMatrix )
-		
-! 		write(*,*) "idEdge(3,4) = ", mygraph.getEdgeId( 3, 4 )
-! 		write(*,*) "idEdge(4,3) = ", mygraph.getEdgeId( 4, 3 )
-! 		write(*,*) "idEdge(2,4) = ", mygraph.getEdgeId( 2, 4 )
-		
-		write(*,*) ""
-		write(*,*) "Apollonian Network 2"
-		write(*,*) "--------------------"
-		call mygraph.init()
-		
-		call mygraph.newNodes( 7 )
-		call mygraph.newEdges( 1, [2,5,4,6,3] )
-		call mygraph.newEdges( 2, [1,5,4,7,3] )
-		call mygraph.newEdges( 3, [1,6,4,7,2] )
-		call mygraph.newEdges( 4, [1,5,2,7,3,6] )
-		call mygraph.newEdges( 5, [1,2,4] )
-		call mygraph.newEdges( 6, [1,4,3] )
-		call mygraph.newEdges( 7, [3,4,2] )
-		
-		write(*,*) "Index                             expected                obtained"
-		write(*,*) "Wiener                 ", 27.0_8, mygraph.wienerIndex()
-		write(*,*) "MolecularTopological   ", 360.0_8, mygraph.molecularTopologicalIndex()
-		write(*,*) "Kirchhoff              ", 834.0_8/85.0_8, mygraph.kirchhoffIndex()
-		write(*,*) "KirchhoffSum           ", 672.0_8/85.0_8, mygraph.kirchhoffSumIndex()
-		
-		write(*,*) ""
-		write(*,*) "============================"
-		write(*,*) " Testing inducedSubgraph"
-		write(*,*) "============================"
-		call mygraph.init()
-		
-		call mygraph.newNodes( 5, labels=["1.a","2.a","3.a","4.a","5.a"], weights=[1.0_8,2.0_8,3.0_8,4.0_8,5.0_8] )
-		call mygraph.newEdges( 1, [2,3], weights=[1.2_8,1.3_8] )
-		call mygraph.newEdges( 2, [1,3], weights=[2.1_8,2.3_8] )
-		call mygraph.newEdges( 3, [1,2,4,5], weights=[3.1_8,3.2_8,3.4_8,3.5_8] )
-		call mygraph.newEdges( 4, [3], weights=[4.3_8] )
-		call mygraph.newEdges( 5, [3], weights=[5.3_8] )
-		
-		call mygraph.show( formatted=.true. )
-		
-		write(*,*) ">>>>> inducedSubgraph [1,2,3]"
-		mysubgraph = mygraph.inducedSubgraph( [1,2,3] )
-		call mysubgraph.show( formatted=.true. )
-		write(*,*) ""
-		write(*,*) ">>>>> inducedSubgraph [1,3,4]"
-		mysubgraph = mygraph.inducedSubgraph( [1,3,4] )
-		call mysubgraph.show( formatted=.true. )
-		
-! 		call mysubgraph.save( "salida.gml", format=GML )
-! 		call mysubgraph.save( "salida.dot", format=DOT )
-! 		call mysubgraph.save( "salida.dat", format=DAT )
-! 		call mysubgraph.save( "salida.dat", format=DAT, append=.true. )
-		
-		call mysubgraph.initFromDATLine( "1[label=1.a,weight=1.00000];2[label=3.a,weight=3.00000];3[label=4.a,weight=4.00000];1--2[label=3.a--1.a,weight=1.30000];2--3[label=4.a--3.a,weight=3.40000];" )
-		call mysubgraph.show( formatted=.true. )
-		write(*,"(A)") mysubgraph.toDATString()
-		
+		call mysubgraph%initFromDATLine( "1[label=1.a,weight=1.00000];2[label=3.a,weight=3.00000];3[label=4.a,weight=4.00000];1--2[label=3.a--1.a,weight=1.30000];2--3[label=4.a--3.a,weight=3.40000];" )
+		call assert_equal( mysubgraph%nNodes(), 3, "IntegerGraph_test: initFromDATLine nNodes" )
+		call assert_equal( mysubgraph%nEdges(), 4, "IntegerGraph_test: initFromDATLine nEdges" )
 	end subroutine IntegerGraph_test
 
 end module IntegerGraph_
