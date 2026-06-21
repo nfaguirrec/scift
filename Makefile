@@ -1,39 +1,33 @@
 MAKEFLAGS = -s
+FC = ifort
+GFCFLAGS = -w -I. -I/home/aguirre/Software/miniconda3/envs/python3.10/include -I/usr/include -cpp -O3 -g -fPIC -fdec-structure -ffree-line-length-none
+GLDFLAGS = -L. -lscift -L/home/aguirre/Software/miniconda3/envs/python3.10/lib -L/usr/lib -Wl,-rpath,/home/aguirre/Software/miniconda3/envs/python3.10/lib -lfftw3 -lopenblas -llapack
+IFCFLAGS = -w -I. -O3 -g -fPIC -fpp -mkl
+ILDFLAGS = -L. -lscift
+TLIB = 
 
-all:
-	cd src; make; cd ..
-	cd examples; make; cd ..
+ifeq ($(findstring gfortran,$(FC)),gfortran)
+    FCFLAGS = $(GFCFLAGS)
+    LDFLAGS = $(GLDFLAGS)
+else
+    FCFLAGS = $(IFCFLAGS)
+    LDFLAGS = $(ILDFLAGS)
+endif
+
+all: build_src  $(TLIB) 
+
+build_src: src
+	make -C src
+	echo 'Building source dir src'
 
 clean:
-	cd src; make clean
-	cd examples; make clean
-	
-install: src/libscift.a
-	echo ''
-	echo -n 'Installing scift in ${HOME}/Software/scift ... '
-	mkdir -p ${HOME}/Software/scift/finclude/
-	cp src/*.mod ${HOME}/Software/scift/finclude/
-	cp src/lib*.a ${HOME}/Software/scift/
-	cp src/*.mod ${HOME}/Software/scift/finclude/
-	cp -r utils ${HOME}/Software/scift/
-	mkdir -p ${HOME}/Software/scift/bin
-	find examples/ -executable -type f -exec cp {} ${HOME}/Software/scift/bin/ \;
-	echo 'OK'
-	echo ''
-	echo '-----------------------------------------------------------------'
-	echo ' Append the next lines into ~/.bashrc file'
-	echo '-----------------------------------------------------------------'
-	echo ''
-	echo ' export PATH=$$PATH:$$HOME/Software/scift/bin'
-	echo ' export PATH=$$PATH:$$HOME/Software/scift/utils'
-	echo ' export LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$$HOME/Software/scift/'
-	echo '-----------------------------------------------------------------'
+	rm -f *.o *.mod *~ .deps $(TLIB) 2> /dev/null
 
-uninstall: ${HOME}/Software/scift/libscift.a
-	echo -n 'Uninstalling scift from ${HOME}/Software/scift ... '
-	rm -rf ${HOME}/Software/scift
-	echo 'OK'
+distclean:
+	rm -f *.o *.mod *~ .deps Makefile $(TLIB) 2> /dev/null
 
-doc: doxyfile doc/style.css src/libscift.a
-	cp -r doc/images/ doc/html/
-	doxygen doxyfile
+Makefile: .deps
+	fmake
+
+.deps:
+	fmake

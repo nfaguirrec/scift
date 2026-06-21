@@ -150,8 +150,8 @@ getDepLine()
 	local programName=""
 	
 	sed -r '{s/^[[:space:]]+//g;s/[[:space:]]+$//g;s/[[:space:]]+/ /g;s/_[[:blank:],]*.*$//g}' $1 > .tmp.f90
-	moduleName=`grep -E "^[[:blank:]]*end[[:blank:]]+module[[:blank:]]+.*$" .tmp.f90 | gawk '{printf "%s",$3}'`
-	programName=`grep -E "^[[:blank:]]*end[[:blank:]]+program[[:blank:]]+.*$" .tmp.f90 | gawk '{printf "%s",$3}'`
+	moduleName=`grep -E "^[[:blank:]]*end[[:blank:]]+module[[:blank:]]+.*$" .tmp.f90 2> /dev/null | gawk '{printf "%s",$3}'`
+	programName=`grep -E "^[[:blank:]]*end[[:blank:]]+program[[:blank:]]+.*$" .tmp.f90 2> /dev/null | gawk '{printf "%s",$3}'`
 	rm .tmp.f90
 	
 	if [ -z "$moduleName" -a -z "$programName" ]
@@ -240,7 +240,7 @@ checkChangesInDeps()
 	
 	if [ -f .deps ]
 	then
-		grep -E "^[[:blank:]]*use[[:blank:]]+.*_[[:blank:],]*.*$" *.f90 \
+		grep -E "^[[:blank:]]*use[[:blank:]]+.*_[[:blank:],]*.*$" *.f90 2> /dev/null \
 			| sed -r '{s/[[:blank:]]+/ /g;/^[[:blank:]]*$/d;s/_[[:blank:],]*.*$//g}' > .deps2
 		diffDeps="`diff -q .deps .deps2`"
 		
@@ -257,7 +257,7 @@ checkChangesInDeps()
 			exit
 		fi
 	else
-		grep -E "^[[:blank:]]*use[[:blank:]]+.*_[[:blank:],]*.*$" *.f90 \
+		grep -E "^[[:blank:]]*use[[:blank:]]+.*_[[:blank:],]*.*$" *.f90 2> /dev/null \
 			| sed -r '{s/[[:blank:]]+/ /g;/^[[:blank:]]*$/d;s/_[[:blank:],]*.*$//g}' > .deps
 	fi
 
@@ -368,7 +368,8 @@ main()
 		echo "OK"
 	done
 
-	objectsToLib=`grep -E "^[[:blank:]]*end[[:blank:]]+module[[:blank:]]+.*$" *.f90 | gawk 'BEGIN{FS="."}{printf "%s.o ", $1}'`
+	objectsToLib=`grep -E "^[[:blank:]]*end[[:blank:]]+module[[:blank:]]+.*$" *.f90 2> /dev/null | gawk 'BEGIN{FS="."}{printf "%s.o ", $1}'`
+	[ -d "src" ] && addsrc="build_src"
 	
 	if [ -z "$TLIB" -a ! -f ".programs" ]
 	then
@@ -378,12 +379,20 @@ main()
 
 	mv depends.Po depends.Po.tmp
 		
-	echo "all: $objectsToLib \$(TLIB) `cat .programs 2>/dev/null`" > depends.Po
+	echo "all: $addsrc $objectsToLib \$(TLIB) `cat .programs 2>/dev/null`" > depends.Po
 		
 	echo "" >> depends.Po
 	cat depends.Po.tmp >> depends.Po
 	rm depends.Po.tmp
 	
+	if [ -n "$addsrc" ]
+	then
+		echo "build_src: src" >> depends.Po
+		echo -e "\tmake -C src" >> depends.Po
+		echo -e "\techo 'Building source dir src'" >> depends.Po
+		echo "" >> depends.Po
+	fi
+
 	if [ -n "$TLIB" ]
 	then
 		echo "\$(TLIB): $objectsToLib" >> depends.Po

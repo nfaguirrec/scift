@@ -1,5 +1,5 @@
 MAKEFLAGS = -s
-FC = gfortran
+FC = ifort
 GFCFLAGS = -w -I. -I/home/aguirre/Software/miniconda3/envs/python3.10/include -I/usr/include -cpp -O3 -g -fPIC -fdec-structure -ffree-line-length-none
 GLDFLAGS = -L. -lscift -L/home/aguirre/Software/miniconda3/envs/python3.10/lib -L/usr/lib -Wl,-rpath,/home/aguirre/Software/miniconda3/envs/python3.10/lib -lfftw3 -lopenblas -llapack
 IFCFLAGS = -w -I. -O3 -g -fPIC -fpp -mkl
@@ -14,7 +14,7 @@ else
     LDFLAGS = $(ILDFLAGS)
 endif
 
-all: Atom.o AtomicElementsDB.o BlocksIFileParser.o CNFunction2D.o CNFunction3D.o CNFunction.o CommandLineParser.o Edge.o EdgeVector.o ElementsDB.o FFTW3.o FourierGridDiagonalization.o FourierTransform2D.o FourierTransform3D.o FourierTransform.o GaborTransform.o GOptions.o Grid2D.o Grid3D.o GridBase.o Grid.o GridND.o IntegerGraph.o IntegerHyperList.o IntegerHyperVector.o IntegerList.o IntegerVector.o IOStream.o IterativeAlgorithm.o IVector.o Math.o MathFormula.o MathParser.o Matrix.o MDIntegrator.o MoldenParser.o Molecule.o Morse.o NDerivator.o NIntegrator.o Node.o NodeVector.o NPeakFinder.o NPotentialEnergyCurve.o RandomSampler.o RandomUtils.o RealHistogram.o RealList.o RealVector.o RNFunction2D.o RNFunction3D.o RNFunction.o RVector.o SpecialAtomsPair.o SpecialMatrix.o Spline.o String.o StringHistogram.o StringIntegerMap.o StringIntegerPair.o StringIntegerPairList.o StringList.o StringRealHistogramMap.o StringRealHistogramPair.o StringRealHistogramPairList.o StringRealMap.o StringRealPair.o StringRealPairList.o Table.o TestUtils.o ThrularNumerovMethod.o Timer.o UnitsConverter.o  $(TLIB) 
+all:  Atom.o AtomicElementsDB.o BlocksIFileParser.o CNFunction2D.o CNFunction3D.o CNFunction.o CommandLineParser.o Edge.o EdgeVector.o ElementsDB.o FFTW3.o FourierGridDiagonalization.o FourierTransform2D.o FourierTransform3D.o FourierTransform.o GaborTransform.o GOptions.o Grid2D.o Grid3D.o GridBase.o Grid.o GridND.o IntegerGraph.o IntegerHyperList.o IntegerHyperVector.o IntegerList.o IntegerVector.o IOStream.o IterativeAlgorithm.o IVector.o Math.o MathFormula.o MathParser.o Matrix.o MDIntegrator.o MoldenParser.o Molecule.o Morse.o NDerivator.o NIntegrator.o Node.o NodeVector.o NPeakFinder.o NPotentialEnergyCurve.o RandomSampler.o RandomUtils.o RealHistogram.o RealList.o RealVector.o RNFunction2D.o RNFunction3D.o RNFunction.o RVector.o SpecialAtomsPair.o SpecialMatrix.o Spline.o String.o StringHistogram.o StringIntegerMap.o StringIntegerPair.o StringIntegerPairList.o StringList.o StringRealHistogramMap.o StringRealHistogramPair.o StringRealHistogramPairList.o StringRealMap.o StringRealPair.o StringRealPairList.o Table.o TestUtils.o ThrularNumerovMethod.o Timer.o UnitsConverter.o  $(TLIB) 
 
 Atom.o atom_.mod: Atom.f90 atomicelementsdb_.mod specialatomspair_.mod goptions_.mod timer_.mod unitsconverter_.mod iostream_.mod string_.mod
 	fmake
