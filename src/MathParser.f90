@@ -2,7 +2,7 @@
 !!                                                                                   !!
 !!  This file is part of SciFT project                                               !!
 !!  Copyright (c) 2011-2013 Nestor F. Aguirre (nfaguirrec@gmail.com)                 !!
-!!  Copyright (c) 2000-2008 Roland Schmehl (roland.schmehl@alumni.uni-karlsruhe.de)  !!
+!!  Copyright (c) 2000-2008 Roland Schmehl (roland%schmehl@alumni%uni-karlsruhe%de)  !!
 !!                                                                                   !!
 !!  Redistribution and use in source and binary forms, with or without               !!
 !!  modification, are permitted provided that the following conditions are met:      !!
@@ -38,7 +38,7 @@
 !!**********************************************************************************
 !!                                                                                 !
 !!    (2000-2008) Roland Schmehl                                                   !
-!!                roland.schmehl@alumni.uni-karlsruhe.de                           !
+!!                roland%schmehl@alumni%uni-karlsruhe%de                           !
 !!                                                                                 !
 !!    This software is distributable under the BSD license. See the terms of the   !
 !!    BSD license in the documentation provided with this software.                !
@@ -52,14 +52,14 @@
 !!    the set of function strings into byte code, which is interpreted efficiently !
 !!    for the various variable values.                                             !
 !!                                                                                 !
-!!    The source code is available from http://fparser.sourceforge.net             !
+!!    The source code is available from http://fparser%sourceforge%net             !
 !!                                                                                 !
 !!    Please send comments, corrections or questions to the author:                !
-!!    Roland Schmehl <roland.schmehl@alumni.uni-karlsruhe.de>                      !
+!!    Roland Schmehl <roland%schmehl@alumni%uni-karlsruhe%de>                      !
 !!                                                                                 !
 !!    The function parser concept is based on a C++ class library written by       !
-!!    Juha Nieminen <warp@iki.fi> available from:                                  !
-!!    http://warp.povusers.org/FunctionParser/                                     !
+!!    Juha Nieminen <warp@iki%fi> available from:                                  !
+!!    http://warp%povusers%org/FunctionParser/                                     !
 !!                                                                                 !
 !!**********************************************************************************
 
@@ -111,8 +111,8 @@ module MathParser_
 		    'tanh  ', 'sin   ', 'cos   ', 'tan   ', 'asin  ', 'acos  ', 'atan  ', &
 		    'sgn   ', 'ceil  ', 'floor ', 'ustep ', 'ubox  ' ]
 		     
-	character(*), parameter :: ERROR_MESSAGE(4) &
-		 = [ 'Division by zero', 'Argument of SQRT negative', &
+	character(32), parameter :: ERROR_MESSAGE(4) &
+		 = [ character(32) :: 'Division by zero', 'Argument of SQRT negative', &
 		   'Argument of LOG negative', 'Argument of ASIN or ACOS illegal' ]
 	
 	type, public :: MathParser
@@ -153,9 +153,9 @@ module MathParser_
 	subroutine initDefault( this )
 		class(MathParser) :: this
 		
-		nullify( this.bytecode )
-		nullify( this.immed )
-		nullify( this.stack )
+		nullify( this%bytecode )
+		nullify( this%immed )
+		nullify( this%stack )
 	end subroutine initDefault
 	
 	!>
@@ -175,10 +175,10 @@ module MathParser_
 	subroutine destroy( this )
 		type(MathParser) :: this
 		
-		if( associated(this.bytecode) ) deallocate( this.bytecode )
-		if( associated(this.immed) ) deallocate( this.immed )
-		if( associated(this.stack) ) deallocate( this.stack )
-		if( allocated(this.funcPosition) ) deallocate( this.funcPosition )
+		if( associated(this%bytecode) ) deallocate( this%bytecode )
+		if( associated(this%immed) ) deallocate( this%immed )
+		if( associated(this%stack) ) deallocate( this%stack )
+		if( allocated(this%funcPosition) ) deallocate( this%funcPosition )
 	end subroutine destroy
 	
 	!>
@@ -219,107 +219,107 @@ module MathParser_
 		
 		DP = 1
 		SP = 0
-		do IP=1,this.ByteCodeSize
-			select case( this.ByteCode(IP) )
+		do IP=1,this%ByteCodeSize
+			select case( this%ByteCode(IP) )
 				case( C_IMMED )
 					SP=SP+1
-					this.stack(SP) = this.Immed(DP)
+					this%stack(SP) = this%Immed(DP)
 					DP = DP+1
 				case( C_NEG )
-					this.stack(SP) = -this.stack(SP)
+					this%stack(SP) = -this%stack(SP)
 				case( C_ADD )
-					this.stack(SP-1) = this.stack(SP-1)+this.stack(SP)
+					this%stack(SP-1) = this%stack(SP-1)+this%stack(SP)
 					SP = SP-1
 				case( C_SUB )
-					this.stack(SP-1) = this.stack(SP-1)-this.stack(SP)
+					this%stack(SP-1) = this%stack(SP-1)-this%stack(SP)
 					SP = SP-1
 				case( C_MUL )
-					this.stack(SP-1) = this.stack(SP-1)*this.stack(SP)
+					this%stack(SP-1) = this%stack(SP-1)*this%stack(SP)
 					SP = SP-1
 				case( C_DIV )
-					if( this.stack(SP) == ZERO ) then
-						this.error = 1
+					if( this%stack(SP) == ZERO ) then
+						this%error = 1
 						res = ZERO
 						return
 					endif
-					this.stack(SP-1) = this.stack(SP-1)/this.stack(SP)
+					this%stack(SP-1) = this%stack(SP-1)/this%stack(SP)
 					SP = SP-1
 				case( C_POW )
-					this.stack(SP-1) = this.stack(SP-1)**this.stack(SP)
+					this%stack(SP-1) = this%stack(SP-1)**this%stack(SP)
 					SP = SP-1
 				case( C_ABS )
-					this.stack(SP) = abs( this.stack(SP) )
+					this%stack(SP) = abs( this%stack(SP) )
 				case( C_EXP )
-					this.stack(SP) = exp( this.stack(SP) )
+					this%stack(SP) = exp( this%stack(SP) )
 				case ( C_LOG10 )
-					if( this.stack(SP) <= ZERO ) then
-						this.error = 3
+					if( this%stack(SP) <= ZERO ) then
+						this%error = 3
 						res = ZERO
 						return
 					endif
-					this.stack(SP) = log10( this.stack(SP) )
+					this%stack(SP) = log10( this%stack(SP) )
 				case( C_LOG )
-					if( this.stack(SP) <= ZERO ) then
-						this.error = 3
+					if( this%stack(SP) <= ZERO ) then
+						this%error = 3
 						res = ZERO
 						return
 					endif
-					this.stack(SP) = log( this.stack(SP) )
+					this%stack(SP) = log( this%stack(SP) )
 				case( C_SQRT )
-					if( this.stack(SP) < ZERO ) then
-						this.error = 3
+					if( this%stack(SP) < ZERO ) then
+						this%error = 3
 						res = ZERO
 						return
 					endif
-					this.stack(SP) = sqrt( this.stack(SP) )
+					this%stack(SP) = sqrt( this%stack(SP) )
 				case( C_SINH )
-					this.stack(SP) = sinh( this.stack(SP) )
+					this%stack(SP) = sinh( this%stack(SP) )
 				case( C_COSH )
-					this.stack(SP) = cosh( this.stack(SP) )
+					this%stack(SP) = cosh( this%stack(SP) )
 				case( C_TANH )
-					this.stack(SP) = tanh( this.stack(SP) )
+					this%stack(SP) = tanh( this%stack(SP) )
 				case( C_SIN )
-					this.stack(SP) = sin( this.stack(SP) )
+					this%stack(SP) = sin( this%stack(SP) )
 				case( C_COS )
-					this.stack(SP) = cos( this.stack(SP) )
+					this%stack(SP) = cos( this%stack(SP) )
 				case( C_TAN )
-					this.stack(SP) = tan( this.stack(SP) )
+					this%stack(SP) = tan( this%stack(SP) )
 				case( C_ASIN )
-					if( (this.stack(SP)<-1.0_8) .or. (this.stack(SP)>1.0_8) ) then
-						this.error = 4
+					if( (this%stack(SP)<-1.0_8) .or. (this%stack(SP)>1.0_8) ) then
+						this%error = 4
 						res = ZERO
 						return
 					endif
-					this.stack(SP) = asin( this.stack(SP) )
+					this%stack(SP) = asin( this%stack(SP) )
 				case( C_ACOS )
-					if( (this.stack(SP)<-1.0_8) .or. (this.stack(SP)>1.0_8) ) then
-						this.error = 4
+					if( (this%stack(SP)<-1.0_8) .or. (this%stack(SP)>1.0_8) ) then
+						this%error = 4
 						res = ZERO
 						return
 					endif
-					this.stack(SP) = acos( this.stack(SP) )
+					this%stack(SP) = acos( this%stack(SP) )
 				case( C_ATAN )
-					this.stack(SP) = atan( this.stack(SP) )
+					this%stack(SP) = atan( this%stack(SP) )
 				case( C_SGN )
-					this.stack(SP) = sign( 1.0_8, this.stack(SP) )
+					this%stack(SP) = sign( 1.0_8, this%stack(SP) )
 				case( C_CEIL )
-					this.stack(SP) = ceiling( this.stack(SP) )
+					this%stack(SP) = ceiling( this%stack(SP) )
 				case( C_FLOOR )
-					this.stack(SP) = floor( this.stack(SP) )
+					this%stack(SP) = floor( this%stack(SP) )
 #define ustep(x) 0.5_8*( 1.0_8 + tanh( 1.0d12*(x) ) )
 				case( C_USTEP )
-					this.stack(SP) = ustep( this.stack(SP) )
+					this%stack(SP) = ustep( this%stack(SP) )
 				case( C_UBOX )
-					this.stack(SP) = ustep( this.stack(SP)+0.5_8 ) - ustep( this.stack(SP)-0.5_8 )
+					this%stack(SP) = ustep( this%stack(SP)+0.5_8 ) - ustep( this%stack(SP)-0.5_8 )
 #undef ustep
 				case  default
 					SP = SP+1
-					this.stack(SP) = val( this.ByteCode(IP)-C_VARBEGIN+1 )
+					this%stack(SP) = val( this%ByteCode(IP)-C_VARBEGIN+1 )
 			end select
 		end do
 		
-		this.error = 0
-		res = this.stack(1)
+		this%error = 0
+		res = this%stack(1)
 	end function evaluateFunction
 	
 	!>
@@ -419,10 +419,10 @@ module MathParser_
 		class(MathParser) :: this
 		character(len(ERROR_MESSAGE)) :: msg
 		
-		if( this.error < 1 .or. this.error > size(ERROR_MESSAGE) ) then
+		if( this%error < 1 .or. this%error > size(ERROR_MESSAGE) ) then
 			msg = ''
 		else
-			msg = ERROR_MESSAGE(this.error)
+			msg = ERROR_MESSAGE(this%error)
 		endif
 	end function errorMessage
 	
@@ -586,31 +586,31 @@ module MathParser_
 		
 		integer :: istat
 		
-		if( associated(this.bytecode) ) then
-			deallocate( this.bytecode )
-			deallocate( this.immed )
-			deallocate( this.stack )
+		if( associated(this%bytecode) ) then
+			deallocate( this%bytecode )
+			deallocate( this%immed )
+			deallocate( this%stack )
 		end if
 		
-		this.bytecodeSize = 0
-		this.immedSize = 0
-		this.stackSize = 0
-		this.stackPtr = 0
+		this%bytecodeSize = 0
+		this%immedSize = 0
+		this%stackSize = 0
+		this%stackPtr = 0
 		
 		call compileSubstr( this, f, 1, len_trim(f), var ) ! compile string to determine size
 		
-		allocate( this.bytecode( this.bytecodeSize ), stat=istat )
-		allocate( this.immed( this.immedSize ), stat=istat )
-		allocate( this.stack( this.stackSize ), stat=istat )
+		allocate( this%bytecode( this%bytecodeSize ), stat=istat )
+		allocate( this%immed( this%immedSize ), stat=istat )
+		allocate( this%stack( this%stackSize ), stat=istat )
 		
 		if( istat /= 0 ) then
 			write(*,*) '*** MathParser error: Memmory allocation for byte code failed'
 			stop
 		else
-			this.bytecodeSize = 0
-			this.immedSize = 0
-			this.stackSize = 0
-			this.stackPtr = 0
+			this%bytecodeSize = 0
+			this%immedSize = 0
+			this%stackSize = 0
+			this%stackPtr = 0
 			
 			call compileSubstr( this, f, 1, len_trim(f), var ) ! Compile string into bytecode
 		end if
@@ -695,21 +695,21 @@ module MathParser_
 						call compileSubstr( this, f, b, j-1, var )
 						call compileSubstr( this, f, j+1, e, var )
 						call addCompiledByte( this, operatorIndex(STR_OPERATORS(io)) )
-						this.StackPtr = this.StackPtr - 1
+						this%StackPtr = this%StackPtr - 1
 						return
 					end if
 				end if
 			end do
 		end do
 		
-		! check for remaining items, i.e. variables or explicit numbers
+		! check for remaining items, i%e. variables or explicit numbers
 		b2 = b
 		if( f(b:b) == '-' ) b2 = b2+1
 		n = mathItemIndex( this, f(b2:e), var )
 ! 		write(*,*)'8. AddCompiledByte ', n
 		call addCompiledByte( this, n )
-		this.stackPtr = this.stackPtr + 1
-		if( this.StackPtr > this.StackSize ) this.stackSize = this.stackSize + 1
+		this%stackPtr = this%stackPtr + 1
+		if( this%StackPtr > this%StackSize ) this%stackSize = this%stackSize + 1
 		if( b2 > b ) call addCompiledByte( this, C_NEG )
 	end subroutine compileSubstr
 	
@@ -720,8 +720,8 @@ module MathParser_
 		class(MathParser) :: this
 		integer, intent(in) :: b ! Value of byte to be added
 		
-		this.ByteCodeSize = this.ByteCodeSize + 1
-		IF( associated(this.ByteCode) ) this.byteCode( this.byteCodeSize ) = b
+		this%ByteCodeSize = this%ByteCodeSize + 1
+		IF( associated(this%ByteCode) ) this%byteCode( this%byteCodeSize ) = b
 	end subroutine addCompiledByte
 	
 	!>
@@ -735,9 +735,9 @@ module MathParser_
 		
 		n = 0
 		if( scan( f(1:1), '0123456789.' ) > 0 ) then ! Check for begin of a number
-			this.immedSize = this.immedSize + 1
-			if( associated(this.immed) ) then
-				this.immed( this.immedSize ) = strToReal( f )
+			this%immedSize = this%immedSize + 1
+			if( associated(this%immed) ) then
+				this%immed( this%immedSize ) = strToReal( f )
 			end if
 			n = C_IMMED
 		else                                                     ! Check for a variable

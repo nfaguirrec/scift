@@ -74,37 +74,37 @@ program main
 	call get_command_argument( 3, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) oFileDOT = trim(sBuffer)
 	
-	mol = Molecule( iFileName.fstr )
-	call mol.buildGraph( alpha=alpha )
+	mol = Molecule( iFileName%fstr )
+	call mol%buildGraph( alpha=alpha )
 	
-	molGraph = mol.molGraph
-	call hashKeys.init()
+	molGraph = mol%molGraph
+	call hashKeys%init()
 	
-	do i=1,molGraph.nNodes()
-		iNeighborsA = molGraph.neighbors(i)
+	do i=1,molGraph%nNodes()
+		iNeighborsA = molGraph%neighbors(i)
 		
-		do j=1,molGraph.nNodes()
-			if( iNeighborsA.contains(j) ) then
-				iNeighborsB = molGraph.neighbors(j)
+		do j=1,molGraph%nNodes()
+			if( iNeighborsA%contains(j) ) then
+				iNeighborsB = molGraph%neighbors(j)
 				
-				do k=1,molGraph.nNodes()
-					if( iNeighborsB.contains(k) .and. k/=i ) then
-						iNeighborsC = molGraph.neighbors(k)
+				do k=1,molGraph%nNodes()
+					if( iNeighborsB%contains(k) .and. k/=i ) then
+						iNeighborsC = molGraph%neighbors(k)
 				
-						do l=1,molGraph.nNodes()
-							if( iNeighborsC.contains(l) .and. l/=i .and. l/=j ) then
+						do l=1,molGraph%nNodes()
+							if( iNeighborsC%contains(l) .and. l/=i .and. l/=j ) then
 							
-								hashKey = i*molGraph.nNodes()**0 + j*molGraph.nNodes()**1 + k*molGraph.nNodes()**2 + l*molGraph.nNodes()**3
+								hashKey = i*molGraph%nNodes()**0 + j*molGraph%nNodes()**1 + k*molGraph%nNodes()**2 + l*molGraph%nNodes()**3
 								
-								if( .not. hashKeys.contains(hashKey) ) then
+								if( .not. hashKeys%contains(hashKey) ) then
 									
-									write(*,"(A,4I5,F10.2)") trim(mol.atoms(i).symbol)//"--"//trim(mol.atoms(j).symbol)//"--"//trim(mol.atoms(k).symbol)//"--"//trim(mol.atoms(l).symbol), &
-																i, j, k, l, mol.dihedral( mol.atoms(i), mol.atoms(j), mol.atoms(k), mol.atoms(l) )/deg
+									write(*,"(A,4I5,F10.2)") trim(mol%atoms(i)%symbol)//"--"//trim(mol%atoms(j)%symbol)//"--"//trim(mol%atoms(k)%symbol)//"--"//trim(mol%atoms(l)%symbol), &
+																i, j, k, l, mol%dihedral( mol%atoms(i), mol%atoms(j), mol%atoms(k), mol%atoms(l) )/deg
 									
-									call hashKeys.append( hashKey )
+									call hashKeys%append( hashKey )
 									
-									hashKey = l*molGraph.nNodes()**0 + k*molGraph.nNodes()**1 + j*molGraph.nNodes()**2 + i*molGraph.nNodes()**3
-									call hashKeys.append( hashKey )
+									hashKey = l*molGraph%nNodes()**0 + k*molGraph%nNodes()**1 + j*molGraph%nNodes()**2 + i*molGraph%nNodes()**3
+									call hashKeys%append( hashKey )
 								end if
 								
 							end if

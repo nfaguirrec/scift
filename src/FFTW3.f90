@@ -36,10 +36,13 @@
 
 !>
 !! @brief
-! https://gcc.gnu.org/onlinedocs/gfortran/ISO_005fC_005fBINDING.html
+! https://gcc%gnu%org/onlinedocs/gfortran/ISO_005fC_005fBINDING%html
 !!
 module FFTW3_
 	use, intrinsic :: ISO_C_Binding
-!    include 'fftw3.f03'
+#ifdef __GFORTRAN__
+	include 'fftw3.f'
+#else
  	include 'fftw/fftw3.f'
+#endif
 end module FFTW3_

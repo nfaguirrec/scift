@@ -1,7 +1,7 @@
 program test_Math
     use Math_
     use TestUtils_
-    use ieee_arithmetic   ! http://fortranwiki.org/fortran/show/ieee_arithmetic
+    use ieee_arithmetic   ! http://fortranwiki%org/fortran/show/ieee_arithmetic
     implicit none
 		real(8), allocatable :: rArray(:)
 		integer, allocatable :: iArray(:)
@@ -14,6 +14,8 @@ program test_Math
 		integer :: i, j, k, l
 		integer :: nFrag
 		integer :: ssum
+		real(8) :: zero
+		real(8) :: negativeOne
 		
 		call assert_equal_real( Gamma(0.5_8), 1.772453850905516_8, 1e-10_8, "Math_test: Gamma(0.5)" )
 		call assert_equal_real( log_Gamma(0.5_8), 0.572364942924700_8, 1e-10_8, "Math_test: log_Gamma(0.5)" )
@@ -41,7 +43,7 @@ program test_Math
 		deallocate( iCombOld )
 		
 		allocate( strArray(8) )
-		strArray = ["H", "C", "CH", "C2", "H2", "C2H", "CH2", "C2H2"]
+		strArray = [character(4) :: "H", "C", "CH", "C2", "H2", "C2H", "CH2", "C2H2"]
 		
 		allocate( MyiArray(8) )
 		MyiArray = [1, 6, 7, 12, 2, 13, 8, 14]
@@ -64,12 +66,14 @@ program test_Math
 		deallocate( MyiArray )
 		deallocate( iCombOld )
 		
+		zero = 0.0_8
+		negativeOne = -1.0_8
 		call assert_true( .not. Math_isNaN( 2.0_8 ), "Math_test: isNaN(2.0)" )
-		call assert_true( Math_isNaN( sqrt(-1.0_8) ), "Math_test: isNaN(sqrt(-1))" )
+		call assert_true( Math_isNaN( sqrt(negativeOne) ), "Math_test: isNaN(sqrt(-1))" )
 		call assert_true( .not. Math_isInf( 1.0d56 ), "Math_test: isInf(1.0d56)" )
-		call assert_true( Math_isInf( 1.0_8/0.0_8 ), "Math_test: isInf(1/0)" )
-		call assert_true( Math_isInf( 1.0_8/0.0_8 + 10.0_8 ), "Math_test: isInf(1/0+10)" )
-		call assert_true( Math_isInf( 1.0_8/0.0_8 - 10.0_8 ), "Math_test: isInf(1/0-10)" )
+		call assert_true( Math_isInf( 1.0_8/zero ), "Math_test: isInf(1/0)" )
+		call assert_true( Math_isInf( 1.0_8/zero + 10.0_8 ), "Math_test: isInf(1/0+10)" )
+		call assert_true( Math_isInf( 1.0_8/zero - 10.0_8 ), "Math_test: isInf(1/0-10)" )
 		
 
     contains

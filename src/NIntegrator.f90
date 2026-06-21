@@ -65,12 +65,12 @@ module NIntegrator_
 		type(RNFunction), target, intent(in) :: func
 		integer, optional, intent(in) :: method
 		
-		this.func => func
+		this%func => func
 		
 		if( present(method) ) then
-			this.method = method
+			this%method = method
 		else
-			this.method = NIntegrator_SIMPSON
+			this%method = NIntegrator_SIMPSON
 		end if
 	end subroutine initDefault
 	
@@ -80,7 +80,7 @@ module NIntegrator_
 	subroutine destroy( this )
 		type(NIntegrator) :: this
 		
-		nullify(this.func)
+		nullify(this%func)
 	end subroutine destroy
 	
 	!>
@@ -98,23 +98,23 @@ module NIntegrator_
 ! 		output = trim(output)//"<NIntegrator:"
 ! 		
 ! 		output = trim(output)//"min="
-! 		fmt = int(log10(this.min+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+! 		fmt = int(log10(this%min+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%min
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",max="
-! 		fmt = int(log10(this.max+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.max
+! 		fmt = int(log10(this%max+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%max
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",h="
-! 		fmt = int(log10(this.h+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.h
+! 		fmt = int(log10(this%h+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%h
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",size="
-! 		fmt = int(log10(float(this.size+1)))+1
-! 		write(strBuffer, "(i<fmt>)") this.size
+! 		fmt = int(log10(float(this%size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this%size
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//">"
@@ -135,7 +135,7 @@ module NIntegrator_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -150,25 +150,25 @@ module NIntegrator_
 		real(8) :: effA
 		real(8) :: effB
 		
-		effA = this.func.min()
+		effA = this%func%min()
 		if( present(a) ) then
-			if( a >= this.func.min() .and. a <= this.func.max() ) then
+			if( a >= this%func%min() .and. a <= this%func%max() ) then
 				effA = a
 			else
 				call GOptions_error( "The integration lower limit 'a' is outside of numerical grid.", "NIntegrator.evaluate(a,b)" )
 			end if
 		end if
 		
-		effB = this.func.max()
+		effB = this%func%max()
 		if( present(b) ) then
-			if( b >= this.func.min() .and. b <= this.func.max() ) then
+			if( b >= this%func%min() .and. b <= this%func%max() ) then
 				effB = b
 			else
 				call GOptions_error( "The integration upper limit 'b' is outside of numerical grid.", "NIntegrator.evaluate(a,b)" )
 			end if
 		end if
 		
-		select case( this.method )
+		select case( this%method )
 			case( NIntegrator_SIMPSON )
 				output = simpsonRule( this, effA, effB )
 			case( NIntegrator_EXTSIMPSON )
@@ -201,15 +201,15 @@ module NIntegrator_
 		real(8) :: ssum
 		integer :: i, ia, ib
 		
-		ia = this.func.xGrid.pos( a )
-		ib = this.func.xGrid.pos( b )
+		ia = this%func%xGrid%pos( a )
+		ib = this%func%xGrid%pos( b )
 		
 		ssum = 0.0_8
 		do i=ia+1,ib-1
-			ssum = ssum + this.func.fArray(i);
+			ssum = ssum + this%func%fArray(i);
 		end do
 		
-		output = (this.func.xGrid.stepSize/2.0_8)*( this.func.fArray(ia) + 2.0_8*ssum + this.func.fArray(ib) )
+		output = (this%func%xGrid%stepSize/2.0_8)*( this%func%fArray(ia) + 2.0_8*ssum + this%func%fArray(ib) )
 	end function simpsonRule
 	
 	!>
@@ -225,20 +225,20 @@ module NIntegrator_
 		integer :: size
 		integer :: i
 		
-		size = this.func.nPoints()
+		size = this%func%nPoints()
 		
 		call GOptions_warning( "This method has not implemented yet defined integration.", "NIntegrator.extendedSimpsonRule(a,b)" )
 		
 		sum = 0.0
 		do i=5,size-4
-			sum = sum + this.func.fArray(i)
+			sum = sum + this%func%fArray(i)
 		end do
 		sum = 48.0_8*sum
 		
-		sum = sum + 17.0_8*this.func.fArray(1) + 59.0_8*this.func.fArray(2) + 43.0_8*this.func.fArray(3) + 49.0_8*this.func.fArray(4)
-		sum = sum + 49.0_8*this.func.fArray(size-3) + 43.0_8*this.func.fArray(size-2) + 59.0_8*this.func.fArray(size-1) + 17.0_8*this.func.fArray(size)
+		sum = sum + 17.0_8*this%func%fArray(1) + 59.0_8*this%func%fArray(2) + 43.0_8*this%func%fArray(3) + 49.0_8*this%func%fArray(4)
+		sum = sum + 49.0_8*this%func%fArray(size-3) + 43.0_8*this%func%fArray(size-2) + 59.0_8*this%func%fArray(size-1) + 17.0_8*this%func%fArray(size)
 		
-		output = sum*( this.func.xGrid.stepSize/48.0_8 )
+		output = sum*( this%func%xGrid%stepSize/48.0_8 )
 	end function extendedSimpsonRule
 	
 	function simpson38Rule( this, a, b ) result( output )
@@ -262,15 +262,15 @@ module NIntegrator_
 		real(8) :: ssum
 		integer :: i, ia, ib
 		
-		ia = this.func.xGrid.pos( a )
-		ib = this.func.xGrid.pos( b )
+		ia = this%func%xGrid%pos( a )
+		ib = this%func%xGrid%pos( b )
 		
 		ssum = 0.0_8
 		do i=ia+1,ib-1
-			ssum = ssum + this.func.fArray(i);
+			ssum = ssum + this%func%fArray(i);
 		end do
 		
-		output = this.func.xGrid.stepSize*( 2.0_8*this.func.fArray(ia) + ssum + 2.0_8*this.func.fArray(ib) )
+		output = this%func%xGrid%stepSize*( 2.0_8*this%func%fArray(ia) + ssum + 2.0_8*this%func%fArray(ib) )
 	end function trapezoidalRule
 
 	function fixedQuadratureRule( this, a, b ) result( output )
@@ -302,7 +302,7 @@ module NIntegrator_
 	
 	!>
 	!! @brief Boole rule
-	!!        http://fourier.eng.hmc.edu/e176/lectures/ch6/node6.html
+	!!        http://fourier%eng%hmc%edu/e176/lectures/ch6/node6%html
 	!!
 	function booleRule( this, a, b ) result( output )
 		class(NIntegrator) :: this
@@ -313,16 +313,16 @@ module NIntegrator_
 		real(8) :: ssum
 		integer :: i, ia, ib
 		
-		ia = this.func.xGrid.pos( a )
-		ib = this.func.xGrid.pos( b )
+		ia = this%func%xGrid%pos( a )
+		ib = this%func%xGrid%pos( b )
 		
 		ssum = 0.0_8
 		do i=ia,ib-4,4
-			ssum = ssum + 7.0_8*this.func.fArray(i) + 32.0_8*this.func.fArray(i+1) &
-					+ 12.0_8*this.func.fArray(i+2) + 32.0_8*this.func.fArray(i+3) + 7.0_8*this.func.fArray(i+4)
+			ssum = ssum + 7.0_8*this%func%fArray(i) + 32.0_8*this%func%fArray(i+1) &
+					+ 12.0_8*this%func%fArray(i+2) + 32.0_8*this%func%fArray(i+3) + 7.0_8*this%func%fArray(i+4)
 		end do
 		
-		output = ssum*2.0_8*this.func.xGrid.stepSize/45.0_8
+		output = ssum*2.0_8*this%func%xGrid%stepSize/45.0_8
 	end function booleRule
 	
 end module NIntegrator_

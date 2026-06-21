@@ -11,7 +11,7 @@ program test_MathParser
 		real(8), allocatable :: cVal(:)
 		
 		allocate( cVar(2) )
-		cVar = [ 'r', 's ' ]
+		cVar = [ character(len=10) :: 'r', 's ' ]
 		
 		allocate( cVal(2) )
 		cVal = [ 2.0_8, 3.0_8 ]
@@ -19,7 +19,7 @@ program test_MathParser
 		call parser%init()
 		
 		func = "-0.5*12*cos(0.5)*(a**2+2)*sin(b*0.5+0.6)*1e-2+0.5*x+r+s"
-		var  = [ 'x', 'a', 'b', cVar ]
+		var  = [ character(len=6) :: 'x', 'a', 'b', cVar ]
 		val  = [ 2.0_8, 3.0_8, 4.0_8, cVal ]
 		
 		call parser%parseFunction( func, var )

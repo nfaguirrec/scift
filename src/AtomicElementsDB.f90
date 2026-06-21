@@ -76,8 +76,8 @@ module AtomicElementsDB_
 		]
 		
 	!-----------------------------------------------------------------------------------------------
-	! Taken from: http://www.nist.gov/pml/data/comp.cfm
-	! Hay que copiar este formato: http://www.lfd.uci.edu/~gohlke/code/elements.py.html
+	! Taken from: http://www%nist%gov/pml/data/comp%cfm
+	! Hay que copiar este formato: http://www%lfd%uci%edu/~gohlke/code/elements%py%html
 	!-----------------------------------------------------------------------------------------------
 		
 	real(8), parameter :: ATOMIC_MASS(AtomicElementsDB_nElems) = [ &
@@ -124,7 +124,7 @@ module AtomicElementsDB_
 ! ! 1.57, 1.49, 1.43, 1.41, 1.34, 1.29, 1.28, 1.21, 1.22, 1.36, 1.43, 1.62, 1.75, 1.65, 1.57 &
 ! 		]
 
-	! De piamod, pero hay que revisar el molden.f
+	! De piamod, pero hay que revisar el molden%f
 	! @todo Revisar. Los valores de los actinidos los he tomado de la tabla anterior que esta comentada
 	real(8), parameter :: COVALENT_RADIUS(AtomicElementsDB_nElems) = [ &
 			 0.37,                                                                                                 0.70, &
@@ -141,10 +141,10 @@ module AtomicElementsDB_
 		
 	! Mainly taken from:
 	!    S. S. Batsanov. Van der Waals Radii of Elements. Inorganic Materials 37 (2001) 871
-	!    http://download.springer.com/static/pdf/639/art%253A10.1023%252FA%253A1011625728803.pdf?originUrl=http%3A%2F%2Flink.springer.com%2Farticle%2F10.1023%2FA%3A1011625728803&token2=exp=1458657684~acl=%2Fstatic%2Fpdf%2F639%2Fart%25253A10.1023%25252FA%25253A1011625728803.pdf%3ForiginUrl%3Dhttp%253A%252F%252Flink.springer.com%252Farticle%252F10.1023%252FA%253A1011625728803*~hmac=6b9748bab749f1bbd3299905115c9d1804349b2665a6a454182c877b6b911379
+	!    http://download%springer%com/static/pdf/639/art%253A10.1023%252FA%253A1011625728803.pdf?originUrl=http%3A%2F%2Flink.springer%com%2Farticle%2F10.1023%2FA%3A1011625728803&token2=exp=1458657684~acl=%2Fstatic%2Fpdf%2F639%2Fart%25253A10.1023%25252FA%25253A1011625728803.pdf%3ForiginUrl%3Dhttp%253A%252F%252Flink.springer%com%252Farticle%252F10.1023%252FA%253A1011625728803*~hmac=6b9748bab749f1bbd3299905115c9d1804349b2665a6a454182c877b6b911379
 	!    Table 9. Equilibrium (lower figures) van der Waals radii of elements.
 	! Rest of elements were taken from:
-	!     http://www.webelements.com/periodicity/van_der_waals_radius/
+	!     http://www%webelements%com/periodicity/van_der_waals_radius/
 	!     A. Bondi, J. Phys. Chem., 1964, 68, 441.
 	real(8), parameter :: VANDERWAALS_RADIUS(AtomicElementsDB_nElems) = [ &
 			 1.56,                                                                                                 1.40, &
@@ -170,7 +170,7 @@ module AtomicElementsDB_
 ! 			             0.00, 1.86, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00 &
 		]
 		
-	! Taken from JMol: http://www.biorom.uma.es/contenido/biomodel/Jmol/colors/jmol_colors.en.htm
+	! Taken from JMol: http://www%biorom%uma%es/contenido/biomodel/Jmol/colors/jmol_colors%en%htm
 	character(6), parameter :: ATOMIC_COLOR(AtomicElementsDB_nElems) = [ &
 			 "FFFFFF",                                                                                                                                                                 "D9FFFF", &
 			 "CC80FF", "C2FF00",                                                                                                     "FFB5B5", "909090", "3050F8", "FF0D0D", "90E050", "B3E3F5", &
@@ -231,7 +231,7 @@ module AtomicElementsDB_
 	subroutine destroyAtomicElementsDB( this )
 		type(AtomicElementsDB) :: this
 		
-		if( allocated( this.specialPairs ) ) deallocate( this.specialPairs )
+		if( allocated( this%specialPairs ) ) deallocate( this%specialPairs )
 	end subroutine destroyAtomicElementsDB
 
 	!>
@@ -327,9 +327,9 @@ module AtomicElementsDB_
 		
 		select case( effType )
 			case( AtomicElementsDB_COVALENT_RADIUS )
-				R = this.covalentRadius( symbol )
+				R = this%covalentRadius( symbol )
 			case( AtomicElementsDB_VANDERWAALS_RADIUS )
-				R = this.VanDerWaalsRadius( symbol )
+				R = this%VanDerWaalsRadius( symbol )
 		end select
 	end function radius
 	
@@ -431,9 +431,9 @@ module AtomicElementsDB_
 		
 		integer :: i
 		
-		if( allocated( this.specialPairs ) ) deallocate( this.specialPairs )
-		allocate( this.specialPairs( size(specialPairs) ) )
-		this.specialPairs = specialPairs
+		if( allocated( this%specialPairs ) ) deallocate( this%specialPairs )
+		allocate( this%specialPairs( size(specialPairs) ) )
+		this%specialPairs = specialPairs
 		
 		write(6,"(A)") ""
 		write(6,"(A)") "---------------------"
@@ -443,8 +443,8 @@ module AtomicElementsDB_
 		write(6,"(A10,A10,2A15)") "symbol1", "symbol2", "bondCutoff(A)", "dbondCutoff(A)"
 		write(6,"(A10,A10,2A15)") "-------", "-------", "-------------", "--------------"
 		do i=1,size(specialPairs)
-			write(6,"(A10,A10,2F15.5)") trim(specialPairs(i).symbol1), trim(specialPairs(i).symbol2), &
-				specialPairs(i).bondCutoff/angs, specialPairs(i).doubleBondCutoff/angs
+			write(6,"(A10,A10,2F15.5)") trim(specialPairs(i)%symbol1), trim(specialPairs(i)%symbol2), &
+				specialPairs(i)%bondCutoff/angs, specialPairs(i)%doubleBondCutoff/angs
 		end do
 		write(6,"(A)") ""
 		

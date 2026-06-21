@@ -65,28 +65,28 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i" )
-	oFileName = parser.getString( "-o" )
-	smoothFactor = parser.getReal( "-n" )
+	iFileName = parser%getString( "-i" )
+	oFileName = parser%getString( "-o" )
+	smoothFactor = parser%getReal( "-n" )
 	
-	fileType = RNFunction_checkTypeN1DF( iFileName.fstr )
+	fileType = RNFunction_checkTypeN1DF( iFileName%fstr )
 	
 	if( fileType == 0 ) then
-		riFunc = RNFunction( iFileName.fstr )
+		riFunc = RNFunction( iFileName%fstr )
 		
-		call spl.init( riFunc )
-		riFuncSmooth = spl.smooth( smoothFactor )
+		call spl%init( riFunc )
+		riFuncSmooth = spl%smooth( smoothFactor )
 		
-		call riFuncSmooth.save( oFileName.fstr )
+		call riFuncSmooth%save( oFileName%fstr )
 	else if( fileType == 1 ) then
 		write(0,*) "### ERROR ### for complex functions it is not implemented yet"
 		stop
-! 		call ciFunc.init( iFileName.fstr )
-! 		call cbFunc.init( bFileName.fstr )
-! 		coFunc = ciFunc.interpolate( cbFunc.xGrid )
-! 		call coFunc.save( oFileName.fstr )
+! 		call ciFunc%init( iFileName%fstr )
+! 		call cbFunc%init( bFileName%fstr )
+! 		coFunc = ciFunc%interpolate( cbFunc%xGrid )
+! 		call coFunc%save( oFileName%fstr )
 	else
-		write(0,*) "### ERROR ### unknown type for "//trim(iFileName.fstr)
+		write(0,*) "### ERROR ### unknown type for "//trim(iFileName%fstr)
 		stop
 	end if
 	

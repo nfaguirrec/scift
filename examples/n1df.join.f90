@@ -84,13 +84,13 @@ program main
 			rFunc(i) = RNFunction( buffer )
 		end do
 		
-		rFuncOut = RNFunction( rFunc(1).xGrid )
+		rFuncOut = RNFunction( rFunc(1)%xGrid )
 		
-		do j=1,rFunc(1).nPoints()
-			write(*,"(E20.8)",advance="no") rFunc(1).x(j)
+		do j=1,rFunc(1)%nPoints()
+			write(*,"(E20.8)",advance="no") rFunc(1)%x(j)
 			
 			do i=1,nFiles
-				write(*,"(E20.8)",advance="no") rFunc(i).at(j)
+				write(*,"(E20.8)",advance="no") rFunc(i)%at(j)
 			end do
 			
 			write(*,"(A)") ""
@@ -103,13 +103,13 @@ program main
 			cFunc(i) = CNFunction( buffer )
 		end do
 		
-		cFuncOut = CNFunction( cFunc(1).xGrid )
+		cFuncOut = CNFunction( cFunc(1)%xGrid )
 		
-		do j=1,cFunc(1).nPoints()
-			write(*,"(E20.8)",advance="no") cFunc(1).x(j)
+		do j=1,cFunc(1)%nPoints()
+			write(*,"(E20.8)",advance="no") cFunc(1)%x(j)
 			
 			do i=1,nFiles
-				write(*,"(E25.8)",advance="no") cFunc(i).at(j)
+				write(*,"(E25.8)",advance="no") cFunc(i)%at(j)
 			end do
 			
 			write(*,"(A)") ""
@@ -155,13 +155,13 @@ program main
 ! 	!---------------------------------------------
 ! 	if( fileTypeB == 0 .and. fileTypeA == 0 ) then
 ! 		
-! 		call rFuncOut.save( fileNameFuncAB )
+! 		call rFuncOut%save( fileNameFuncAB )
 ! 		
 ! 	else if( ( fileTypeA == 1 .and. fileTypeB == 0 ) .or. &
 ! 			 ( fileTypeA == 0 .and. fileTypeB == 1 ) .or. &
 ! 			 ( fileTypeA == 1 .and. fileTypeB == 1 ) ) then
 ! 		
-! 		call cFuncB.save( fileNameFuncAB )
+! 		call cFuncB%save( fileNameFuncAB )
 ! 	
 ! 	end if
 	

@@ -50,7 +50,7 @@ module StringIntegerHistogramMap_
 		
 #define Map StringIntegerHistogramMap
 ! #define __CLASS_ITEMMAP__ class(String)
-#define __CLASS_MAPITERATOR__  class(StringIntegerHistogramMapIterator)
+#define __CLASS_MAPITERATOR__  type(StringIntegerHistogramMapIterator)
 #define __TYPE_MAPLIST__       type(StringIntegerHistogramPairList)
 #define __TYPE_MAPPAIR__       type(StringIntegerHistogramPair)
 #define __CLASS_MAPPAIR__      class(StringIntegerHistogramPair)
@@ -82,7 +82,7 @@ module StringIntegerHistogramMap_
 		logical :: effFormatted
 		character(:), allocatable :: effPrefix
 		
-		class(StringIntegerHistogramMapIterator), pointer :: iter
+		type(StringIntegerHistogramMapIterator), pointer :: iter
 		type(StringIntegerHistogramPair) :: pair
 		integer :: fmt
 		character(200) :: fstr
@@ -97,12 +97,12 @@ module StringIntegerHistogramMap_
 		
 		if( .not. effFormatted ) then
 #define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
-#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f0.6)") v; output = trim(output)//trim(fstr)
 #define ITEMI(l,v) output = trim(output)//l; write(fstr,*) v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<Map:"
 			
-			ITEMI( "size=", this.size() )
+			ITEMI( "size=", this%size() )
 #undef RFMT
 #undef ITEMR
 #undef ITEMI
@@ -115,8 +115,8 @@ module StringIntegerHistogramMap_
 ! 
 ! 			LINE("Map")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -135,23 +135,23 @@ module StringIntegerHistogramMap_
 		
 		integer :: unitEff
 		
-		class(StringIntegerHistogramMapIterator), pointer :: iter
+		type(StringIntegerHistogramMapIterator), pointer :: iter
 		type(StringIntegerHistogramPair) :: pair
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = STDOUT
 		end if
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
-			pair = this.pair( iter )
-			write(unitEff,"(A15,F15.7)") pair.first.fstr, pair.second.str()
+			pair = this%pair( iter )
+			write(unitEff,"(A15,F15.7)") pair%first%fstr, pair%second%str()
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 	end subroutine toFStream
 	
@@ -164,15 +164,15 @@ module StringIntegerHistogramMap_
                 integer, intent(in) :: array(:)
 		integer, optional :: rule
                 
-		class(StringIntegerHistogramMapIterator), pointer :: ptr
+		type(StringIntegerHistogramMapIterator), pointer :: ptr
 		type(IntegerHistogram) :: hist
                 
-		if( this.find( key, ptr ) ) then
-			call ptr.data.second.add( array )
+		if( this%find( key, ptr ) ) then
+			call ptr%data%second%add( array )
 		else
-			call hist.init( rule )
-			call hist.add( array )
-			call this.insert( key, hist )
+			call hist%init( rule )
+			call hist%add( array )
+			call this%insert( key, hist )
 		end if
         end subroutine add
 	
@@ -182,15 +182,15 @@ module StringIntegerHistogramMap_
 	subroutine showMyMap( mymap )
 		type(StringIntegerHistogramMap) :: mymap
 		
-		class(StringIntegerHistogramMapIterator), pointer :: iter
+		type(StringIntegerHistogramMapIterator), pointer :: iter
 		type(StringIntegerHistogramPair) :: pair
 		
-		iter => mymap.begin
+		iter => mymap%begin
 		do while( associated(iter) )
-			pair = mymap.pair( iter )
-			write(*,"(I20,A,A15,A)") pair.first.hashKey(), "  ==>  ", pair.first.fstr//", ", pair.second.str()
+			pair = mymap%pair( iter )
+			write(*,"(I20,A,A15,A)") pair%first%hashKey(), "  ==>  ", pair%first%fstr//", ", pair%second%str()
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		write(*,*)
 	end subroutine
@@ -203,153 +203,153 @@ module StringIntegerHistogramMap_
 		type(IntegerHistogram) :: hist
 		type(StringIntegerHistogramPair) :: pair
 		type(StringIntegerHistogramMap) :: mymap
-		class(StringIntegerHistogramMapIterator), pointer :: ptr
+		type(StringIntegerHistogramMapIterator), pointer :: ptr
 		
-		call mymap.init()
+		call mymap%init()
 		
 		str = "Ademas"
-		call hist.init( STURGES )
-		call hist.add( [24, 19, 27, 23, 25, 25, 23, 22] )
-		call mymap.insert( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24, 19, 27, 23, 25, 25, 23, 22] )
+		call mymap%insert( str, hist )
 		call showMyMap( mymap )
 		
 		str = "Amor"
-		call hist.init( STURGES )
-		call hist.add( [24, 19, 27, 23, 25, 25, 23] )
-		call mymap.insert( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24, 19, 27, 23, 25, 25, 23] )
+		call mymap%insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Amor"
-		call hist.init( STURGES )
-		call hist.add( [24] )
-		call mymap.insert( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24] )
+		call mymap%insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Entonces"
-		call hist.init( STURGES )
-		call hist.add( [24, 19, 27, 23, 25, 25] )
-		call mymap.insert( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24, 19, 27, 23, 25, 25] )
+		call mymap%insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Corazon"
-		call hist.init( STURGES )
-		call hist.add( [24, 19, 27, 23, 25] )
-		call mymap.insert( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24, 19, 27, 23, 25] )
+		call mymap%insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Hola"
-		call hist.init( STURGES )
-		call hist.add( [24, 19, 27, 23] )
-		call mymap.insert( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24, 19, 27, 23] )
+		call mymap%insert( str, hist )
 		call showMyMap( mymap )	
 		
 		str = "Conejo"
-		call hist.init( STURGES )
-		call hist.add( [24, 19, 27] )
-		call mymap.insert( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24, 19, 27] )
+		call mymap%insert( str, hist )
 		call showMyMap( mymap )
 			
-		call mymap.show()
+		call mymap%show()
 		
 ! 		! Entonces -> Amor -> Amor -> Hola -> Ademas -> Conejo
 		
 		write(*,*) "Buscando 'Corazon'"
 		str = "Corazon"
-		if( mymap.find( str, ptr ) ) then
-			pair = mymap.pair( ptr )
-			write(*,*) "   Encontrado asi: ( ", pair.first.fstr, pair.second.str(), " )"
+		if( mymap%find( str, ptr ) ) then
+			pair = mymap%pair( ptr )
+			write(*,*) "   Encontrado asi: ( ", pair%first%fstr, pair%second%str(), " )"
 		else
 			write(*,*) "   No encontrado"
 		end if
 		
 		write(*,*) "Buscando 'Corazon '"
 		str = "Corazon "
-		if( mymap.find( str, ptr ) ) then
-			pair = mymap.pair( ptr )
-			write(*,*) "   Encontrado asi: ( ", pair.first.fstr, pair.second.str(), " )"
+		if( mymap%find( str, ptr ) ) then
+			pair = mymap%pair( ptr )
+			write(*,*) "   Encontrado asi: ( ", pair%first%fstr, pair%second%str(), " )"
 		else
 			write(*,*) "   No encontrado"
 		end if
 		
 		write(*,*) "Eliminando a 'Conejo'"
 		str = "Conejo"
-		call mymap.erase( str )
+		call mymap%erase( str )
 		call showMyMap( mymap )
 		
 		write(*,*) "Eliminando a 'Entonces'"
 		str = "Entonces"
-		call mymap.erase( str )
+		call mymap%erase( str )
 		call showMyMap( mymap )
 		
 		write(*,*) "Eliminando a 'Amor'"
 		str = "Amor"
-		call mymap.erase( str )
+		call mymap%erase( str )
 		call showMyMap( mymap )
 		
 		write(*,*) "Limpiando el mapa"
-		call mymap.clear()
+		call mymap%clear()
 		call showMyMap( mymap )
 		
 		write(*,*) "Adicionando nuevas cosas"
 		
 		str = "Ademas"
-		call hist.init( STURGES )
-		call hist.add( [24] )
-		call mymap.insert( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24] )
+		call mymap%insert( str, hist )
 		call showMyMap( mymap )
 		
 		str = "Amor"
-		call hist.init( STURGES )
-		call hist.add( [24, 19, 27] )
-		call mymap.insert( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24, 19, 27] )
+		call mymap%insert( str, hist )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando el elemento Amor a size=2"
 		str = "Amor"
-		call hist.init( STURGES )
-		call hist.add( [24, 19] )
-		call mymap.set( str, hist )
+		call hist%init( STURGES )
+		call hist%add( [24, 19] )
+		call mymap%set( str, hist )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando un elemento que no existe Hola a size=2"
 		str = "Hola"
-		call mymap.set( str, hist )
+		call mymap%set( str, hist )
 		call showMyMap( mymap )
 		
 		write(*,*) "Limpiando el mapa"
-		call mymap.clear()
+		call mymap%clear()
 		call showMyMap( mymap )
 		
 ! 		write(*,*) "Cambiando un elemento que no existe HHHHHHH a 56"
 ! 		str = "HHHHHHH"
-! 		call mymap.set( str, 56 )
+! 		call mymap%set( str, 56 )
 ! 		call showMyMap( mymap )
 ! 		
 ! 		write(*,*) "Insertando un elemento que ya existe HHHHHHH a 60"
 ! 		str = "HHHHHHH"
-! 		call mymap.insert( str, 60 )
+! 		call mymap%insert( str, 60 )
 ! 		call showMyMap( mymap )
 		
 		!------------------------------------------------
 		! Test propios de Histgram
 		write(*,*) "Cambiando un elemento que no existe Hola a size=2 y adicionando un valor a hist"
 		str = "Hola"
-		call mymap.set( str, hist )
+		call mymap%set( str, hist )
 		call showMyMap( mymap )
-		hist = mymap.value( str )
-		call hist.add( [0, 5] )
-		call mymap.set( str, hist )
+		hist = mymap%value( str )
+		call hist%add( [0, 5] )
+		call mymap%set( str, hist )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando un elemento por referencia de size=4 a size=6"
 		
 		str = "Hola"
-		call mymap.add( str, [0, 5] )
+		call mymap%add( str, [0, 5] )
 		call showMyMap( mymap )
 		
 		write(*,*) "Cambiando un elemento que no existe Entonces a size=2"
 		str = "Entonces"
-		call mymap.add( str, [0, 5] )
+		call mymap%add( str, [0, 5] )
 		call showMyMap( mymap )
 		
 	end subroutine StringIntegerHistogramMap_test

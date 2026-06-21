@@ -62,6 +62,9 @@ program main
 	real(8), allocatable :: cDescriptors(:,:)
 	real(8) :: gSimilarity
 	real(8) :: cSimilarity
+#ifdef __GFORTRAN__
+	character(len=100) :: fmtStr
+#endif
 
 	integer :: i, j
 	type(IFStream) :: ifile
@@ -121,28 +124,28 @@ program main
 	write(*,"(A,L)")     "Use Edge Weights = ", useEdgeWeights
 	write(*,*) ""
 	
-	call ifile.init( iFileName.fstr )
+	call ifile%init( iFileName%fstr )
 	
-	allocate( molecules(ifile.numberOfLines) )
-	allocate( fileNames(ifile.numberOfLines) )
-	allocate( energies(ifile.numberOfLines) )
-	allocate( removed(ifile.numberOfLines) )
+	allocate( molecules(ifile%numberOfLines) )
+	allocate( fileNames(ifile%numberOfLines) )
+	allocate( energies(ifile%numberOfLines) )
+	allocate( removed(ifile%numberOfLines) )
 	
 	removed = .false.
 	
 	write(6,"(A)",advance="no")  "Loading molecules "
 	call flush(6)
 	
-	do i=1,ifile.numberOfLines
+	do i=1,ifile%numberOfLines
 		
-		if( mod(i,int(max(ifile.numberOfLines,10)/10.0_8)) == 0 ) then
+		if( mod(i,int(max(ifile%numberOfLines,10)/10.0_8)) == 0 ) then
 			write(6,"(A)",advance="no") "."
 			call flush(6)
 		end if
 		
-		fileNames(i) = trim(ifile.readLine())
-		molecules(i) = Molecule( fileNames(i).fstr )
-		call FString_split( molecules(i).name, tokens, " " )
+		fileNames(i) = trim(ifile%readLine())
+		molecules(i) = Molecule( fileNames(i)%fstr )
+		call FString_split( molecules(i)%name, tokens, " " )
 		
 		! @todo Cerificar que todas las moleculas tienen la energia definida. De lo contrario toca volver al esquema basico
 		energies(i) = FString_toReal( trim(tokens(3)) )
@@ -161,14 +164,14 @@ program main
 	
 	do i=1,size(molecules)
 	
-		if( mod(i,int(max(ifile.numberOfLines,10)/10.0_8)) == 0 ) then
+		if( mod(i,int(max(ifile%numberOfLines,10)/10.0_8)) == 0 ) then
 			write(6,"(A)",advance="no") "."
 			call flush(6)
 		end if
 	
-		cFormula(i) = molecules(i).chemicalFormula()
-		gDescriptors(:,i) = molecules(i).ballesterDescriptors( useMassWeight=useMassWeight, useIm=useIm )
-		cDescriptors(:,i) = molecules(i).connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
+		cFormula(i) = molecules(i)%chemicalFormula()
+		gDescriptors(:,i) = molecules(i)%ballesterDescriptors( useMassWeight=useMassWeight, useIm=useIm )
+		cDescriptors(:,i) = molecules(i)%connectivityDescriptors( alpha=alpha, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights )
 		
 	end do
 	
@@ -182,21 +185,33 @@ program main
 			do j=i+1,size(molecules)
 				
 				if( .not. removed(j)  .and. abs( energies(i)-energies(j) ) <= 1.0_8*eV ) then
-! 					write(*,"(A)") "      Comparing "//trim(fileNames(i).fstr)//" <-> "//trim(fileNames(j).fstr)//" >>>> dE="//adjustl(trim((FString_fromReal(abs( energies(i)-energies(j) ), "(F10.5)"))))
+! 					write(*,"(A)") "      Comparing "//trim(fileNames(i)%fstr)//" <-> "//trim(fileNames(j)%fstr)//" >>>> dE="//adjustl(trim((FString_fromReal(abs( energies(i)-energies(j) ), "(F10.5)"))))
 					
 					gSimilarity = 1.0_8/( 1.0_8+abs(sum( gDescriptors(:,i)-gDescriptors(:,j) ))/real(size(gDescriptors(:,i)),8) )
 					cSimilarity = 1.0_8/( 1.0_8+abs(sum( cDescriptors(:,i)-cDescriptors(:,j) ))/real(size(cDescriptors(:,i)),8) )
 					
 					if( debug ) then
 						write(*,*) ""
+#ifdef __GFORTRAN__
+						write(fmtStr, "(A,I0,A)") "(A,", size(gDescriptors, dim=1), "F15.4)"
+						write(*,fmtStr)  " gDescrip1 = ", gDescriptors(:,i)
+						write(*,fmtStr)  " gDescrip2 = ", gDescriptors(:,j)
+#else
 						write(*,"(A,<size(gDescriptors)>F15.4)")  " gDescrip1 = ", gDescriptors(:,i)
 						write(*,"(A,<size(gDescriptors)>F15.4)")  " gDescrip2 = ", gDescriptors(:,j)
+#endif
 						write(*,"(A,F10.5)")    "Similarity = ", gSimilarity
 						write(*,"(A,F10.5)")    " Threshold = ", thr
 						write(*,*)              "    Equal? = ", gSimilarity > thr
 						write(*,*) ""
+#ifdef __GFORTRAN__
+						write(fmtStr, "(A,I0,A)") "(A,", size(cDescriptors, dim=1), "F15.4)"
+						write(*,fmtStr)  " cDescrip1 = ", cDescriptors(:,i)
+						write(*,fmtStr)  " cDescrip2 = ", cDescriptors(:,j)
+#else
 						write(*,"(A,<size(cDescriptors)>F15.4)")  " cDescrip1 = ", cDescriptors(:,i)
 						write(*,"(A,<size(cDescriptors)>F15.4)")  " cDescrip2 = ", cDescriptors(:,j)
+#endif
 						write(*,"(A,F10.5)")    "Similarity = ", cSimilarity
 						write(*,"(A,F10.5)")    " Threshold = ", thr
 						write(*,*)              "    Equal? = ", cSimilarity > thr
@@ -204,22 +219,22 @@ program main
 					end if
 					
 					equal = 0
-					if( molecules(i).compareFormula( molecules(j), debug=debug ) ) equal = equal + 1					
-					if( molecules(i).compareGeometry( molecules(j), useMassWeight=useMassWeight, useIm=useIm, thr=thr, debug=debug ) ) equal = equal + 1
-					if( molecules(i).compareConnectivity( molecules(j), alpha=alpha, thr=thr, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights, debug=debug ) ) equal = equal + 1
+					if( molecules(i)%compareFormula( molecules(j), debug=debug ) ) equal = equal + 1					
+					if( molecules(i)%compareGeometry( molecules(j), useMassWeight=useMassWeight, useIm=useIm, thr=thr, debug=debug ) ) equal = equal + 1
+					if( molecules(i)%compareConnectivity( molecules(j), alpha=alpha, thr=thr, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights, debug=debug ) ) equal = equal + 1
 					if( abs(energies(i)-energies(j)) < 0.1_8*eV ) equal = equal + 1
 					
 					if( equal == 4 ) then
 						sBuffer = FString_fromReal(abs( energies(i)-energies(j) )/eV, "(F10.3)")
 						
-						write(*,"(A)",advance="no") "      "//trim(fileNames(i).fstr)//"  "//trim(fileNames(j).fstr)//" ("// &
+						write(*,"(A)",advance="no") "      "//trim(fileNames(i)%fstr)//"  "//trim(fileNames(j)%fstr)//" ("// &
 													trim(adjustl(adjustr(trim(sBuffer))))// &
 													") --> Equal "
 						removed(j) = .true.
 						
 						if( remove ) then
-							write(*,"(A)") "  Removed ("//trim(fileNames(j).fstr)//")"
-							call system( "[ -f "//trim(fileNames(j).fstr)//" ] && rm "//trim(fileNames(j).fstr) )
+							write(*,"(A)") "  Removed ("//trim(fileNames(j)%fstr)//")"
+							call system( "[ -f "//trim(fileNames(j)%fstr)//" ] && rm "//trim(fileNames(j)%fstr) )
 						else
 							write(*,"(A)") ""
 						end if

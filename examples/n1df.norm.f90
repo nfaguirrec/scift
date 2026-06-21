@@ -63,10 +63,10 @@ program main
 	
 	if( fileType == 0 ) then
 		rFunc = RNFunction( fileName )
-		write(*,*) rFunc.norm()
+		write(*,*) rFunc%norm()
 	else if( fileType == 1 ) then
 		cFunc = CNFunction( fileName )
-		write(*,*) cFunc.norm()
+		write(*,*) cFunc%norm()
 	else
 		write(0,*) "### ERROR ### unknown type for "//trim(fileName)
 		stop

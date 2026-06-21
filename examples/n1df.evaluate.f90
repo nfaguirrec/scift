@@ -75,12 +75,12 @@ program main
 	
 	if( fileType == 0 ) then
 		rFunc = RNFunction( fileName )
-		write(*,*) rFunc.interpolate( rx )
+		write(*,*) rFunc%interpolate( rx )
 	else if( fileType == 1 ) then
 		cFunc = CNFunction( fileName )
 		write(0,*) "### ERROR ### Interpolation for complex functions is not implemented yet "//trim(fileName)
 		stop
-! 		write(*,*) cFunc.interpolate( cx )
+! 		write(*,*) cFunc%interpolate( cx )
 	else
 		write(0,*) "### ERROR ### unknown type for "//trim(fileName)
 		stop

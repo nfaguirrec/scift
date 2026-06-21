@@ -64,23 +64,23 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i" )
-	oFileName = parser.getString( "-o" )
-	addPoints = parser.getInteger( "-n" )
-	dir = parser.getInteger( "-d" )
+	iFileName = parser%getString( "-i" )
+	oFileName = parser%getString( "-o" )
+	addPoints = parser%getInteger( "-n" )
+	dir = parser%getInteger( "-d" )
 	
-	fileType = RNFunction_checkTypeN1DF( iFileName.fstr )
+	fileType = RNFunction_checkTypeN1DF( iFileName%fstr )
 	
 	if( fileType == 0 ) then
-		rFunc = RNFunction( iFileName.fstr )
-		call rFunc.resize( addPoints, dir )
-		call rFunc.save( oFileName.fstr )
+		rFunc = RNFunction( iFileName%fstr )
+		call rFunc%resize( addPoints, dir )
+		call rFunc%save( oFileName%fstr )
 	else if( fileType == 1 ) then
-		cFunc = CNFunction( iFileName.fstr )
-		call cFunc.resize( addPoints, dir )
-		call cFunc.save( oFileName.fstr )
+		cFunc = CNFunction( iFileName%fstr )
+		call cFunc%resize( addPoints, dir )
+		call cFunc%save( oFileName%fstr )
 	else
-		write(0,*) "### ERROR ### unknown type for "//trim(iFileName.fstr)
+		write(0,*) "### ERROR ### unknown type for "//trim(iFileName%fstr)
 		stop
 	end if
 	

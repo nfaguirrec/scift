@@ -15,7 +15,7 @@ program test_RandomSampler
 		nDim = 2
 		nPoints = 1000
 		allocate( sample(nDim,nPoints) )
-		call rs.init( nDim )
+		call rs%init( nDim )
 		
 		a = 1.0_8
 		b = 2.0_8
@@ -29,7 +29,7 @@ program test_RandomSampler
 		
 		Amatrix = matmul(Rot,matmul(Sigma**2,transpose(Rot)))
 		
-		call rs.uniformEllipsoid( sample, A=Amatrix )
+		call rs%uniformEllipsoid( sample, A=Amatrix )
 		
 		do i=1,nPoints
 			val = dot_product(sample(:,i), matmul(Amatrix, sample(:,i)))
@@ -65,7 +65,7 @@ program test_RandomSampler
     ! 			
     ! 		allocate( sampleBase(nDim+1,nPoints) )
     ! 		
-    ! 		call this.normal( sampleBase, cov=cov, aver=[0.0_8,0.0_8] )
+    ! 		call this%normal( sampleBase, cov=cov, aver=[0.0_8,0.0_8] )
     ! 		
     ! 		do i=1,nPoints
     ! ! 			write(10,'(<nDim>F10.5)') sample(:,i)

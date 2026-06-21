@@ -46,7 +46,7 @@ module StringIntegerHistogramPairList_
 		StringIntegerHistogramPairList_test
 
 !>
-!! This class use the List template declared into List.h90 file,
+!! This class use the List template declared into List%h90 file,
 !! please take a look to this file for details
 !!	
 #define List StringIntegerHistogramPairList
@@ -85,12 +85,12 @@ module StringIntegerHistogramPairList_
 		if( .not. effFormatted ) then
 #define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
 #define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
-#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
-#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+#define ITEMI(l,v) output = trim(output)//l; write(fstr, "(i0)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f0.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<StringIntegerHistogramPairList:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -104,8 +104,8 @@ module StringIntegerHistogramPairList_
 ! 
 ! 			LINE("List")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -128,19 +128,19 @@ module StringIntegerHistogramPairList_
 		type(StringIntegerHistogramPair) :: pair
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = STDOUT
 		end if
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
-			pair = iter.data
-			write(unitEff,"(A15,F15.7)") pair.first.fstr, pair.second.str()
+			pair = iter%data
+			write(unitEff,"(A15,F15.7)") pair%first%fstr, pair%second%str()
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 	end subroutine toFStream
 	
@@ -162,13 +162,13 @@ module StringIntegerHistogramPairList_
 		write(*,*) "-----------------------------"
 		
 		write(*,*) "call mylist.init()"
-		call mylist.init()
+		call mylist%init()
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, iter.data.second.str()
+			write(*,*) iter%data%first%fstr, iter%data%second%str()
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		
 		write(*,*) "-------------------------"
@@ -182,38 +182,38 @@ module StringIntegerHistogramPairList_
 ! 		write(*,*)
 ! 		
 		str = "Hello"
-		call hist.init( STURGES )
-		call hist.add( [24, 19, 27, 23, 25, 25, 23, 22] )
+		call hist%init( STURGES )
+		call hist%add( [24, 19, 27, 23, 25, 25, 23, 22] )
 		
-		call mypair.init( str, hist )
-		call mylist.append( mypair )
+		call mypair%init( str, hist )
+		call mylist%append( mypair )
 		
 		str = "class"
-		call hist.init( STURGES )
-		call hist.add( [24, 19, 27] )
+		call hist%init( STURGES )
+		call hist%add( [24, 19, 27] )
 		
-		call mypair.init( str, hist )
-		call mylist.append( mypair )
+		call mypair%init( str, hist )
+		call mylist%append( mypair )
 		
 		str = "string"
-		call hist.init( STURGES )
-		call hist.add( [27] )
+		call hist%init( STURGES )
+		call hist%add( [27] )
 		
-		call mypair.init( str, hist )
-		call mylist.append( mypair )
+		call mypair%init( str, hist )
+		call mylist%append( mypair )
 		
 		str = "list"
-		call hist.init( STURGES )
-		call hist.add( [23, 22] )
+		call hist%init( STURGES )
+		call hist%add( [23, 22] )
 		
-		call mypair.init( str, hist )
-		call mylist.append( mypair )
+		call mypair%init( str, hist )
+		call mylist%append( mypair )
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, "   =>   ", iter.data.second.str()
+			write(*,*) iter%data%first%fstr, "   =>   ", iter%data%second%str()
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		write(*,*)
 		
@@ -226,51 +226,51 @@ module StringIntegerHistogramPairList_
 ! 		write(*,*)
 ! 		
 ! 		str = "day"
-! 		call mypair.init( str, 3 )
-! 		call mylist.prepend( mypair )
+! 		call mypair%init( str, 3 )
+! 		call mylist%prepend( mypair )
 ! 		
 ! 		str = "control"
-! 		call mypair.init( str, 2 )
-! 		call mylist.prepend( mypair )
+! 		call mypair%init( str, 2 )
+! 		call mylist%prepend( mypair )
 ! 		
-! 		iter => mylist.begin
+! 		iter => mylist%begin
 ! 		do while( associated(iter) )
-! 			write(*,*) iter.data.first.fstr, iter.data.second
+! 			write(*,*) iter%data%first%fstr, iter%data%second
 ! 			
-! 			iter => iter.next
+! 			iter => iter%next
 ! 		end do
 ! 		write(*,*)
 ! 		
-! 		iter => mylist.begin
-! 		iter => iter.next
+! 		iter => mylist%begin
+! 		iter => iter%next
 ! 		
 		write(*,*) "--------------------------"
 		write(*,*) "Testing the access methods"
 		write(*,*) "--------------------------"
 		
-		write(*,*) "mylist.size() = ", mylist.size()
+		write(*,*) "mylist.size() = ", mylist%size()
 		
-		mypair = mylist.value( mylist.begin )
-		write(*,*) "mylist.value( mylist.begin ) = ", mypair.first.fstr, mypair.second.str()
-		mypair = mylist.value( 1 )
-		write(*,*) "mylist.value( 1 ) = ", mypair.first.fstr, mypair.second.str()
+		mypair = mylist%value( mylist%begin )
+		write(*,*) "mylist.value( mylist.begin ) = ", mypair%first%fstr, mypair%second%str()
+		mypair = mylist%value( 1 )
+		write(*,*) "mylist.value( 1 ) = ", mypair%first%fstr, mypair%second%str()
 		
-		iter => mylist.begin
-		iter => iter.next
-		iter => iter.next
+		iter => mylist%begin
+		iter => iter%next
+		iter => iter%next
 		iterPos => iter
-		iter => iter.next
-		mypair = mylist.value( iterPos )
+		iter => iter%next
+		mypair = mylist%value( iterPos )
 		write(*,*) "iter => mylist.begin"
 		write(*,*) "iter => iter.next"
 		write(*,*) "iter => iter.next"
 		write(*,*) "iterPos => iter"
-		write(*,*) "mylist.value( iterPos ) = ", mypair.first.fstr, mypair.second.str()
+		write(*,*) "mylist.value( iterPos ) = ", mypair%first%fstr, mypair%second%str()
 		
-		mypair = mylist.value( mylist.end )
-		write(*,*) "mylist.value( mylist.end ) = ", mypair.first.fstr, mypair.second.str()
-		mypair = mylist.value( mylist.size() )
-		write(*,*) "mylist.value( mylist.size() ) = ", mypair.first.fstr, mypair.second.str()
+		mypair = mylist%value( mylist%end )
+		write(*,*) "mylist.value( mylist.end ) = ", mypair%first%fstr, mypair%second%str()
+		mypair = mylist%value( mylist%size() )
+		write(*,*) "mylist.value( mylist.size() ) = ", mypair%first%fstr, mypair%second%str()
 		
 		write(*,*) "--------------------------------"
 		write(*,*) "Testing insert and erase methods"
@@ -279,17 +279,17 @@ module StringIntegerHistogramPairList_
 		write(*,*) "call mylist.insert( iterPos, Prueba )"
 		
 		str = "Prueba"
-		call hist.init( STURGES )
-		call hist.add( [23, 22, 22, 22] )
+		call hist%init( STURGES )
+		call hist%add( [23, 22, 22, 22] )
 		
-		call mypair.init( str, hist )
-		call mylist.insert( iterPos, mypair )
+		call mypair%init( str, hist )
+		call mylist%insert( iterPos, mypair )
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, "   =>   ", iter.data.second.str()
+			write(*,*) iter%data%first%fstr, "   =>   ", iter%data%second%str()
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		write(*,*)
 		
@@ -300,18 +300,18 @@ module StringIntegerHistogramPairList_
 		write(*,*) "iterPos => iter"
 		write(*,*) "call mylist.erase( iterPos )"
 		
-		iter => mylist.begin
-		iter => iter.next
-		iter => iter.next
-		iter => iter.next
+		iter => mylist%begin
+		iter => iter%next
+		iter => iter%next
+		iter => iter%next
 		iterPos => iter
-		call mylist.erase( iterPos )
+		call mylist%erase( iterPos )
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, "   =>   ", iter.data.second.str()
+			write(*,*) iter%data%first%fstr, "   =>   ", iter%data%second%str()
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		write(*,*)
 		
@@ -321,13 +321,13 @@ module StringIntegerHistogramPairList_
 		
 		write(*,*) "call mylist.clear()"
 		
-		call mylist.clear()
+		call mylist%clear()
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,*) iter.data.first.fstr, "   =>   ", iter.data.second.str()
+			write(*,*) iter%data%first%fstr, "   =>   ", iter%data%second%str()
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		write(*,*)
 		
@@ -335,23 +335,23 @@ module StringIntegerHistogramPairList_
 ! 		write(*,*) "call mylist.append( Hello2 bbbbb ccccc )"
 ! 		
 ! 		str = "Hello1 aaaaaa"
-! 		call mypair.init( str, 21 )
-! 		call mylist.append( mypair )
+! 		call mypair%init( str, 21 )
+! 		call mylist%append( mypair )
 ! 		
 ! 		str = "Hello2 bbbbb ccccc"
-! 		call mypair.init( str, 31 )
-! 		call mylist.append( mypair )
+! 		call mypair%init( str, 31 )
+! 		call mylist%append( mypair )
 ! 		
-! 		iter => mylist.begin
+! 		iter => mylist%begin
 ! 		do while( associated(iter) )
-! 			write(*,*) iter.data.first.fstr, iter.data.second
+! 			write(*,*) iter%data%first%fstr, iter%data%second
 ! 			
-! 			iter => iter.next
+! 			iter => iter%next
 ! 		end do
 ! 		write(*,*)
 ! 		
 ! 		write(*,*) "call mylist.clear()"
-! 		call mylist.clear()
+! 		call mylist%clear()
 		
 	end subroutine StringIntegerHistogramPairList_test
 

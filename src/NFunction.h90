@@ -169,13 +169,13 @@
 		effValue = 0.0_8
 		if( present(value) ) effValue = value
 		
-		this.xGrid = xGrid
+		this%xGrid = xGrid
 		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(xGrid.nPoints), stat=allocStat )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(xGrid%nPoints), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromGrid()" )
 		
-		this.fArray = effValue
+		this%fArray = effValue
 	end function fromGrid
 	
 	!>
@@ -196,13 +196,13 @@
 		if( present(value) ) effValue = value
 		
 		
-		call this.xGrid.init( min, max, nPoints, stepSize )
+		call this%xGrid%init( min, max, nPoints, stepSize )
 		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray( this.xGrid.nPoints ), stat=allocStat )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray( this%xGrid%nPoints ), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromGridData()" )
 		
-		this.fArray = effValue
+		this%fArray = effValue
 	end function fromGridData
 	
 	!>
@@ -234,18 +234,18 @@
 			stop
 		end if
 		
-		call this.xGrid.init( xArray )
-		call this.xGrid.setUnits( effUnits(1) )
+		call this%xGrid%init( xArray )
+		call this%xGrid%setUnits( effUnits(1) )
 		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray( size(xArray) ), stat=allocStat )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray( size(xArray) ), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromArrays()" )
 		
 		do i=1,size(fArray,dim=1)
 #if __ID_TYPE__ == 0
-			this.fArray(i) = min( max( fArray(i)*effUnits(2), -effCutoff ), effCutoff )
+			this%fArray(i) = min( max( fArray(i)*effUnits(2), -effCutoff ), effCutoff )
 #elif __ID_TYPE__ == 1
-			this.fArray(i) = fArray(i)*effUnits(2)
+			this%fArray(i) = fArray(i)*effUnits(2)
 #endif
 		end do
 	end function fromArrays
@@ -274,24 +274,24 @@
 		effCutoff = 1d10
 		if( present(cutoff) ) effCutoff = cutoff
 		
-		this.xGrid = xGrid
-		call this.xGrid.setUnits( effUnits(1) )
+		this%xGrid = xGrid
+		call this%xGrid%setUnits( effUnits(1) )
 		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
+		if( allocated(this%fArray) ) deallocate(this%fArray)
 		
-		if( xGrid.nPoints /= size(fArray) ) then
-			write(*,*) "### ERROR ### NFunction.fromGridArray: The xArray's size should be equal to fArray's size (", xGrid.nPoints,"/=", size(fArray), ")"
+		if( xGrid%nPoints /= size(fArray) ) then
+			write(*,*) "### ERROR ### NFunction.fromGridArray: The xArray's size should be equal to fArray's size (", xGrid%nPoints,"/=", size(fArray), ")"
 			stop
 		end if
 		
-		allocate( this.fArray(xGrid.nPoints), stat=allocStat )
+		allocate( this%fArray(xGrid%nPoints), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromGridArray()" )
 		
 		do i=1,size(fArray,dim=1)
 #if __ID_TYPE__ == 0
-			this.fArray(i) = min( max( fArray(i)*effUnits(2), -effCutoff ), effCutoff )
+			this%fArray(i) = min( max( fArray(i)*effUnits(2), -effCutoff ), effCutoff )
 #elif __ID_TYPE__ == 1
-			this.fArray(i) = fArray(i)*effUnits(2)
+			this%fArray(i) = fArray(i)*effUnits(2)
 #endif
 		end do
 		
@@ -322,18 +322,18 @@
 		effCutoff = 1d10
 		if( present(cutoff) ) effCutoff = cutoff
 		
-		this.xGrid = xGrid
-		call this.xGrid.setUnits( effUnits(1) )
+		this%xGrid = xGrid
+		call this%xGrid%setUnits( effUnits(1) )
 		
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(this.nPoints()), stat=allocStat )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(this%nPoints()), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.fromFunction()" )
 		
-		do i=1,this.nPoints()
+		do i=1,this%nPoints()
 #if __ID_TYPE__ == 0
-			this.fArray(i) = min( max( func( xGrid.data(i) )*effUnits(2), -effCutoff ), effCutoff )
+			this%fArray(i) = min( max( func( xGrid%data(i) )*effUnits(2), -effCutoff ), effCutoff )
 #elif __ID_TYPE__ == 1
-			this.fArray(i) = func( xGrid.data(i) )*effUnits(2)
+			this%fArray(i) = func( xGrid%data(i) )*effUnits(2)
 #endif
 		end do
 	end function fromFunction
@@ -369,17 +369,17 @@
 				deallocate( tokens )
 				
 				if( trim(extension) == "n1df" ) then
-					call this.loadN1DF( fileName )
+					call this%loadN1DF( fileName )
 				else if( trim(extension) == "cube" ) then
-					call this.loadCUBE( fileName, CUBE_FORMAT )
+					call this%loadCUBE( fileName, CUBE_FORMAT )
 				else if( trim(extension) == "rcube" ) then
-					call this.loadCUBE( fileName, RCUBE_FORMAT )
+					call this%loadCUBE( fileName, RCUBE_FORMAT )
 				else if( trim(extension) == "icube" ) then
-					call this.loadCUBE( fileName, ICUBE_FORMAT )
+					call this%loadCUBE( fileName, ICUBE_FORMAT )
 				else if( trim(extension) == "blks" ) then
-					call this.loadBLKS( fileName )
+					call this%loadBLKS( fileName )
 				else if( trim(extension) == "dat" ) then
-					call this.loadDAT( fileName )
+					call this%loadDAT( fileName )
 				else
 					call GOptions_error( &
 						"Unknown format file (AUTO_FORMAT). fileName = "//trim(fileName), &
@@ -387,15 +387,15 @@
 					)
 				end if
 			case( N1DF_FORMAT )
-				call this.loadN1DF( fileName )
+				call this%loadN1DF( fileName )
 			case( CUBE_FORMAT )
-				call this.loadCUBE( fileName, CUBE_FORMAT )
+				call this%loadCUBE( fileName, CUBE_FORMAT )
 			case( RCUBE_FORMAT )
-				call this.loadCUBE( fileName, RCUBE_FORMAT )
+				call this%loadCUBE( fileName, RCUBE_FORMAT )
 			case( ICUBE_FORMAT )
-				call this.loadCUBE( fileName, ICUBE_FORMAT )
+				call this%loadCUBE( fileName, ICUBE_FORMAT )
 			case( BLKS_FORMAT )
-				call this.loadBLKS( fileName )
+				call this%loadBLKS( fileName )
 			case default
 				write(6,*) "### ERROR ### NFunction.fromFile(). The format is not supported (", effFormat, ")"
 				stop
@@ -411,13 +411,15 @@
 		
 		integer :: allocStat
 		
-		call this.xGrid.copyGrid( other.xGrid )
+		call this%xGrid%copyGrid( other%xGrid )
 		
-		if( allocated(this.fArray) ) deallocate( this.fArray )
-		allocate( this.fArray(this.nPoints()), stat=allocStat )
-		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.copyNFunction()" )
+		if( allocated(this%fArray) ) deallocate( this%fArray )
 		
-		this.fArray = other.fArray
+		if ( allocated(other%fArray) ) then
+			allocate( this%fArray(this%nPoints()), stat=allocStat )
+			if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.copyNFunction()" )
+			this%fArray = other%fArray
+		end if
 	end subroutine copyNFunction
 	
 	!>
@@ -427,7 +429,7 @@
 		class(NFunction), intent(inout) :: this
 		class(NFunction), intent(in) :: other
 		
-		this.fArray = other.fArray
+		this%fArray = other%fArray
 	end subroutine copyFArray
 	
 	!>
@@ -436,9 +438,9 @@
 	subroutine destroyNFunction( this )
 		type(NFunction) :: this
 		
-! 		call this.xGrid.destroy()
+! 		call this%xGrid%destroy()
 		
-		if( allocated(this.fArray) ) deallocate( this.fArray )
+		if( allocated(this%fArray) ) deallocate( this%fArray )
 	end subroutine destroyNFunction
 	
 	!>
@@ -463,11 +465,11 @@
 		effCutoff = 1d10
 		if( present(cutoff) ) effCutoff = cutoff
 		
-		do i=1,this.nPoints()
+		do i=1,this%nPoints()
 #if __ID_TYPE__ == 0
-			this.fArray(i) = min( max( func( this.xGrid.data(i) )*effUnits(2), -effCutoff ), effCutoff )
+			this%fArray(i) = min( max( func( this%xGrid%data(i) )*effUnits(2), -effCutoff ), effCutoff )
 #elif __ID_TYPE__ == 1
-			this.fArray(i) = func( this.xGrid.data(i) )*effUnits(2)
+			this%fArray(i) = func( this%xGrid%data(i) )*effUnits(2)
 #endif
 		end do
 	end subroutine updateFromFunction
@@ -483,21 +485,21 @@
 		logical :: interpolate
 		
 		interpolate = .false.
-		if( this.nPoints() /= other.nPoints() ) then
+		if( this%nPoints() /= other%nPoints() ) then
 			write(*,"(A)") "@@ WARNING @@ NFunction.addition (NFunction.h90): Numerical Functions have not the same size. They will be interpolated"
 			interpolate = .true.
 		end if
 		
 		if( .not. interpolate ) then
-			call output.copy( this )
-			output.fArray = this.fArray + other.fArray
+			call output%copy( this )
+			output%fArray = this%fArray + other%fArray
 		else
-			if( this.nPoints() > other.nPoints() ) then
-				output = other.interpolate( xGrid=this.xGrid )
-				output.fArray = this.fArray + output.fArray
+			if( this%nPoints() > other%nPoints() ) then
+				output = other%interpolate( xGrid=this%xGrid )
+				output%fArray = this%fArray + output%fArray
 			else
-				output = this.interpolate( xGrid=other.xGrid )
-				output.fArray = output.fArray + other.fArray
+				output = this%interpolate( xGrid=other%xGrid )
+				output%fArray = output%fArray + other%fArray
 			end if
 		end if
 	end function addition
@@ -510,13 +512,13 @@
 		type(Grid), intent(in) :: xGrid
 		type(NFunction) :: output
 		
-		if( this.nPoints() /= xGrid.nPoints ) then
+		if( this%nPoints() /= xGrid%nPoints ) then
 			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
 			stop
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray + xGrid.data
+		call output%copy( this )
+		output%fArray = this%fArray + xGrid%data
 	end function additionGrid
 	
 	!>
@@ -527,8 +529,8 @@
 		real(8), intent(in) :: constant
 		type(NFunction) :: output
 		
-		call output.copy( this )
-		output.fArray = this.fArray+constant
+		call output%copy( this )
+		output%fArray = this%fArray+constant
 	end function additionFC
 	
 	!>
@@ -542,21 +544,21 @@
 		logical :: interpolate
 		
 		interpolate = .false.
-		if( this.nPoints() /= other.nPoints() ) then
+		if( this%nPoints() /= other%nPoints() ) then
 			write(*,"(A)") "@@ WARNING @@ NFunction.subtraction (NFunction.h90): Numerical Functions have not the same size. They will be interpolated"
 			interpolate = .true.
 		end if
 		
 		if( .not. interpolate ) then
-			call output.copy( this )
-			output.fArray = this.fArray - other.fArray
+			call output%copy( this )
+			output%fArray = this%fArray - other%fArray
 		else
-			if( this.nPoints() > other.nPoints() ) then
-				output = other.interpolate( xGrid=this.xGrid )
-				output.fArray = this.fArray - output.fArray
+			if( this%nPoints() > other%nPoints() ) then
+				output = other%interpolate( xGrid=this%xGrid )
+				output%fArray = this%fArray - output%fArray
 			else
-				output = this.interpolate( xGrid=other.xGrid )
-				output.fArray = output.fArray - other.fArray
+				output = this%interpolate( xGrid=other%xGrid )
+				output%fArray = output%fArray - other%fArray
 			end if
 		end if
 		
@@ -570,13 +572,13 @@
 		type(Grid), intent(in) :: xGrid
 		type(NFunction) :: output
 		
-		if( this.nPoints() /= xGrid.nPoints ) then
+		if( this%nPoints() /= xGrid%nPoints ) then
 			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
 			stop
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray - xGrid.data
+		call output%copy( this )
+		output%fArray = this%fArray - xGrid%data
 	end function subtractionGrid
 	
 	!>
@@ -587,8 +589,8 @@
 		real(8), intent(in) :: constant
 		type(NFunction) :: output
 		
-		call output.copy( this )
-		output.fArray = this.fArray-constant
+		call output%copy( this )
+		output%fArray = this%fArray-constant
 	end function subtractionFC
 	
 	!>
@@ -602,21 +604,21 @@
 		logical :: interpolate
 		
 		interpolate = .false.
-		if( this.nPoints() /= other.nPoints() ) then
+		if( this%nPoints() /= other%nPoints() ) then
 			write(*,"(A)") "@@ WARNING @@ NFunction.multiplication (NFunction.h90): Numerical Functions have not the same size. They will be interpolated"
 			interpolate = .true.
 		end if
 		
 		if( .not. interpolate ) then
-			call output.copy( this )
-			output.fArray = this.fArray*other.fArray
+			call output%copy( this )
+			output%fArray = this%fArray*other%fArray
 		else
-			if( this.nPoints() > other.nPoints() ) then
-				output = other.interpolate( xGrid=this.xGrid )
-				output.fArray = this.fArray*output.fArray
+			if( this%nPoints() > other%nPoints() ) then
+				output = other%interpolate( xGrid=this%xGrid )
+				output%fArray = this%fArray*output%fArray
 			else
-				output = this.interpolate( xGrid=other.xGrid )
-				output.fArray = output.fArray*other.fArray
+				output = this%interpolate( xGrid=other%xGrid )
+				output%fArray = output%fArray*other%fArray
 			end if
 		end if
 	end function multiplication
@@ -629,13 +631,13 @@
 		type(Grid), intent(in) :: xGrid
 		type(NFunction) :: output
 		
-		if( this.nPoints() /= xGrid.nPoints ) then
+		if( this%nPoints() /= xGrid%nPoints ) then
 			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
 			stop
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray*xGrid.data
+		call output%copy( this )
+		output%fArray = this%fArray*xGrid%data
 	end function multiplicationGrid
 	
 	!>
@@ -646,8 +648,8 @@
 		real(8), intent(in) :: constant
 		type(NFunction) :: output
 		
-		call output.copy( this )
-		output.fArray = this.fArray*constant
+		call output%copy( this )
+		output%fArray = this%fArray*constant
 	end function multiplicationFC
 	
 	!>
@@ -661,21 +663,21 @@
 		logical :: interpolate
 		
 		interpolate = .false.
-		if( this.nPoints() /= other.nPoints() ) then
+		if( this%nPoints() /= other%nPoints() ) then
 			write(*,"(A)") "@@ WARNING @@ NFunction.division (NFunction.h90): Numerical Functions have not the same size. They will be interpolated"
 			interpolate = .true.
 		end if
 		
 		if( .not. interpolate ) then
-			call output.copy( this )
-			output.fArray = this.fArray / other.fArray
+			call output%copy( this )
+			output%fArray = this%fArray / other%fArray
 		else
-			if( this.nPoints() > other.nPoints() ) then
-				output = other.interpolate( xGrid=this.xGrid )
-				output.fArray = this.fArray/output.fArray
+			if( this%nPoints() > other%nPoints() ) then
+				output = other%interpolate( xGrid=this%xGrid )
+				output%fArray = this%fArray/output%fArray
 			else
-				output = this.interpolate( xGrid=other.xGrid )
-				output.fArray = output.fArray/other.fArray
+				output = this%interpolate( xGrid=other%xGrid )
+				output%fArray = output%fArray/other%fArray
 			end if
 		end if
 	end function division
@@ -688,13 +690,13 @@
 		type(Grid), intent(in) :: xGrid
 		type(NFunction) :: output
 		
-		if( this.nPoints() /= xGrid.nPoints ) then
+		if( this%nPoints() /= xGrid%nPoints ) then
 			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
 			stop
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray/xGrid.data
+		call output%copy( this )
+		output%fArray = this%fArray/xGrid%data
 	end function divisionGrid
 	
 	!>
@@ -705,8 +707,8 @@
 		real(8), intent(in) :: constant
 		type(NFunction) :: output
 		
-		call output.copy( this )
-		output.fArray = this.fArray/constant
+		call output%copy( this )
+		output%fArray = this%fArray/constant
 	end function divisionFC
 	
 	!>
@@ -717,13 +719,13 @@
 		type(NFunction), intent(in) :: other
 		type(NFunction) :: output
 		
-		if( this.nPoints() /= other.nPoints() ) then
+		if( this%nPoints() /= other%nPoints() ) then
 			write(*,*) "## ERROR ## the Numerical Functions have not the same size"
 			stop
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray**other.fArray
+		call output%copy( this )
+		output%fArray = this%fArray**other%fArray
 	end function exponentiation
 	
 	!>
@@ -734,13 +736,13 @@
 		type(Grid), intent(in) :: xGrid
 		type(NFunction) :: output
 		
-		if( this.nPoints() /= xGrid.nPoints ) then
+		if( this%nPoints() /= xGrid%nPoints ) then
 			write(*,*) "## ERROR ## the Numerical Function and grid have not the same size"
 			stop
 		end if
 		
-		call output.copy( this )
-		output.fArray = this.fArray**xGrid.data
+		call output%copy( this )
+		output%fArray = this%fArray**xGrid%data
 	end function exponentiationGrid
 	
 	!>
@@ -751,8 +753,8 @@
 		real(8), intent(in) :: constant
 		type(NFunction) :: output
 		
-		call output.copy( this )
-		output.fArray = this.fArray**constant
+		call output%copy( this )
+		output%fArray = this%fArray**constant
 	end function exponentiationFC
 	
 	!>
@@ -766,11 +768,11 @@
 		real(8), optional, intent(in) :: dy
 		
 		if( present(dx) ) then
-			call this.xGrid.translate( dx )
+			call this%xGrid%translate( dx )
 		end if
 		
 		if( present(dy) ) then
-			this.fArray = this.fArray + dy
+			this%fArray = this%fArray + dy
 		end if
 	end subroutine translate
 	
@@ -781,7 +783,7 @@
 		class(NFunction), intent(in) :: this
 		logical :: output
 		
-		output = this.xGrid.isEquallyspaced
+		output = this%xGrid%isEquallyspaced
 	end function isEquallyspaced
 	
 	!>
@@ -790,7 +792,7 @@
 	subroutine checkEquallyspaced( this )
 		class(NFunction) :: this
 		
-		call this.xGrid.checkEquallyspaced()
+		call this%xGrid%checkEquallyspaced()
 	end subroutine checkEquallyspaced
 	
 	!>
@@ -839,17 +841,17 @@
 				deallocate( tokens )
 				
 				if( trim(extension) == "n1df" ) then
-					call this.saveN1DF( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+					call this%saveN1DF( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
 				else if( trim(extension) == "cube" ) then
-					call this.saveCUBE( fileName, CUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+					call this%saveCUBE( fileName, CUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
 				else if( trim(extension) == "rcube" ) then
-					call this.saveCUBE( fileName, RCUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+					call this%saveCUBE( fileName, RCUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
 				else if( trim(extension) == "icube" ) then
-					call this.saveCUBE( fileName, ICUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+					call this%saveCUBE( fileName, ICUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
 				else if( trim(extension) == "blks" ) then
-					call this.saveBLKS( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+					call this%saveBLKS( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
 				else if( trim(extension) == "dat" ) then
-					call this.saveBLKS( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+					call this%saveBLKS( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
 				else
 					call GOptions_error( &
 						"Unknown format file (AUTO_FORMAT). FileName = "//trim(fileName), &
@@ -857,15 +859,15 @@
 					)
 				end if
 			case( N1DF_FORMAT )
-				call this.saveN1DF( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				call this%saveN1DF( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
 			case( CUBE_FORMAT )
-				call this.saveCUBE( fileName, CUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				call this%saveCUBE( fileName, CUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
 			case( RCUBE_FORMAT )
-				call this.saveCUBE( fileName, RCUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				call this%saveCUBE( fileName, RCUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
 			case( ICUBE_FORMAT )
-				call this.saveCUBE( fileName, ICUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				call this%saveCUBE( fileName, ICUBE_FORMAT, metadata=metadata, xrange=xrange, ixrange=ixrange )
 			case( BLKS_FORMAT )
-				call this.saveBLKS( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
+				call this%saveBLKS( fileName, metadata=metadata, xrange=xrange, ixrange=ixrange )
 			case default
 				write(6,*) "### ERROR ### NFunction.save(). The format is not supported"
 				stop
@@ -879,8 +881,8 @@
 		class(NFunction) :: this
 		real(8), intent(in) :: units(2)
 		
-		call this.xGrid.setUnits( units(1) )
-		this.fArray = this.fArray*units(2)
+		call this%xGrid%setUnits( units(1) )
+		this%fArray = this%fArray*units(2)
 	end subroutine setUnits
 	
 	!>
@@ -891,13 +893,13 @@
 		integer, intent(in) :: n
 		__TYPE_VALUE__, intent(in) :: yValue
 		
-		if( n <= this.nPoints() ) then
-			this.fArray(n) = yValue
+		if( n <= this%nPoints() ) then
+			this%fArray(n) = yValue
 		else
 			call GOptions_error( &
 				"Accessing an array outside its bounds", &
 				"NFunction.set()", &
-				"("//trim(FString_fromInteger(n))//">"//trim(FString_fromInteger(this.nPoints()))//")" &
+				"("//trim(FString_fromInteger(n))//">"//trim(FString_fromInteger(this%nPoints()))//")" &
 			)
 		end if
 	end subroutine set
@@ -909,7 +911,7 @@
 		class(NFunction), intent(in) :: this
 		__TYPE_VALUE__ :: output
 		
-		output = this.fArray(1)
+		output = this%fArray(1)
 	end function first
 	
 	!>
@@ -919,7 +921,7 @@
 		class(NFunction), intent(in) :: this
 		__TYPE_VALUE__ :: output
 		
-		output = this.fArray( this.nPoints() )
+		output = this%fArray( this%nPoints() )
 	end function last
 	
 	!>
@@ -930,7 +932,7 @@
 		integer, intent(in) :: pos
 		__TYPE_VALUE__ :: output
 		
-		output = this.fArray( pos )
+		output = this%fArray( pos )
 	end function at
 	
 	!>
@@ -941,7 +943,7 @@
 		integer, intent(in) :: pos
 		real(8) :: output
 		
-		output = this.xGrid.at( pos )
+		output = this%xGrid%at( pos )
 	end function x
 	
 	!>
@@ -951,7 +953,7 @@
 		class(NFunction), intent(in) :: this
 		integer :: output
 		
-		output = this.xGrid.nPoints
+		output = this%xGrid%nPoints
 	end function nPoints
 	
 	!>
@@ -961,7 +963,7 @@
 		class(NFunction), intent(in) :: this
 		real(8) :: output
 		
-		output = this.xGrid.min
+		output = this%xGrid%min
 	end function minInCoord
 	
 	!>
@@ -971,7 +973,7 @@
 		class(NFunction), intent(in) :: this
 		real(8) :: output
 		
-		output = this.xGrid.max
+		output = this%xGrid%max
 	end function maxInCoord
 	
 	!>
@@ -981,7 +983,7 @@
 		class(NFunction), intent(in) :: this
 		real(8) :: output
 		
-		output = this.xGrid.stepSize
+		output = this%xGrid%stepSize
 	end function stepSize
 	
 	!>
@@ -994,9 +996,9 @@
 		
 		select case( coord )
 			case(1)
-				output = this.xGrid.lenght()
+				output = this%xGrid%lenght()
 			case(2)
-				output = this.xGrid.lenght()
+				output = this%xGrid%lenght()
 			case default
 				call GOptions_error( "Inconsistent value for coord", "NFunction.lenght( coord="//trim(FString_fromInteger(coord))//" )" )
 		end select
@@ -1022,12 +1024,12 @@
 			effUnits = [1.0_8, 1.0_8]
 		end if
 		
-		call ifile.init( ifileName )
+		call ifile%init( ifileName )
 		select type (this); type is (NFunction)
 			this = NFunction( ifile, columns, cComments, units )
 ! 			this = fromFStream( ifile, columns, cComments, units )
 		end select
-		call ifile.close()
+		call ifile%close()
 	end subroutine loadDAT
 	
 	!>
@@ -1054,11 +1056,11 @@
 ! ! 		if( present(append) ) effAppend = append
 ! ! 		
 ! ! 		if( present(oFileName) ) then
-! ! 			call ofile.init( oFileName, append=effAppend )
-! ! 			call this.toFStream( ofile, units=units, resolution=resolution, xrange=xrange, ixrange=ixrange, beforeLine=beforeLine )
-! ! 			call ofile.close()
+! ! 			call ofile%init( oFileName, append=effAppend )
+! ! 			call this%toFStream( ofile, units=units, resolution=resolution, xrange=xrange, ixrange=ixrange, beforeLine=beforeLine )
+! ! 			call ofile%close()
 ! ! 		else
-! ! 			call this.toFStream( units=units, resolution=resolution, xrange=xrange, ixrange=ixrange, beforeLine=beforeLine )
+! ! 			call this%toFStream( units=units, resolution=resolution, xrange=xrange, ixrange=ixrange, beforeLine=beforeLine )
 ! ! 		end if
 ! 
 ! 		integer :: effUnit
@@ -1071,16 +1073,16 @@
 ! 		character(100), allocatable :: tokens(:)
 ! 		
 ! 		effUnit = IO_STDOUT
-! 		if( present(ofile) ) effUnit = ofile.unit
+! 		if( present(ofile) ) effUnit = ofile%unit
 ! 		
 ! 		effUnits = [1.0_8, 1.0_8]
 ! 		if( present(units) ) effUnits = units
 ! 		
-! 		effIXRange = [1,this.nPoints()]
+! 		effIXRange = [1,this%nPoints()]
 ! 		if( present(xrange) ) then
 ! 			effIXRange = [ &
-! 				floor( 1.0000001*(xrange(1)-this.xGrid.min)/this.xGrid.stepSize+1.0 ), &
-! 				floor( 1.0000001*(xrange(2)-this.xGrid.min)/this.xGrid.stepSize+1.0 ) ]
+! 				floor( 1.0000001*(xrange(1)-this%xGrid%min)/this%xGrid%stepSize+1.0 ), &
+! 				floor( 1.0000001*(xrange(2)-this%xGrid%min)/this%xGrid%stepSize+1.0 ) ]
 ! 		else if( present(ixrange) ) then
 ! 			effIXRange = ixrange
 ! 		end if
@@ -1108,19 +1110,19 @@
 ! 		
 ! 		do i=effIXRange(1),effIXRange(2),invResolution
 ! #if __ID_TYPE__ == 0
-! 			if( abs(this.fArray( i )) > 1d-98 ) then
-! 				write(effUnit,"(E15.7,E15.7)") this.xGrid.data(i)/effUnits(1), &
-! 					this.fArray( i )/effUnits(2)
+! 			if( abs(this%fArray( i )) > 1d-98 ) then
+! 				write(effUnit,"(E15.7,E15.7)") this%xGrid%data(i)/effUnits(1), &
+! 					this%fArray( i )/effUnits(2)
 ! 			else
-! 				write(effUnit,"(E15.7,E15.7)") this.xGrid.data(i)/effUnits(1), 0.0_8
+! 				write(effUnit,"(E15.7,E15.7)") this%xGrid%data(i)/effUnits(1), 0.0_8
 ! 			end if
 ! #elif __ID_TYPE__ == 1
-! 			if( abs(this.fArray( i )) > 1d-98 ) then
-! 				write(effUnit,"(E15.7,2E15.7)") this.xGrid.data(i)/effUnits(1), &
-! 					real(this.fArray( i ))/effUnits(2), &
-! 					aimag(this.fArray( i ))/effUnits(2)
+! 			if( abs(this%fArray( i )) > 1d-98 ) then
+! 				write(effUnit,"(E15.7,2E15.7)") this%xGrid%data(i)/effUnits(1), &
+! 					real(this%fArray( i ))/effUnits(2), &
+! 					aimag(this%fArray( i ))/effUnits(2)
 ! 			else
-! 				write(effUnit,"(E15.7,2E15.7)") this.xGrid.data(i)/effUnits(1), 0.0_8, 0.0_8
+! 				write(effUnit,"(E15.7,2E15.7)") this%xGrid%data(i)/effUnits(1), 0.0_8, 0.0_8
 ! 			end if
 ! #endif
 ! 		end do
@@ -1128,7 +1130,7 @@
 ! 		write(effUnit,"(a)") ""
 ! 		write(effUnit,"(a)") ""
 ! 		
-! 		call ofile.close()
+! 		call ofile%close()
 ! 		
 ! 	end subroutine saveDAT
 	
@@ -1176,7 +1178,7 @@
 		! Volumetric data
 		read(1) fArray
 		
-		call xGrid.init( min=xMin, max=xMax, nPoints=nx )
+		call xGrid%init( min=xMin, max=xMax, nPoints=nx )
 		this = NFunction( xGrid, fArray )
 		
 		deallocate( fArray )
@@ -1198,16 +1200,16 @@
 		
 		integer :: idType
 		
-		effIXRange = [1,this.nPoints()]
+		effIXRange = [1,this%nPoints()]
 		if( present(xrange) ) then
 			effIXRange = [ &
-				floor( 1.0000001*(xrange(1)-this.xGrid.min)/this.xGrid.stepSize+1.0 ), &
-				floor( 1.0000001*(xrange(2)-this.xGrid.min)/this.xGrid.stepSize+1.0 ) ]
+				floor( 1.0000001*(xrange(1)-this%xGrid%min)/this%xGrid%stepSize+1.0 ), &
+				floor( 1.0000001*(xrange(2)-this%xGrid%min)/this%xGrid%stepSize+1.0 ) ]
 		else if( present(ixrange) ) then
 			effIXRange = ixrange
 		end if
 		
-		if( .not. this.xGrid.isEquallyspaced ) then
+		if( .not. this%xGrid%isEquallyspaced ) then
 			call GOptions_error( &
 				"This subroutine is not available for functions wich are not equally spaced", &
 				"NFunction.saveN1DF()" &
@@ -1224,19 +1226,19 @@
 		write(1) idType
 		
 		! origin of the grid
-! 		write(1) this.xGrid.min
-		write(1) this.xGrid.at( effIXRange(1) )
+! 		write(1) this%xGrid%min
+		write(1) this%xGrid%at( effIXRange(1) )
 		
 		! Number of points for each coordinate
-! 		write(1) this.xGrid.nPoints
+! 		write(1) this%xGrid%nPoints
 		write(1) effIXRange(2)-effIXRange(1)+1
 		
 		! Increment for each coordinate
-		write(1) this.xGrid.stepSize
+		write(1) this%xGrid%stepSize
 		
 		!!!!!!!!!!!!!!!!!!!!!!!
 		! Volumetric data
-		write(1) this.fArray( effIXRange(1):effIXRange(2) )
+		write(1) this%fArray( effIXRange(1):effIXRange(2) )
 		
 		close(1)
 	end subroutine saveN1DF
@@ -1335,7 +1337,7 @@
 		end select
 #endif
 		
-		call xGrid.init( min=xMin, max=xMax, nPoints=nx )
+		call xGrid%init( min=xMin, max=xMax, nPoints=nx )
 		this = NFunction( xGrid, fArray )
 		
 		close(1)
@@ -1360,7 +1362,7 @@
 		integer :: ix
 		character(255) :: date
 		
-		if( .not. this.xGrid.isEquallyspaced ) then
+		if( .not. this%xGrid%isEquallyspaced ) then
 			call GOptions_error( &
 				"This subroutine is not available for functions wich are not equally spaced", &
 				"NFunction.saveCUBE()" &
@@ -1397,29 +1399,29 @@
 		! The third line has the number of atoms
 		! (in this case is the calcium atom) followed by
 		! the position of the grid
-		write(1, "(I4,F12.5)" ) 0, this.xGrid.min
+		write(1, "(I4,F12.5)" ) 0, this%xGrid%min
 		
 		! The next three lines have the following information for each coordinate
 		! <number of points> <x_increment> <y_increment> <z_increment>
-		write(1, "(I4,F12.5)" ) this.xGrid.nPoints, this.xGrid.stepSize
+		write(1, "(I4,F12.5)" ) this%xGrid%nPoints, this%xGrid%stepSize
 		
 		! The last section in the header is one for each atom consisting
 		! of 5 numbers
 		! <atomic number(integer)> <atomic number(real)> <x_coordinate> <y_coordinate> <z_coordinate>
-! 		write(1, "(I4,F12.5,F12.5,F12.5,F12.5)" ) 20, 20.0, this.ximp, yimp, zimp
+! 		write(1, "(I4,F12.5,F12.5,F12.5,F12.5)" ) 20, 20.0, this%ximp, yimp, zimp
 		
 		!!!!!!!!!!!!!!!!!!!!!!!
 		! Volumetric data
 #if __ID_TYPE__ == 0
-		write(1,"(6E13.5)") ( this.fArray(ix), ix=1,this.xGrid.nPoints )
+		write(1,"(6E13.5)") ( this%fArray(ix), ix=1,this%xGrid%nPoints )
 #elif __ID_TYPE__ == 1
 		select case ( effFormat )
 			case( CUBE_FORMAT )
-				write(1,"(6E13.5)") ( abs(this.fArray(ix)), ix=1,this.xGrid.nPoints )
+				write(1,"(6E13.5)") ( abs(this%fArray(ix)), ix=1,this%xGrid%nPoints )
 			case( RCUBE_FORMAT )
-				write(1,"(6E13.5)") ( real(this.fArray(ix)), ix=1,this.xGrid.nPoints )
+				write(1,"(6E13.5)") ( real(this%fArray(ix)), ix=1,this%xGrid%nPoints )
 			case( ICUBE_FORMAT )
-				write(1,"(6E13.5)") ( aimag(this.fArray(ix)), ix=1,this.xGrid.nPoints )
+				write(1,"(6E13.5)") ( aimag(this%fArray(ix)), ix=1,this%xGrid%nPoints )
 			case default
 				write(6,*) "### ERROR ### NFunction.saveCUBE(). The format is not supported"
 				stop
@@ -1471,11 +1473,11 @@
 		integer :: effIXRange(2)
 		__TYPE_VALUE__ :: value
 		
-		effIXRange = [1,this.nPoints()]
+		effIXRange = [1,this%nPoints()]
 		if( present(xrange) ) then
 			effIXRange = [ &
-				floor( 1.0000001*(xrange(1)-this.xGrid.min)/this.xGrid.stepSize+1.0 ), &
-				floor( 1.0000001*(xrange(2)-this.xGrid.min)/this.xGrid.stepSize+1.0 ) ]
+				floor( 1.0000001*(xrange(1)-this%xGrid%min)/this%xGrid%stepSize+1.0 ), &
+				floor( 1.0000001*(xrange(2)-this%xGrid%min)/this%xGrid%stepSize+1.0 ) ]
 		else if( present(ixrange) ) then
 			effIXRange = ixrange
 		end if
@@ -1501,20 +1503,20 @@
 			if( allocated(tokens) ) deallocate( tokens )
 		end if
 		
-! 		do ix=1,this.xGrid.nPoints
+! 		do ix=1,this%xGrid%nPoints
 		do ix=effIXRange(1),effIXRange(2)
-			value = this.fArray(ix)
+			value = this%fArray(ix)
 #if __ID_TYPE__ == 0
 			if( abs(value) > 1d-98 ) then
-				write(1,"(2E20.10)") this.xGrid.at(ix), this.fArray(ix)
+				write(1,"(2E20.10)") this%xGrid%at(ix), this%fArray(ix)
 			else
-				write(1,"(2E20.10)") this.xGrid.at(ix), 0.0_8
+				write(1,"(2E20.10)") this%xGrid%at(ix), 0.0_8
 			end if
 #elif __ID_TYPE__ == 1
 			if( abs(value) > 1d-98 ) then
-				write(1,"(3E20.10)") this.xGrid.at(ix), this.fArray(ix)
+				write(1,"(3E20.10)") this%xGrid%at(ix), this%fArray(ix)
 			else
-				write(1,"(3E20.10)") this.xGrid.at(ix), 0.0_8, 0.0_8
+				write(1,"(3E20.10)") this%xGrid%at(ix), 0.0_8, 0.0_8
 			end if
 #endif
 		end do
@@ -1530,7 +1532,7 @@
 		class(NFunction), intent(in) :: other
 		logical :: output
 		
-		output = this.xGrid.isEqualTo( other.xGrid )
+		output = this%xGrid%isEqualTo( other%xGrid )
 	end function checkBox
 	
 	!>
@@ -1557,39 +1559,39 @@
 		effDir = 1
 		if( present(dir) ) effDir = dir
 		
-		xGrid = this.xGrid
-		call xGrid.resize( dn, dir )
+		xGrid = this%xGrid
+		call xGrid%resize( dn, dir )
 		
-		oldN = this.xGrid.nPoints
+		oldN = this%xGrid%nPoints
 		
 		if( dn > 0 ) then
 			if( effDir == 1 ) then
 			
-				newN = xGrid.nPoints
+				newN = xGrid%nPoints
 				allocate( fArray(newN), stat=allocStat )
 				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
 				
 				fArray = 0.0_8
 				
 				do i=1,oldN
-					fArray(i) = this.fArray(i)
+					fArray(i) = this%fArray(i)
 				end do
 
 			else if( effDir == -1 ) then
 			
-				newN = xGrid.nPoints
+				newN = xGrid%nPoints
 				allocate( fArray(newN), stat=allocStat )
 				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
 				
 				fArray = 0.0_8
 				
 				do i=dn+1,newN
-					fArray(i) = this.fArray(i-dn)
+					fArray(i) = this%fArray(i-dn)
 				end do
 				
 			else if( effDir == 0 ) then
 				
-				newN = xGrid.nPoints
+				newN = xGrid%nPoints
 				allocate( fArray(newN), stat=allocStat )
 				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
 				
@@ -1597,7 +1599,7 @@
 				
 				ii=1
 				do i=dn+1,dn+oldN
-					fArray(i) = this.fArray(ii)
+					fArray(i) = this%fArray(ii)
 					ii=ii+1
 				end do
 			else
@@ -1609,31 +1611,31 @@
 		else
 			if( effDir == 1 ) then
 			
-				newN = xGrid.nPoints
+				newN = xGrid%nPoints
 				allocate( fArray(newN), stat=allocStat )
 				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
 				
 				fArray = 0.0_8
 				
 				do i=1,newN
-					fArray(i) = this.fArray(i)
+					fArray(i) = this%fArray(i)
 				end do
 
 			else if( effDir == -1 ) then
 			
-				newN = xGrid.nPoints
+				newN = xGrid%nPoints
 				allocate( fArray(newN), stat=allocStat )
 				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
 				
 				fArray = 0.0_8
 				
 				do i=1,newN
-					fArray(i) = this.fArray(i-dn)
+					fArray(i) = this%fArray(i-dn)
 				end do
 				
 			else if( effDir == 0 ) then
 				
-				newN = xGrid.nPoints
+				newN = xGrid%nPoints
 				allocate( fArray(newN), stat=allocStat )
 				if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.resize()" )
 				
@@ -1641,7 +1643,7 @@
 				
 				ii=1
 				do i=abs(dn)+1,oldN-abs(dn)
-					fArray(ii) = this.fArray(i)
+					fArray(ii) = this%fArray(i)
 					ii=ii+1
 				end do
 			else
@@ -1673,15 +1675,15 @@
 		if( present(checkBox) ) effCheckBox = checkBox
 		
 		if( effCheckBox ) then
-			if( .not. ( this.checkBox( oper ) .and. func2.checkBox( oper ) ) ) then
+			if( .not. ( this%checkBox( oper ) .and. func2%checkBox( oper ) ) ) then
 				call GOptions_error( "Inconsistent boxes", "NFunction.transitionElementFromNFunction()" )
 			end if
 		end if
 		
 #if __ID_TYPE__ == 1
-		output = sum( conjg(this.fArray)*oper.fArray*func2.fArray )*this.xGrid.dV()
+		output = sum( conjg(this%fArray)*oper%fArray*func2%fArray )*this%xGrid%dV()
 #else
-		output = sum( this.fArray*oper.fArray*func2.fArray )*this.xGrid.dV()
+		output = sum( this%fArray*oper%fArray*func2%fArray )*this%xGrid%dV()
 #endif
 	end function transitionElementFromNFunction
 	
@@ -1706,19 +1708,19 @@
 		if( present(factor) ) effFactor = factor
 		
 		if( effCheckBox ) then
-			if( this.nPoints() /= size(oper) .or. func2.nPoints() /= size(oper) ) then
+			if( this%nPoints() /= size(oper) .or. func2%nPoints() /= size(oper) ) then
 				call GOptions_error( &
 					"Inconsistent boxes", &
 					"NFunction.expectationValueFromRArray()", &
-					trim(FString_fromInteger(this.nPoints()))//" /= "//trim(FString_fromInteger(size(oper)))//")" &
+					trim(FString_fromInteger(this%nPoints()))//" /= "//trim(FString_fromInteger(size(oper)))//")" &
 					)
 			end if
 		end if
 		
 #if __ID_TYPE__ == 1
-		output = effFactor*sum( conjg(this.fArray)*oper*func2.fArray )*this.xGrid.dV()
+		output = effFactor*sum( conjg(this%fArray)*oper*func2%fArray )*this%xGrid%dV()
 #else
-		output = effFactor*sum( this.fArray*oper*func2.fArray )*this.xGrid.dV()
+		output = effFactor*sum( this%fArray*oper*func2%fArray )*this%xGrid%dV()
 #endif
 	end function transitionElementFromRArray
 	
@@ -1737,25 +1739,25 @@
 		integer :: i
 		integer :: nx
 		
-		nx = this.xGrid.nPoints
+		nx = this%xGrid%nPoints
 		
 		effCheckBox = .true.
 		if( present(checkBox) ) effCheckBox = checkBox
 		
 		if( effCheckBox ) then
-			if( this.xGrid.nPoints /= size(oper) .or. func2.xGrid.nPoints /= size(oper) ) then
+			if( this%xGrid%nPoints /= size(oper) .or. func2%xGrid%nPoints /= size(oper) ) then
 				call GOptions_error( &
 					"Inconsistent boxes", &
 					"NFunction.expectationValueFromCArray()", &
-					trim(FString_fromInteger(this.xGrid.nPoints))//" /= "//trim(FString_fromInteger(size(oper,dim=1))) &
+					trim(FString_fromInteger(this%xGrid%nPoints))//" /= "//trim(FString_fromInteger(size(oper,dim=1))) &
 					)
 			end if
 		end if
 		
 #if __ID_TYPE__ == 1
-		output = sum( conjg(this.fArray)*oper*func2.fArray )*this.xGrid.dV()
+		output = sum( conjg(this%fArray)*oper*func2%fArray )*this%xGrid%dV()
 #else
-		output = sum( this.fArray*oper*func2.fArray )*this.xGrid.dV()
+		output = sum( this%fArray*oper*func2%fArray )*this%xGrid%dV()
 #endif
 	end function transitionElementFromCArray
 	
@@ -1768,7 +1770,7 @@
 		logical, optional, intent(in) :: checkBox
 		__TYPE_VALUE__ :: output
 		
-		output = this.transitionElementFromNFunction( oper, this, checkBox )
+		output = this%transitionElementFromNFunction( oper, this, checkBox )
 	end function expectationValueFromNFunction
 	
 	!>
@@ -1781,7 +1783,7 @@
 		real(8), optional, intent(in) :: factor
 		__TYPE_VALUE__ :: output
 		
-		output = this.transitionElementFromRArray( oper, this, checkBox, factor )
+		output = this%transitionElementFromRArray( oper, this, checkBox, factor )
 	end function expectationValueFromRArray
 	
 	!>
@@ -1793,7 +1795,7 @@
 		logical, optional, intent(in) :: checkBox
 		__TYPE_VALUE__ :: output
 		
-		output = this.transitionElementFromCArray( oper, this, checkBox )
+		output = this%transitionElementFromCArray( oper, this, checkBox )
 	end function expectationValueFromCArray
 	
 	!>
@@ -1810,19 +1812,19 @@
 		effHermitian = .true.
 		if( present(hermitian) ) effHermitian = hermitian
 		
-! 		if( .not. this.xGrid.isEquallyspaced() ) then
+! 		if( .not. this%xGrid%isEquallyspaced() ) then
 ! 			write(6,*) "### ERROR ### The grid is not equally spaced"
 ! 			stop
 ! 		end if
 		
 #if __ID_TYPE__ == 1
 		if( effHermitian ) then
-			output = sum( conjg(this.fArray)*other.fArray )*this.xGrid.dV()
+			output = sum( conjg(this%fArray)*other%fArray )*this%xGrid%dV()
 		else
-			output = sum( this.fArray*other.fArray )*this.xGrid.dV()
+			output = sum( this%fArray*other%fArray )*this%xGrid%dV()
 		end if
 #else
-		output = sum( this.fArray*other.fArray )*this.xGrid.dV()
+		output = sum( this%fArray*other%fArray )*this%xGrid%dV()
 #endif
 	end function innerProductWithNFunction
 	
@@ -1840,19 +1842,19 @@
 		effHermitian = .true.
 		if( present(hermitian) ) effHermitian = hermitian
 		
-! 		if( .not. this.xGrid.isEquallyspaced() ) then
+! 		if( .not. this%xGrid%isEquallyspaced() ) then
 ! 			write(6,*) "### ERROR ### The grid is not equally spaced"
 ! 			stop
 ! 		end if
 		
 #if __ID_TYPE__ == 1
 		if( effHermitian ) then
-			output = sum( conjg(this.fArray)*other )*this.xGrid.dV()
+			output = sum( conjg(this%fArray)*other )*this%xGrid%dV()
 		else
-			output = sum( this.fArray*other )*this.xGrid.dV()
+			output = sum( this%fArray*other )*this%xGrid%dV()
 		end if
 #else
-		output = sum( this.fArray*other )*this.xGrid.dV()
+		output = sum( this%fArray*other )*this%xGrid%dV()
 #endif
 	end function innerProductWithRArray
 	
@@ -1870,19 +1872,19 @@
 		effHermitian = .true.
 		if( present(hermitian) ) effHermitian = hermitian
 		
-! 		if( .not. this.xGrid.isEquallyspaced() ) then
+! 		if( .not. this%xGrid%isEquallyspaced() ) then
 ! 			write(6,*) "### ERROR ### The grid is not equally spaced"
 ! 			stop
 ! 		end if
 		
 #if __ID_TYPE__ == 1
 		if( effHermitian ) then
-			output = sum( conjg(this.fArray)*other )*this.xGrid.dV()
+			output = sum( conjg(this%fArray)*other )*this%xGrid%dV()
 		else
-			output = sum( this.fArray*other )*this.xGrid.dV()
+			output = sum( this%fArray*other )*this%xGrid%dV()
 		end if
 #else
-		output = sum( this.fArray*other )*this.xGrid.dV()
+		output = sum( this%fArray*other )*this%xGrid%dV()
 #endif
 	end function innerProductWithCArray
 	
@@ -1898,7 +1900,7 @@
 		output = this
 		
 #if __ID_TYPE__ == 1
-			output.fArray = conjg(this.fArray)
+			output%fArray = conjg(this%fArray)
 #endif
 	end function conjugate
 	
@@ -1914,9 +1916,9 @@
 		output = this
 		
 #if __ID_TYPE__ == 1
-			output.fArray = abs(this.fArray)**2
+			output%fArray = abs(this%fArray)**2
 #else
-			output.fArray = this.fArray**2
+			output%fArray = this%fArray**2
 #endif
 	end function absoluteSquare
 
@@ -1929,9 +1931,9 @@
 		
 		real(8) :: nConstant
 		
-		nConstant = 1.0_8/this.norm()
+		nConstant = 1.0_8/this%norm()
 		
-		this.fArray = nConstant*this.fArray
+		this%fArray = nConstant*this%fArray
 		
 		if( present(constant) ) then
 			constant = nConstant
@@ -1946,9 +1948,9 @@
 		real(8) :: output
 		
 #if __ID_TYPE__ == 1
-		output = sum( conjg(this.fArray)*this.fArray )*this.xGrid.dV()
+		output = sum( conjg(this%fArray)*this%fArray )*this%xGrid%dV()
 #else
-		output = sum( this.fArray*this.fArray )*this.xGrid.dV()
+		output = sum( this%fArray*this%fArray )*this%xGrid%dV()
 #endif
 	end function norm2
 	
@@ -1959,7 +1961,7 @@
 		class(NFunction), intent(in) :: this
 		real(8) :: output
 		
-		output = sqrt( this.norm2() )
+		output = sqrt( this%norm2() )
 	end function norm
 	
 	!>
@@ -2180,33 +2182,33 @@
 		effValue = 0.0_8
 		if( present(value) ) effValue = value
 		
-		if( .not. this.xGrid.isEquallyspaced ) then
+		if( .not. this%xGrid%isEquallyspaced ) then
 			write(6,"(A)") "### ERROR ### Numerical derivatives for non equally spaced grids are not implemented yet"
 			stop
 		end if
 		
-		if( x < this.xGrid.min .or. x > this.xGrid.max ) then
+		if( x < this%xGrid%min .or. x > this%xGrid%max ) then
 			output = effValue
 			return
 		end if
 		
-		pos = (x-this.xGrid.min)/this.xGrid.stepSize+1
+		pos = (x-this%xGrid%min)/this%xGrid%stepSize+1
 		
 		! Diferencias hacia adelante
 		if( pos <= effStencil ) then
 			allocate( coeff(0:effStencil,0:effStencil,0:effOrder) )
-			call fornbergWeights( this.xGrid.data(pos:pos+effStencil), x, effOrder, coeff )
-			output = sum( coeff( effStencil, :, effOrder )*this.fArray(pos:pos+effStencil) )
+			call fornbergWeights( this%xGrid%data(pos:pos+effStencil), x, effOrder, coeff )
+			output = sum( coeff( effStencil, :, effOrder )*this%fArray(pos:pos+effStencil) )
 		! Diferencias centradas
-		else if( pos > effStencil .and. pos < this.nPoints()-effStencil  ) then
+		else if( pos > effStencil .and. pos < this%nPoints()-effStencil  ) then
 			allocate( coeff(0:2*effStencil,0:2*effStencil,0:effOrder) )
-			call fornbergWeights( this.xGrid.data(pos-effStencil:pos+effStencil), x, effOrder, coeff )
-			output = sum( coeff( 2*effStencil, :, effOrder )*this.fArray(pos-effStencil:pos+effStencil) )
+			call fornbergWeights( this%xGrid%data(pos-effStencil:pos+effStencil), x, effOrder, coeff )
+			output = sum( coeff( 2*effStencil, :, effOrder )*this%fArray(pos-effStencil:pos+effStencil) )
 		! Diferencias hacia atrás
-		else if( pos-effStencil <= this.nPoints() ) then
+		else if( pos-effStencil <= this%nPoints() ) then
 			allocate( coeff(0:effStencil,0:effStencil,0:effOrder) )
-			call fornbergWeights( this.xGrid.data(pos-effStencil:pos), x, effOrder, coeff )
-			output = sum( coeff( effStencil, :, effOrder )*this.fArray(pos-effStencil:pos) )
+			call fornbergWeights( this%xGrid%data(pos-effStencil:pos), x, effOrder, coeff )
+			output = sum( coeff( effStencil, :, effOrder )*this%fArray(pos-effStencil:pos) )
 		end if
 		
 		deallocate( coeff )
@@ -2231,11 +2233,11 @@
 		integer :: allocStat
 		integer :: i
 		
-		allocate( dArray(xGrid.nPoints), stat=allocStat )
+		allocate( dArray(xGrid%nPoints), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.interpolateOnGrid()" )
 		
-		do i=1,xGrid.nPoints
-			dArray(i) = this.interpolatePoint( xGrid.at(i), stencil=stencil, order=order, value=value )
+		do i=1,xGrid%nPoints
+			dArray(i) = this%interpolatePoint( xGrid%at(i), stencil=stencil, order=order, value=value )
 		end do
 		
 		output = NFunction( xGrid, dArray )
@@ -2264,14 +2266,14 @@
 		effOrder = 1
 		if( present(order) ) effOrder = order
 		
-		allocate( dArray(this.xGrid.nPoints), stat=allocStat )
+		allocate( dArray(this%xGrid%nPoints), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "NFunction.derivative()" )
 		
-		do i=1,this.xGrid.nPoints
-			dArray(i) = this.interpolatePoint( this.xGrid.at(i), stencil, effOrder )
+		do i=1,this%xGrid%nPoints
+			dArray(i) = this%interpolatePoint( this%xGrid%at(i), stencil, effOrder )
 		end do
 		
-		output = NFunction( this.xGrid, dArray )
+		output = NFunction( this%xGrid, dArray )
 		
 		deallocate( dArray )
 	end function derivative
@@ -2286,7 +2288,7 @@
 		
 		integer :: ix, iy, iz
 		
-		if( .not. this.xGrid.isEquallyspaced ) then
+		if( .not. this%xGrid%isEquallyspaced ) then
 			call GOptions_error( &
 				"This subroutine is not available for functions wich are not equally spaced", &
 				"NFunction.nearestValue()" &
@@ -2294,12 +2296,12 @@
 		end if
 		
 		! Map x to a point dx in the grid [1,n]
-		ix = floor( 1.0000001*(x-this.xGrid.min)/this.xGrid.stepSize+1.0 )
+		ix = floor( 1.0000001*(x-this%xGrid%min)/this%xGrid%stepSize+1.0 )
 		
-		if( ix < 1 .or. ix > this.xGrid.nPoints ) then
+		if( ix < 1 .or. ix > this%xGrid%nPoints ) then
 			output = 0.0_8
 		else
-			output = this.fArray(ix)
+			output = this%fArray(ix)
 		end if
 	end function nearestValuePoint
 #endif

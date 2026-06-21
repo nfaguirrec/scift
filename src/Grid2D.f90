@@ -130,7 +130,11 @@ module Grid2D_
 		integer :: i
 		
 		do i=1,2
-			call this.component(i).init( min(i), max(i), size(i), stepSize(i) )
+			if ( present(stepSize) ) then
+				call this%component(i)%init( min(i), max(i), stepSize=stepSize(i) )
+			else if ( present(size) ) then
+				call this%component(i)%init( min(i), max(i), nPoints=size(i) )
+			end if
 		end do
 	end subroutine initDefault
 	
@@ -142,8 +146,8 @@ module Grid2D_
 		type(Grid), intent(in) :: x
 		type(Grid), intent(in) :: y
 		
-		this.component(1) = x
-		this.component(2) = y
+		this%component(1) = x
+		this%component(2) = y
 	end subroutine fromComponents
 	
 	!>
@@ -154,8 +158,8 @@ module Grid2D_
 		real(8), intent(in) :: xArray(:)
 		real(8), intent(in) :: yArray(:)
 		
-		call this.component(1).fromArray( xArray )
-		call this.component(2).fromArray( yArray )
+		call this%component(1)%fromArray( xArray )
+		call this%component(2)%fromArray( yArray )
 	end subroutine fromArray
 	
 	!>
@@ -179,7 +183,7 @@ module Grid2D_
 		end if
 		
 		do i=1,2
-			call this.component(i).fromFile( iFileName, columnsEff(i), tol=tol, cComments=cComments )
+			call this%component(i)%fromFile( iFileName, columnsEff(i), tol=tol, cComments=cComments )
 		end do
 	end subroutine fromFile
 	
@@ -193,7 +197,7 @@ module Grid2D_
 		integer :: i
 		
 		do i=1,2
-			this.component(i) = other.component(i)
+			this%component(i) = other%component(i)
 		end do
 	end subroutine copyGrid2D
 	
@@ -215,8 +219,8 @@ module Grid2D_
 		logical :: output
 		
 		output = &
-			this.component(1).isEqualTo( other.component(1), tol ) .and. &
-			this.component(2).isEqualTo( other.component(2), tol )
+			this%component(1)%isEqualTo( other%component(1), tol ) .and. &
+			this%component(2)%isEqualTo( other%component(2), tol )
 	end function isEqualTo
 	
 	!>
@@ -227,8 +231,8 @@ module Grid2D_
 		logical :: output
 		
 		output = &
-			this.component(1).isEquallyspaced .and. &
-			this.component(2).isEquallyspaced
+			this%component(1)%isEquallyspaced .and. &
+			this%component(2)%isEquallyspaced
 	end function isEquallyspaced
 	
 	!>
@@ -237,8 +241,8 @@ module Grid2D_
 	subroutine checkEquallyspaced( this )
 		class(Grid2D) :: this
 		
-		call this.component(1).checkEquallyspaced()
-		call this.component(2).checkEquallyspaced()
+		call this%component(1)%checkEquallyspaced()
+		call this%component(2)%checkEquallyspaced()
 	end subroutine checkEquallyspaced
 
 	
@@ -252,13 +256,13 @@ module Grid2D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "Grid2D.fromArrays()" )
 		end if
 		
 		do i=1,2
-			output.component(i) = this.component(i) + other.component(i)
+			output%component(i) = this%component(i) + other%component(i)
 		end do
 	end function addition
 	
@@ -273,7 +277,7 @@ module Grid2D_
 		integer :: i
 		
 		do i=1,2
-			output.component(i) = this.component(i) + constant
+			output%component(i) = this%component(i) + constant
 		end do
 	end function additionFC
 	
@@ -287,13 +291,13 @@ module Grid2D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "Grid2D.subtraction()" )
 		end if
 		
 		do i=1,2
-			output.component(i) = this.component(i) - other.component(i)
+			output%component(i) = this%component(i) - other%component(i)
 		end do
 	end function subtraction
 	
@@ -308,7 +312,7 @@ module Grid2D_
 		integer :: i
 		
 		do i=1,2
-			output.component(i) = this.component(i) + constant
+			output%component(i) = this%component(i) + constant
 		end do
 	end function subtractionFC
 	
@@ -322,13 +326,13 @@ module Grid2D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "Grid2D.multiplication()" )
 		end if
 		
 		do i=1,2
-			output.component(i) = this.component(i)*other.component(i)
+			output%component(i) = this%component(i)*other%component(i)
 		end do
 	end function multiplication
 	
@@ -343,7 +347,7 @@ module Grid2D_
 		integer :: i
 		
 		do i=1,2
-			output.component(i) = this.component(i)*constant
+			output%component(i) = this%component(i)*constant
 		end do
 	end function multiplicationFC
 	
@@ -357,13 +361,13 @@ module Grid2D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "Grid2D.division()" )
 		end if
 		
 		do i=1,2
-			output.component(i) = this.component(i)/other.component(i)
+			output%component(i) = this%component(i)/other%component(i)
 		end do
 	end function division
 	
@@ -378,7 +382,7 @@ module Grid2D_
 		integer :: i
 		
 		do i=1,2
-			output.component(i) = this.component(i)/constant
+			output%component(i) = this%component(i)/constant
 		end do
 	end function divisionFC
 	
@@ -392,13 +396,13 @@ module Grid2D_
 		
 		integer :: i
 		
-		if( this.nPoints(1) /= other.nPoints(1) .or. &
-		    this.nPoints(2) /= other.nPoints(2) ) then
+		if( this%nPoints(1) /= other%nPoints(1) .or. &
+		    this%nPoints(2) /= other%nPoints(2) ) then
 			call GOptions_error( "Grids have not the same size", "Grid2D.exponentiation()" )
 		end if
 		
 		do i=1,2
-			output.component(i) = this.component(i)**other.component(i)
+			output%component(i) = this%component(i)**other%component(i)
 		end do
 	end function exponentiation
 	
@@ -413,7 +417,7 @@ module Grid2D_
 		integer :: i
 		
 		do i=1,2
-			output.component(i) = this.component(i)**constant
+			output%component(i) = this%component(i)**constant
 		end do
 	end function exponentiationFC
 	
@@ -446,20 +450,20 @@ module Grid2D_
 #define ITEML(l,v) output = trim(output)//l; write(fstr, "(L3)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<Grid2D:"
-			ITEMR( "min=(", this.component(1).min )
-			ITEMR( ";", this.component(2).min )
-			ITEMR( "),first=(", this.component(1).first() )
-			ITEMR( ";", this.component(2).first() )
-			ITEMR( "),max=(", this.component(1).max )
-			ITEMR( ";", this.component(2).max )
-			ITEMR( "),last=(", this.component(1).last() )
-			ITEMR( ";", this.component(2).last() )
-			ITEMI( "),nPoints=(", this.component(1).nPoints )
-			ITEMI( ";", this.component(2).nPoints )
-			ITEMR( "),stepSize=(", this.component(1).stepSize )
-			ITEMR( ";", this.component(2).stepSize )
-			ITEML( "),isEquallyspaced=(", this.component(1).isEquallyspaced )
-			ITEML( ";", this.component(2).isEquallyspaced )
+			ITEMR( "min=(", this%component(1)%min )
+			ITEMR( ";", this%component(2)%min )
+			ITEMR( "),first=(", this%component(1)%first() )
+			ITEMR( ";", this%component(2)%first() )
+			ITEMR( "),max=(", this%component(1)%max )
+			ITEMR( ";", this%component(2)%max )
+			ITEMR( "),last=(", this%component(1)%last() )
+			ITEMR( ";", this%component(2)%last() )
+			ITEMI( "),nPoints=(", this%component(1)%nPoints )
+			ITEMI( ";", this%component(2)%nPoints )
+			ITEMR( "),stepSize=(", this%component(1)%stepSize )
+			ITEMR( ";", this%component(2)%stepSize )
+			ITEML( "),isEquallyspaced=(", this%component(1)%isEquallyspaced )
+			ITEML( ";", this%component(2)%isEquallyspaced )
 			ITEMS( "", ")" )
 #undef ITEMS
 #undef ITEMI
@@ -474,8 +478,8 @@ module Grid2D_
 
 			LINE("Grid2D")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -516,13 +520,13 @@ module Grid2D_
 		type(OFStream) :: ofile
 		
 		if( present(units) .and. present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile, units )
-			call ofile.close()
+			call ofile%close()
 		else if( present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile )
-			call ofile.close()
+			call ofile%close()
 		else
 			call toFStream( this )
 		end if
@@ -542,7 +546,7 @@ module Grid2D_
 		integer :: i
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
@@ -555,7 +559,7 @@ module Grid2D_
 					write( unitEff, "(A)" ) "# Y"
 			end select
 			
-			call this.component(i).toFStream( ofile, units )
+			call this%component(i)%toFStream( ofile, units )
 			write( unitEff, * ) ""
 			write( unitEff, * ) ""
 		end do
@@ -571,7 +575,7 @@ module Grid2D_
 		integer :: i
 		
 		do i=1,2
-			call this.component(i).setUnits( unit )
+			call this%component(i)%setUnits( unit )
 		end do
 	end subroutine setUnits
 	
@@ -583,7 +587,7 @@ module Grid2D_
 		integer, intent(in) :: i
 		integer :: output
 		
-		output = this.component(i).nPoints
+		output = this%component(i)%nPoints
 	end function nPointsInCoord
 	
 	!>
@@ -593,7 +597,7 @@ module Grid2D_
 		class(Grid2D), intent(in) :: this
 		integer :: output(2)
 		
-		output = [ this.component(1).nPoints, this.component(2).nPoints ]
+		output = [ this%component(1)%nPoints, this%component(2)%nPoints ]
 	end function nPointsVec
 	
 	!>
@@ -604,7 +608,7 @@ module Grid2D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(i).min
+		output = this%component(i)%min
 	end function minInCoord
 	
 	!>
@@ -614,7 +618,7 @@ module Grid2D_
 		class(Grid2D), intent(in) :: this
 		real(8) :: output(2)
 		
-		output = [ this.component(1).min, this.component(2).min ]
+		output = [ this%component(1)%min, this%component(2)%min ]
 	end function minVec
 	
 	!>
@@ -625,7 +629,7 @@ module Grid2D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(i).max
+		output = this%component(i)%max
 	end function maxInCoord
 	
 	!>
@@ -635,7 +639,7 @@ module Grid2D_
 		class(Grid2D), intent(in) :: this
 		real(8) :: output(2)
 		
-		output = [ this.component(1).max, this.component(2).max ]
+		output = [ this%component(1)%max, this%component(2)%max ]
 	end function maxVec
 	
 	!>
@@ -646,7 +650,7 @@ module Grid2D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(i).stepSize
+		output = this%component(i)%stepSize
 	end function stepSizeInCoord
 	
 	!>
@@ -656,7 +660,7 @@ module Grid2D_
 		class(Grid2D), intent(in) :: this
 		real(8) :: output(2)
 		
-		output = [ this.component(1).stepSize, this.component(2).stepSize ]
+		output = [ this%component(1)%stepSize, this%component(2)%stepSize ]
 	end function stepSizeVec
 	
 	!>
@@ -671,8 +675,8 @@ module Grid2D_
 		integer, intent(in) :: dnx, dny
 		integer, optional, intent(in) :: dirx, diry
 		
-		if( dnx > 0 ) call this.component(1).resize( dnx, dirx )
-		if( dny > 0 ) call this.component(2).resize( dny, diry )
+		if( dnx > 0 ) call this%component(1)%resize( dnx, dirx )
+		if( dny > 0 ) call this%component(2)%resize( dny, diry )
 	end subroutine resize1
 	
 	!>
@@ -687,7 +691,7 @@ module Grid2D_
 		integer, intent(in) :: dn(2)
 		integer, optional, intent(in) :: dir(2)
 		
-		call this.resize1( dn(1), dn(2), dir(1), dir(2) )
+		call this%resize1( dn(1), dn(2), dir(1), dir(2) )
 	end subroutine resize2
 	
 	!>
@@ -698,7 +702,7 @@ module Grid2D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(1).data(i)
+		output = this%component(1)%data(i)
 	end function x
 	
 	!>
@@ -709,7 +713,7 @@ module Grid2D_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(2).data(i)
+		output = this%component(2)%data(i)
 	end function y
 	
 	!>
@@ -721,7 +725,7 @@ module Grid2D_
 		integer, intent(in) :: j
 		real(8) :: output(2)
 		
-		output = [ this.component(1).data(i), this.component(2).data(j) ]
+		output = [ this%component(1)%data(i), this%component(2)%data(j) ]
 	end function at
 	
 	!>
@@ -731,7 +735,7 @@ module Grid2D_
 		class(Grid2D), intent(in) :: this
 		real(8) :: output
 		
-		output = this.component(1).stepSize*this.component(2).stepSize
+		output = this%component(1)%stepSize*this%component(2)%stepSize
 	end function dV
 	
 	!>
@@ -742,8 +746,8 @@ module Grid2D_
 		integer, intent(in) :: i, j
 		real(8), intent(in) :: value(2)
 		
-		call this.component(1).set( i, value(1) )
-		call this.component(2).set( j, value(2) )
+		call this%component(1)%set( i, value(1) )
+		call this%component(2)%set( j, value(2) )
 	end subroutine set
 	
 	!>
@@ -764,8 +768,8 @@ module Grid2D_
 					write(*,*) "Y = "
 			end select
 			
-			do j=1,xyzGrid.nPoints(i)
-				write(*,"(f10.5)", advance="no") xyzGrid.component(i).data(j)
+			do j=1,xyzGrid%nPoints(i)
+				write(*,"(f10.5)", advance="no") xyzGrid%component(i)%data(j)
 				
 				if ( mod(j-1,10) == 9 ) then
 					write(*,"(A)") ""

@@ -90,16 +90,16 @@ program main
 		rFuncB = RNFunction( fileNameB )
 		
 		! @todo En el futuro esto debe estar internamente integrado en libscift. Convertir entre RNFunction y CNFunction, o cargar un CNFunction desde dos columnas
-! 		call cFuncB.fromGridArray( cFuncB.xGrid, fArray=cmplx(rFuncB.fArray) )
-		cFuncB = CNFunction( rFuncB.xGrid )
-		cFuncB.fArray = rFuncB.fArray
+! 		call cFuncB%fromGridArray( cFuncB%xGrid, fArray=cmplx(rFuncB%fArray) )
+		cFuncB = CNFunction( rFuncB%xGrid )
+		cFuncB%fArray = rFuncB%fArray
 	else if( fileTypeA == 0 .and. fileTypeB == 1 ) then
 		rFuncA = RNFunction( fileNameA )
 		cFuncB = CNFunction( fileNameB )
 		
-! 		call cFuncA.fromGridArray( cFuncA.xGrid, fArray=rFuncA.fArray )
-		cFuncA = CNFunction( rFuncA.xGrid )
-		cFuncA.fArray = rFuncA.fArray
+! 		call cFuncA%fromGridArray( cFuncA%xGrid, fArray=rFuncA%fArray )
+		cFuncA = CNFunction( rFuncA%xGrid )
+		cFuncA%fArray = rFuncA%fArray
 	else if( fileTypeB == 1 .and. fileTypeA == 1 ) then
 		cFuncA = CNFunction( fileNameA )
 		cFuncB = CNFunction( fileNameB )
@@ -143,13 +143,13 @@ program main
 	!---------------------------------------------
 	if( fileTypeB == 0 .and. fileTypeA == 0 ) then
 		
-		call rFuncAB.save( fileNameFuncAB )
+		call rFuncAB%save( fileNameFuncAB )
 		
 	else if( ( fileTypeA == 1 .and. fileTypeB == 0 ) .or. &
 			 ( fileTypeA == 0 .and. fileTypeB == 1 ) .or. &
 			 ( fileTypeA == 1 .and. fileTypeB == 1 ) ) then
 		
-		call cFuncAB.save( fileNameFuncAB )
+		call cFuncAB%save( fileNameFuncAB )
 	
 	end if
 	

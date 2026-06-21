@@ -74,32 +74,32 @@ program main
 	call get_command_argument( 3, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) oFileDOT = trim(sBuffer)
 	
-	mol = Molecule( iFileName.fstr )
-	call mol.buildGraph( alpha=alpha )
+	mol = Molecule( iFileName%fstr )
+	call mol%buildGraph( alpha=alpha )
 	
-	molGraph = mol.molGraph
-	call hashKeys.init()
+	molGraph = mol%molGraph
+	call hashKeys%init()
 	
-	do i=1,molGraph.nNodes()
-		iNeighborsA = molGraph.neighbors(i)
+	do i=1,molGraph%nNodes()
+		iNeighborsA = molGraph%neighbors(i)
 		
-		do j=1,molGraph.nNodes()
-			if( iNeighborsA.contains(j) ) then
-				iNeighborsB = molGraph.neighbors(j)
+		do j=1,molGraph%nNodes()
+			if( iNeighborsA%contains(j) ) then
+				iNeighborsB = molGraph%neighbors(j)
 				
-				do k=1,molGraph.nNodes()
-					if( iNeighborsB.contains(k) .and. k/=i ) then
+				do k=1,molGraph%nNodes()
+					if( iNeighborsB%contains(k) .and. k/=i ) then
 					
-						hashKey = i*molGraph.nNodes()**0 + j*molGraph.nNodes()**1 + k*molGraph.nNodes()**2
+						hashKey = i*molGraph%nNodes()**0 + j*molGraph%nNodes()**1 + k*molGraph%nNodes()**2
 						
-						if( .not. hashKeys.contains(hashKey) ) then
+						if( .not. hashKeys%contains(hashKey) ) then
 							
-							write(*,"(A,3I5,F10.2)") trim(mol.atoms(i).symbol)//"--"//trim(mol.atoms(j).symbol)//"--"//trim(mol.atoms(k).symbol), i, j, k, mol.angle( mol.atoms(i), mol.atoms(j), mol.atoms(k) )/deg
+							write(*,"(A,3I5,F10.2)") trim(mol%atoms(i)%symbol)//"--"//trim(mol%atoms(j)%symbol)//"--"//trim(mol%atoms(k)%symbol), i, j, k, mol%angle( mol%atoms(i), mol%atoms(j), mol%atoms(k) )/deg
 							
-							call hashKeys.append( hashKey )
+							call hashKeys%append( hashKey )
 							
-							hashKey = k*molGraph.nNodes()**0 + j*molGraph.nNodes()**1 + i*molGraph.nNodes()**2
-							call hashKeys.append( hashKey )
+							hashKey = k*molGraph%nNodes()**0 + j*molGraph%nNodes()**1 + i*molGraph%nNodes()**2
+							call hashKeys%append( hashKey )
 						end if
 						
 					end if

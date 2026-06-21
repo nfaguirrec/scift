@@ -69,22 +69,22 @@ module ThrularNumerovMethod_
 		integer, optional, intent(in) :: nStates
 		real(8), optional, intent(in) :: rMass
 		
-		this.potential = potential
+		this%potential = potential
 		
 		if( present(nStates) ) then
-			this.nStates = nStates
+			this%nStates = nStates
 		else
-			this.nStates = 10
+			this%nStates = 10
 		end if
 		
 		if( present(rMass) ) then
-			this.rMass = rMass
+			this%rMass = rMass
 		else
-			this.rMass = 1.0_8
+			this%rMass = 1.0_8
 		end if
 		
-		allocate( this.eigenValues(potential.xGrid.nPoints) )
-		allocate( this.eigenFunctions(this.nStates) )
+		allocate( this%eigenValues(potential%xGrid%nPoints) )
+		allocate( this%eigenFunctions(this%nStates) )
 	end subroutine init
 	
 	!>
@@ -93,11 +93,11 @@ module ThrularNumerovMethod_
 	subroutine destroy( this )
 		class(ThrularNumerovMethod) :: this
 		
-		this.rMass = 1.0_8
-		this.nStates = 10
+		this%rMass = 1.0_8
+		this%nStates = 10
 		
-		deallocate( this.eigenValues )
-		deallocate( this.eigenFunctions )
+		deallocate( this%eigenValues )
+		deallocate( this%eigenFunctions )
 	end subroutine destroy
 	
 	!>
@@ -114,16 +114,14 @@ module ThrularNumerovMethod_
 		
 		output = trim(output)//"<ThrularNumerovMethod:"
 		
-		output = trim(output)//this.potential.str()
+		output = trim(output)//this%potential%str()
 		
 		output = trim(output)//",rMass="
-		fmt = int(log10(this.rMass+1.0))+1
-		write(strBuffer, "(f<fmt+7>.6)") this.rMass
+		write(strBuffer, "(f0.6)") this%rMass
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//",nStates="
-		fmt = int(log10(float(this.nStates)+1.0))+1
-		write(strBuffer, "(i<fmt>)") this.nStates
+		write(strBuffer, "(i0)") this%nStates
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -145,7 +143,7 @@ module ThrularNumerovMethod_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -158,19 +156,19 @@ module ThrularNumerovMethod_
 		real(8), allocatable :: eigenFunctions(:,:)
 		integer :: nBound
 		
-		allocate( eigenFunctions(this.nStates,this.potential.xGrid.nPoints) )
+		allocate( eigenFunctions(this%nStates,this%potential%xGrid%nPoints) )
 		
-		call thrularnumerov( this.rMass, this.potential.xGrid.min, this.potential.xGrid.max, &
-							 this.potential.xGrid.nPoints, this.potential.fArray, this.nStates, 1, &
-							 this.eigenValues, eigenFunctions, nBound )
-		do i=1,this.nStates
-			this.eigenFunctions(i) = RNFunction( this.potential.xGrid, eigenFunctions(i,:) )
-! 			this.eigenFunctions(i).fArray(:) = eigenFunctions(i,:)
+		call thrularnumerov( this%rMass, this%potential%xGrid%min, this%potential%xGrid%max, &
+							 this%potential%xGrid%nPoints, this%potential%fArray, this%nStates, 1, &
+							 this%eigenValues, eigenFunctions, nBound )
+		do i=1,this%nStates
+			this%eigenFunctions(i) = RNFunction( this%potential%xGrid, eigenFunctions(i,:) )
+! 			this%eigenFunctions(i)%fArray(:) = eigenFunctions(i,:)
 		end do
 		
 		deallocate( eigenFunctions )
 
-		this.nStates = nBound
+		this%nStates = nBound
 	end subroutine run
 	
 	!>
@@ -343,7 +341,7 @@ module ThrularNumerovMethod_
 	!     BOUCLE DES ITERATIONS
 	12 DO 171 IT=1,MAXIT
 		XIT=IT
-	!     INTEGRATION VERS L-INTERIEUR.PREMIERS PAS
+	!     INTEGRATION VERS L-INTERIEUR%PREMIERS PAS
 		P(N)=1.D-30
 		GN=V(N)-E
 		GI=V(N-1)-E
@@ -399,7 +397,7 @@ module ThrularNumerovMethod_
 	92 YIN=Y(2)/PM
 	94 DO 96 J=M,N
 	96 P(J)=P(J)/PM
-	!     INTEGRATION VERS L-EXTERIEUR.PREMIERS PAS
+	!     INTEGRATION VERS L-EXTERIEUR%PREMIERS PAS
 	100   P(1)=1.D-20
 	102 Y(1)=0.D0
 	104 GI=V(1)-E

@@ -49,14 +49,14 @@ program main
 	real(8) :: x, y, z
 	type(Molecule) :: mol
 	
-	iFileName = parser.getString( "-i" )
-	x = parser.getReal( "-x", def=0.0_8 )*angs
-	y = parser.getReal( "-y", def=0.0_8 )*angs
-	z = parser.getReal( "-z", def=0.0_8 )*angs
+	iFileName = parser%getString( "-i" )
+	x = parser%getReal( "-x", def=0.0_8 )*angs
+	y = parser%getReal( "-y", def=0.0_8 )*angs
+	z = parser%getReal( "-z", def=0.0_8 )*angs
 	
-	mol = Molecule( iFileName.fstr )
+	mol = Molecule( iFileName%fstr )
 	
-	call mol.setCenter( [x,y,z] )
+	call mol%setCenter( [x,y,z] )
 	
-	call mol.save()
+	call mol%save()
 end program main

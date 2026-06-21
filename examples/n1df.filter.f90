@@ -65,29 +65,29 @@ program main
 	integer :: columns(2)
 	integer :: i
 	
-	iFileName = parser.getString( "-i" )
-	oFileName = parser.getString( "-o" )
-	filter = parser.getString( "-f" )
+	iFileName = parser%getString( "-i" )
+	oFileName = parser%getString( "-o" )
+	filter = parser%getString( "-f" )
 	
-	strBuffer = parser.getString( "-c", def="1,2" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-c", def="1,2" )
+	call strBuffer%split( tokens, "," )
 	columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 	
-	call ifile.init( iFileName.fstr )
+	call ifile%init( iFileName%fstr )
 	nFunc = RNFunction( ifile, columns=columns )
-	call ifile.close()
+	call ifile%close()
 	
-! 	oFunc = RNFunction( nFunc.xGrid, value=0.0_8 )
-	oFunc = RNFunction( nFunc.xGrid )
+! 	oFunc = RNFunction( nFunc%xGrid, value=0.0_8 )
+	oFunc = RNFunction( nFunc%xGrid )
 	
-	select case( trim(filter.fstr) )
+	select case( trim(filter%fstr) )
 		case( ">0" )
-			oFunc.fArray = merge( nFunc.fArray, 0.0_8, nFunc.fArray > 0.0_8 )
+			oFunc%fArray = merge( nFunc%fArray, 0.0_8, nFunc%fArray > 0.0_8 )
 		case default
-			write(*,*) "### ERROR ### Filter "//trim(filter.fstr)//" is not supported"
+			write(*,*) "### ERROR ### Filter "//trim(filter%fstr)//" is not supported"
 			stop
 	end select
 	
-	call oFunc.save( oFileName.fstr )
+	call oFunc%save( oFileName%fstr )
 	
 end program main

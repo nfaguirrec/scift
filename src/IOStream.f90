@@ -119,44 +119,43 @@ module IOStream_
 				lastUnit = lastUnit + 1
 		end select
 		
-		this.unit = lastUnit
+		this%unit = lastUnit
 		
 		if( present(name) ) then
-			this.name = name
+			this%name = name
 			
 			call FString_split( name, tokens, "." )
 			
 			if( size( tokens ) > 1 ) then
-				this.extension = trim(tokens(size(tokens)))
+				this%extension = trim(tokens(size(tokens)))
 			end if
 			
 			deallocate( tokens )
 		else
-			fmt = int(log10(1.0*lastUnit))+1
-			write( sunit, "(i<fmt>)" ) lastUnit
-			this.name = "fort."//trim(sunit)
+			write( sunit, "(i0)" ) lastUnit
+			this%name = "fort."//trim(sunit)
 		end if
 		
 		effAppend = .false.
 		if( present(append) ) effAppend = append
 		
 		if( effAppend ) then
-			this.access = "append"
+			this%access = "append"
 		else
-			this.access = "sequential"
+			this%access = "sequential"
 		end if
 		
 		select type( this )
 			type is ( IFStream )
-				this.status = "old"
-				call this.scan()
+				this%status = "old"
+				call this%scan()
 			type is ( OFStream )
-! 				this.status = "new"
-! 				this.status = "replace"
-				this.status = "unknown"
+! 				this%status = "new"
+! 				this%status = "replace"
+				this%status = "unknown"
 		end select
 		
-		open( unit=this.unit, file=trim(adjustl(this.name)), access=this.access, status=this.status )
+		open( unit=this%unit, file=trim(adjustl(this%name)), access=this%access, status=this%status )
 	end subroutine FStream_init
 	
 	!>
@@ -166,7 +165,7 @@ module IOStream_
 		class(FStream), intent(in) :: this
 		logical :: output
 		
-		if( this.unit == 0 ) then
+		if( this%unit == 0 ) then
 			output = .false.
 		else
 			output = .true.
@@ -179,13 +178,13 @@ module IOStream_
 	subroutine close( this )
 		class(FStream) :: this
 		
-		close( this.unit )
+		close( this%unit )
 		
-		this.name = NULL_FILENAME
-		this.extension = ""
-		this.unit = 0
-		this.status = NULL_FILENAME
-		this.access = NULL_FILENAME
+		this%name = NULL_FILENAME
+		this%extension = ""
+		this%unit = 0
+		this%status = NULL_FILENAME
+		this%access = NULL_FILENAME
 	end subroutine close
 	
 	!>
@@ -195,7 +194,16 @@ module IOStream_
 		class(FStream) :: this
 		logical output
 		
-		output = eof( this.unit )
+#ifdef __GFORTRAN__
+		select type( this )
+			type is ( IFStream )
+				output = ( this%currentLine >= this%numberOfLines )
+			class default
+				output = .true.
+		end select
+#else
+		output = eof( this%unit )
+#endif
 	end function FStream_eof
 	
 	!>
@@ -207,37 +215,33 @@ module IOStream_
 		integer :: fmt
 		
 		select type( this )
-			type is ( FStream )
-				write(IO_STDOUT, "(a)", advance="no") "<FStream:"
 			type is ( IFStream )
 				write(IO_STDOUT, "(a)", advance="no") "<IFStream:"
 			type is ( OFStream )
 				write(IO_STDOUT, "(a)", advance="no") "<OFStream:"
+			class default
+				write(IO_STDOUT, "(a)", advance="no") "<FStream:"
 		end select
 		
 		write(IO_STDOUT, "(a)", advance="no") "name="
-		write(IO_STDOUT, "(a)", advance="no") trim(this.name)
+		write(IO_STDOUT, "(a)", advance="no") trim(this%name)
 		
 		write(IO_STDOUT, "(a)", advance="no") ",extension="
-		write(IO_STDOUT, "(a)", advance="no") trim(this.extension)
+		write(IO_STDOUT, "(a)", advance="no") trim(this%extension)
 		
 		write(IO_STDOUT, "(a)", advance="no") ",unit="
-		fmt = int(log10(1.0*this.unit))+1
-		write(IO_STDOUT, "(i<fmt>)", advance="no") this.unit
+		write(IO_STDOUT, "(i0)", advance="no") this%unit
 		
 		select type( this )
 			type is ( IFStream )
 				write(IO_STDOUT, "(a)", advance="no") ",numberOfLines="
-				fmt = int(log10(1.0*this.numberOfLines+1))+1
-				write(IO_STDOUT, "(i<fmt>)", advance="no") this.numberOfLines
+				write(IO_STDOUT, "(i0)", advance="no") this%numberOfLines
 				
 				write(IO_STDOUT, "(a)", advance="no") ",minNColumns="
-				fmt = int(log10(1.0*this.minNColumns+1))+1
-				write(IO_STDOUT, "(i<fmt>)", advance="no") this.minNColumns
+				write(IO_STDOUT, "(i0)", advance="no") this%minNColumns
 				
 				write(IO_STDOUT, "(a)", advance="no") ",maxNColumns="
-				fmt = int(log10(1.0*this.maxNColumns+1))+1
-				write(IO_STDOUT, "(i<fmt>)", advance="no") this.maxNColumns
+				write(IO_STDOUT, "(i0)", advance="no") this%maxNColumns
 		end select
 
 		write(IO_STDOUT, "(a)", advance="no") ">"
@@ -245,7 +249,7 @@ module IOStream_
 	end subroutine show
 	
 	!>
-	!! @brief Extract information from the file i.e. numberOfLines
+	!! @brief Extract information from the file i%e. numberOfLines
 	!!
 	subroutine IFStream_scan( this )
 		class(IFStream) :: this
@@ -255,35 +259,35 @@ module IOStream_
 		type(String) :: strBuffer
 		character(100), allocatable :: tokens(:)
 		
-		open( unit=this.unit, file=this.name, status=this.status, iostat=iostat )
+		open( unit=this%unit, file=this%name, status=this%status, iostat=iostat )
 		
 		if( iostat /= 0 ) then
-			write(IO_STDOUT, *) "### Error ###: The file ( ", trim(this.name), " ) cannot be open"
+			write(IO_STDOUT, *) "### Error ###: The file ( ", trim(this%name), " ) cannot be open"
 		else
-			this.numberOfLines = -1
+			this%numberOfLines = -1
 			iostat = 1
-			this.maxNColumns = -1
-			this.minNColumns = 1000
+			this%maxNColumns = -1
+			this%minNColumns = 1000
 			do while( iostat /= -1 )
-				this.numberOfLines = this.numberOfLines + 1
-				read( this.unit, "(a)", iostat=iostat ) buffer
+				this%numberOfLines = this%numberOfLines + 1
+				read( this%unit, "(a)", iostat=iostat ) buffer
 				
-				call strBuffer.init( trim(buffer) )
-				call strBuffer.split( tokens, " " )
+				call strBuffer%init( trim(buffer) )
+				call strBuffer%split( tokens, " " )
 				
-				if( this.minNColumns > size(tokens) ) then
-					this.minNColumns = size(tokens)
+				if( this%minNColumns > size(tokens) ) then
+					this%minNColumns = size(tokens)
 				end if
 				
-				if( this.maxNColumns < size(tokens) ) then
-					this.maxNColumns = size(tokens)
+				if( this%maxNColumns < size(tokens) ) then
+					this%maxNColumns = size(tokens)
 				end if
 				
 				deallocate( tokens )
 			end do
 		end if
 		
-		close( unit=this.unit )
+		close( unit=this%unit )
 	end subroutine IFStream_scan
 	
 	!>
@@ -292,11 +296,12 @@ module IOStream_
 	subroutine IFStream_rewind( this )
 		class(IFStream) :: this
 		
-		rewind( unit=this.unit )
+		rewind( unit=this%unit )
+		this%currentLine = 0
 	end subroutine IFStream_rewind
 	
 	!>
-	!! @brief Extract information from the file i.e. numberOfLines
+	!! @brief Extract information from the file i%e. numberOfLines
 	!! @todo Puede que haya problemas si se llama a otras funciones despues de readLine ya que no se cierra el fichero
 	!! @todo El output no debería ser de tipo allocatable ya que queda en manos del usuario llamar el deallocate
 	!!
@@ -315,9 +320,9 @@ module IOStream_
 		
 		! @todo No estoy seguro que esto funcione para hacer el peek
 		if( effPeek ) then
-			read(this.unit,'(A)',advance='NO') buffer
+			read(this%unit,'(A)',advance='NO') buffer
 		else
-			read(this.unit,'(A)') buffer
+			read(this%unit,'(A)') buffer
 		end if
 		
 		if( present(cComments) ) then
@@ -332,7 +337,7 @@ module IOStream_
 			output = trim(buffer)
 		end if
 		
-		this.currentLine = this.currentLine + 1
+		this%currentLine = this%currentLine + 1
 	end function IFStream_readLine
 	
 	!>
@@ -343,11 +348,11 @@ module IOStream_
 		character(*), optional, intent(in) :: cComments
 		character(:), allocatable :: output
 		
-		output = this.readLine( cComments, peek=.true. )
+		output = this%readLine( cComments, peek=.true. )
 	end function IFStream_peek
 	
 	!>
-	!! @brief Extract information from the file i.e. numberOfLines
+	!! @brief Extract information from the file i%e. numberOfLines
 	!!
 	subroutine IFStream_showContent( this )
 		class(IFStream) :: this
@@ -355,19 +360,19 @@ module IOStream_
 		integer :: iostat
 		character(1000) :: buffer
 		
-		open( unit=this.unit, file=this.name, status=this.status, iostat=iostat )
+		open( unit=this%unit, file=this%name, status=this%status, iostat=iostat )
 		
 		if( iostat /= 0 ) then
-			write(IO_STDOUT, *) "### Error ###: The file ( ", trim(this.name), " ) cannot be open"
+			write(IO_STDOUT, *) "### Error ###: The file ( ", trim(this%name), " ) cannot be open"
 		else
 			iostat = 1
 			do while( iostat /= -1 )
-				read( this.unit, "(A)", iostat=iostat ) buffer
+				read( this%unit, "(A)", iostat=iostat ) buffer
 				write(*,*) trim(buffer)
 			end do
 		end if
 		
-		close( unit=this.unit )
+		close( unit=this%unit )
 	end subroutine IFStream_showContent
 	
 end module IOStream_

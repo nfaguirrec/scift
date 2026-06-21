@@ -63,8 +63,8 @@ program main
 		alpha = FString_toReal( sBuffer )
 	end if
 	
-	mol = Molecule( iFileName.fstr )
+	mol = Molecule( iFileName%fstr )
 	
-	call mol.buildGraph( alpha=alpha )
-	write(*,*) mol.molGraph.isConnected()
+	call mol%buildGraph( alpha=alpha )
+	write(*,*) mol%molGraph%isConnected()
 end program main

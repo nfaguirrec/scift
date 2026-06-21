@@ -120,19 +120,19 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i" )
-	userEnergy = parser.getReal( "-E" )
-! 	userNTrials = parser.getInteger( "-n", def=10000 )
-	userSeed = parser.getInteger( "-s", def=-1 )
-	userTol = parser.getReal( "-t", def=1d-10 )
-	debug = parser.getLogical( "-d", def=.false. )
-	oXYZFileName = parser.getString( "-o", def=FString_NULL )
-	oVXYZFileName = parser.getString( "-v", def=FString_NULL )
-	oSHARCFileName = parser.getString( "-sharc", def=FString_NULL )
+	iFileName = parser%getString( "-i" )
+	userEnergy = parser%getReal( "-E" )
+! 	userNTrials = parser%getInteger( "-n", def=10000 )
+	userSeed = parser%getInteger( "-s", def=-1 )
+	userTol = parser%getReal( "-t", def=1d-10 )
+	debug = parser%getLogical( "-d", def=.false. )
+	oXYZFileName = parser%getString( "-o", def=FString_NULL )
+	oVXYZFileName = parser%getString( "-v", def=FString_NULL )
+	oSHARCFileName = parser%getString( "-sharc", def=FString_NULL )
 	
 	if( debug ) then
 		write(*,*) ""
-		write(*,*) "Input file = ", trim(iFileName.fstr)
+		write(*,*) "Input file = ", trim(iFileName%fstr)
 		write(*,*) "    energy = ", userEnergy
 ! 		write(*,*) "    trials = ", userNTrials
 		write(*,*) "      seed = ", userSeed
@@ -140,18 +140,18 @@ program main
 		write(*,*) "     debug = ", debug
 		
 		if( oXYZFileName /= FString_NULL ) &
-			write(*,*) "Output geometry file = ", trim(oXYZFileName.fstr)
+			write(*,*) "Output geometry file = ", trim(oXYZFileName%fstr)
 		if( oVXYZFileName /= FString_NULL ) &
-			write(*,*) "Output velocity file = ", trim(oVXYZFileName.fstr)
+			write(*,*) "Output velocity file = ", trim(oVXYZFileName%fstr)
 		if( oSHARCFileName /= FString_NULL ) &
-			write(*,*) "Output file = ", trim(oSHARCFileName.fstr)
+			write(*,*) "Output file = ", trim(oSHARCFileName%fstr)
 		write(*,*) ""
 	end if
 	
-	mol = Molecule( iFileName.fstr )
-	call mol.orient()
+	mol = Molecule( iFileName%fstr )
+	call mol%orient()
 	
-	allocate( velocities(mol.nAtoms(),3) )
+	allocate( velocities(mol%nAtoms(),3) )
 	
 	call initRandomNumbers( userSeed )
 	
@@ -170,15 +170,15 @@ program main
 	do while( .true. )
 ! 		!--------------------------------------------
 ! 		
-! 		totalVelocity = totalLinearMomentum/mol.mass()
+! 		totalVelocity = totalLinearMomentum/mol%mass()
 ! 
-! 		do i=1,mol.nAtoms()
+! 		do i=1,mol%nAtoms()
 ! 			velocities(i,:) = velocities(i,:) - totalVelocity(:)
 ! 		end do
 ! 		
 ! 		! Escala las velocidades
 ! 		energy = getEnergy()
-! 		do i=1,mol.nAtoms()
+! 		do i=1,mol%nAtoms()
 ! 			velocities(i,:) = velocities(i,:)*sqrt(userEnergy/energy)
 ! 		end do
 ! 		
@@ -190,14 +190,14 @@ program main
 ! 		
 ! 		!--------------------------------------------
 ! 		
-! 		do i=1,mol.nAtoms()
-! 			angularVelocity = crossProduct( mol.atoms(i).r, velocities(i,:) )/sum(mol.atoms(i).r**2)
-! 			velocities(i,:) = velocities(i,:) - crossProduct( angularVelocity, mol.atoms(i).r )
+! 		do i=1,mol%nAtoms()
+! 			angularVelocity = crossProduct( mol%atoms(i)%r, velocities(i,:) )/sum(mol%atoms(i)%r**2)
+! 			velocities(i,:) = velocities(i,:) - crossProduct( angularVelocity, mol%atoms(i)%r )
 ! 		end do
 ! 		
 ! 		! Escala las velocidades
 ! 		energy = getEnergy()
-! 		do i=1,mol.nAtoms()
+! 		do i=1,mol%nAtoms()
 ! 			velocities(i,:) = velocities(i,:)*sqrt(userEnergy/energy)
 ! 		end do
 ! 		
@@ -212,14 +212,14 @@ program main
 		
 		!--------------------------------------------
 		
-		do i=1,mol.nAtoms()
-			angularVelocity = crossProduct( mol.atoms(i).r, velocities(i,:) )/sum(mol.atoms(i).r**2)
-			velocities(i,:) = velocities(i,:) - crossProduct( angularVelocity, mol.atoms(i).r )
+		do i=1,mol%nAtoms()
+			angularVelocity = crossProduct( mol%atoms(i)%r, velocities(i,:) )/sum(mol%atoms(i)%r**2)
+			velocities(i,:) = velocities(i,:) - crossProduct( angularVelocity, mol%atoms(i)%r )
 		end do
 		
 		! Escala las velocidades
 		energy = getEnergy()
-		do i=1,mol.nAtoms()
+		do i=1,mol%nAtoms()
 			velocities(i,:) = velocities(i,:)*sqrt(userEnergy/energy)
 		end do
 		
@@ -231,15 +231,15 @@ program main
 		
 		!--------------------------------------------
 		
-		totalVelocity = totalLinearMomentum/mol.mass()
+		totalVelocity = totalLinearMomentum/mol%mass()
 
-		do i=1,mol.nAtoms()
+		do i=1,mol%nAtoms()
 			velocities(i,:) = velocities(i,:) - totalVelocity(:)
 		end do
 		
 		! Escala las velocidades
 		energy = getEnergy()
-		do i=1,mol.nAtoms()
+		do i=1,mol%nAtoms()
 			velocities(i,:) = velocities(i,:)*sqrt(userEnergy/energy)
 		end do
 		
@@ -265,34 +265,34 @@ program main
 		write(*,*) "**************************************"
 		write(*,*) " GEOMETRY"
 		write(*,*) "**************************************"
-		call mol.save()
+		call mol%save()
 	end if
 	
 	if( oXYZFileName /= FString_NULL ) then
-		call mol.save( oXYZFileName.fstr )
+		call mol%save( oXYZFileName%fstr )
 	end if
 	
 	if( oVXYZFileName /= FString_NULL ) then
-		open( 1, file=oVXYZFileName.fstr )
-		write(1,*) mol.nAtoms()
-		write(1,"(A)") "Generated velocities by molecule.vrandom from "//trim(mol.name)
-		do i=1,mol.nAtoms()
-			write(1,"(A5,3F20.8)") trim(mol.atoms(i).symbol), velocities(i,:)
+		open( 1, file=oVXYZFileName%fstr )
+		write(1,*) mol%nAtoms()
+		write(1,"(A)") "Generated velocities by molecule.vrandom from "//trim(mol%name)
+		do i=1,mol%nAtoms()
+			write(1,"(A5,3F20.8)") trim(mol%atoms(i)%symbol), velocities(i,:)
 		end do
 		write(1,"(A)") ""
 		close(1)
 	end if
 	
 	if( oSHARCFileName /= FString_NULL ) then
-		open( 1, file=oSHARCFileName.fstr )
+		open( 1, file=oSHARCFileName%fstr )
 		
-		do i=1,mol.nAtoms()
-			write(1,"(A5,F5.1,3F15.8,F15.5)") trim(mol.atoms(i).symbol), mol.atoms(i).atomicNumber(), mol.atoms(i).r, mol.atoms(i).mass()/amu
+		do i=1,mol%nAtoms()
+			write(1,"(A5,F5.1,3F15.8,F15.5)") trim(mol%atoms(i)%symbol), mol%atoms(i)%atomicNumber(), mol%atoms(i)%r, mol%atoms(i)%mass()/amu
 		end do
 		
 		write(1,"(A)") ""
 		
-		do i=1,mol.nAtoms()
+		do i=1,mol%nAtoms()
 			write(1,"(3F20.8)") velocities(i,:)
 		end do
 		
@@ -346,23 +346,23 @@ program main
 		real(8) :: r, theta, phi
 		integer :: n
 		
-		allocate( energies(mol.nAtoms()) )
+		allocate( energies(mol%nAtoms()) )
 		
 ! 		do n=1,nTrials
 ! 			energies = 0.0_8
-! 			do i=1,mol.nAtoms()-1
+! 			do i=1,mol%nAtoms()-1
 ! 				call random_number( randNumber ) ! [0,1]
 ! 				energies(i) = randNumber*totalEnergy
 ! 			end do
 ! 			
-! 			if( sum(energies(1:mol.nAtoms()-1)) < totalEnergy ) then
+! 			if( sum(energies(1:mol%nAtoms()-1)) < totalEnergy ) then
 ! 				exit
 ! 			end if
 ! 		end do
-! 		energies( mol.nAtoms() ) = totalEnergy-sum(energies(1:mol.nAtoms()-1))
+! 		energies( mol%nAtoms() ) = totalEnergy-sum(energies(1:mol%nAtoms()-1))
 
 		energies = 0.0_8
-		do i=1,mol.nAtoms()
+		do i=1,mol%nAtoms()
 			call random_number( randNumber ) ! [0,1]
 			energies(i) = randNumber*( totalEnergy - merge( sum(energies(1:i-1)), 0.0_8, i>1 ) )
 		end do
@@ -379,9 +379,9 @@ program main
 			write(*,*) ""
 			
 ! 			write(*,*) "masas"
-			do i=1,mol.nAtoms()
-				write(*,"(5X,I3,A10,F20.5,F10.5)") i, trim(mol.atoms(i).symbol), mol.atoms(i).mass(), energies(i)
-! 				write(*,*) trim(mol.atoms(i).symbol), mol.atoms(i).mass()
+			do i=1,mol%nAtoms()
+				write(*,"(5X,I3,A10,F20.5,F10.5)") i, trim(mol%atoms(i)%symbol), mol%atoms(i)%mass(), energies(i)
+! 				write(*,*) trim(mol%atoms(i)%symbol), mol%atoms(i)%mass()
 			end do
 			
 			write(*,"(8X,30X,A10)") "----------"
@@ -389,8 +389,8 @@ program main
 			write(*,"(8X,A)") ""
 		end if
 		
-		do i=1,mol.nAtoms()
-			r =sqrt( 2.0_8*energies(i)/mol.atoms(i).mass() )
+		do i=1,mol%nAtoms()
+			r =sqrt( 2.0_8*energies(i)/mol%atoms(i)%mass() )
 			
 			call random_number( randNumber ) ! [0,1]
 			theta = randNumber*Math_PI
@@ -413,8 +413,8 @@ program main
 		real(8) :: output
 		
 		output = 0.0_8
-		do i=1,mol.nAtoms()
-			output = output + sum(0.5_8*mol.atoms(i).mass()*velocities(i,:)**2)
+		do i=1,mol%nAtoms()
+			output = output + sum(0.5_8*mol%atoms(i)%mass()*velocities(i,:)**2)
 		end do
 	end function getEnergy
 	
@@ -434,13 +434,13 @@ program main
 	!!
 	subroutine updateTotalMomentum()
 		totalLinearMomentum = 0.0_8
-		do i=1,mol.nAtoms()
-			totalLinearMomentum = totalLinearMomentum + velocities(i,:)*mol.atoms(i).mass()
+		do i=1,mol%nAtoms()
+			totalLinearMomentum = totalLinearMomentum + velocities(i,:)*mol%atoms(i)%mass()
 		end do
 		
 		totalAngularMomentum = 0.0_8
-		do i=1,mol.nAtoms()
-			totalAngularMomentum = totalAngularMomentum + crossProduct( mol.atoms(i).r, mol.atoms(i).mass()*velocities(i,:) )
+		do i=1,mol%nAtoms()
+			totalAngularMomentum = totalAngularMomentum + crossProduct( mol%atoms(i)%r, mol%atoms(i)%mass()*velocities(i,:) )
 		end do
 	end subroutine updateTotalMomentum
 	
@@ -456,8 +456,8 @@ program main
 		write(*,"(5X,A5,3A15)") "sym","x", "y", "z"
 		
 		ssum = 0.0_8
-		do i=1,mol.nAtoms()
-			write(*,"(5X,A5,3F15.5)") trim(mol.atoms(i).symbol), velocities(i,:)
+		do i=1,mol%nAtoms()
+			write(*,"(5X,A5,3F15.5)") trim(mol%atoms(i)%symbol), velocities(i,:)
 			ssum = ssum + velocities(i,:)
 		end do
 		write(*,"(5X,5X,3A15)") "---------", "---------", "---------"

@@ -91,14 +91,14 @@ program main
 		stop
 	end if
 	
-	call parser.init()
+	call parser%init()
 	
 	if( fileTypeA == 0 ) then
-		call parser.parseFunction( formula, [ 'x' ]  )
-		rFunc = RNFunction( rA.xGrid, evaluateFormulaR )
+		call parser%parseFunction( formula, [ 'x' ]  )
+		rFunc = RNFunction( rA%xGrid, evaluateFormulaR )
 	else if( fileTypeA == 1 ) then
-		call parser.parseFunction( formula, [ 'x' ]  )
-		cFunc = CNFunction( cA.xGrid, evaluateFormulaC )
+		call parser%parseFunction( formula, [ 'x' ]  )
+		cFunc = CNFunction( cA%xGrid, evaluateFormulaC )
 	end if
 	
 	!---------------------------------------------
@@ -137,9 +137,9 @@ program main
 	! Saving AB
 	!---------------------------------------------
 	if( fileTypeA == 0 ) then
-		call rFuncA.save( fileNameFuncA )
+		call rFuncA%save( fileNameFuncA )
 	else if( fileTypeA == 1 ) then
-		call cFuncA.save( fileNameFuncA )
+		call cFuncA%save( fileNameFuncA )
 	end if
 	
 	contains
@@ -151,7 +151,7 @@ program main
 		real(8), intent(in) :: x
 		real(8) :: output
 		
-		output = parser.evaluateFunction( [ x ] )
+		output = parser%evaluateFunction( [ x ] )
 	end function evaluateFormulaR
 	
 	!>
@@ -161,7 +161,7 @@ program main
 		real(8), intent(in) :: x
 		complex(8) :: output
 		
-		output = cmplx( parser.evaluateFunction( [ x ] ), 0.0_8 )
+		output = cmplx( parser%evaluateFunction( [ x ] ), 0.0_8 )
 	end function evaluateFormulaC
 
 end program main

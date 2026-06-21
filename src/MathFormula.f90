@@ -84,28 +84,28 @@ module MathFormula_
 		
 		integer :: i
 		
-		call this.parser.init()
+		call this%parser%init()
 		
-		this.formula = formula
+		this%formula = formula
 		
-		if( allocated( this.variables ) ) deallocate( this.variables )
-		allocate( this.variables(size(variables)) )
+		if( allocated( this%variables ) ) deallocate( this%variables )
+		allocate( this%variables(size(variables)) )
 		do i=1,size(variables)
-			this.variables(i) = trim(variables(i))
+			this%variables(i) = trim(variables(i))
 		end do
 		
 		if( present(constants) .and. present(constantsValues) ) then
-			if( allocated( this.constants ) ) deallocate( this.constants )
-			allocate( this.constants(size(constants)) )
-			this.constants = constants
+			if( allocated( this%constants ) ) deallocate( this%constants )
+			allocate( this%constants(size(constants)) )
+			this%constants = constants
 			
-			if( allocated( this.constantsValues ) ) deallocate( this.constantsValues )
-			allocate( this.constantsValues(size(constantsValues)) )
-			this.constantsValues = constantsValues
+			if( allocated( this%constantsValues ) ) deallocate( this%constantsValues )
+			allocate( this%constantsValues(size(constantsValues)) )
+			this%constantsValues = constantsValues
 			
-			call this.parser.parseFunction( formula, [variables,constants] )
+			call this%parser%parseFunction( formula, [variables,constants] )
 		else
-			call this.parser.parseFunction( formula, this.variables )
+			call this%parser%parseFunction( formula, this%variables )
 		end if
 		
 	end subroutine initFromCharacterVec
@@ -123,30 +123,30 @@ module MathFormula_
 		integer :: i
 		character(100), allocatable :: tokens(:)
 		
-		call this.parser.init()
+		call this%parser%init()
 		
-		this.formula = formula
+		this%formula = formula
 		
 		call FString_split( variables, tokens, "," )
 		
-		if( allocated( this.variables ) ) deallocate( this.variables )
-		allocate( this.variables(size(tokens)) )
+		if( allocated( this%variables ) ) deallocate( this%variables )
+		allocate( this%variables(size(tokens)) )
 		do i=1,size(tokens)
-			this.variables(i) = trim(tokens(i))
+			this%variables(i) = trim(tokens(i))
 		end do
 		
 		if( present(constants) .and. present(constantsValues) ) then
-			if( allocated( this.constants ) ) deallocate( this.constants )
-			allocate( this.constants(size(constants)) )
-			this.constants = constants
+			if( allocated( this%constants ) ) deallocate( this%constants )
+			allocate( this%constants(size(constants)) )
+			this%constants = constants
 			
-			if( allocated( this.constantsValues ) ) deallocate( this.constantsValues )
-			allocate( this.constantsValues(size(constantsValues)) )
-			this.constantsValues = constantsValues
+			if( allocated( this%constantsValues ) ) deallocate( this%constantsValues )
+			allocate( this%constantsValues(size(constantsValues)) )
+			this%constantsValues = constantsValues
 			
-			call this.parser.parseFunction( formula, [tokens,constants] )
+			call this%parser%parseFunction( formula, [tokens,constants] )
 		else
-			call this.parser.parseFunction( formula, this.variables )
+			call this%parser%parseFunction( formula, this%variables )
 		end if
 		
 		deallocate( tokens )
@@ -160,20 +160,20 @@ module MathFormula_
 		class(MathFormula), intent(inout) :: this
 		type(MathFormula), intent(in) :: other
 		
-		this.parser = other.parser
-		this.formula = other.formula
+		this%parser = other%parser
+		this%formula = other%formula
 		
-		if( allocated(this.variables) ) deallocate(this.variables)
-		allocate(this.variables(other.nVariables()))
-		this.variables = other.variables
+		if( allocated(this%variables) ) deallocate(this%variables)
+		allocate(this%variables(other%nVariables()))
+		this%variables = other%variables
 		
-		if( allocated(this.constants) ) deallocate(this.constants)
-		allocate(this.constants(other.nConstants()))
-		this.constants = other.constants
+		if( allocated(this%constants) ) deallocate(this%constants)
+		allocate(this%constants(other%nConstants()))
+		this%constants = other%constants
 		
-		if( allocated(this.constantsValues) ) deallocate(this.constantsValues)
-		allocate(this.constantsValues(other.nConstants()))
-		this.constantsValues = other.constantsValues
+		if( allocated(this%constantsValues) ) deallocate(this%constantsValues)
+		allocate(this%constantsValues(other%nConstants()))
+		this%constantsValues = other%constantsValues
 	end subroutine copyMathFormula
 	
 	!>
@@ -182,9 +182,9 @@ module MathFormula_
 	subroutine destroyMathFormula( this )
 		type(MathFormula) :: this
 		
-		if( allocated(this.variables) ) deallocate(this.variables)
-		if( allocated( this.constants ) ) deallocate( this.constants )
-		if( allocated( this.constantsValues ) ) deallocate( this.constantsValues )
+		if( allocated(this%variables) ) deallocate(this%variables)
+		if( allocated( this%constants ) ) deallocate( this%constants )
+		if( allocated( this%constantsValues ) ) deallocate( this%constantsValues )
 	end subroutine destroyMathFormula
 	
 	!>
@@ -217,8 +217,8 @@ module MathFormula_
 #define ITEML(l,v) output = trim(output)//l; write(fstr, "(L3)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<MathFormula:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef ITEMS
 #undef ITEMI
 #undef ITEMR
@@ -232,8 +232,8 @@ module MathFormula_
 
 			LINE("MathFormula")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -269,7 +269,7 @@ module MathFormula_
 		class(MathFormula), intent(in) :: this
 		integer :: output
 		
-		output = size(this.variables)
+		output = size(this%variables)
 	end function nVariables
 	
 	!>
@@ -279,7 +279,7 @@ module MathFormula_
 		class(MathFormula), intent(in) :: this
 		integer :: output
 		
-		output = size(this.constants)
+		output = size(this%constants)
 	end function nConstants
 	
 	!>
@@ -290,7 +290,7 @@ module MathFormula_
 		real(8), intent(in) :: values(:)
 		real(8) :: output
 		
-		output = this.parser.evaluateFunction( [ values, this.constantsValues ] )
+		output = this%parser%evaluateFunction( [ values, this%constantsValues ] )
 	end function evaluate
 	
 end module MathFormula_

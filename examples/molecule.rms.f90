@@ -61,22 +61,22 @@ program main
 	call get_command_argument( 2, sBuffer )
 	iFileName2 = sBuffer
 	
-	mol1 = Molecule( iFileName1.fstr )
-	mol2 = Molecule( iFileName2.fstr )
+	mol1 = Molecule( iFileName1%fstr )
+	mol2 = Molecule( iFileName2%fstr )
 	
-	if( mol1.nAtoms() /= mol2.nAtoms() ) then
+	if( mol1%nAtoms() /= mol2%nAtoms() ) then
 		stop "### ERROR ### Mol1 and Mol2 have not the same number of atoms"
 	end if
 	
 	rms = 0.0_8
-	do i=1,mol1.nAtoms()
-		if( trim(mol1.atoms(i).symbol) /= trim(mol2.atoms(i).symbol) ) then
+	do i=1,mol1%nAtoms()
+		if( trim(mol1%atoms(i)%symbol) /= trim(mol2%atoms(i)%symbol) ) then
 			stop "### ERROR ### Symbols in Mol1 are incompatible with Mol2"
 		end if
 		
-		rms = rms + sum( ( mol1.atoms(i).r - mol2.atoms(i).r )**2 )
+		rms = rms + sum( ( mol1%atoms(i)%r - mol2%atoms(i)%r )**2 )
 	end do
 	
-	write(*,"(F15.8)") sqrt(rms/real(mol1.nAtoms(),8))/angs
+	write(*,"(F15.8)") sqrt(rms/real(mol1%nAtoms(),8))/angs
 	
 end program main

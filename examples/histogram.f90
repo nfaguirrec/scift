@@ -62,19 +62,19 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i" )
-	oFileName = parser.getString( "-o" )
+	iFileName = parser%getString( "-i" )
+	oFileName = parser%getString( "-o" )
 	
 	hist = RealHistogram( Histogram_LORENTZIAN_DRESSING )
-	call hist.add( iFileName.fstr )
+	call hist%add( iFileName%fstr )
 	
-	minValue = parser.getReal( "-min", def=hist.minimum() )
-	maxValue = parser.getReal( "-max", def=hist.maximum() )
-	nBins = parser.getInteger( "-nbins", def=-1 )
+	minValue = parser%getReal( "-min", def=hist%minimum() )
+	maxValue = parser%getReal( "-max", def=hist%maximum() )
+	nBins = parser%getInteger( "-nbins", def=-1 )
 	
 	write(*,*) "min = ", minValue
 	write(*,*) "max = ", maxValue
 	
-	call hist.build( nBins=nBins, min=minValue, max=maxValue )
-	call hist.density.save( oFileName.fstr )
+	call hist%build( nBins=nBins, min=minValue, max=maxValue )
+	call hist%density%save( oFileName%fstr )
 end program main

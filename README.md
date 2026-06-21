@@ -14,11 +14,14 @@ SciFT is known to work on GNU/Linux. However, it should work on any POSIX-compli
 
 - **[GNU Awk (gawk)](https://www.gnu.org/software/gawk/)** (version >= 4.0)
 
-- **[Intel® Fortran Compiler](https://software.intel.com/en-us/fortran-compilers)** (version >= 14.0.3)<br>
-  SciFT has not been tested with any other compiler.
+- **Fortran Compiler**:
+  - **[GNU Fortran (gfortran)](https://gcc.gnu.org/wiki/GFortran)** (version >= 6.0) OR
+  - **[Intel® Fortran Compiler (ifort/ifx)](https://software.intel.com/en-us/fortran-compilers)** (version >= 14.0.3)
 
-- **[Intel® Math Kernel Library (Intel® MKL)](https://software.intel.com/en-us/mkl)**<br>
-  SciFT has not been tested with any other math library.
+- **Mathematical Libraries**:
+  - For **gfortran**: **[FFTW3](https://www.fftw.org/)**, **[OpenBLAS](https://www.openblas.net/)**, and **[LAPACK](http://www.netlib.org/lapack/)** (e.g. installed via Conda).
+  - For **Intel Compiler**: **[Intel® Math Kernel Library (Intel® MKL)](https://software.intel.com/en-us/mkl)**.
+
 
 <!---**Recommended Dependencies:**--->
 
@@ -49,12 +52,23 @@ docs      examples  LICENSE.FortranParser  README.md     src    VERSION
 doxyfile  LICENSE   Makefile               SCIFTvars.sh  utils
 ```
 
-Enter in the scift directory (`cd scift`) and modify the Makefile file (`src/Makefile`) if necessary.
+Enter in the scift directory (`cd scift`).
 
-To build the code just type make inside the main directory as follows:
-```
-$ source SCIFTvars.sh
-$ make
+To build the library, you can use either the GNU Fortran Compiler (`gfortran`) or the Intel Fortran Compiler (`ifort`/`ifx`). The build system dynamically configures flags and libraries based on the selected compiler.
+
+- **Using gfortran (with active Conda libraries)**:
+  ```bash
+  $ source SCIFTvars.sh
+  $ make FC=gfortran
+  ```
+
+- **Using Intel Compiler**:
+  ```bash
+  $ source SCIFTvars.sh
+  $ make FC=ifort
+  ```
+
+If no compiler is specified, `make` will automatically use `ifort` if available, falling back to `gfortran`.
 Building dependencies for Atom.f90 ... OK
 Building dependencies for AtomicElementsDB.f90 ... OK
 Building dependencies for BlocksIFileParser.f90 ... OK
@@ -138,11 +152,21 @@ program test
 	write(*,*) trim(str1.fstr)
 end program test
 ```
-It is compiled an executed as follows:
+It is compiled and executed as follows:
 
-```
-$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
-$ ./test 
+- **Using Intel Compiler**:
+  ```bash
+  $ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+  $ ./test
+  ```
+
+- **Using gfortran (with conda libraries)**:
+  ```bash
+  $ gfortran test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift -L${CONDA_PREFIX}/lib -lfftw3 -lopenblas -llapack
+  $ ./test
+  ```
+
+For either compiler, the output is: 
  Hello:fortran-string
            1     Hello
            2     fortran

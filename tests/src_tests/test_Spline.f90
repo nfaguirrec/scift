@@ -27,11 +27,11 @@ program test_Spline
 		call morseObj%save( "morse.dat" )
 		call morseObj%destroy()
 		
-		call ifile.init( "morse.dat" )
+		call ifile%init( "morse.dat" )
 		nFunc = RNFunction( ifile )
-		call ifile.close()
+		call ifile%close()
 		
-		call nFuncSpline.init( nFunc )
+		call nFuncSpline%init( nFunc )
 		
 		call assert_equal( nFuncSpline%size, nFunc%nPoints(), "Spline_test: size match" )
 		
@@ -39,7 +39,7 @@ program test_Spline
 			call assert_true( abs(nFuncSpline%evaluate(nFunc%x(i)) - nFunc%at(i)) < 1e-10_8, "Spline_test: evaluate node" )
 		end do
 		
-		nFuncSmooth = nFuncSpline.smooth( 10 )
+		nFuncSmooth = nFuncSpline%smooth( 10 )
 		call assert_equal( nFuncSmooth%nPoints(), nFunc%nPoints() * 10, "Spline_test: smooth size" )
 		
 		open(10, file="morse.dat")

@@ -57,10 +57,10 @@ program main
 	call get_command_argument( 2, sBuffer )
 	iFileNameRef = sBuffer
 	
-	molRef = Molecule( iFileNameRef.fstr )
-	molFrag = Molecule( iFileNameFrag.fstr )
+	molRef = Molecule( iFileNameRef%fstr )
+	molFrag = Molecule( iFileNameFrag%fstr )
 	
-	if( molFrag.isFragmentOf( molRef ) ) then
+	if( molFrag%isFragmentOf( molRef ) ) then
 		write(*,"(A)") "OK"
 	else
 		write(*,"(A)") "Failed"

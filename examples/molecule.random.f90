@@ -65,15 +65,15 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i", def=FString_NULL )
+	iFileName = parser%getString( "-i", def=FString_NULL )
 	if( iFileName /= FString_NULL ) then
-		mol = Molecule( iFileName.fstr )
+		mol = Molecule( iFileName%fstr )
 	else
 		call get_command_argument( 1, sBuffer )
 		strFormula = sBuffer
 		
 		nAtoms = 0
-		call strFormula.split( tokens, "," )
+		call strFormula%split( tokens, "," )
 		do i=1,size(tokens)
 			call FString_split( tokens(i), tokens2, "_" )
 			
@@ -93,10 +93,10 @@ program main
 		end do
 		deallocate( tokens )
 		
-		mol = Molecule( nAtoms, trim(strFormula.fstr)//" ( Random geometry )" )
+		mol = Molecule( nAtoms, trim(strFormula%fstr)//" ( Random geometry )" )
 		
 		nAtoms = 1
-		call strFormula.split( tokens, "," )
+		call strFormula%split( tokens, "," )
 		do i=1,size(tokens)
 			call FString_split( tokens(i), tokens2, "_" )
 			
@@ -109,8 +109,8 @@ program main
 			end if
 			
 			do j=1,mult
-				call atom1.init( symb )
-				mol.atoms(nAtoms) = atom1
+				call atom1%init( symb )
+				mol%atoms(nAtoms) = atom1
 				
 				nAtoms = nAtoms + 1
 			end do
@@ -121,10 +121,10 @@ program main
 	end if
 	
 	alpha = 0.7_8
-	if( mol.nAtoms() == 2 ) alpha = 2.0_8
-	if( mol.nAtoms() == 3 ) alpha = 1.0_8
+	if( mol%nAtoms() == 2 ) alpha = 2.0_8
+	if( mol%nAtoms() == 3 ) alpha = 1.0_8
 	
-	call mol.randomGeometry( overlappingRadius=0.6_8, alpha=alpha )
+	call mol%randomGeometry( overlappingRadius=0.6_8, alpha=alpha )
 	
-	call mol.save()
+	call mol%save()
 end program main

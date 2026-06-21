@@ -117,7 +117,7 @@ module UnitsConverter_
 	
 	integer, private, parameter :: UnitsConverter_NUNITS = 19
 	
-	character(10), private, parameter :: UnitsConverter_NAME(UnitsConverter_NUNITS) = [ &
+	character(10), private, parameter :: UnitsConverter_NAME(UnitsConverter_NUNITS) = [ character(10) :: &
 		"amu", &
 		"angs", &
 		"eV", &

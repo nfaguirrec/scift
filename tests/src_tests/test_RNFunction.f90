@@ -13,7 +13,7 @@ program test_RNFunction
 		real(8), allocatable :: data(:)
 		integer :: i
 		
-		call xGrid.init( 1.0_8, 10.0_8, 100 )
+		call xGrid%init( 1.0_8, 10.0_8, 100 )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test from function
@@ -24,15 +24,15 @@ program test_RNFunction
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test for copy constructor
-		call nFunc2.copy( nFunc )
+		call nFunc2%copy( nFunc )
 		call assert_equal( nFunc2%nPoints(), 100, "RNFunction_test: nPoints copy" )
 		call assert_true( all(nFunc2%fArray == nFunc%fArray), "RNFunction_test: fArray copy" )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test from array
-		allocate( data(xGrid.nPoints) )
-		do i=1,xGrid.nPoints
-			data(i) = funcTest( xGrid.data(i) )
+		allocate( data(xGrid%nPoints) )
+		do i=1,xGrid%nPoints
+			data(i) = funcTest( xGrid%data(i) )
 		end do
 		
 		nFunc = RNFunction( xGrid, fArray=data )
@@ -42,50 +42,50 @@ program test_RNFunction
 
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Testing resize
-		call xGrid.init( 1.0_8, 10.0_8, 10 )
+		call xGrid%init( 1.0_8, 10.0_8, 10 )
 		nFunc2 = RNFunction( xGrid, func=funcTest )
 		
 		! resize grid +10, dir = +1
 		nFunc = nFunc2
-		call nFunc.resize(+10,+1)
+		call nFunc%resize(+10,+1)
 		call assert_equal( nFunc%nPoints(), 20, "RNFunction_test: resize +10, dir=+1 size" )
 		call assert_true( abs(nFunc%x(1) - 1.0_8) < 1e-12_8, "RNFunction_test: resize +10, dir=+1 min" )
 		call assert_true( abs(nFunc%x(20) - 20.0_8) < 1e-12_8, "RNFunction_test: resize +10, dir=+1 max" )
 		
-		call nFunc.resize(-10,+1)
+		call nFunc%resize(-10,+1)
 		call assert_equal( nFunc%nPoints(), 10, "RNFunction_test: resize -10, dir=+1 size" )
 		call assert_true( abs(nFunc%x(1) - 1.0_8) < 1e-12_8, "RNFunction_test: resize -10, dir=+1 min" )
 		call assert_true( abs(nFunc%x(10) - 10.0_8) < 1e-12_8, "RNFunction_test: resize -10, dir=+1 max" )
 		
 		! resize grid +10, dir = -1
 		nFunc = nFunc2
-		call nFunc.resize(+10,-1)
+		call nFunc%resize(+10,-1)
 		call assert_equal( nFunc%nPoints(), 20, "RNFunction_test: resize +10, dir=-1 size" )
 		call assert_true( abs(nFunc%x(1) - (-9.0_8)) < 1e-12_8, "RNFunction_test: resize +10, dir=-1 min" )
 		call assert_true( abs(nFunc%x(20) - 10.0_8) < 1e-12_8, "RNFunction_test: resize +10, dir=-1 max" )
 		
-		call nFunc.resize(-10,-1)
+		call nFunc%resize(-10,-1)
 		call assert_equal( nFunc%nPoints(), 10, "RNFunction_test: resize -10, dir=-1 size" )
 		call assert_true( abs(nFunc%x(1) - 1.0_8) < 1e-12_8, "RNFunction_test: resize -10, dir=-1 min" )
 		
 		! resize grid +10, dir = 0
 		nFunc = nFunc2
-		call nFunc.resize(+10,0)
+		call nFunc%resize(+10,0)
 		call assert_equal( nFunc%nPoints(), 30, "RNFunction_test: resize +10, dir=0 size" )
 		call assert_true( abs(nFunc%x(1) - (-9.0_8)) < 1e-12_8, "RNFunction_test: resize +10, dir=0 min" )
 		call assert_true( abs(nFunc%x(30) - 20.0_8) < 1e-12_8, "RNFunction_test: resize +10, dir=0 max" )
 		
-		call nFunc.resize(-10,0)
+		call nFunc%resize(-10,0)
 		call assert_equal( nFunc%nPoints(), 10, "RNFunction_test: resize -10, dir=0 size" )
 		call assert_true( abs(nFunc%x(1) - 1.0_8) < 1e-12_8, "RNFunction_test: resize -10, dir=0 min" )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Testing interpolation
-		call xGrid.init( 1.0_8, 10.0_8, 21 )
+		call xGrid%init( 1.0_8, 10.0_8, 21 )
 		nFunc = RNFunction( xGrid, func=funcTest )
 		
-		call xGrid2.init( -2.0_8, 13.0_8, 41 )
-		nFunc2 = nFunc.interpolate( xGrid2 )
+		call xGrid2%init( -2.0_8, 13.0_8, 41 )
+		nFunc2 = nFunc%interpolate( xGrid2 )
 		call assert_equal( nFunc2%nPoints(), 41, "RNFunction_test: interpolate size" )
 		call assert_true( abs(nFunc2%interpolate(5.0_8) - funcTest(5.0_8)) < 1e-3_8, "RNFunction_test: interpolate accuracy" )
 
@@ -115,16 +115,16 @@ program test_RNFunction
     ! 		character(255) :: date
     ! 		
     ! 		effUnit = IO_STDOUT
-    ! 		if( present(ofile) ) effUnit = ofile.unit
+    ! 		if( present(ofile) ) effUnit = ofile%unit
     ! 		
     ! 		effUnits = [1.0_8, 1.0_8]
     ! 		if( present(units) ) effUnits = units
     ! 		
-    ! 		effIXRange = [1,this.nPoints()]
+    ! 		effIXRange = [1,this%nPoints()]
     ! 		if( present(xrange) ) then
     ! 			effIXRange = [ &
-    ! 				floor( 1.0000001*(xrange(1)-this.xGrid.min)/this.xGrid.stepSize+1.0 ), &
-    ! 				floor( 1.0000001*(xrange(2)-this.xGrid.min)/this.xGrid.stepSize+1.0 ) ]
+    ! 				floor( 1.0000001*(xrange(1)-this%xGrid%min)/this%xGrid%stepSize+1.0 ), &
+    ! 				floor( 1.0000001*(xrange(2)-this%xGrid%min)/this%xGrid%stepSize+1.0 ) ]
     ! 		else if( present(ixrange) ) then
     ! 			effIXRange = ixrange
     ! 		end if
@@ -141,11 +141,11 @@ program test_RNFunction
     ! 		write(effUnit,"(A)") "# "//trim(date)
     ! 		
     ! 		do i=effIXRange(1),effIXRange(2),invResolution
-    ! 			if( abs(this.fArray( i )) > 1d-98 ) then
-    ! 				write(effUnit,"(A,E15.7,E15.7)") trim(effBeforeLine), this.xGrid.data(i)/effUnits(1), &
-    ! 					this.fArray( i )/effUnits(2)
+    ! 			if( abs(this%fArray( i )) > 1d-98 ) then
+    ! 				write(effUnit,"(A,E15.7,E15.7)") trim(effBeforeLine), this%xGrid%data(i)/effUnits(1), &
+    ! 					this%fArray( i )/effUnits(2)
     ! 			else
-    ! 				write(effUnit,"(A,E15.7,E15.7)") trim(effBeforeLine), this.xGrid.data(i)/effUnits(1), 0.0_8
+    ! 				write(effUnit,"(A,E15.7,E15.7)") trim(effBeforeLine), this%xGrid%data(i)/effUnits(1), 0.0_8
     ! 			end if
     ! 		end do
     ! 		

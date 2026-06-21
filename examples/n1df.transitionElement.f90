@@ -82,14 +82,14 @@ program main
 	!---------------------------------------------
 	! Loading operator
 	!---------------------------------------------
-	call parser.init()
+	call parser%init()
 	
 	if( fileTypeA == 0 ) then
-		call parser.parseFunction( formulaOper, [ 'x' ]  )
-		rFuncOper = RNFunction( rFuncA.xGrid, evaluateFormulaR )
+		call parser%parseFunction( formulaOper, [ 'x' ]  )
+		rFuncOper = RNFunction( rFuncA%xGrid, evaluateFormulaR )
 	else if( fileTypeA == 1 ) then
-		call parser.parseFunction( formulaOper, [ 'x' ]  )
-		cFuncOper = CNFunction( cFuncA.xGrid, evaluateFormulaC )
+		call parser%parseFunction( formulaOper, [ 'x' ]  )
+		cFuncOper = CNFunction( cFuncA%xGrid, evaluateFormulaC )
 	end if
 	
 	!---------------------------------------------
@@ -109,9 +109,9 @@ program main
 	! Operations
 	!---------------------------------------------
 	if( fileTypeA == 0 .and. fileTypeB == 0 ) then
-		write(*,"(E20.8)") rFuncA.transitionElement( rFuncOper, rFuncB )
+		write(*,"(E20.8)") rFuncA%transitionElement( rFuncOper, rFuncB )
 	else if( fileTypeA == 1 .and. fileTypeB == 1 ) then
-		write(*,"(2E20.8)") cFuncA.transitionElement( cFuncOper, cFuncB )
+		write(*,"(2E20.8)") cFuncA%transitionElement( cFuncOper, cFuncB )
 	else
 		write(0,*) "### ERROR ### Both "//trim(fileNameA)//" and "//trim(fileNameB)//" must be either real or complex. Mixing is not implemented yet."
 		stop
@@ -126,7 +126,7 @@ program main
 		real(8), intent(in) :: x
 		real(8) :: output
 		
-		output = parser.evaluateFunction( [ x ] )
+		output = parser%evaluateFunction( [ x ] )
 	end function evaluateFormulaR
 	
 	!>
@@ -136,7 +136,7 @@ program main
 		real(8), intent(in) :: x
 		complex(8) :: output
 		
-		output = cmplx( parser.evaluateFunction( [ x ] ), 0.0_8 )
+		output = cmplx( parser%evaluateFunction( [ x ] ), 0.0_8 )
 	end function evaluateFormulaC
 
 end program main

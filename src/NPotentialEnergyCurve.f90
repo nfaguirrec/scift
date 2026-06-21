@@ -82,7 +82,7 @@ module NPotentialEnergyCurve_
 		class(NPotentialEnergyCurve) :: this
 		type(RNFunction), intent(in) :: rawData
 		
-		this.rawData = rawData
+		this%rawData = rawData
 	end subroutine initDefault
 	
 	function parent( this ) result( output )
@@ -90,7 +90,7 @@ module NPotentialEnergyCurve_
 		class(NPotentialEnergyCurve) :: this
 		type(RNFunction) :: output
 		
-		output = RNFunction( this.xGrid, this.fArray )
+		output = RNFunction( this%xGrid, this%fArray )
 	end function parent
 	
 	subroutine run( this, rGrid, longRangeF, veryShortRangeF )
@@ -104,15 +104,15 @@ module NPotentialEnergyCurve_
 		real(8), allocatable :: y(:)
 		integer :: i
 		
-		call spline.init( this.rawData )
-		allocate( y(rGrid.nPoints) )
+		call spline%init( this%rawData )
+		allocate( y(rGrid%nPoints) )
 		
-		firstRawData = [ this.rawData.xGrid.data(1), this.rawData.fArray(1) ]
-		lastRawData = [ this.rawData.xGrid.data(this.rawData.nPoints()), this.rawData.fArray(this.rawData.nPoints()) ]
+		firstRawData = [ this%rawData%xGrid%data(1), this%rawData%fArray(1) ]
+		lastRawData = [ this%rawData%xGrid%data(this%rawData%nPoints()), this%rawData%fArray(this%rawData%nPoints()) ]
 		
-		do i=1,rGrid.nPoints
+		do i=1,rGrid%nPoints
 		
-			xi = rGrid.data(i)
+			xi = rGrid%data(i)
 			
 			if( xi < firstRawData(1) ) then
 				if( present(veryShortRangeF) ) then
@@ -121,7 +121,7 @@ module NPotentialEnergyCurve_
 					y(i) = veryShortRangeDefault( xi )
 				end if
 			else if( xi >= firstRawData(1) .and. xi<= lastRawData(1) ) then
-				y(i) = spline.evaluate(xi)
+				y(i) = spline%evaluate(xi)
 			else if( xi > lastRawData(1) ) then
 				if( present(longRangeF) ) then
 					y(i) = longRangeF( xi )
@@ -133,7 +133,7 @@ module NPotentialEnergyCurve_
 			
 		end do
 		
-		this.RNFunction = RNFunction( rGrid, y )
+		this%RNFunction = RNFunction( rGrid, y )
 	end subroutine run
 	
 	!>
@@ -187,7 +187,7 @@ module NPotentialEnergyCurve_
 		real(8) :: c6 = -3.66827_8
 		real(8) :: c8 = 3.65743_8
 		
-		output = sign(1.0,c6)*(c6/x)**6.0_8+sign(1.0,c8)*(c8/x)**8.0_8
+		output = sign(1.0_8,c6)*(c6/x)**6.0_8+sign(1.0_8,c8)*(c8/x)**8.0_8
 	end function longRangeDefault
 	
 end module NPotentialEnergyCurve_

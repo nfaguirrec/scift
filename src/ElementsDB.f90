@@ -151,26 +151,26 @@ module ElementsDB_
 		type(Element) :: elem
 		type(Isotope), allocatable :: isot(:)
 		
-		allocate( this.elements(1) )
+		allocate( this%elements(1) )
 		
-		elem.atomicNumber = 1
-		elem.symbol = "H"
-		elem.name = "Hydrogen"
-		elem.atomicWeight = 1.00794_8
-		elem.mostStableIsotopeMassNumber = 1
+		elem%atomicNumber = 1
+		elem%symbol = "H"
+		elem%name = "Hydrogen"
+		elem%atomicWeight = 1.00794_8
+		elem%mostStableIsotopeMassNumber = 1
 		allocate( isot(2) )
-		isot(1).massNumber = 1
-		isot(1).abundance  = 0.999885_8
-		isot(1).atomicMass = 1.00782503207_8
+		isot(1)%massNumber = 1
+		isot(1)%abundance  = 0.999885_8
+		isot(1)%atomicMass = 1.00782503207_8
 		
-		isot(2).massNumber = 2
-		isot(2).abundance  = 0.000115_8
-		isot(2).atomicMass = 2.0141017778_8
+		isot(2)%massNumber = 2
+		isot(2)%abundance  = 0.000115_8
+		isot(2)%atomicMass = 2.0141017778_8
 		
-		allocate( elem.isotopes(2) )
-		elem.isotopes = isot
+		allocate( elem%isotopes(2) )
+		elem%isotopes = isot
 		
-		this.elements(1) = elem
+		this%elements(1) = elem
 		
 		deallocate( isot )
 	end subroutine initElementsDB
@@ -222,8 +222,8 @@ module ElementsDB_
 #define ITEML(l,v) output = trim(output)//l; write(fstr, "(L3)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<ElementsDB:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef ITEMS
 #undef ITEMI
 #undef ITEMR
@@ -237,8 +237,8 @@ module ElementsDB_
 
 			LINE("ElementsDB")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -274,7 +274,7 @@ module ElementsDB_
 		class(ElementsDB), intent(in) :: this
 		integer :: output
 		
-		output = size( this.elements )
+		output = size( this%elements )
 	end function nElements
 	
 	!>
@@ -285,7 +285,7 @@ module ElementsDB_
 		integer, intent(in) :: atomicNumber
 		real(8) :: atomicMass
 		
-		atomicMass = this.elements( atomicNumber ).isotopes( this.elements( atomicNumber ).mostStableIsotopeMassNumber ).atomicMass*amu
+		atomicMass = this%elements( atomicNumber )%isotopes( this%elements( atomicNumber )%mostStableIsotopeMassNumber )%atomicMass*amu
 	end function atomicMassFromAtomicNumber
 	
 	!>
@@ -303,10 +303,10 @@ module ElementsDB_
 		upperSymb = FString_toUpper( symbol )
 		
 		atomicMass = -1.0_8
-		do atomicNumber=1,this.nElements()
-			upperSymbInt = FString_toUpper( this.elements(atomicNumber).symbol )
+		do atomicNumber=1,this%nElements()
+			upperSymbInt = FString_toUpper( this%elements(atomicNumber)%symbol )
 			if( trim(adjustl(upperSymb)) == trim(adjustl(upperSymbInt)) ) then
-				atomicMass = this.elements( atomicNumber ).isotopes( this.elements( atomicNumber ).mostStableIsotopeMassNumber ).atomicMass*amu
+				atomicMass = this%elements( atomicNumber )%isotopes( this%elements( atomicNumber )%mostStableIsotopeMassNumber )%atomicMass*amu
 				exit
 			end if
 		end do

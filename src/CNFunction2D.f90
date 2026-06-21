@@ -50,7 +50,7 @@ module CNFunction2D_
 	
 	
 !>
-!! This class use the List template declared into List.h90 file,
+!! This class use the List template declared into List%h90 file,
 !! please take a look to this file for details
 !!
 #define NFunction2D CNFunction2D
@@ -104,10 +104,10 @@ module CNFunction2D_
 #define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<CNFunction2D:"
-			output = trim(output)//trim(this.xyGrid.str())
-! 			ITEMI( "min=", this.min )
-			ITEMI( ",sizex=", this.nPoints(1) )
-			ITEMI( ",sizey=", this.nPoints(2) )
+			output = trim(output)//trim(this%xyGrid%str())
+! 			ITEMI( "min=", this%min )
+			ITEMI( ",sizex=", this%nPoints(1) )
+			ITEMI( ",sizey=", this%nPoints(2) )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -121,8 +121,8 @@ module CNFunction2D_
 
 			LINE("CNFunction2D")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.nPoints )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%nPoints )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -142,7 +142,7 @@ module CNFunction2D_
 		integer :: unitEff
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if

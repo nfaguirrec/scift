@@ -13,11 +13,11 @@ program test_FourierTransform
 		type(Grid) :: xGrid, omegaGrid
 		type(Grid) :: xGrid2, omegaGrid2
 		
-		call xGrid.init( -10.0_8, 10.0_8, 10 )
+		call xGrid%init( -10.0_8, 10.0_8, 10 )
 		omegaGrid = FourierTransform_omegaGrid( xGrid )
 		
 		xGrid2 = xGrid
-		call xGrid2.resize( 5, 0 )
+		call xGrid2%resize( 5, 0 )
 		omegaGrid2 = FourierTransform_omegaGrid( xGrid2 )
 		
 		call assert_equal( xGrid%nPoints, 10, "FourierTransform_test: xGrid nPoints" )
@@ -42,7 +42,7 @@ program test_FourierTransform
     		
     		output = exp(-0.1_8*x**2)*( 0.5_8*cos(9.0_8*x) - 0.5_8*Math_I*sin(5.0_8*x) + 2.0_8*sin(2.5_8*x) )
     
-    ! 		http://www.ee.nmt.edu/~wedeward/EE341/FA97/example9.html
+    ! 		http://www%ee%nmt%edu/~wedeward/EE341/FA97/example9%html
     ! 		output = exp(-2.0_8*x)*Math_ustep(x)
     	end function funcTest
 

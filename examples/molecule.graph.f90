@@ -77,61 +77,61 @@ program main
 	call get_command_argument( 4, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) call FString_split( trim(sBuffer), nodesSuffixes, "," )
 	
-	mol = Molecule( iFileName.fstr )
-	call mol.buildGraph( alpha=alpha )
+	mol = Molecule( iFileName%fstr )
+	call mol%buildGraph( alpha=alpha )
 	
-! 	do i=1,mol.molGraph.nEdges()
-! 		edgeProp = mol.molGraph.getEdgeProperties(i)
-! ! 		edgeProp.weight = anint(edgeProp.weight*10.0_8**bondPrec)/10.0_8**bondPrec
-! 		edgeProp.weight = 1.0_8
-! 		call mol.molGraph.setEdgeProperties( i, edgeProp )
+! 	do i=1,mol%molGraph%nEdges()
+! 		edgeProp = mol%molGraph%getEdgeProperties(i)
+! ! 		edgeProp%weight = anint(edgeProp%weight*10.0_8**bondPrec)/10.0_8**bondPrec
+! 		edgeProp%weight = 1.0_8
+! 		call mol%molGraph%setEdgeProperties( i, edgeProp )
 ! 	end do
 	
 	if( allocated(nodesSuffixes) ) then
-		call mol.showGraph( nodesSuffixes=nodesSuffixes )
+		call mol%showGraph( nodesSuffixes=nodesSuffixes )
 	else
-		call mol.showGraph()
+		call mol%showGraph()
 	end if
 	
-! 	L = mol.molGraph.laplacianMatrix()
+! 	L = mol%molGraph%laplacianMatrix()
 ! 	write(*,*) "Laplacian Matrix = "
-! 	call L.show( formatted=.true. )
+! 	call L%show( formatted=.true. )
 
-! 	D = mol.molGraph.distanceMatrix()
+! 	D = mol%molGraph%distanceMatrix()
 ! 	write(*,*) "Distance Matrix = "
-! 	call D.show( formatted=.true. )
+! 	call D%show( formatted=.true. )
 	
-! 	write(*,*) "nComponents = ", mol.molGraph.nComponents()
-! 	write(*,*) "Randic = ", mol.molGraph.randicIndex()
-! 	write(*,*) "Wiener = ", mol.molGraph.wienerIndex()
-! 	write(*,*) "InverseWiener = ", mol.molGraph.inverseWienerIndex()
-! 	write(*,*) "Balaban = ", mol.molGraph.balabanIndex()
-! 	write(*,*) "MolecularTopological = ", mol.molGraph.molecularTopologicalIndex()
-! 	write(*,*) "Kirchhoff = ", mol.molGraph.kirchhoffIndex()
-! 	write(*,*) "KirchhoffSum = ", mol.molGraph.kirchhoffSumIndex()
-! 	write(*,*) "WienerSum = ", mol.molGraph.wienerSumIndex()
-! 	write(*,*) "JOmega = ", mol.molGraph.JOmegaIndex()
+! 	write(*,*) "nComponents = ", mol%molGraph%nComponents()
+! 	write(*,*) "Randic = ", mol%molGraph%randicIndex()
+! 	write(*,*) "Wiener = ", mol%molGraph%wienerIndex()
+! 	write(*,*) "InverseWiener = ", mol%molGraph%inverseWienerIndex()
+! 	write(*,*) "Balaban = ", mol%molGraph%balabanIndex()
+! 	write(*,*) "MolecularTopological = ", mol%molGraph%molecularTopologicalIndex()
+! 	write(*,*) "Kirchhoff = ", mol%molGraph%kirchhoffIndex()
+! 	write(*,*) "KirchhoffSum = ", mol%molGraph%kirchhoffSumIndex()
+! 	write(*,*) "WienerSum = ", mol%molGraph%wienerSumIndex()
+! 	write(*,*) "JOmega = ", mol%molGraph%JOmegaIndex()
 	
-! 	write(*,*) "Wiener = ", mol.molGraph.wienerIndex( distanceMatrix=D )
-! 	write(*,*) "InverseWiener = ", mol.molGraph.inverseWienerIndex( distanceMatrix=D )
-! 	write(*,*) "Balaban = ", mol.molGraph.balabanIndex( distanceMatrix=D )
-! 	write(*,*) "MolecularTopological = ", mol.molGraph.molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
-! 	write(*,*) "Kirchhoff = ", mol.molGraph.kirchhoffIndex( resistanceDistanceMatrix=Omega )
-! 	write(*,*) "KirchhoffSum = ", mol.molGraph.kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-! 	write(*,*) "WienerSum = ", mol.molGraph.wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
-! 	write(*,*) "JOmega = ", mol.molGraph.JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+! 	write(*,*) "Wiener = ", mol%molGraph%wienerIndex( distanceMatrix=D )
+! 	write(*,*) "InverseWiener = ", mol%molGraph%inverseWienerIndex( distanceMatrix=D )
+! 	write(*,*) "Balaban = ", mol%molGraph%balabanIndex( distanceMatrix=D )
+! 	write(*,*) "MolecularTopological = ", mol%molGraph%molecularTopologicalIndex( adjacencyMatrix=A, distanceMatrix=D )
+! 	write(*,*) "Kirchhoff = ", mol%molGraph%kirchhoffIndex( resistanceDistanceMatrix=Omega )
+! 	write(*,*) "KirchhoffSum = ", mol%molGraph%kirchhoffSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+! 	write(*,*) "WienerSum = ", mol%molGraph%wienerSumIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
+! 	write(*,*) "JOmega = ", mol%molGraph%JOmegaIndex( distanceMatrix=D, resistanceDistanceMatrix=Omega )
 	
 	if( allocated(nodesSuffixes) ) then
-		if( .not. oFileDOT.isEmpty() ) then
-			call mol.saveDOT( oFileDOT.fstr, nodesSuffixes=nodesSuffixes )
+		if( .not. oFileDOT%isEmpty() ) then
+			call mol%saveDOT( oFileDOT%fstr, nodesSuffixes=nodesSuffixes )
 		else
-			call mol.saveDOT( nodesSuffixes=nodesSuffixes )
+			call mol%saveDOT( nodesSuffixes=nodesSuffixes )
 		end if
 	else
-		if( .not. oFileDOT.isEmpty() ) then
-			call mol.saveDOT( oFileDOT.fstr )
+		if( .not. oFileDOT%isEmpty() ) then
+			call mol%saveDOT( oFileDOT%fstr )
 		else
-			call mol.saveDOT()
+			call mol%saveDOT()
 		end if
 
 	end if

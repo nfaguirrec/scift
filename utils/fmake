@@ -252,7 +252,10 @@ checkChangesInDeps()
 			rm .deps2
 		fi
 		
-		exit
+		if [ -f Makefile ]
+		then
+			exit
+		fi
 	else
 		grep -E "^[[:blank:]]*use[[:blank:]]+.*_[[:blank:],]*.*$" *.f90 \
 			| sed -r '{s/[[:blank:]]+/ /g;/^[[:blank:]]*$/d;s/_[[:blank:],]*.*$//g}' > .deps
@@ -261,8 +264,10 @@ checkChangesInDeps()
 	if [ -f Makefile ]
 	then
 		export FC=`gawk '($1=="FC"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
-		export FCFLAGS=`gawk '($1=="FCFLAGS"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
-		export LDFLAGS=`gawk '($1=="LDFLAGS"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
+		export GFCFLAGS=`gawk '($1=="GFCFLAGS"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
+		export GLDFLAGS=`gawk '($1=="GLDFLAGS"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
+		export IFCFLAGS=`gawk '($1=="IFCFLAGS"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
+		export ILDFLAGS=`gawk '($1=="ILDFLAGS"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
 		export TLIB=`gawk '($1=="TLIB"){for(i=3;i<=NF;i++) out=out" "$i}END{print substr(out, 2)}' Makefile`
 	fi
 }
@@ -295,6 +300,59 @@ main()
 
 	checkChangesInDeps
 	
+	conda_inc=""
+	conda_lib=""
+	conda_rpath=""
+	if [ -n "$CONDA_PREFIX" ]
+	then
+		conda_inc="-I${CONDA_PREFIX}/include "
+		conda_lib="-L${CONDA_PREFIX}/lib "
+		conda_rpath="-Wl,-rpath,${CONDA_PREFIX}/lib "
+	elif [ -d "/home/aguirre/Software/miniconda3/envs/python3.10" ]
+	then
+		conda_inc="-I/home/aguirre/Software/miniconda3/envs/python3.10/include "
+		conda_lib="-L/home/aguirre/Software/miniconda3/envs/python3.10/lib "
+		conda_rpath="-Wl,-rpath,/home/aguirre/Software/miniconda3/envs/python3.10/lib "
+	fi
+
+	if [ -z "$FC" ]
+	then
+		if command -v ifort >/dev/null 2>&1
+		then
+			FC="ifort"
+		else
+			FC="gfortran"
+		fi
+	fi
+
+	if [ -z "$GFCFLAGS" ]
+	then
+		GFCFLAGS="-w -I. ${conda_inc}-cpp -O3 -g -fPIC -fdec-structure -ffree-line-length-none"
+	fi
+
+	if [ -z "$GLDFLAGS" ]
+	then
+		GLDFLAGS="-L. -lscift ${conda_lib}${conda_rpath}-lfftw3 -lopenblas -llapack"
+	fi
+
+	if [ -z "$IFCFLAGS" ]
+	then
+		IFCFLAGS="-w -I. -O3 -g -fPIC -fpp -mkl"
+	fi
+
+	if [ -z "$ILDFLAGS" ]
+	then
+		ILDFLAGS="-L. -lscift"
+	fi
+
+	if [ -z "$TLIB" ]
+	then
+		if [ "$(basename "$(pwd)")" = "src" ]
+		then
+			TLIB="libscift.a"
+		fi
+	fi
+
 	F90_SOURCES=`ls *.f90`
 	
 	rm -rf depends.Po .programs
@@ -358,33 +416,30 @@ main()
 	rm -rf .programs
 	
 	echo ""
-	if [ -z "$FC" ]
-	then
-		FC="ifort"
-	fi
 	echo "FC = $FC"
-
-	if [ -z "$FCFLAGS" ]
-	then
-		FCFLAGS="-traceback -w -I. -g -fpp"
-	fi
-	echo "FCFLAGS = $FCFLAGS"
-
-	if [ -z "$LDFLAGS" ]
-	then
-		LDFLAGS=""
-	fi
-	echo "LDFLAGS = $LDFLAGS"
-
+	echo "GFCFLAGS = $GFCFLAGS"
+	echo "GLDFLAGS = $GLDFLAGS"
+	echo "IFCFLAGS = $IFCFLAGS"
+	echo "ILDFLAGS = $ILDFLAGS"
 	echo "TLIB = $TLIB"
 	echo ""
 
 	echo -n "Building Makefile ... "
 	echo "MAKEFLAGS = -s" > Makefile 
 	echo "FC = $FC" >> Makefile
-	echo "FCFLAGS = $FCFLAGS" >> Makefile
-	echo "LDFLAGS = $LDFLAGS" >> Makefile
+	echo "GFCFLAGS = $GFCFLAGS" >> Makefile
+	echo "GLDFLAGS = $GLDFLAGS" >> Makefile
+	echo "IFCFLAGS = $IFCFLAGS" >> Makefile
+	echo "ILDFLAGS = $ILDFLAGS" >> Makefile
 	echo "TLIB = $TLIB" >> Makefile
+	echo "" >> Makefile
+	echo "ifeq (\$(findstring gfortran,\$(FC)),gfortran)" >> Makefile
+	echo "    FCFLAGS = \$(GFCFLAGS)" >> Makefile
+	echo "    LDFLAGS = \$(GLDFLAGS)" >> Makefile
+	echo "else" >> Makefile
+	echo "    FCFLAGS = \$(IFCFLAGS)" >> Makefile
+	echo "    LDFLAGS = \$(ILDFLAGS)" >> Makefile
+	echo "endif" >> Makefile
 	echo "OK"
 	echo ""
 

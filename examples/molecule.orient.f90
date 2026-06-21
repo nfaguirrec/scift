@@ -49,20 +49,20 @@ program main
 	logical :: random
 	type(Molecule) :: mol
 	
-	iFileName = parser.getString( "-i" )
-! 	alpha = parser.getReal( "-alpha", def=0.0_8 )
-! 	beta = parser.getReal( "-beta", def=0.0_8 )
-! 	gamma = parser.getReal( "-gamma", def=0.0_8 )
-! 	random = parser.getLogical( "-random", def=.false. )
+	iFileName = parser%getString( "-i" )
+! 	alpha = parser%getReal( "-alpha", def=0.0_8 )
+! 	beta = parser%getReal( "-beta", def=0.0_8 )
+! 	gamma = parser%getReal( "-gamma", def=0.0_8 )
+! 	random = parser%getLogical( "-random", def=.false. )
 	
-	mol = Molecule( iFileName.fstr )
-	call mol.orient()
+	mol = Molecule( iFileName%fstr )
+	call mol%orient()
 	
 ! 	if( .not. random ) then
-! 		call mol.rotate( alpha, beta, gamma )
+! 		call mol%rotate( alpha, beta, gamma )
 ! 	else
-! 		call mol.rotate( random=.true. )
+! 		call mol%rotate( random=.true. )
 ! 	end if
 	
-	call mol.save()
+	call mol%save()
 end program main

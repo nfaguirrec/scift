@@ -102,13 +102,13 @@ program main
 	call get_command_argument( 8, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) oFileName = sBuffer
 	
-	mol = Molecule( iFileName.fstr )
-	call mol.distort( radius=radius, method=method, overlappingRadius=overlapping, useMassWeight=.true., alpha=alpha, thr=symthr, keepConnectivity=keepConnectivity )
+	mol = Molecule( iFileName%fstr )
+	call mol%distort( radius=radius, method=method, overlappingRadius=overlapping, useMassWeight=.true., alpha=alpha, thr=symthr, keepConnectivity=keepConnectivity )
 	
-	if( .not. oFileName.isEmpty() ) then
-		call mol.save( oFileName.fstr )
+	if( .not. oFileName%isEmpty() ) then
+		call mol%save( oFileName%fstr )
 	else
-		call mol.save()
+		call mol%save()
 	end if
 	
 end program main

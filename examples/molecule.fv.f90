@@ -56,8 +56,8 @@ program main
 	call get_command_argument( 1, sBuffer )
 	iFileName = sBuffer
 	
-	mol = Molecule( iFileName.fstr )
-	call mol.orient( debug=.false. )
+	mol = Molecule( iFileName%fstr )
+	call mol%orient( debug=.false. )
 	
-	write(*,"(I20)") mol.fv()
+	write(*,"(I20)") mol%fv()
 end program main

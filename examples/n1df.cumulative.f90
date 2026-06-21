@@ -81,25 +81,25 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i" )
-	oFileName = parser.getString( "-o" )
+	iFileName = parser%getString( "-i" )
+	oFileName = parser%getString( "-o" )
 	
-	strBuffer = parser.getString( "-c", def="1,2" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-c", def="1,2" )
+	call strBuffer%split( tokens, "," )
 	columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 	
-	smoothFactor = parser.getInteger( "-s", def=1 )
+	smoothFactor = parser%getInteger( "-s", def=1 )
 	
-	call ifile.init( iFileName.fstr )
+	call ifile%init( iFileName%fstr )
 	nFunc = RNFunction( ifile, columns=columns )
-	call ifile.close()
+	call ifile%close()
 	
-	a = parser.getReal( "-a", def=nFunc.min() )
-	b = parser.getReal( "-b", def=nFunc.max() )
+	a = parser%getReal( "-a", def=nFunc%min() )
+	b = parser%getReal( "-b", def=nFunc%max() )
 	
-	strBuffer = parser.getString( "-m", def="BOOLE" )
+	strBuffer = parser%getString( "-m", def="BOOLE" )
 	
-	select case( trim(strBuffer.fstr) )
+	select case( trim(strBuffer%fstr) )
 		case( "SIMPSON" )
 			idMethod = NIntegrator_SIMPSON
 		case( "EXTSIMPSON" )
@@ -120,25 +120,25 @@ program main
 			idMethod = -1
 	end select
 	
-	if( nFunc.xGrid.isEquallyspaced ) then
-		call integrator.init( nFunc, idMethod )
+	if( nFunc%xGrid%isEquallyspaced ) then
+		call integrator%init( nFunc, idMethod )
 	else
-		call nFuncSpline.init( nFunc )
-		nFuncSmooth = nFuncSpline.smooth( smoothFactor )
+		call nFuncSpline%init( nFunc )
+		nFuncSmooth = nFuncSpline%smooth( smoothFactor )
 		
-		call integrator.init( nFuncSmooth, idMethod )
+		call integrator%init( nFuncSmooth, idMethod )
 	end if
 	
-	ixa = nFunc.xGrid.pos(a)
-	ixb = nFunc.xGrid.pos(b)
+	ixa = nFunc%xGrid%pos(a)
+	ixb = nFunc%xGrid%pos(b)
 	
-	cnFunc = RNFunction( nFunc.xGrid )
+	cnFunc = RNFunction( nFunc%xGrid )
 	
 	do i=ixa,ixb
-		value = integrator.evaluate( a, nFunc.x( i ) )
-		call cnFunc.set( i, value )
+		value = integrator%evaluate( a, nFunc%x( i ) )
+		call cnFunc%set( i, value )
 	end do
 	
-	call cnFunc.save( oFileName.fstr )
+	call cnFunc%save( oFileName%fstr )
 	
 end program main

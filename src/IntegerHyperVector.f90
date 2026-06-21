@@ -44,7 +44,7 @@ module IntegerHyperVector_
 	
 		
 !>
-!! This class use the Vector template declared into Vector.h90 file,
+!! This class use the Vector template declared into Vector%h90 file,
 !! please take a look to this file for details
 !!
 #define Vector IntegerHyperVector
@@ -69,12 +69,12 @@ module IntegerHyperVector_
 		class(IntegerHyperVector), intent(in) :: other
 		logical :: output
 		
-! 		this.nItems = other.nItems
-! 		this.resizeIncrement = other.resizeIncrement
+! 		this%nItems = other%nItems
+! 		this%resizeIncrement = other%resizeIncrement
 		
 		write(*,*) "### ERROR ### IntegerHyperVector.equal  is not implemented yet"
 		stop
-! 		output = all( this.data(1:this.size()) == other.data(1:other.size()) )
+! 		output = all( this%data(1:this%size()) == other%data(1:other%size()) )
 	end function equal
 
 	!>
@@ -103,12 +103,12 @@ module IntegerHyperVector_
 		if( .not. effFormatted ) then
 #define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
 #define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
-#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
-#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+#define ITEMI(l,v) output = trim(output)//l; write(fstr, "(i0)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f0.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<IntegerHyperVector:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -122,8 +122,8 @@ module IntegerHyperVector_
 ! 
 ! 			LINE("Vector")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -145,18 +145,18 @@ module IntegerHyperVector_
 		type(IntegerHyperVectorIterator), pointer :: iter
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-! 		iter => this.begin
+! 		iter => this%begin
 ! 		do while ( associated(iter) )
-! 			write(unitEff,"(I15)") iter.data
+! 			write(unitEff,"(I15)") iter%data
 ! 			
-! 			iter => iter.next
+! 			iter => iter%next
 ! 		end do
 	end subroutine toFStream
 	
@@ -166,13 +166,13 @@ module IntegerHyperVector_
 		type(IntegerVector), pointer :: ivec
 		integer :: i, j
 		
-		do i=1,myvec.size()
-			ivec => myvec.data(i)
+		do i=1,myvec%size()
+			ivec => myvec%data(i)
 			
 			write(*,"(I2,A)", advance="no") i, ") "
 			
-			do j=1,ivec.size()
-				write(*,"(I2,A)", advance="no") ivec.at(j), " --> "
+			do j=1,ivec%size()
+				write(*,"(I2,A)", advance="no") ivec%at(j), " --> "
 			end do
 			
 			write(*,*)

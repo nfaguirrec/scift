@@ -115,17 +115,17 @@ module BlocksIFileParser_
 		effNotifyGetMethods = .false.
 		if( present(notifyGetMethods) ) effNotifyGetMethods = notifyGetMethods
 		
-		this.iFileName = iFileName
-		this.notifyGetMethods = effNotifyGetMethods
+		this%iFileName = iFileName
+		this%notifyGetMethods = effNotifyGetMethods
 		
-		this.numberOfLines = 0
-		if( allocated(this.lines) ) deallocate(this.lines)
-		call this.load( effcComments )
+		this%numberOfLines = 0
+		if( allocated(this%lines) ) deallocate(this%lines)
+		call this%load( effcComments )
 		
-		this.numberOfVariables = 0
-		if( allocated(this.varName) ) deallocate(this.varName)
-		if( allocated(this.varValue) ) deallocate(this.varValue)
-		if( allocated(this.varUnit) ) deallocate(this.varUnit)
+		this%numberOfVariables = 0
+		if( allocated(this%varName) ) deallocate(this%varName)
+		if( allocated(this%varValue) ) deallocate(this%varValue)
+		if( allocated(this%varUnit) ) deallocate(this%varUnit)
 	end subroutine initDefault
 	
 	!>
@@ -145,10 +145,10 @@ module BlocksIFileParser_
 	subroutine destroy( this )
 		type(BlocksIFileParser) :: this
 		
-		if( allocated(this.lines) ) deallocate(this.lines)
-		if( allocated(this.varName) ) deallocate(this.varName)
-		if( allocated(this.varValue) ) deallocate(this.varValue)
-		if( allocated(this.varUnit) ) deallocate(this.varUnit)
+		if( allocated(this%lines) ) deallocate(this%lines)
+		if( allocated(this%varName) ) deallocate(this%varName)
+		if( allocated(this%varValue) ) deallocate(this%varValue)
+		if( allocated(this%varUnit) ) deallocate(this%varUnit)
 	end subroutine destroy
 	
 	!>
@@ -166,13 +166,13 @@ module BlocksIFileParser_
 		output = trim(output)//"<BlocksIFileParser:"
 		
 !! 		output = trim(output)//"min="
-!! 		fmt = int(log10(this.min+1.0))+1
-!! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+!! 		fmt = int(log10(this%min+1.0))+1
+!! 		write(strBuffer, "(f<fmt+7>.6)") this%min
 !! 		output = trim(output)//trim(strBuffer)
 !! 		
 !! 		output = trim(output)//",size="
-!! 		fmt = int(log10(float(this.size+1)))+1
-!! 		write(strBuffer, "(i<fmt>)") this.size
+!! 		fmt = int(log10(float(this%size+1)))+1
+!! 		write(strBuffer, "(i<fmt>)") this%size
 !! 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -210,8 +210,8 @@ module BlocksIFileParser_
 		write(effunit,"(A)") "Blocks input file"
 		write(effunit,"(A)") "-----------------"
 		
-		do i=1,this.numberOfLines
-			write(effunit,"(A)") "> "//trim(this.lines(i))
+		do i=1,this%numberOfLines
+			write(effunit,"(A)") "> "//trim(this%lines(i))
 		end do
 		
 		write(effunit,*) ""
@@ -231,36 +231,36 @@ module BlocksIFileParser_
 		character(:), allocatable :: line
 		character(1000), allocatable :: fileContent(:)
 		
-		open( 10, file=this.iFileName, status="old", iostat=iostat )
+		open( 10, file=this%iFileName, status="old", iostat=iostat )
 		
 		! This block get the number of lines, including comments
 		if( iostat /= 0 ) then
-			write(*, *) "### Error ###: The file ( ", this.iFileName, " ) cannot be open"
+			write(*, *) "### Error ###: The file ( ", this%iFileName, " ) cannot be open"
 			stop
 		else
-			this.numberOfLines = 1
+			this%numberOfLines = 1
 			iostat = 1
 			do while( .true. )
 				read(10,'(A)', iostat=iostat) buffer
 				
 				if( iostat == -1 ) exit
-				this.numberOfLines = this.numberOfLines + 1
+				this%numberOfLines = this%numberOfLines + 1
 			end do
 		end if
-		this.numberOfLines = this.numberOfLines - 1
+		this%numberOfLines = this%numberOfLines - 1
 		
 		close(10)
 		
-		allocate( fileContent(this.numberOfLines) )
+		allocate( fileContent(this%numberOfLines) )
 		
 		! This block get the effective number of lines (without comments), and loads the information
-		open( 10, file=this.iFileName, status="old", iostat=iostat )
+		open( 10, file=this%iFileName, status="old", iostat=iostat )
 		
 		if( iostat /= 0 ) then
-			write(*, *) "### Error ###: The file ( ", this.iFileName, " ) cannot be open"
+			write(*, *) "### Error ###: The file ( ", this%iFileName, " ) cannot be open"
 			stop
 		else
-			this.numberOfLines = 1
+			this%numberOfLines = 1
 			iostat = 1
 			do while( .true. )
 				read(10,'(A)', iostat=iostat) buffer
@@ -284,21 +284,21 @@ module BlocksIFileParser_
 				if( len(adjustl(trim(line))) > 0 ) then
 					if( adjustl(trim(line)) == "STOP" ) exit
 					
-					fileContent( this.numberOfLines ) = FString_removeTabs( line )
-! 					fileContent( this.numberOfLines ) = line
-					this.numberOfLines = this.numberOfLines + 1
+					fileContent( this%numberOfLines ) = FString_removeTabs( line )
+! 					fileContent( this%numberOfLines ) = line
+					this%numberOfLines = this%numberOfLines + 1
 				end if
 				
 			end do
 		end if
-		this.numberOfLines = this.numberOfLines - 1
+		this%numberOfLines = this%numberOfLines - 1
 		
 		close( 10 )
 		
-		allocate( this.lines( this.numberOfLines ) )
+		allocate( this%lines( this%numberOfLines ) )
 		
-		do i=1,this.numberOfLines
-			this.lines(i) = trim( fileContent(i) )
+		do i=1,this%numberOfLines
+			this%lines(i) = trim( fileContent(i) )
 		end do
 		
 		deallocate( fileContent )
@@ -312,7 +312,7 @@ module BlocksIFileParser_
 		logical :: output
 		
 		output = .false.
-		if( this.numberOfLines == 0 ) then
+		if( this%numberOfLines == 0 ) then
 			output = .true.
 		end if
 	end function isEmpty
@@ -324,7 +324,7 @@ module BlocksIFileParser_
 		class(BlocksIFileParser), intent(in) :: this
 		type(String) :: output
 		
-		output = this.iFileName
+		output = this%iFileName
 	end function inputFileName
 	
 	!>
@@ -352,15 +352,15 @@ module BlocksIFileParser_
 		
 		call FString_split( item, targetItem, ":" )
 		
-		if( .not. this.isThereBlock( targetItem(1) ) .and. .not. present(def) ) then
+		if( .not. this%isThereBlock( targetItem(1) ) .and. .not. present(def) ) then
 			write(*,*) "### ERROR ### BlocksIFileParser: Block "//trim(targetItem(1))//" is required"
 			stop
 		end if
 		
 		foundBegin = .false.
 		i=1
-		do while( i <= this.numberOfLines )
-			call FString_split( this.lines(i), fstrBufferList, " " )
+		do while( i <= this%numberOfLines )
+			call FString_split( this%lines(i), fstrBufferList, " " )
 			
 			if( trim(adjustl(fstrBufferList(1))) == "BEGIN" .and. &
 				trim(adjustl(fstrBufferList(2))) == trim(adjustl(targetItem(1))) ) then
@@ -370,9 +370,9 @@ module BlocksIFileParser_
 				foundBegin = .true.
 				
 				! @todo Hay que convertirlo al estilo del BEGIN, utilizando fstrBufferList
-				do while( index( this.lines(i), "END" ) == 0 )
+				do while( index( this%lines(i), "END" ) == 0 )
 					
-					call FString_split( this.lines(i), fstrBufferList, "=" )
+					call FString_split( this%lines(i), fstrBufferList, "=" )
 					
 					if( trim(adjustl(fstrBufferList(1))) == trim(adjustl(targetItem(2))) ) then
 						output = trim(adjustl(fstrBufferList(2)))
@@ -429,21 +429,21 @@ module BlocksIFileParser_
 		
 		i=1 ! Contador sobre las lineas del fichero
 		j=1 ! Contador sobre las lineas del bloque
-		do while( i <= this.numberOfLines )
+		do while( i <= this%numberOfLines )
 		
-			call FString_split( this.lines(i), fstrBufferList, " " )
+			call FString_split( this%lines(i), fstrBufferList, " " )
 			
 			if( trim(adjustl(fstrBufferList(1))) == "BEGIN" .and. &
 				trim(adjustl(fstrBufferList(2))) == trim(adjustl(item)) ) then
 
 				i=i+1
 				
-				do while( index( this.lines(i), "END" ) == 0 )
+				do while( index( this%lines(i), "END" ) == 0 )
 					
 					j=j+1
 					i=i+1
 					
-					if( i > this.numberOfLines ) then
+					if( i > this%numberOfLines ) then
 						write(*,*) "### ERROR ### BlocksIFileParser.isThereABlock: Unbalanced BEGIN-END statement for block "//trim(item)
 						stop
 					end if
@@ -483,28 +483,28 @@ module BlocksIFileParser_
 			deallocate(output)
 		end if
 		
-		allocate( strBufferList(this.numberOfLines) ) ! En el peor de los casos todas las lineas son el bloque
+		allocate( strBufferList(this%numberOfLines) ) ! En el peor de los casos todas las lineas son el bloque
 		
 		i=1 ! Contador sobre las lineas del fichero
 		j=1 ! Contador sobre las lineas del bloque
-		do while( i <= this.numberOfLines )
+		do while( i <= this%numberOfLines )
 		
-			call FString_split( this.lines(i), fstrBufferList, " " )
+			call FString_split( this%lines(i), fstrBufferList, " " )
 			
 			if( trim(adjustl(fstrBufferList(1))) == "BEGIN" .and. &
 				trim(adjustl(fstrBufferList(2))) == trim(adjustl(item)) ) then
 				
 				i=i+1
 				
-				do while( index( this.lines(i), "END" ) == 0 )
-					if( index( this.lines(i), " = " ) == 0 .or. .not. effIgnoreVars ) then
-						strBufferList(j) = adjustl(trim(this.lines(i)))
+				do while( index( this%lines(i), "END" ) == 0 )
+					if( index( this%lines(i), " = " ) == 0 .or. .not. effIgnoreVars ) then
+						strBufferList(j) = adjustl(trim(this%lines(i)))
 						j=j+1
 					end if
 					
 					i=i+1
 					
-					if( i > this.numberOfLines ) then
+					if( i > this%numberOfLines ) then
 						write(*,*) "### ERROR ### BlocksIFileParser.isThereABlock: Unbalanced BEGIN-END statement for block "//trim(item)
 						stop
 					end if
@@ -538,16 +538,16 @@ module BlocksIFileParser_
 		type(String) :: tmp
 		
 		if( present(def) ) then
-			output = this.getStringBase( item, trim(def) )
+			output = this%getStringBase( item, trim(def) )
 			
-			if( this.notifyGetMethods ) then
-				write(*,"(A40,A20,A,A20,A)") item//" = ", trim(output.fstr), "        ( ", def, " )"
+			if( this%notifyGetMethods ) then
+				write(*,"(A40,A20,A,A20,A)") item//" = ", trim(output%fstr), "        ( ", def, " )"
 			end if
 		else
-			output = this.getStringBase( item )
+			output = this%getStringBase( item )
 			
-			if( this.notifyGetMethods ) then
-				write(*,"(A40,A20)") item//" = ", trim(output.fstr)
+			if( this%notifyGetMethods ) then
+				write(*,"(A40,A20)") item//" = ", trim(output%fstr)
 			end if
 		end if
 	end function getString
@@ -566,15 +566,15 @@ module BlocksIFileParser_
 		
 		if( present(def) ) then
 			write( buffer, * ) def
-			output = String_toLogical( this.getStringBase( item, trim(buffer) ) )
+			output = String_toLogical( this%getStringBase( item, trim(buffer) ) )
 			
-			if( this.notifyGetMethods ) then
+			if( this%notifyGetMethods ) then
 				write(*,"(A40,L20,A,L20,A)") item//" = ", output, "        ( ", def, " )"
 			end if
 		else
-			output = String_toLogical( this.getStringBase( item ) )
+			output = String_toLogical( this%getStringBase( item ) )
 			
-			if( this.notifyGetMethods ) then
+			if( this%notifyGetMethods ) then
 				write(*,"(A40,L20)") item//" = ", output
 			end if
 		end if
@@ -595,15 +595,15 @@ module BlocksIFileParser_
 		
 		if( present(def) ) then
 			write( buffer, * ) def
-			output = String_toInteger( this.getStringBase( item, trim(buffer) ) )
+			output = String_toInteger( this%getStringBase( item, trim(buffer) ) )
 			
-			if( this.notifyGetMethods ) then
+			if( this%notifyGetMethods ) then
 				write(*,"(A40,I20,A,I20,A)") item//" = ", output, "        ( ", def, " )"
 			end if
 		else
-			output = String_toInteger( this.getStringBase( item ) )
+			output = String_toInteger( this%getStringBase( item ) )
 			
-			if( this.notifyGetMethods ) then
+			if( this%notifyGetMethods ) then
 				write(*,"(A40,I20)") item//" = ", output
 			end if
 		end if
@@ -623,15 +623,15 @@ module BlocksIFileParser_
 		
 		if( present(def) ) then
 			write( buffer, * ) def
-			output = String_toReal( this.getStringBase( item, trim(buffer) ) )
+			output = String_toReal( this%getStringBase( item, trim(buffer) ) )
 			
-			if( this.notifyGetMethods ) then
+			if( this%notifyGetMethods ) then
 				write(*,"(A40,F20.8,A,F20.8,A)") item//" = ", output, "        ( ", def, " )"
 			end if
 		else
-			output = String_toReal( this.getStringBase( item ) )
+			output = String_toReal( this%getStringBase( item ) )
 			
-			if( this.notifyGetMethods ) then
+			if( this%notifyGetMethods ) then
 				write(*,"(A40,F20.8,A,F20.8,A)") item//" = ", output
 			end if
 		end if
@@ -656,9 +656,9 @@ module BlocksIFileParser_
 		stop
 ! 		if( present(def) ) then
 ! 			write( buffer, * ) def
-! 			output = String_toRealArray( this.getStringBase( item, "("//trim(buffer) ) )
+! 			output = String_toRealArray( this%getStringBase( item, "("//trim(buffer) ) )
 ! 		else
-! 			output = String_toRealArray( this.getStringBase( item ) )
+! 			output = String_toRealArray( this%getStringBase( item ) )
 ! 		end if
 		
 ! 		write(*,*) "  ", item, " = ", output
@@ -676,38 +676,38 @@ module BlocksIFileParser_
 		character(1000), allocatable :: tokens(:)
 		integer :: i
 		
-		call this.getBlock( item, tableBuffer, ignoreVars=.false. )
+		call this%getBlock( item, tableBuffer, ignoreVars=.false. )
 		
-		if( allocated(this.varName) ) deallocate(this.varName)
-		allocate( this.varName( size(tableBuffer) ) )
+		if( allocated(this%varName) ) deallocate(this%varName)
+		allocate( this%varName( size(tableBuffer) ) )
 		
-		if( allocated(this.varValue) ) deallocate(this.varValue)
-		allocate( this.varValue( size(tableBuffer) ) )
+		if( allocated(this%varValue) ) deallocate(this%varValue)
+		allocate( this%varValue( size(tableBuffer) ) )
 		
-		if( allocated(this.varUnit) ) deallocate(this.varUnit)
-		allocate( this.varUnit( size(tableBuffer) ) )
+		if( allocated(this%varUnit) ) deallocate(this%varUnit)
+		allocate( this%varUnit( size(tableBuffer) ) )
 
 		do i=1,size(tableBuffer)
-			call tableBuffer(i).split( tokens, "=" )
+			call tableBuffer(i)%split( tokens, "=" )
 			
-			this.varName(i) = trim(tokens(1))
+			this%varName(i) = trim(tokens(1))
 			
 			sBuffer = tokens(2)
-			call sBuffer.split( tokens, " " )
+			call sBuffer%split( tokens, " " )
 			
-! 			this.varValue(i) = FString_toReal( tokens(1) )
-			this.varValue(i) = trim(tokens(1))
+! 			this%varValue(i) = FString_toReal( tokens(1) )
+			this%varValue(i) = trim(tokens(1))
 			
 			if( size(tokens) > 1 ) then
-				this.varUnit(i) = trim(tokens(2))
+				this%varUnit(i) = trim(tokens(2))
 			else
-				this.varUnit(i) = ""
+				this%varUnit(i) = ""
 			end if
 		end do
 		
 		if( allocated(tableBuffer) ) deallocate(tableBuffer)
 		
-		this.numberOfVariables = size(tableBuffer)
+		this%numberOfVariables = size(tableBuffer)
 	end subroutine loadVariablesBlock
 	
 end module BlocksIFileParser_

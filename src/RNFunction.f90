@@ -47,7 +47,7 @@ module RNFunction_
 		RNFunction_getFormatIdFromFileExtension
 		
 !>
-!! This class use the List template declared into List.h90 file,
+!! This class use the List template declared into List%h90 file,
 !! please take a look to this file for details
 !!
 #define NFunction_checkTypeN1DF RNFunction_checkTypeN1DF
@@ -103,16 +103,16 @@ module RNFunction_
 		end if
 		
 		! El peor de los casos es que todas las lineas sean datos
-		allocate( x(stream.numberOfLines) )
-		allocate( y(stream.numberOfLines) )
+		allocate( x(stream%numberOfLines) )
+		allocate( y(stream%numberOfLines) )
 		
 		nData = 1
-		do while( .not. stream.eof() )
-			line = stream.readLine( cCommentsEff )
+		do while( .not. stream%eof() )
+			line = stream%readLine( cCommentsEff )
 			
 			if( len(line) /= 0 ) then
-				call buffer.fromFString( line )
-				call buffer.split( tokens, " " )
+				call buffer%fromFString( line )
+				call buffer%split( tokens, " " )
 				
 				if( nData == 1 .and. .not. ( size(tokens) >= size(columnsEff) ) ) then
 					write(*,*) "### ERROR ### NFunction.fromFStream(): Number of columns in file ("&
@@ -133,13 +133,13 @@ module RNFunction_
 		end do
 		
 		nPoints = nData-1
-		call this.xGrid.fromArray( x(1:nPoints) )
-		if( allocated(this.fArray) ) deallocate(this.fArray)
-		allocate( this.fArray(nPoints) )
-		this.fArray = y(1:nPoints)
-		call this.setUnits( effUnits )
+		call this%xGrid%fromArray( x(1:nPoints) )
+		if( allocated(this%fArray) ) deallocate(this%fArray)
+		allocate( this%fArray(nPoints) )
+		this%fArray = y(1:nPoints)
+		call this%setUnits( effUnits )
 		
-		call this.checkEquallyspaced()
+		call this%checkEquallyspaced()
 		
 		deallocate(x)
 		deallocate(y)
@@ -160,21 +160,21 @@ module RNFunction_
 		
 		output = trim(output)//"<RNFunction:"
 		
-		output = trim(output)//this.xGrid.str()
+		output = trim(output)//this%xGrid%str()
 		
 ! 		output = trim(output)//",max="
-! 		fmt = int(log10(this.max+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.max
+! 		fmt = int(log10(this%max+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%max
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",h="
-! 		fmt = int(log10(this.h+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.h
+! 		fmt = int(log10(this%h+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%h
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",size="
-! 		fmt = int(log10(float(this.size+1)))+1
-! 		write(strBuffer, "(i<fmt>)") this.size
+! 		fmt = int(log10(float(this%size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this%size
 ! 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"

@@ -82,12 +82,12 @@ module StringRealPair_
 		if( .not. effFormatted ) then
 #define RFMT(v) int(log10(max(real(abs(v),8),1.0)))+merge(1,2,v>=0)
 #define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
-#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
-#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+#define ITEMI(l,v) output = trim(output)//l; write(fstr, "(i0)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f0.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<Pair:"
-			ITEMS( "first=", this.first.fstr )
-			ITEMI( ",second=", this.second )
+			ITEMS( "first=", this%first%fstr )
+			ITEMI( ",second=", this%second )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -101,8 +101,8 @@ module StringRealPair_
 ! 
 ! 			LINE("Pair")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS

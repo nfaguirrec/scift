@@ -41,12 +41,12 @@ module Spline_
 	implicit none
 	private
 
-#define _XMIN this.nFunc.xGrid.min
-#define _XMAX this.nFunc.xGrid.max
-#define _X this.nFunc.xGrid.data
-#define _Y this.nFunc.fArray
-#define _B this.b
-#define _N this.size
+#define _XMIN this%nFunc%xGrid%min
+#define _XMAX this%nFunc%xGrid%max
+#define _X this%nFunc%xGrid%data
+#define _Y this%nFunc%fArray
+#define _B this%b
+#define _N this%size
 	
 	
 	type, public :: Spline
@@ -88,9 +88,9 @@ module Spline_
 			efftol = 1.0e-12
 		end if
 		
-! 		call this.nFunc.copy( nFunc )
-		this.nFunc => nFunc
-		this.size = nFunc.nPoints()
+! 		call this%nFunc%copy( nFunc )
+		this%nFunc => nFunc
+		this%size = nFunc%nPoints()
 		
 		if( allocated(_B) ) deallocate( _B )
 		
@@ -99,8 +99,8 @@ module Spline_
 		allocate( c(_N) )
 		allocate( s(_N) )
 		
-		_X = nFunc.xGrid.data
-		_Y = nFunc.fArray
+		_X = nFunc%xGrid%data
+		_Y = nFunc%fArray
 		
 		_B(1) = 0.0_8
 		_B(_N) = 0.0_8
@@ -147,9 +147,9 @@ module Spline_
 	subroutine destroy( this )
 		type(Spline) :: this
 		
-		this.size = 0
-		this.nFunc => null()
-		if( allocated( this.b ) ) deallocate( this.b )
+		this%size = 0
+		this%nFunc => null()
+		if( allocated( this%b ) ) deallocate( this%b )
 	end subroutine destroy
 	
 	!>
@@ -165,7 +165,7 @@ module Spline_
 		output = ""
 		
 		output = trim(output)//"<Spline:"
-		output = trim(output)//this.nFunc.str()
+		output = trim(output)//this%nFunc%str()
 		output = trim(output)//">"
 	end function str
 	
@@ -184,7 +184,7 @@ module Spline_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -242,10 +242,10 @@ module Spline_
 		allocate( y(n) )
 		
 		stepSize = abs(_XMAX-_XMIN)/( n - 1 )
-		call xGrid.init( _XMIN, _XMAX, n, stepSize )
+		call xGrid%init( _XMIN, _XMAX, n, stepSize )
 		
-		do i=1,xGrid.nPoints
-			y(i) = this.evaluate( xGrid.data(i) )
+		do i=1,xGrid%nPoints
+			y(i) = this%evaluate( xGrid%data(i) )
 		end do
 		
 		output = RNFunction( xGrid, y )
@@ -267,7 +267,7 @@ module Spline_
 		integer :: i
 		
 		if( present(ofile) ) then
-			effunit = ofile.unit
+			effunit = ofile%unit
 		else
 			effunit = IO_STDOUT
 		end if
@@ -278,11 +278,11 @@ module Spline_
 			effnPoints = 100
 		end if
 		
-		write(effunit,"(a)") "#"//trim(this.str())
+		write(effunit,"(a)") "#"//trim(this%str())
 		write(effunit,"(a)") ""
 		write(effunit,"(a)") "# Raw values"
-		do i=1,this.size
-			write(effunit,"(f15.7,f15.7)") this.nFunc.xGrid.data(i), this.nFunc.fArray(i)
+		do i=1,this%size
+			write(effunit,"(f15.7,f15.7)") this%nFunc%xGrid%data(i), this%nFunc%fArray(i)
 		end do
 		
 		write(effunit,"(a)") ""
@@ -292,8 +292,8 @@ module Spline_
 		stepSize = abs(_XMAX-_XMIN)/( effnPoints - 1 )
 		
 		do i=1,effnPoints
-			xi = this.nFunc.xGrid.min + dble(i-1)*stepSize
-			write(effunit,"(f15.7,f15.7)") xi, this.evaluate(xi)
+			xi = this%nFunc%xGrid%min + dble(i-1)*stepSize
+			write(effunit,"(f15.7,f15.7)") xi, this%evaluate(xi)
 		end do
 
 	end subroutine save

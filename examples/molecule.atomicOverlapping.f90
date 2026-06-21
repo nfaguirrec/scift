@@ -60,9 +60,9 @@ program main
 	call get_command_argument( 2, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) alpha = FString_toReal(sBuffer)
 	
-	mol1 = Molecule( iFileNameMol.fstr )
+	mol1 = Molecule( iFileNameMol%fstr )
 	
-	if( mol1.atomicOverlapping( alpha=alpha ) ) then
+	if( mol1%atomicOverlapping( alpha=alpha ) ) then
 		write(*,"(A)") "TRUE"
 	else
 		write(*,"(A)") "FALSE"

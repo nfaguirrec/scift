@@ -49,7 +49,7 @@ module StringRealHistogramMap_
 		
 #define Map StringRealHistogramMap
 ! #define __CLASS_ITEMMAP__ class(String)
-#define __CLASS_MAPITERATOR__  class(StringRealHistogramMapIterator)
+#define __CLASS_MAPITERATOR__  type(StringRealHistogramMapIterator)
 #define __MAPLIST__            StringRealHistogramPairList
 #define __TYPE_MAPLIST__       type(StringRealHistogramPairList)
 #define __TYPE_MAPPAIR__       type(StringRealHistogramPair)
@@ -85,7 +85,7 @@ module StringRealHistogramMap_
 		logical :: effFormatted
 		character(:), allocatable :: effPrefix
 		
-		class(StringRealHistogramMapIterator), pointer :: iter
+		type(StringRealHistogramMapIterator), pointer :: iter
 		type(StringRealHistogramPair) :: pair
 		integer :: fmt
 		character(200) :: fstr
@@ -100,12 +100,12 @@ module StringRealHistogramMap_
 		
 		if( .not. effFormatted ) then
 #define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
-#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f0.6)") v; output = trim(output)//trim(fstr)
 #define ITEMI(l,v) output = trim(output)//l; write(fstr,*) v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<Map:"
 			
-			ITEMI( "size=", this.size() )
+			ITEMI( "size=", this%size() )
 #undef RFMT
 #undef ITEMR
 #undef ITEMI
@@ -118,8 +118,8 @@ module StringRealHistogramMap_
 ! 
 ! 			LINE("Map")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -138,33 +138,41 @@ module StringRealHistogramMap_
 		
 		integer :: unitEff
 		integer :: maxLen
+#ifdef __GFORTRAN__
+		character(len=100) :: fmtStr
+#endif
 		
-		class(StringRealHistogramMapIterator), pointer :: iter
+		type(StringRealHistogramMapIterator), pointer :: iter
 		type(StringRealHistogramPair) :: pair
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
 		
 		maxLen = 0
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
-			pair = this.pair( iter )
-			if( len(pair.first.fstr) > maxLen ) maxLen = len(pair.first.fstr)
+			pair = this%pair( iter )
+			if( len(pair%first%fstr) > maxLen ) maxLen = len(pair%first%fstr)
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
-			pair = this.pair( iter )
-			write(unitEff,"(A<maxLen>,F15.7)") pair.first.fstr, pair.second.str()
+			pair = this%pair( iter )
+#ifdef __GFORTRAN__
+			write(fmtStr, "(A,I0,A)") "(A", maxLen, ",F15.7)"
+			write(unitEff,fmtStr) pair%first%fstr, pair%second%str()
+#else
+			write(unitEff,"(A<maxLen>,F15.7)") pair%first%fstr, pair%second%str()
+#endif
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 	end subroutine toFStream
 	
@@ -177,15 +185,15 @@ module StringRealHistogramMap_
                 real(8), intent(in) :: array(:)
 		integer, optional :: rule
                 
-		class(StringRealHistogramMapIterator), pointer :: ptr
+		type(StringRealHistogramMapIterator), pointer :: ptr
 		type(RealHistogram) :: hist
                 
-		if( this.find( key, ptr ) ) then
-			call ptr.data.second.add( array )
+		if( this%find( key, ptr ) ) then
+			call ptr%data%second%add( array )
 		else
 			hist = RealHistogram( rule )
-			call hist.add( array )
-			call this.insert( key, hist )
+			call hist%add( array )
+			call this%insert( key, hist )
 		end if
         end subroutine addArray
         
@@ -198,15 +206,15 @@ module StringRealHistogramMap_
                 real(8), intent(in) :: value
 		integer, optional :: rule
                 
-		class(StringRealHistogramMapIterator), pointer :: ptr
+		type(StringRealHistogramMapIterator), pointer :: ptr
 		type(RealHistogram) :: hist
                 
-		if( this.find( key, ptr ) ) then
-			call ptr.data.second.add( value )
+		if( this%find( key, ptr ) ) then
+			call ptr%data%second%add( value )
 		else
 			hist = RealHistogram( rule )
-			call hist.add( value )
-			call this.insert( key, hist )
+			call hist%add( value )
+			call this%insert( key, hist )
 		end if
         end subroutine addValue
 	
@@ -216,15 +224,15 @@ module StringRealHistogramMap_
 	subroutine showMyMap( mymap )
 		type(StringRealHistogramMap) :: mymap
 		
-		class(StringRealHistogramMapIterator), pointer :: iter
+		type(StringRealHistogramMapIterator), pointer :: iter
 		type(StringRealHistogramPair) :: pair
 		
-		iter => mymap.begin
+		iter => mymap%begin
 		do while( associated(iter) )
-			pair = mymap.pair( iter )
-			write(*,"(I20,A,A15,A)") pair.first.hashKey(), "  ==>  ", pair.first.fstr//", ", pair.second.str()
+			pair = mymap%pair( iter )
+			write(*,"(I20,A,A15,A)") pair%first%hashKey(), "  ==>  ", pair%first%fstr//", ", pair%second%str()
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		write(*,*)
 	end subroutine

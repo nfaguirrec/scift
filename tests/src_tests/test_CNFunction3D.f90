@@ -30,32 +30,32 @@ program test_CNFunction3D
 		fArray(2,:,2) = [ 7.0, 0.0 ]
 		fArray(3,:,2) = [ 2.0, 1.0 ]
 		
-		call func.init( xVec, yVec, zVec, fArray )
-		call assert_equal( func.size(), 12, "func size init" )
-		call assert_equal_real( func.xyzGrid.min(1), 1.0_8, 1e-10_8, "func min(1) init" )
-		call assert_equal_real( func.xyzGrid.max(2), 0.0_8, 1e-10_8, "func max(2) init" )
+		call func%init( xVec, yVec, zVec, fArray )
+		call assert_equal( func%size(), 12, "func size init" )
+		call assert_equal_real( func%xyzGrid%min(1), 1.0_8, 1e-10_8, "func min(1) init" )
+		call assert_equal_real( func%xyzGrid%max(2), 0.0_8, 1e-10_8, "func max(2) init" )
 		
-		call xyzGrid.init( xVec, yVec, zVec )
-		call func.init( xyzGrid, fArray )
-		call assert_equal( func.size(), 12, "func size init Grid" )
+		call xyzGrid%init( xVec, yVec, zVec )
+		call func%init( xyzGrid, fArray )
+		call assert_equal( func%size(), 12, "func size init Grid" )
 		
-		call func.init( "data/formats/complex-N3DF", format=N3DF_FORMAT )
-		call assert_equal( func.size(), 125000, "complex-N3DF size" )
+		call func%init( "data/formats/complex-N3DF", format=N3DF_FORMAT )
+		call assert_equal( func%size(), 125000, "complex-N3DF size" )
 		
-		call func.init( "data/formats/CUBE", format=CUBE_FORMAT )
-		call assert_equal( func.size(), 125000, "CUBE format size" )
+		call func%init( "data/formats/CUBE", format=CUBE_FORMAT )
+		call assert_equal( func%size(), 125000, "CUBE format size" )
 		
-		call xyzGrid.init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[200,200,200] )
-		call func.init( xyzGrid, funcTest )
-		call assert_equal( func.size(), 8000000, "funcTest formula size" )
+		call xyzGrid%init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[200,200,200] )
+		call func%init( xyzGrid, funcTest )
+		call assert_equal( func%size(), 8000000, "funcTest formula size" )
 		
 		func2 = func
-		call assert_equal( func2.size(), 8000000, "copy constructor size" )
+		call assert_equal( func2%size(), 8000000, "copy constructor size" )
 		
-		call func.save( "salida.cube", format=CUBE_FORMAT )
-		call func.save( "salida.rcube", format=RCUBE_FORMAT )
-		call func.save( "salida.icube", format=ICUBE_FORMAT )
-		call func.save( "salida.n3df", format=N3DF_FORMAT )
+		call func%save( "salida.cube", format=CUBE_FORMAT )
+		call func%save( "salida.rcube", format=RCUBE_FORMAT )
+		call func%save( "salida.icube", format=ICUBE_FORMAT )
+		call func%save( "salida.n3df", format=N3DF_FORMAT )
 		
 		write(*,*) "All CNFunction3D tests PASSED"
 

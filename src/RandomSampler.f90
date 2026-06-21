@@ -35,7 +35,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !>
-!! http://docs.python.org/2/library/random.html
+!! http://docs%python%org/2/library/random%html
 !! @brief
 !!
 module RandomSampler_
@@ -86,17 +86,17 @@ module RandomSampler_
 		integer :: i, n, clock
 		integer, dimension(:), allocatable :: seed
 		
-		this.nDim = nDim
+		this%nDim = nDim
 		
-		if( allocated(this.range) ) deallocate( this.range )
+		if( allocated(this%range) ) deallocate( this%range )
 		if( allocated(extraParamsDist) ) deallocate( extraParamsDist )
 		
-		allocate( this.range(nDim,2) )
+		allocate( this%range(nDim,2) )
 		allocate( extraParamsDist(nDim) )
 		
 		do i=1,nDim
-			this.range(i,1) = 0.0_8
-			this.range(i,2) = 1.0_8
+			this%range(i,1) = 0.0_8
+			this%range(i,2) = 1.0_8
 		end do
 		
 		call RandomUtils_init()
@@ -117,7 +117,7 @@ module RandomSampler_
 	subroutine destroy( this )
 		type(RandomSampler) :: this
 		
-		if( allocated(this.range) ) deallocate( this.range )
+		if( allocated(this%range) ) deallocate( this%range )
 		if( allocated(extraParamsDist) ) deallocate( extraParamsDist )
 	end subroutine destroy
 	
@@ -136,13 +136,13 @@ module RandomSampler_
 		output = trim(output)//"<RandomSampler:"
 		
 !! 		output = trim(output)//"min="
-!! 		fmt = int(log10(this.min+1.0))+1
-!! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+!! 		fmt = int(log10(this%min+1.0))+1
+!! 		write(strBuffer, "(f<fmt+7>.6)") this%min
 !! 		output = trim(output)//trim(strBuffer)
 !! 		
 !! 		output = trim(output)//",size="
-!! 		fmt = int(log10(float(this.size+1)))+1
-!! 		write(strBuffer, "(i<fmt>)") this.size
+!! 		fmt = int(log10(float(this%size+1)))+1
+!! 		write(strBuffer, "(i<fmt>)") this%size
 !! 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -174,8 +174,8 @@ module RandomSampler_
 		integer :: dim
 		real(8) :: range(2)
 		
-		this.range(dim,1) = range(1) ! min
-		this.range(dim,2) = range(2) ! max
+		this%range(dim,1) = range(1) ! min
+		this%range(dim,2) = range(2) ! max
 	end subroutine setRange
 	
 	!>
@@ -202,11 +202,11 @@ module RandomSampler_
 		logical :: outOfRange
 		integer :: i
 		
-		if( size(sample,dim=1) /= size(this.range,dim=1) ) then
+		if( size(sample,dim=1) /= size(this%range,dim=1) ) then
 			stop "## Error ## ... in subroutine RandomSampler:buildSample(), size(sample) != size(range)"
 		end if
 		
-		deltaEff = sum( abs(this.range(:,2)-this.range(:,1)) )/(this.nDim*10.0_8)
+		deltaEff = sum( abs(this%range(:,2)-this%range(:,1)) )/(this%nDim*10.0_8)
 		if( present(delta) ) deltaEff = delta
 		
 		rMinEff = 0.0_8
@@ -216,13 +216,13 @@ module RandomSampler_
 			stop "## Error ## ... in subroutine RandomSampler:buildSample(), delta<rMin"
 		end if
 		
-		allocate( rCurrent(this.nDim) )
-		allocate( rNew(this.nDim) )
+		allocate( rCurrent(this%nDim) )
+		allocate( rNew(this%nDim) )
 		
-! 		do i=1,this.nDim
+! 		do i=1,this%nDim
 ! 			! Numero actual aleatorio en el intervalo [min,max]
 ! 			call random_number( randNumber )
-! 			rCurrent(i) = this.range(i,1)+randNumber*abs( this.range(i,2)-this.range(i,1) ) ;
+! 			rCurrent(i) = this%range(i,1)+randNumber*abs( this%range(i,2)-this%range(i,1) ) ;
 ! 		end do
 		rCurrent = 0.0_8
 		
@@ -241,7 +241,7 @@ module RandomSampler_
 					call random_number( randNumber )
 					rNew(i) = rCurrent(i)+(2.0*randNumber-1.0_8)*deltaEff
 				
-					if ( rNew(i) < this.range(i,1) .or. rNew(i) > this.range(i,2) ) then
+					if ( rNew(i) < this%range(i,1) .or. rNew(i) > this%range(i,2) ) then
 						outOfRange = .true.
 						exit
 					end if
@@ -291,7 +291,7 @@ module RandomSampler_
 ! 		srand( time(NULL) );
 ! 		
 ! 		generatedData = 0 ;
-! 		while( data.size() < requiredData ){
+! 		while( data%size() < requiredData ){
 ! 			
 ! 			// Numero aleatorio en el intervalo [min,max]
 ! 			randomX = min+RAND*fabs(max-min) ;
@@ -300,7 +300,7 @@ module RandomSampler_
 ! 			randomY = RAND*proposalDistribution( randomX ) ;
 ! 			
 ! 			if( randomY < targetDistribution( randomX ) )
-! 				data.push_back( randomX ) ;
+! 				data%push_back( randomX ) ;
 ! 			
 ! 			generatedData++ ;
 ! 			
@@ -325,7 +325,7 @@ module RandomSampler_
 		real(8), allocatable :: workSpace(:)
 		integer :: info
 		
-		if( size(sample,dim=1) /= size(this.range,dim=1) ) then
+		if( size(sample,dim=1) /= size(this%range,dim=1) ) then
 			stop "## Error ## ... in subroutine RandomSampler:uniform(), size(sample) != size(range)"
 		end if
 		
@@ -336,7 +336,7 @@ module RandomSampler_
 			call random_number( sample )
 			
 			do i=1,nDim
-				sample(i,:) = this.range(i,1) + sample(i,:)*abs(this.range(i,2)-this.range(i,1))
+				sample(i,:) = this%range(i,1) + sample(i,:)*abs(this%range(i,2)-this%range(i,1))
 			end do
 		else
 			allocate( eVec( nDim, nDim ) )
@@ -385,7 +385,7 @@ module RandomSampler_
 		real(8), allocatable :: workSpace(:)
 		integer :: info
 		
-		if( size(sample,dim=1) /= size(this.range,dim=1) ) then
+		if( size(sample,dim=1) /= size(this%range,dim=1) ) then
 			stop "## Error ## ... in subroutine RandomSampler:uniform(), size(sample) != size(range)"
 		end if
 		
@@ -396,7 +396,7 @@ module RandomSampler_
 			call random_number( sample )
 			
 			do i=1,size(sample,dim=1)
-				sample(i,:) = this.range(i,1) + sample(i,:)*abs(this.range(i,2)-this.range(i,1))
+				sample(i,:) = this%range(i,1) + sample(i,:)*abs(this%range(i,2)-this%range(i,1))
 			end do
 		else
 			allocate( eVec( nDim, nDim ) )
@@ -460,7 +460,7 @@ module RandomSampler_
 		real(8), allocatable :: workSpace(:)
 		integer :: info
 		
-		if( size(sample,dim=1) /= size(this.range,dim=1) ) then
+		if( size(sample,dim=1) /= size(this%range,dim=1) ) then
 			stop "## Error ## ... in subroutine RandomSampler:normal(), size(sample) != size(range)"
 		end if
 		

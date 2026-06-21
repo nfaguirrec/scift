@@ -72,21 +72,21 @@ program main
 	call get_command_argument( 3, sBuffer )
 	if( len_trim(sBuffer) /= 0 ) oFileDOT = trim(sBuffer)
 	
-	mol = Molecule( iFileName.fstr )
-	call mol.buildGraph( alpha=alpha )
+	mol = Molecule( iFileName%fstr )
+	call mol%buildGraph( alpha=alpha )
 	
-	molGraph = mol.molGraph
+	molGraph = mol%molGraph
 	
-	do i=1,molGraph.nNodes()-1
-		iNeighborsA = molGraph.neighbors(i)
+	do i=1,molGraph%nNodes()-1
+		iNeighborsA = molGraph%neighbors(i)
 		
-		do j=i+1,molGraph.nNodes()
-			if( iNeighborsA.contains(j) ) then
+		do j=i+1,molGraph%nNodes()
+			if( iNeighborsA%contains(j) ) then
 				
-				if( mol.atoms(i).atomicNumber() < mol.atoms(j).atomicNumber() ) then
-					write(*,"(A,2I5,F15.6)") trim(mol.atoms(i).symbol)//"--"//trim(mol.atoms(j).symbol), i, j, mol.distance( mol.atoms(i), mol.atoms(j) )/angs
+				if( mol%atoms(i)%atomicNumber() < mol%atoms(j)%atomicNumber() ) then
+					write(*,"(A,2I5,F15.6)") trim(mol%atoms(i)%symbol)//"--"//trim(mol%atoms(j)%symbol), i, j, mol%distance( mol%atoms(i), mol%atoms(j) )/angs
 				else
-					write(*,"(A,2I5,F15.6)") trim(mol.atoms(j).symbol)//"--"//trim(mol.atoms(i).symbol), j, i, mol.distance( mol.atoms(i), mol.atoms(j) )/angs
+					write(*,"(A,2I5,F15.6)") trim(mol%atoms(j)%symbol)//"--"//trim(mol%atoms(i)%symbol), j, i, mol%distance( mol%atoms(i), mol%atoms(j) )/angs
 				end if
 				
 			end if

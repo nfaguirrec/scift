@@ -92,21 +92,21 @@
 		__TYPE_VALUE__, optional, intent(in) :: val
 		integer, optional, intent(in) :: type
 		
-		this.type = ROW_VECTOR
-		if( present(type) ) this.type = type
+		this%type = ROW_VECTOR
+		if( present(type) ) this%type = type
 		
-		this.nElems = nElems
+		this%nElems = nElems
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(nElems) )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(nElems) )
 		
 # if __ID_TYPE__ == 1
-		this.data = 0
+		this%data = 0
 # elif __ID_TYPE__ == 2
-		this.data = 0.0_8
+		this%data = 0.0_8
 # endif
 		
-		if( present(val) ) this.data = val
+		if( present(val) ) this%data = val
 	end subroutine initDefault
 	
 	subroutine identity( this, nElems, type )
@@ -115,9 +115,9 @@
 		integer, optional, intent(in) :: type
 		
 # if __ID_TYPE__ == 1
-		call this.initDefault( nElems, 1, type )
+		call this%initDefault( nElems, 1, type )
 # elif __ID_TYPE__ == 2
-		call this.initDefault( nElems, 1.0_8, type )
+		call this%initDefault( nElems, 1.0_8, type )
 # endif
 	end subroutine identity
 	
@@ -130,13 +130,13 @@
 		integer, dimension(:), allocatable :: seed
 		real(8) :: rnd
 		
-		this.type = ROW_VECTOR
-		if( present(type) ) this.type = type
+		this%type = ROW_VECTOR
+		if( present(type) ) this%type = type
 		
-		this.nElems = nElems
+		this%nElems = nElems
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(nElems) )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(nElems) )
 		
 		!---------------------------------------------
 		call random_seed(size = n)
@@ -151,9 +151,9 @@
 			call random_number( rnd )
 			
 # if __ID_TYPE__ == 1
-		this.data(i) = int(rnd)
+		this%data(i) = int(rnd)
 # elif __ID_TYPE__ == 2
-		this.data(i) = rnd
+		this%data(i) = rnd
 # endif
 		end do
 	end subroutine random
@@ -165,13 +165,13 @@
 		class(NVector), intent(out) :: this
 		type(NVector), intent(in) :: other
 		
-		this.nElems = other.nElems
+		this%nElems = other%nElems
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(other.nElems) )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(other%nElems) )
 		
-		this.data = other.data
-		this.type = other.type
+		this%data = other%data
+		this%type = other%type
 	end subroutine copyNVector
 	
 	!>
@@ -180,8 +180,8 @@
 	subroutine destroyNVector( this )
 		type(NVector) :: this
 		
-		this.nElems = 0
-		if( allocated(this.data) ) deallocate(this.data)
+		this%nElems = 0
+		if( allocated(this%data) ) deallocate(this%data)
 	end subroutine destroyNVector
 	
 	!>
@@ -203,6 +203,9 @@
 		integer :: i, k, l, u, columns
 		
 		integer :: maxIPart
+#ifdef __GFORTRAN__
+		character(len=200) :: fmtStr
+#endif
 		
 		effFormatted = .false.
 		if( present(formatted) ) effFormatted = formatted
@@ -215,12 +218,12 @@
 		if( .not. effFormatted ) then
 #define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
 #define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
-#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
-#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+#define ITEMI(l,v) output = trim(output)//l; write(fstr, "(i0)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f0.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<NVector:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -233,21 +236,21 @@
 #define ITEMR(l,v) output = trim(output)//effPrefix//l; write(fstr, "(f10.5)") v; output = trim(output)//trim(fstr)//new_line('')
 
 #define RFMT(v) int(log10(max(1.0*abs(v),1.0)))+merge(1,2,v>=0)
-			maxIPart = RFMT( maxval( this.data ) )
+			maxIPart = RFMT( maxval( this%data ) )
 #undef RFMT
 ! 			LINE("NVector")
 ! 			LINE("---------")
 ! 			LINE("")
 			
-			if( this.type == ROW_VECTOR ) then
-				columns = this.nElems
-				do k=1, ceiling( real(this.nElems,8)/real(ncolEff,8) )
+			if( this%type == ROW_VECTOR ) then
+				columns = this%nElems
+				do k=1, ceiling( real(this%nElems,8)/real(ncolEff,8) )
 					
 					l = ncolEff * ( k - 1 ) + 1
 					u = ncolEff * ( k )
 					
-					if( u > this.nElems ) then
-						columns = l + ncolEff*( 1 - k ) +  this.nElems - 1
+					if( u > this%nElems ) then
+						columns = l + ncolEff*( 1 - k ) +  this%nElems - 1
 						u = columns
 					end if
 					
@@ -256,48 +259,71 @@
 	! 					if( present( keys ) ) then
 	! 						write (6,"(<columns>A18)") ( trim(keys(i)), i = l, u )
 	! 					else
+#ifdef __GFORTRAN__
+							write(fmtStr, "(A,I0,A,I0,A)") "(5X,", columns, "I", maxIPart+11, ")"
+							write(fstr,fmtStr) ( i, i = l, u )
+#else
 # if __ID_TYPE__ == 1
 							write(fstr,"(5X,<columns>I<maxIPart+5+6>)") ( i, i = l, u )
 # elif __ID_TYPE__ == 2
 							write(fstr,"(5X,<columns>I<maxIPart+5+6>)") ( i, i = l, u )
 # endif
+#endif
 							output = trim(output)//trim(fstr)//new_line('')
 	! 					end if
 	! 					
 	! 				end if
 					
+#ifdef __GFORTRAN__
 # if __ID_TYPE__ == 1
-					write(fstr,"(5X,<columns>I<maxIPart+5+6>)") ( this.data(i), i = l, u )
+					write(fmtStr, "(A,I0,A,I0,A)") "(5X,", columns, "I", maxIPart+11, ")"
 # elif __ID_TYPE__ == 2
-					write(fstr,"(5X,<columns>F<maxIPart+5+6>.6)") ( this.data(i), i = l, u )
+					write(fmtStr, "(A,I0,A,I0,A)") "(5X,", columns, "F", maxIPart+11, ".6)"
 # endif
+					write(fstr,fmtStr) ( this%data(i), i = l, u )
+#else
+# if __ID_TYPE__ == 1
+					write(fstr,"(5X,<columns>I<maxIPart+5+6>)") ( this%data(i), i = l, u )
+# elif __ID_TYPE__ == 2
+					write(fstr,"(5X,<columns>F<maxIPart+5+6>.6)") ( this%data(i), i = l, u )
+# endif
+#endif
 					output = trim(output)//trim(fstr)//new_line('')//new_line('')
 				end do
-			else if( this.type == COLUMN_VECTOR ) then
+			else if( this%type == COLUMN_VECTOR ) then
 
 !                        if( ( tmpFlags - VERTICAL ) == WITH_KEYS ) then
 !                                 
 !                                 if( present( keys ) ) then
 !                                         do i=1, ssize
 !                                         
-!                                                 write (6,"(A18,F15.6)") trim(keys(i)), this.values(i)
+!                                                 write (6,"(A18,F15.6)") trim(keys(i)), this%values(i)
 !                                         end do
 !                                 else
-                                        do i=1,this.nElems
+                                        do i=1,this%nElems
                                         
+#ifdef __GFORTRAN__
 # if __ID_TYPE__ == 1
-					write (fstr,"(I5,I<maxIPart+5+6>)") i, this.data(i)
+					write(fmtStr, "(A,I0,A)") "(I5,I", maxIPart+11, ")"
 # elif __ID_TYPE__ == 2
-					write (fstr,"(I5,F<maxIPart+5+6>.6)") i, this.data(i)
+					write(fmtStr, "(A,I0,A)") "(I5,F", maxIPart+11, ".6)"
 # endif
+					write(fstr,fmtStr) i, this%data(i)
+#else
+# if __ID_TYPE__ == 1
+					write (fstr,"(I5,I<maxIPart+5+6>)") i, this%data(i)
+# elif __ID_TYPE__ == 2
+					write (fstr,"(I5,F<maxIPart+5+6>.6)") i, this%data(i)
+# endif
+#endif
 						output = trim(output)//trim(fstr)//new_line('')
 					end do
 !                                 end if
 !                                 
 !                         else
                         
-!                                 do i=1,this.nElems
-!                                         write (fstr,"(F15.6)") this.data(i)
+!                                 do i=1,this%nElems
+!                                         write (fstr,"(F15.6)") this%data(i)
 !                                         output = trim(output)//trim(fstr)//new_line('')
 !                                 end do
                                 
@@ -338,7 +364,7 @@
 		integer, intent(in) :: i
 		__TYPE_VALUE__, intent(in) :: value
 		
-		this.data(i) = value
+		this%data(i) = value
 	end subroutine set
 	
 	!>
@@ -349,7 +375,7 @@
 		integer, intent(in) :: i
 		__TYPE_VALUE__ :: output
 		
-		output = this.data(i)
+		output = this%data(i)
 	end function get
 	
 	!>
@@ -360,13 +386,13 @@
 		class(NVector), intent(in) :: other
 		type(NVector) :: output
 		
-		if( this.nElems /= other.nElems ) then
+		if( this%nElems /= other%nElems ) then
 			write(*,*) "## ERROR ## NVector.addition: The vectors have not the same size"
 			stop
 		end if
 		
-		call output.copyNVector( this )
-		output.data = this.data + other.data
+		call output%copyNVector( this )
+		output%data = this%data + other%data
 	end function addition
 	
 	!>
@@ -377,8 +403,8 @@
 		__TYPE_VALUE__, intent(in) :: constant
 		type(NVector) :: output
 		
-		call output.copyNVector( this )
-		output.data = this.data + constant
+		call output%copyNVector( this )
+		output%data = this%data + constant
 	end function additionMC
 	
 	!>
@@ -389,13 +415,13 @@
 		class(NVector), intent(in) :: other
 		type(NVector) :: output
 		
-		if( this.nElems /= other.nElems ) then
+		if( this%nElems /= other%nElems ) then
 			write(*,*) "## ERROR ## NVector.subtraction: The vectors have not the same size"
 			stop
 		end if
 		
-		call output.copyNVector( this )
-		output.data = this.data - other.data
+		call output%copyNVector( this )
+		output%data = this%data - other%data
 	end function subtraction
 	
 	!>
@@ -406,8 +432,8 @@
 		__TYPE_VALUE__, intent(in) :: constant
 		type(NVector) :: output
 		
-		call output.copyNVector( this )
-		output.data = this.data - constant
+		call output%copyNVector( this )
+		output%data = this%data - constant
 	end function subtractionMC
 	
 	!>
@@ -418,13 +444,13 @@
 		class(NVector), intent(in) :: other
 		type(NVector) :: output
 		
-		if( this.nElems /= other.nElems ) then
+		if( this%nElems /= other%nElems ) then
 			write(*,*) "## ERROR ## NVector.multiplication: The vectors have not the same size"
 			stop
 		end if
 		
-		call output.copyNVector( this )
-		output.data = this.data*other.data
+		call output%copyNVector( this )
+		output%data = this%data*other%data
 	end function multiplication
 	
 	!>
@@ -435,8 +461,8 @@
 		__TYPE_VALUE__, intent(in) :: constant
 		type(NVector) :: output
 		
-		call output.copyNVector( this )
-		output.data = this.data*constant
+		call output%copyNVector( this )
+		output%data = this%data*constant
 	end function multiplicationMC
 	
 	!>
@@ -447,8 +473,8 @@
 		__TYPE_VALUE__, intent(in) :: constant
 		type(NVector) :: output
 		
-		call output.copyNVector( this )
-		output.data = this.data/constant
+		call output%copyNVector( this )
+		output%data = this%data/constant
 	end function divisionMC
 	
 	!>
@@ -482,7 +508,7 @@
 		class(NVector), intent(in) :: this
 		real(8) :: output
 		
-		output = sqrt(1.0*sum(this.data**2))
+		output = sqrt(1.0*sum(this%data**2))
 	end function norm
 	
 #endif

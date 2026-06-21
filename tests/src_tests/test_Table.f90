@@ -7,7 +7,7 @@ program test_Table
 		type(Table) :: myTable
 		type(Table) :: myTable2
 		
-		call myTable.init( "data/formats/TABLE" )
+		call myTable%init( "data/formats/TABLE" )
 		call assert_equal( myTable%nRows, 4, "Table_test: nRows" )
 		call assert_equal( myTable%nCols, 4, "Table_test: nCols" )
 		

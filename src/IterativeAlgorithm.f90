@@ -49,7 +49,7 @@ module IterativeAlgorithm_
 			procedure :: iterate
 	end type IterativeAlgorithm
 	
-! http://www.extremeoptimization.com/Documentation/Reference/Extreme.Mathematics.Algorithms.IterativeAlgorithm_Members.aspx
+! http://www%extremeoptimization%com/Documentation/Reference/Extreme%Mathematics%Algorithms%IterativeAlgorithm_Members%aspx
 	
 	contains
 	

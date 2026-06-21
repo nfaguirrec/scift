@@ -42,7 +42,7 @@ module EdgeVector_
 	
 
 !>
-!! This class use the Vector template declared into Vector.h90 file,
+!! This class use the Vector template declared into Vector%h90 file,
 !! please take a look to this file for details
 !!
 #define Vector EdgeVector
@@ -67,10 +67,10 @@ module EdgeVector_
 		class(EdgeVector), intent(in) :: other
 		logical :: output
 		
-! 		this.nItems = other.nItems
-! 		this.resizeIncrement = other.resizeIncrement
+! 		this%nItems = other%nItems
+! 		this%resizeIncrement = other%resizeIncrement
 		
-! 		output = all( this.data(1:this.size()) == other.data(1:other.size()) )
+! 		output = all( this%data(1:this%size()) == other%data(1:other%size()) )
 
 		write(*,*) "### ERROR ### EdgeVector.equal  is not implemented yet"
 		stop
@@ -102,19 +102,19 @@ module EdgeVector_
 		
 		if( .not. effFormatted ) then
 			output = trim(output)//"<EdgeVector:("
-! 			do i=1,this.size()
+! 			do i=1,this%size()
 ! 				if( i==1 ) then
-! 					output = trim(output)//trim(FString_fromInteger(this.at(i)))
+! 					output = trim(output)//trim(FString_fromInteger(this%at(i)))
 ! 				else
-! 					output = trim(output)//","//trim(FString_fromInteger(this.at(i)))
+! 					output = trim(output)//","//trim(FString_fromInteger(this%at(i)))
 ! 				end if
 ! 			end do
 			output = trim(output)//")>"
 ! 		else
 ! 			LINE("Vector")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 		end if
 	end function str
@@ -132,18 +132,18 @@ module EdgeVector_
 		type(EdgeVectorIterator), pointer :: iter
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-! 		iter => this.begin
+! 		iter => this%begin
 ! 		do while ( associated(iter) )
-! 			write(unitEff,"(I15)") iter.data
+! 			write(unitEff,"(I15)") iter%data
 ! 			
-! 			iter => iter.next
+! 			iter => iter%next
 ! 		end do
 	end subroutine toFStream
 	
@@ -151,17 +151,17 @@ module EdgeVector_
 		type(EdgeVector) :: myvector
 		class(EdgeVectorIterator), pointer :: iter
 		
-! 		iter => myvector.begin
+! 		iter => myvector%begin
 ! 		do while( associated(iter) )
-! 			write(*,"(I2,A)", advance="no") iter.data, "  --> "
+! 			write(*,"(I2,A)", advance="no") iter%data, "  --> "
 ! 			
-! 			iter => iter.next
+! 			iter => iter%next
 ! 		end do
 		
 		integer :: i
 		
-		do i=1,myvector.size()
-			write(*,"(I2,A)", advance="no") myvector.at(i), "  --> "
+		do i=1,myvector%size()
+			write(*,"(I2,A)", advance="no") myvector%at(i), "  --> "
 		end do
 		
 		write(*,*)

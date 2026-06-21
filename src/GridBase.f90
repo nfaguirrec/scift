@@ -107,23 +107,23 @@ module GridBase_
 		
 		integer :: i
 		
-		this.min = min
-		this.max = max
-		this.isEquallyspaced = .true.
+		this%min = min
+		this%max = max
+		this%isEquallyspaced = .true.
 		
 		if( present(stepSize) ) then
-			this.stepSize = stepSize
-			this.size = int( abs(max-min)/stepSize )+1
+			this%stepSize = stepSize
+			this%size = int( abs(max-min)/stepSize )+1
 		else if( present(size) ) then
-			this.size = size
-			this.stepSize = abs(max-min)/float(size-1)
+			this%size = size
+			this%stepSize = abs(max-min)/float(size-1)
 		end if
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(this.size) )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(this%size) )
 		
-		do i=1,this.size
-			this.data( i ) = this.min+float(i-1)*this.stepSize
+		do i=1,this%size
+			this%data( i ) = this%min+float(i-1)*this%stepSize
 		end do
 	end subroutine initDefault
 	
@@ -143,27 +143,27 @@ module GridBase_
 		effTol = 1d-3
 		if( present(tol) ) effTol = tol
 		
-		this.min = minval(array)
-		this.max = maxval(array)
-		this.size = size(array)
+		this%min = minval(array)
+		this%max = maxval(array)
+		this%size = size(array)
 		
 		stepSize = abs(array(2)-array(1))
 		
-		this.stepSize = stepSize
-		this.isEquallyspaced = .true.
+		this%stepSize = stepSize
+		this%isEquallyspaced = .true.
 		
-		do i=2,this.size
+		do i=2,this%size
 			if( abs( abs(array(i)-array(i-1)) -stepSize) > effTol ) then
-				this.isEquallyspaced = .false.
+				this%isEquallyspaced = .false.
 				exit
 			end if
 		end do
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(this.size) )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(this%size) )
 		
-		do i=1,this.size
-			this.data( i ) = array( i )
+		do i=1,this%size
+			this%data( i ) = array( i )
 		end do
 	end subroutine fromArray
 	
@@ -196,17 +196,17 @@ module GridBase_
 			columnEff = column
 		end if
 		
-		call ifile.init( trim(iFileName) )
+		call ifile%init( trim(iFileName) )
 		
 		!! En el peor de los casos cada
 		!! línea es un valor
-		allocate( data(ifile.numberOfLines) )
+		allocate( data(ifile%numberOfLines) )
 		
 		nData = 1
-		do while( .not. ifile.eof() )
-			buffer = ifile.readLine( cCommentsEff )
+		do while( .not. ifile%eof() )
+			buffer = ifile%readLine( cCommentsEff )
 			
-			call buffer.split( tokens, " " )
+			call buffer%split( tokens, " " )
 			
 			if( columnEff <= size(tokens) ) then
 				if( len(trim(tokens(columnEff))) /= 0 ) then
@@ -216,28 +216,28 @@ module GridBase_
 			end if
 		end do
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(nData-1) )
-		this.data = data(1:nData-1)
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(nData-1) )
+		this%data = data(1:nData-1)
 		
 		deallocate( data )
-		call ifile.close()
+		call ifile%close()
 		
-		this.min = minval(this.data)
-		this.max = maxval(this.data)
-		this.size = size(this.data)
+		this%min = minval(this%data)
+		this%max = maxval(this%data)
+		this%size = size(this%data)
 		
-		effStepSize = this.data(2)-this.data(1)
-		do i=3,size(this.data)
-			if( abs(this.data(i)-this.data(i-1)-effStepSize) > 1e-10 ) then
-				this.stepSize = -1.0_8
-				this.isEquallyspaced = .false.
+		effStepSize = this%data(2)-this%data(1)
+		do i=3,size(this%data)
+			if( abs(this%data(i)-this%data(i-1)-effStepSize) > 1e-10 ) then
+				this%stepSize = -1.0_8
+				this%isEquallyspaced = .false.
 				return
 			end if
 		end do
 		
-		this.stepSize = effStepSize
-		this.isEquallyspaced = .true.
+		this%stepSize = effStepSize
+		this%isEquallyspaced = .true.
 	end subroutine fromFile
 	
 	!>
@@ -247,16 +247,16 @@ module GridBase_
 		class(GridBase), intent(out) :: this
 		type(GridBase), intent(in) :: other
 		
-		this.min = other.min
-		this.max = other.max
-		this.stepSize = other.stepSize
-		this.size = other.size
-		this.isEquallyspaced = other.isEquallyspaced
+		this%min = other%min
+		this%max = other%max
+		this%stepSize = other%stepSize
+		this%size = other%size
+		this%isEquallyspaced = other%isEquallyspaced
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(this.size) )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(this%size) )
 		
-		this.data = other.data
+		this%data = other%data
 	end subroutine copyGridBase
 	
 	!>
@@ -265,13 +265,13 @@ module GridBase_
 	subroutine destroy( this )
 		type(GridBase) :: this
 		
-		this.min = 0.0_8
-		this.max = 0.0_8
-		this.size = 0
-		this.stepSize = 0.0_8
-		this.isEquallyspaced = .false.
+		this%min = 0.0_8
+		this%max = 0.0_8
+		this%size = 0
+		this%stepSize = 0.0_8
+		this%isEquallyspaced = .false.
 		
-		if( allocated( this.data ) ) deallocate( this.data )
+		if( allocated( this%data ) ) deallocate( this%data )
 	end subroutine destroy
 	
 	!>
@@ -291,17 +291,17 @@ module GridBase_
 		output = .true.
 		
 		if( &
-			abs( this.min - other.min ) > effTol .or. &
-			abs( this.max - other.max ) > effTol .or. &
-			abs( this.stepSize - other.stepSize ) > effTol .or. &
-			this.size /= other.size .or. &
-			this.isEquallyspaced /= other.isEquallyspaced &
+			abs( this%min - other%min ) > effTol .or. &
+			abs( this%max - other%max ) > effTol .or. &
+			abs( this%stepSize - other%stepSize ) > effTol .or. &
+			this%size /= other%size .or. &
+			this%isEquallyspaced .neqv. other%isEquallyspaced &
 		) then
 			output = .false.
 			return
 		end if
 		
-		if( sum( abs(this.data - other.data)/this.size ) > effTol )then
+		if( sum( abs(this%data - other%data)/this%size ) > effTol )then
 			output = .false.
 			return
 		end if
@@ -315,13 +315,13 @@ module GridBase_
 		class(GridBase), intent(in) :: other
 		type(GridBase) :: output
 		
-		if( this.size /= other.size ) then
+		if( this%size /= other%size ) then
 			write(*,*) "## ERROR ## the Grid have not the same size"
 			stop
 		end if
 		
-		call output.copyGridBase( this )
-		output.data = this.data + other.data
+		call output%copyGridBase( this )
+		output%data = this%data + other%data
 	end function addition
 	
 	!>
@@ -332,8 +332,8 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copyGridBase( this )
-		output.data = this.data+constant
+		call output%copyGridBase( this )
+		output%data = this%data+constant
 	end function additionFC
 	
 	!>
@@ -344,13 +344,13 @@ module GridBase_
 		type(GridBase), intent(in) :: other
 		type(GridBase) :: output
 		
-		if( this.size /= other.size ) then
+		if( this%size /= other%size ) then
 			write(*,*) "## ERROR ## the Grid have not the same size"
 			stop
 		end if
 		
-		call output.copyGridBase( this )
-		output.data = this.data - other.data
+		call output%copyGridBase( this )
+		output%data = this%data - other%data
 	end function subtraction
 	
 	!>
@@ -361,8 +361,8 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copyGridBase( this )
-		output.data = this.data-constant
+		call output%copyGridBase( this )
+		output%data = this%data-constant
 	end function subtractionFC
 	
 	!>
@@ -373,13 +373,13 @@ module GridBase_
 		type(GridBase), intent(in) :: other
 		type(GridBase) :: output
 		
-		if( this.size /= other.size ) then
+		if( this%size /= other%size ) then
 			write(*,*) "## ERROR ## the Grid have not the same size"
 			stop
 		end if
 		
-		call output.copyGridBase( this )
-		output.data = this.data*other.data
+		call output%copyGridBase( this )
+		output%data = this%data*other%data
 		
 		! @todo Hay que hacer algo con el stepSize
 	end function multiplication
@@ -392,9 +392,9 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copyGridBase( this )
-		output.data = this.data*constant
-		output.stepSize = this.stepSize*constant
+		call output%copyGridBase( this )
+		output%data = this%data*constant
+		output%stepSize = this%stepSize*constant
 	end function multiplicationFC
 	
 	!>
@@ -405,13 +405,13 @@ module GridBase_
 		type(GridBase), intent(in) :: other
 		type(GridBase) :: output
 		
-		if( this.size /= other.size ) then
+		if( this%size /= other%size ) then
 			write(*,*) "## ERROR ## the Grid have not the same size"
 			stop
 		end if
 		
-		call output.copyGridBase( this )
-		output.data = this.data/other.data
+		call output%copyGridBase( this )
+		output%data = this%data/other%data
 	end function division
 	
 	!>
@@ -422,8 +422,8 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copyGridBase( this )
-		output.data = this.data/constant
+		call output%copyGridBase( this )
+		output%data = this%data/constant
 	end function divisionFC
 	
 	!>
@@ -434,13 +434,13 @@ module GridBase_
 		type(GridBase), intent(in) :: other
 		type(GridBase) :: output
 		
-		if( this.size /= other.size ) then
+		if( this%size /= other%size ) then
 			write(*,*) "## ERROR ## the Grid have not the same size"
 			stop
 		end if
 		
-		call output.copyGridBase( this )
-		output.data = this.data**other.data
+		call output%copyGridBase( this )
+		output%data = this%data**other%data
 	end function exponentiation
 	
 	!>
@@ -451,8 +451,8 @@ module GridBase_
 		real(8), intent(in) :: constant
 		type(GridBase) :: output
 		
-		call output.copyGridBase( this )
-		output.data = this.data**constant
+		call output%copyGridBase( this )
+		output%data = this%data**constant
 	end function exponentiationFC
 	
 	!>
@@ -470,21 +470,21 @@ module GridBase_
 		output = trim(output)//"<GridBase:"
 		
 		output = trim(output)//"min="
-		output = trim(output)//trim(adjustl(FString_fromReal(this.min,"(F20.6)")))
+		output = trim(output)//trim(adjustl(FString_fromReal(this%min,"(F20.6)")))
 		
 		output = trim(output)//",max="
-		output = trim(output)//trim(adjustl(FString_fromReal(this.max,"(F20.6)")))
+		output = trim(output)//trim(adjustl(FString_fromReal(this%max,"(F20.6)")))
 		
-		if ( this.isEquallyspaced ) then
+		if ( this%isEquallyspaced ) then
 			output = trim(output)//",isEquallyspaced=T"
 			output = trim(output)//",stepSize="
-			output = trim(output)//trim(adjustl(FString_fromReal(this.stepSize,"(F20.6)")))
+			output = trim(output)//trim(adjustl(FString_fromReal(this%stepSize,"(F20.6)")))
 		else
 			output = trim(output)//",isEquallyspaced=F"
 		end if
 		
 		output = trim(output)//",size="
-		output = trim(output)//trim(adjustl(FString_fromInteger(this.size,"(I20)")))
+		output = trim(output)//trim(adjustl(FString_fromInteger(this%size,"(I20)")))
 		
 		output = trim(output)//">"
 	end function str
@@ -504,7 +504,7 @@ module GridBase_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -514,10 +514,10 @@ module GridBase_
 		class(GridBase) :: this
 		real(8), intent(in) :: unit
 		
-		this.min = this.min*unit
-		this.max = this.max*unit
-		this.stepSize = this.stepSize*unit
-		this.data = this.data*unit
+		this%min = this%min*unit
+		this%max = this%max*unit
+		this%stepSize = this%stepSize*unit
+		this%data = this%data*unit
 	end subroutine setUnits
 	
 	!>
@@ -532,13 +532,13 @@ module GridBase_
 		type(OFStream) :: ofile
 		
 		if( present(units) .and. present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile, units )
-			call ofile.close()
+			call ofile%close()
 		else if( present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile )
-			call ofile.close()
+			call ofile%close()
 		else
 			call toFStream( this )
 		end if
@@ -559,7 +559,7 @@ module GridBase_
 		integer :: i
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
@@ -572,8 +572,8 @@ module GridBase_
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		do i=1,this.size
-			write(unitEff,"(e15.7,e15.7)") this.data(i)/unitsEff
+		do i=1,this%size
+			write(unitEff,"(e15.7,e15.7)") this%data(i)/unitsEff
 		end do
 	end subroutine toFStream
 	
@@ -585,7 +585,7 @@ module GridBase_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.data(i)
+		output = this%data(i)
 	end function at
 	
 end module GridBase_

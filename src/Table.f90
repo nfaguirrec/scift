@@ -96,17 +96,17 @@ module Table_
 			cCommentsEff = "#"
 		end if
 		
-		call ifile.init( fileName )
+		call ifile%init( fileName )
 		
-		allocate( rawData( ifile.numberOfLines, ifile.maxNColumns ) )
-		allocate( currentRow(ifile.maxNColumns) )
+		allocate( rawData( ifile%numberOfLines, ifile%maxNColumns ) )
+		allocate( currentRow(ifile%maxNColumns) )
 		
 		nCol = 1
-		do while( .not. ifile.eof() )
-			buffer = ifile.readLine( cCommentsEff )
-			call buffer.split( tokens, " " )
+		do while( .not. ifile%eof() )
+			buffer = ifile%readLine( cCommentsEff )
+			call buffer%split( tokens, " " )
 			
-			if( len(trim(buffer.fstr)) > 0 ) then
+			if( len(trim(buffer%fstr)) > 0 ) then
 				nRow = 1
 				do i=1,size(tokens)
 					if( len(trim(tokens(i))) /= 0 ) then
@@ -121,14 +121,14 @@ module Table_
 			end if
 		end do
 		
-		this.data = rawData( 1:nCol-1, 1:nRow-1 )
+		this%data = rawData( 1:nCol-1, 1:nRow-1 )
 		
-		this.nRows = nCol-1
-		this.nCols = nRow-1
+		this%nRows = nCol-1
+		this%nCols = nRow-1
 		
 		deallocate( currentRow )
 		
-		call ifile.close()
+		call ifile%close()
 	end subroutine fromFile
 	
 	!*
@@ -138,12 +138,12 @@ module Table_
 		class(Table), intent(out) :: this
 		type(Table), intent(in) :: other
 		
-		this.nRows = other.nRows
-		this.nCols = other.nCols
-		if ( allocated(other.data) ) then
-			if ( allocated(this.data) ) deallocate(this.data)
-			allocate(this.data(size(other.data,1), size(other.data,2)))
-			this.data = other.data
+		this%nRows = other%nRows
+		this%nCols = other%nCols
+		if ( allocated(other%data) ) then
+			if ( allocated(this%data) ) deallocate(this%data)
+			allocate(this%data(size(other%data,1), size(other%data,2)))
+			this%data = other%data
 		end if
 	end subroutine copyTable
 	
@@ -152,7 +152,7 @@ module Table_
 	!*
 	subroutine destroy( this )
 		type(Table) :: this
-		if ( allocated(this.data) ) deallocate(this.data)
+		if ( allocated(this%data) ) deallocate(this%data)
 	end subroutine destroy
 	
 	!*
@@ -170,13 +170,11 @@ module Table_
 		output = trim(output)//"<Table:"
 		
 		output = trim(output)//"nRows="
-		fmt = int(log10(float(this.nRows+1)))+1
-		write(strBuffer, "(i<fmt>)") this.nRows
+		write(strBuffer, "(i0)") this%nRows
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//",nCols="
-		fmt = int(log10(float(this.nCols+1)))+1
-		write(strBuffer, "(i<fmt>)") this.nCols
+		write(strBuffer, "(i0)") this%nCols
 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -216,9 +214,9 @@ module Table_
 			effunit = 6
 		end if
 		
-		do i=1,size(this.data,dim=1)
-			do j=1,size(this.data,dim=2)
-				write(effunit,"(A20)",advance='no') this.data(i,j).fstr
+		do i=1,size(this%data,dim=1)
+			do j=1,size(this%data,dim=2)
+				write(effunit,"(A20)",advance='no') this%data(i,j)%fstr
 			end do
 			write(*,*)
 		end do

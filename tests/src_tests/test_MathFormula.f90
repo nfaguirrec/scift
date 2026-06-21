@@ -9,7 +9,7 @@ program test_MathFormula
 		real(8) :: cVals(3)
 		real(8) :: val
 		
-		cVars = [ "pi", "c", "a" ]
+		cVars = [ character(len=100) :: "pi", "c", "a" ]
 		cVals = [ 3.141592_8, 137.0_8, 1.0_8 ]
 		
 		call formula%init( "0.5*x**2+y**2+a**2+c*pi", variables="x,y", constants=cVars, constantsValues=cVals )

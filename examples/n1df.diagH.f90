@@ -63,12 +63,12 @@ program main
 	real(8) :: reducedMass
 	real(8) :: p0
 	integer :: smoothFactor
-	integer :: nStates
+	integer :: effNStates
 	integer :: task
 	
 	integer :: i
 	
-	parser.usage = ""&
+	parser%usage = ""&
 	//"DESCRIPTION"//ENDL &
 	//ENDL &
 	//"This program allows to obtain both eigenvalues and eigenfunction"//ENDL &
@@ -97,69 +97,69 @@ program main
 	//"   -s  sfactor"//ENDL &
 	//"       Smooth factor ( default 10 )"//ENDL
 	
-	fileName = parser.getString( "-i" )
+	fileName = parser%getString( "-i" )
 	
-	smoothOFile = parser.getString( "-so", def="smooth.dat" )
+	smoothOFile = parser%getString( "-so", def="smooth.dat" )
 	
-	buffer = parser.get( "-c", def="1,2" )
-	call buffer.split( tokens, "," )
+	buffer = parser%get( "-c", def="1,2" )
+	call buffer%split( tokens, "," )
 	columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 	
-	reducedMass = parser.getReal( "-m", def=1.0_8 )
-	p0 = parser.getReal( "-p0", def=0.0_8 )
-	nStates = parser.getInteger( "-n", def=10 )
-	smoothFactor = parser.getInteger( "-s", def=10 )
-	task = parser.getInteger( "-s", def=0 )
+	reducedMass = parser%getReal( "-m", def=1.0_8 )
+	p0 = parser%getReal( "-p0", def=0.0_8 )
+	effNStates = parser%getInteger( "-n", def=10 )
+	smoothFactor = parser%getInteger( "-s", def=10 )
+	task = parser%getInteger( "-s", def=0 )
 	
 	write(*,"(A,A)")        "# -------------- INPUT PARAMETERS -------------- "
 	write(*,"(A)")          "#"
-	write(*,"(A,A)")        "# fileName          ( -i) = ", trim(fileName.fstr)
+	write(*,"(A,A)")        "# fileName          ( -i) = ", trim(fileName%fstr)
 	write(*,"(A,A20)")      "# columns           ( -c) = ", trim(FString_fromInteger(columns(1)))//","//trim(FString_fromInteger(columns(2)))
 	write(*,"(A,F20.5,A5)") "# reducedMass       ( -m) = ", reducedMass, "a.u."
 	write(*,"(A,F20.5,A5)") "# initialMomentum   (-p0) = ", p0, "a.u."
-	write(*,"(A,I20)")      "# nStates           ( -n) = ", nStates
-	write(*,"(A,A)")        "# smoothOFile       (-so) = ", smoothOFile.fstr
+	write(*,"(A,I20)")      "# nStates           ( -n) = ", effNStates
+	write(*,"(A,A)")        "# smoothOFile       (-so) = ", smoothOFile%fstr
 	write(*,"(A,I20)")      "# smoothFactor      ( -s) = ", smoothFactor
 	write(*,"(A,I20)")      "# task              ( -t) = ", task
 	write(*,"(A)")          "#"
 	
-	call ifile.init( fileName.fstr )
+	call ifile%init( fileName%fstr )
 	nFunc = RNFunction( ifile, columns=columns )
-	call ifile.close()
+	call ifile%close()
 	
 	write(*,"(A,A)")        "# -------------- GRID INFORMATION -------------- "
 	write(*,"(A)")          "#"
-	write(*,"(A,F20.5)")    "# min = ", nFunc.min()
-	write(*,"(A,F20.5)")    "# max = ", nFunc.max()
-	write(*,"(A,F20.5)")    "# stepSize = ", nFunc.stepSize()
-	write(*,"(A,I20)")      "# nPoints = ", nFunc.nPoints()
-	write(*,"(A,L10)")      "# equallySpaced = ", nFunc.isEquallyspaced()
+	write(*,"(A,F20.5)")    "# min = ", nFunc%min()
+	write(*,"(A,F20.5)")    "# max = ", nFunc%max()
+	write(*,"(A,F20.5)")    "# stepSize = ", nFunc%stepSize()
+	write(*,"(A,I20)")      "# nPoints = ", nFunc%nPoints()
+	write(*,"(A,L10)")      "# equallySpaced = ", nFunc%isEquallyspaced()
 	write(*,"(A)")          "#"
 	write(*,*) ""
 	
-	call nFuncSpline.init( nFunc )
-	nFuncSmooth = nFuncSpline.smooth( smoothFactor )
-	call nFuncSmooth.save( smoothOFile.fstr )
+	call nFuncSpline%init( nFunc )
+	nFuncSmooth = nFuncSpline%smooth( smoothFactor )
+	call nFuncSmooth%save( smoothOFile%fstr )
 	
-	call solver.init( nFuncSmooth, rMass=reducedMass )
+	call solver%init( nFuncSmooth, rMass=reducedMass )
 	
 	if( task == 1 ) then
-		call solver.run( task=FourierGridDiagonalization_EIGENFUNCTIONS, nStates=nStates, type=0, p0=p0 )
+		call solver%run( task=FourierGridDiagonalization_EIGENFUNCTIONS, nStates=effNStates, type=0, p0=p0 )
 	else
-		call solver.run( task=FourierGridDiagonalization_EIGENVALUES, nStates=nStates, type=0, p0=p0 )
+		call solver%run( task=FourierGridDiagonalization_EIGENVALUES, nStates=effNStates, type=0, p0=p0 )
 	end if
 	
 	write(*,*) ""
 	write(*,"(A5,A20,A20)") "#  i ", "EigenValues"
 	write(*,"(A5,A20,A20)") "#    ", "       a.u."
 	write(*,"(A5,A20,A20)") "# ---", "-----------"
-	do i=1,nStates
-! 		if ( solver.eigenValues(i) < 0.0_8 ) then
-			write(*,"(I5,F20.10)") i, solver.eigenValues(i)
+	do i=1,effNStates
+! 		if ( solver%eigenValues(i) < 0.0_8 ) then
+			write(*,"(I5,F20.10)") i, solver%eigenValues(i)
 			
 			if( task == 1 ) then
-				call solver.cEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
-! 				call solver.rEigenFunctions(i).save("wf"//trim(FString_fromInteger(i))//".dat")
+				call solver%cEigenFunctions(i)%save("wf"//trim(FString_fromInteger(i))//".dat")
+! 				call solver%rEigenFunctions(i)%save("wf"//trim(FString_fromInteger(i))//".dat")
 			end if
 ! 		end if
 	end do

@@ -52,7 +52,7 @@ module CNFunction3D_
 	public :: CNFunction3D_testOpenMP
 	
 !>
-!! This class use the List template declared into List.h90 file,
+!! This class use the List template declared into List%h90 file,
 !! please take a look to this file for details
 !!
 #define NFunction3D CNFunction3D
@@ -106,9 +106,9 @@ module CNFunction3D_
 #define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<CNFunction3D:"
-			output = trim(output)//trim(this.xyzGrid.str())
-! 			ITEMI( "min=", this.min )
-			ITEMI( ",size=", this.size() )
+			output = trim(output)//trim(this%xyzGrid%str())
+! 			ITEMI( "min=", this%min )
+			ITEMI( ",size=", this%size() )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -122,8 +122,8 @@ module CNFunction3D_
 
 			LINE("CNFunction3D")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -143,7 +143,7 @@ module CNFunction3D_
 		integer :: unitEff
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
@@ -184,7 +184,7 @@ module CNFunction3D_
 		
 ! 		output = sqrt( x**2 + y**2 + z**2 )
 ! 		output = (x**2+y**2-1.0_8)**3-x**2*y**3+z**2
-		output = (x**2+2.25_8*y**2+z**2-1.0_8)**3-x**2*z**3-0.1125_8*y**2*z**3 + Math_I*( sqrt( x**2 + y**2 + z**2 ) )  ! http://mathworld.wolfram.com/HeartSurface.html
+		output = (x**2+2.25_8*y**2+z**2-1.0_8)**3-x**2*z**3-0.1125_8*y**2*z**3 + Math_I*( sqrt( x**2 + y**2 + z**2 ) )  ! http://mathworld%wolfram%com/HeartSurface%html
 	end function funcTest
 	
 	subroutine kernel( k, ny, nx, fArray )
@@ -219,14 +219,14 @@ module CNFunction3D_
 		integer :: nCopy
 		real(8) :: ssum
 		
-		call sTime.init()
+		call sTime%init()
 		
-		nx = parser.getInteger( "-n", def=500 )
+		nx = parser%getInteger( "-n", def=500 )
 		ny = nx
 		nz = nx
 		
-		call xyzGrid.init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[nx,ny,nz] )
-		call func.init( xyzGrid, funcTest )
+		call xyzGrid%init( min=[-3.0_8,-3.0_8,-3.0_8], max=[3.0_8,3.0_8,3.0_8], size=[nx,ny,nz] )
+		call func%init( xyzGrid, funcTest )
 		
 		write(*,"(A1,A9,2A10)") "#", "nThreads", "strategy", "time"
 		write(*,"(A1,A9,2A10)") "#", "--------", "--------", "----"
@@ -238,14 +238,14 @@ module CNFunction3D_
 				
 				ssum = 0.0_8
 				do nCopy=1,2
-					call sTime.start()
+					call sTime%start()
 					
 					select case(strategy)
 						case(1)
 							!$omp parallel
 							!$omp do
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -254,7 +254,7 @@ module CNFunction3D_
 							!$omp parallel private(k,j,i)
 							!$omp do
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -263,7 +263,7 @@ module CNFunction3D_
 							!$omp parallel private(k,j,i)
 							!$omp do
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -272,7 +272,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -281,7 +281,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(dynamic,1)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -290,7 +290,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(dynamic,1)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -299,7 +299,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(dynamic,2)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -308,7 +308,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(static,1)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do
 							!$omp end parallel
@@ -317,7 +317,7 @@ module CNFunction3D_
 							!$omp parallel private(k)
 							!$omp do schedule(static,2)
 								do k=1,nz; do j=1,ny; do i=1,nx
-									func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+									func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -326,7 +326,7 @@ module CNFunction3D_
 							!$omp parallel default(shared) private(k,j,i)
 							!$omp do schedule(static)
 								do k=1,nz; do j=1,ny; do i=1,nx
-										func.fArray(i,j,k) = sqrt( 10.5_8 )**5
+										func%fArray(i,j,k) = sqrt( 10.5_8 )**5
 								end do; end do; end do
 							!$omp end do nowait
 							!$omp end parallel
@@ -335,14 +335,14 @@ module CNFunction3D_
 							!$omp parallel default(shared) private(k,j,i)
 							!$omp do schedule(static)
 								do k=1,nz
-									call kernel( k, ny, nx, func.fArray )
+									call kernel( k, ny, nx, func%fArray )
 								end do
 							!$omp end do nowait
 							!$omp end parallel
 							
 					end select
 					
-					ssum = ssum + sTime.elapsedSeconds()
+					ssum = ssum + sTime%elapsedSeconds()
 				end do
 			
 				write(*,"(2I10,F10.5)") omp_get_max_threads(), strategy, ssum/2.0_8

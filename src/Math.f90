@@ -35,14 +35,15 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 module Math_
-	use ieee_arithmetic   ! http://fortranwiki.org/fortran/show/ieee_arithmetic
+	use ieee_arithmetic   ! http://fortranwiki%org/fortran/show/ieee_arithmetic
 	implicit none
 	private
 	
 	real(8), public, parameter :: Math_PI = acos(-1.0_8)
-	real(8), public, parameter :: Math_INF = 1.0_8/0.0_8
-! 	real(8), public, parameter :: Math_INF = 99999999999999999.0_8
-	real(8), public, parameter :: Math_NAN = 0.0_8/0.0_8
+	integer(8), parameter :: INF_HEX = int(Z'7FF0000000000000', 8)
+	integer(8), parameter :: NAN_HEX = int(Z'7FF8000000000000', 8)
+	real(8), public, parameter :: Math_INF = transfer(INF_HEX, 1.0_8)
+	real(8), public, parameter :: Math_NAN = transfer(NAN_HEX, 1.0_8)
 	complex(8), public, parameter :: Math_I = cmplx(0.0_8,1.0_8)
 	
 	integer, public, parameter :: Math_IINF = huge(0)
@@ -134,7 +135,7 @@ module Math_
 	!>
 	!! This function calculates the value of a Wigner-3j symbol.
 	!! The equation used is equation 1.5 in "The 3j and 6j symbols" by
-	!! Manuel Rotenber, R. Bivins, N.Metropolis  and John K. Wooten, JR
+	!! Manuel Rotenber, R. Bivins, N%Metropolis  and John K. Wooten, JR
 	!! 1959, The Technology Press, Massachusett.
 	!!
 	!! The function has been tested for all sets, where j1d=j2d=5/2
@@ -408,7 +409,7 @@ module Math_
 	
 	!>
 	!!
-	!! taken from http://orion.math.iastate.edu/burkardt/f_src/combo/combo.html
+	!! taken from http://orion%math%iastate%edu/burkardt/f_src/combo/combo%html
 	!! COMB computes the combinatorial coefficient C(N,K).
 	!!
 	!!    Real arithmetic is used, and C(N,K) is computed directly, via
@@ -715,7 +716,7 @@ module Math_
 	!>
 	!! @brief
 	!! @todo La sección comentada puede hacer falta
-	!! Tomada de https://www.google.es/search?q=error+%237768%3A+This+operation+on+this+data+type+is+currently+inaccurate.&oq=error+%237768%3A+This+operation+on+this+data+type+is+currently+inaccurate.&aqs=chrome..69i57.363j0j4&client=ubuntu-browser&sourceid=chrome&es_sm=91&ie=UTF-8
+	!! Tomada de https://www%google%es/search?q=error+%237768%3A+This+operation+on+this+data+type+is+currently+inaccurate.&oq=error+%237768%3A+This+operation+on+this+data+type+is+currently+inaccurate.&aqs=chrome..69i57.363j0j4&client=ubuntu-browser&sourceid=chrome&es_sm=91&ie=UTF-8
 	!!
 	function Math_erfinv( x_in ) result( r )
 		real(8), intent(in) :: x_in
@@ -727,8 +728,7 @@ module Math_
 		x = x_in
 
 		if( x < -1.0_8 .or. x > 1_8 ) then
-! 			r = Math_NAN
-			r = sqrt(-1.0_8)
+			r = Math_NAN
 			return
 		end if
 		

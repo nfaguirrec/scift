@@ -81,24 +81,24 @@ program main
 	!---------------------------------------------
 	! Loading A
 	!---------------------------------------------
-	fileTypeA = cA.checkTypeN3DF( fileNameA )
+	fileTypeA = cA%checkTypeN3DF( fileNameA )
 	if( fileTypeA == 0 ) then
-		call rA.init( fileNameA )
+		call rA%init( fileNameA )
 	else if( fileTypeA == 1 ) then
-		call cA.init( fileNameA )
+		call cA%init( fileNameA )
 	else
 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameA)
 		stop
 	end if
 	
-	call parser.init()
+	call parser%init()
 	
 	if( fileTypeA == 0 ) then
-		call parser.parseFunction( formula, [ 'x', 'y', 'z', 'r' ]  )
-		call rFunc.init( rA.xyzGrid, evaluateFormulaR )
+		call parser%parseFunction( formula, [ 'x', 'y', 'z', 'r' ]  )
+		call rFunc%init( rA%xyzGrid, evaluateFormulaR )
 	else if( fileTypeA == 1 ) then
-		call parser.parseFunction( formula, [ 'x', 'y', 'z', 'r' ]  )
-		call cFunc.init( cA.xyzGrid, evaluateFormulaC )
+		call parser%parseFunction( formula, [ 'x', 'y', 'z', 'r' ]  )
+		call cFunc%init( cA%xyzGrid, evaluateFormulaC )
 	end if
 	
 	!---------------------------------------------
@@ -137,9 +137,9 @@ program main
 	! Saving AB
 	!---------------------------------------------
 	if( fileTypeA == 0 ) then
-		call rFuncA.save( fileNameFuncA )
+		call rFuncA%save( fileNameFuncA )
 	else if( fileTypeA == 1 ) then
-		call cFuncA.save( fileNameFuncA )
+		call cFuncA%save( fileNameFuncA )
 	end if
 	
 	contains
@@ -151,7 +151,7 @@ program main
 		real(8), intent(in) :: x, y, z
 		real(8) :: output
 		
-		output = parser.evaluateFunction( [ x, y, z, sqrt(x**2+y**2+z**2) ] )
+		output = parser%evaluateFunction( [ x, y, z, sqrt(x**2+y**2+z**2) ] )
 	end function evaluateFormulaR
 	
 	!>
@@ -161,7 +161,7 @@ program main
 		real(8), intent(in) :: x, y, z
 		complex(8) :: output
 		
-		output = cmplx( parser.evaluateFunction( [ x, y, z, sqrt(x**2+y**2+z**2) ] ), 0.0_8 )
+		output = cmplx( parser%evaluateFunction( [ x, y, z, sqrt(x**2+y**2+z**2) ] ), 0.0_8 )
 	end function evaluateFormulaC
 
 end program main

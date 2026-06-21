@@ -66,38 +66,38 @@ program main
 		stop
 	end if
 	
-	oFileName = parser.getString( "-o" )
-	iFileRef = parser.getString( "-b", def=FString_NULL )
+	oFileName = parser%getString( "-o" )
+	iFileRef = parser%getString( "-b", def=FString_NULL )
 	
 	if( iFileRef /= FString_NULL ) then
-		fileTypeA = CNFunction_checkTypeN1DF( iFileRef.fstr )
+		fileTypeA = CNFunction_checkTypeN1DF( iFileRef%fstr )
 		if( fileTypeA == 0 ) then
-			rA = RNFunction( iFileRef.fstr )
+			rA = RNFunction( iFileRef%fstr )
 		else if( fileTypeA == 1 ) then
-			cA = CNFunction( iFileRef.fstr )
+			cA = CNFunction( iFileRef%fstr )
 		else
-			write(0,*) "### ERROR ### unknown format for "//trim(iFileRef.fstr)
+			write(0,*) "### ERROR ### unknown format for "//trim(iFileRef%fstr)
 			stop
 		end if
 		
 		if( fileTypeA == 0 ) then
 			
-			rInitValue = parser.getReal( "-init", def=0.0_8 )
-			rFunc = RNFunction( rA.xGrid, value=rInitValue )
+			rInitValue = parser%getReal( "-init", def=0.0_8 )
+			rFunc = RNFunction( rA%xGrid, value=rInitValue )
 			
 		else if( fileTypeA == 1 ) then
 			
-			CInitValue = parser.getReal( "-init", def=0.0_8 )
-			cFunc = CNFunction( cA.xGrid, value=cInitValue )
+			CInitValue = parser%getReal( "-init", def=0.0_8 )
+			cFunc = CNFunction( cA%xGrid, value=cInitValue )
 			
 		end if
 	else
 		fileTypeA = 0
 		
-		strBuffer = parser.getString( "-xgrid" )
-		call strBuffer.split( tokens, "," )
+		strBuffer = parser%getString( "-xgrid" )
+		call strBuffer%split( tokens, "," )
 		
-		rInitValue = parser.getReal( "-init", def=0.0_8 )
+		rInitValue = parser%getReal( "-init", def=0.0_8 )
 		rFunc = RNFunction( FString_toReal(tokens(1)), FString_toReal(tokens(2)), nPoints=FString_toInteger(tokens(3)), value=rInitValue )
 	end if
 	
@@ -105,9 +105,9 @@ program main
 	! Saving AB
 	!---------------------------------------------
 	if( fileTypeA == 0 ) then
-		call rFunc.save( oFileName.fstr )
+		call rFunc%save( oFileName%fstr )
 	else if( fileTypeA == 1 ) then
-		call cFunc.save( oFileName.fstr )
+		call cFunc%save( oFileName%fstr )
 	end if
 	
 	if( allocated(tokens) ) deallocate( tokens )

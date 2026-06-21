@@ -49,7 +49,7 @@ module RNFunction3D_
 	
 	
 !>
-!! This class use the List template declared into List.h90 file,
+!! This class use the List template declared into List%h90 file,
 !! please take a look to this file for details
 !!
 #define NFunction3D RNFunction3D
@@ -91,9 +91,9 @@ module RNFunction3D_
 #define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f20.6)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<RNFunction3D:"
-			output = trim(output)//trim(this.xyzGrid.str())
-! 			ITEMI( "min=", this.min )
-			ITEMI( ",size=", this.size() )
+			output = trim(output)//trim(this%xyzGrid%str())
+! 			ITEMI( "min=", this%min )
+			ITEMI( ",size=", this%size() )
 #undef ITEMS
 #undef ITEMI
 #undef ITEMR
@@ -106,8 +106,8 @@ module RNFunction3D_
 
 			LINE("RNFunction3D")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -127,7 +127,7 @@ module RNFunction3D_
 		integer :: unitEff
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if

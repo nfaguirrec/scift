@@ -65,11 +65,11 @@ program main
     
     write(0,*) "### ERROR ### Command not implemented yet"//trim(fileNameB)
 
-! 	fileTypeA = cNFunc.checkTypeN1DF( fileNameA )
-! 	fileTypeB = cNFunc.checkTypeN1DF( fileNameB )
+! 	fileTypeA = cNFunc%checkTypeN1DF( fileNameA )
+! 	fileTypeB = cNFunc%checkTypeN1DF( fileNameB )
 ! 	
 ! 	if( fileTypeA == 0 ) then
-! 		call rNFunc.init( fileNameA )
+! 		call rNFunc%init( fileNameA )
 ! 	else if( fileTypeA == 1 ) then
 		cNFuncA = CNFunction( fileNameA )
 ! 	else
@@ -78,7 +78,7 @@ program main
 ! 	end if
 ! 	
 ! 	if( fileTypeB == 0 ) then
-! 		call rNFunc.init( fileNameB )
+! 		call rNFunc%init( fileNameB )
 ! 	else if( fileTypeB == 1 ) then
 		cNFuncB = CNFunction( fileNameB )
 ! 	else
@@ -86,6 +86,6 @@ program main
 ! 		stop
 ! 	end if
 	
-	diff = sqrt( 1.0_8-abs( cNFuncA.innerProduct( cNFuncB ) )**2/cNFuncA.norm()**2/cNFuncB.norm()**2 )
+	diff = sqrt( 1.0_8-abs( cNFuncA%innerProduct( cNFuncB ) )**2/cNFuncA%norm()**2/cNFuncB%norm()**2 )
 	write(*,*) diff
 end program main

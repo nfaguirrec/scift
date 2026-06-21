@@ -35,16 +35,16 @@ program test_FourierGridDiagonalization
 			0.17391611_8  &
 		]
 		
-		call rGrid.init( 0.0_8, 30.0_8, 219 )
+		call rGrid%init( 0.0_8, 30.0_8, 219 )
 		
 		potential = RNFunction( rGrid, funcTest )
 		
-		call solver.init( potential, rMass=1836.15280477874_8/2.0_8 )  ! mass from NIST for proton mp = 1.672621898e-27*kg
-		call solver.run( nStates=17 )
+		call solver%init( potential, rMass=1836.15280477874_8/2.0_8 )  ! mass from NIST for proton mp = 1.672621898e-27*kg
+		call solver%run( nStates=17 )
 		
-		call assert_equal( solver.nStates(), 17, "FourierGridDiagonalization_test: nStates == 17" )
-		do i=1,solver.nStates()
-			call assert_equal_real( solver.eigenValues(i), exactEigenValues(i), 1e-5_8, "FourierGridDiagonalization_test: eigenValues match" )
+		call assert_equal( solver%nStates(), 17, "FourierGridDiagonalization_test: nStates == 17" )
+		do i=1,solver%nStates()
+			call assert_equal_real( solver%eigenValues(i), exactEigenValues(i), 1e-5_8, "FourierGridDiagonalization_test: eigenValues match" )
 		end do
 
     contains

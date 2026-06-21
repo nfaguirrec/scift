@@ -41,7 +41,7 @@
 !! line command
 !!
 !! for example:
-!!     -i file.dat -q 0.159
+!!     -i file%dat -q 0.159
 !!
 module CommandLineParser_
 	use String_
@@ -90,7 +90,7 @@ module CommandLineParser_
 		class(CommandLineParser) :: this
 		type(CommandLineParser) :: other
 		
-		this.usage = other.usage
+		this%usage = other%usage
 	end subroutine copy
 	
 	!>
@@ -116,13 +116,13 @@ module CommandLineParser_
 		output = trim(output)//"<CommandLineParser:"
 		
 ! 		output = trim(output)//"min="
-! 		fmt = int(log10(this.min+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+! 		fmt = int(log10(this%min+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%min
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",size="
-! 		fmt = int(log10(float(this.size+1)))+1
-! 		write(strBuffer, "(i<fmt>)") this.size
+! 		fmt = int(log10(float(this%size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this%size
 ! 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -143,7 +143,7 @@ module CommandLineParser_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -185,9 +185,9 @@ module CommandLineParser_
 		else
 			write(*,*) "### ERROR ### CommandLineParser: Parameter "//param//" is required"
 			
-			if( len_trim(this.usage.fstr) > 0 ) then
+			if( len_trim(this%usage%fstr) > 0 ) then
 				write(*,*) ""
-				write(*,"(A)") trim(this.usage.fstr)
+				write(*,"(A)") trim(this%usage%fstr)
 			end if
 			
 			stop
@@ -207,9 +207,9 @@ module CommandLineParser_
 		
 		if( present(def) ) then
 			write( buffer, * ) def
-			output = String_toInteger( this.getString( param, buffer ) )
+			output = String_toInteger( this%getString( param, buffer ) )
 		else
-			output = String_toInteger( this.getString( param ) )
+			output = String_toInteger( this%getString( param ) )
 		end if
 	end function getInteger
 	
@@ -226,9 +226,9 @@ module CommandLineParser_
 		
 		if( present(def) ) then
 			write( buffer, * ) def
-			output = String_toReal( this.getString( param, buffer ) )
+			output = String_toReal( this%getString( param, buffer ) )
 		else
-			output = String_toReal( this.getString( param ) )
+			output = String_toReal( this%getString( param ) )
 		end if
 	end function getReal
 	
@@ -245,9 +245,9 @@ module CommandLineParser_
 		
 		if( present(def) ) then
 			write( buffer, * ) def
-			output = String_toLogical( this.getString( param, buffer ) )
+			output = String_toLogical( this%getString( param, buffer ) )
 		else
-			output = String_toLogical( this.getString( param ) )
+			output = String_toLogical( this%getString( param ) )
 		end if
 	end function getLogical
 	

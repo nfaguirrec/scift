@@ -46,7 +46,7 @@ module SpecialMatrix_
 	implicit none
 	private
 	
-	! @todo Debería tener todo esto implementado http://www.ee.ic.ac.uk/hp/staff/dmb/matrix/special.html
+	! @todo Debería tener todo esto implementado http://www%ee%ic%ac%uk/hp/staff/dmb/matrix/special%html
 	
 	public :: &
 		SpecialMatrix_identity, &
@@ -67,7 +67,7 @@ module SpecialMatrix_
 		integer, intent(in) :: nRows, nCols
 		type(Matrix) :: I
 		
-		call I.identity( nRows, nCols )
+		call I%identity( nRows, nCols )
 	end function SpecialMatrix_identity
 	
 	!>
@@ -80,10 +80,10 @@ module SpecialMatrix_
 		real(8), intent(in) :: phi
 		type(Matrix) :: U
 		
-		call U.columnVector( 3 )
-		call U.set( 1, 1, sin(theta)*cos(phi) )
-		call U.set( 2, 1, sin(theta)*sin(phi) )
-		call U.set( 3, 1, cos(theta) )
+		call U%columnVector( 3 )
+		call U%set( 1, 1, sin(theta)*cos(phi) )
+		call U%set( 2, 1, sin(theta)*sin(phi) )
+		call U%set( 3, 1, cos(theta) )
 	end function SpecialMatrix_unitaryColumnMatrix
 
 	!>
@@ -93,11 +93,11 @@ module SpecialMatrix_
 		real(8), intent(in) :: theta
 		type(Matrix) :: Rx
 		
-		call Rx.identity( 3, 3 )
-		call Rx.set( 2, 2, cos(theta) )
-		call Rx.set( 2, 3, sin(theta) )
-		call Rx.set( 3, 2,-sin(theta) )
-		call Rx.set( 3, 3, cos(theta) )
+		call Rx%identity( 3, 3 )
+		call Rx%set( 2, 2, cos(theta) )
+		call Rx%set( 2, 3, sin(theta) )
+		call Rx%set( 3, 2,-sin(theta) )
+		call Rx%set( 3, 3, cos(theta) )
 	end function SpecialMatrix_xRotation
 	
 	!>
@@ -107,11 +107,11 @@ module SpecialMatrix_
 		real(8), intent(in) :: theta
 		type(Matrix) :: Ry
 		
-		call Ry.identity( 3, 3 )
-		call Ry.set( 1, 1, cos(theta) )
-		call Ry.set( 1, 3,-sin(theta) )
-		call Ry.set( 3, 1, sin(theta) )
-		call Ry.set( 3, 3, cos(theta) )
+		call Ry%identity( 3, 3 )
+		call Ry%set( 1, 1, cos(theta) )
+		call Ry%set( 1, 3,-sin(theta) )
+		call Ry%set( 3, 1, sin(theta) )
+		call Ry%set( 3, 3, cos(theta) )
 	end function SpecialMatrix_yRotation
 	
 	!>
@@ -121,16 +121,16 @@ module SpecialMatrix_
 		real(8), intent(in) :: theta
 		type(Matrix) :: Rz
 		
-		call Rz.identity( 3, 3 )
-		call Rz.set( 1, 1, cos(theta) )
-		call Rz.set( 1, 2, sin(theta) )
-		call Rz.set( 2, 1,-sin(theta) )
-		call Rz.set( 2, 2, cos(theta) )
+		call Rz%identity( 3, 3 )
+		call Rz%set( 1, 1, cos(theta) )
+		call Rz%set( 1, 2, sin(theta) )
+		call Rz%set( 2, 1,-sin(theta) )
+		call Rz%set( 2, 2, cos(theta) )
 	end function SpecialMatrix_zRotation
 	
 	!>
 	!! @brief Gives a rotation matrix that represents a rotation in 3D by radians about the origin.
-	!! http://www.easyspin.org/documentation/eulerangles.html
+	!! http://www%easyspin%org/documentation/eulerangles%html
 	!! @param alpha   0 <= alpha <  2pi  ----> equivalent to   phi en ZYZ
 	!! @param beta    0 <= beta  <=  pi  ----> equivalent to theta en ZYZ
 	!! @param gamma   0 <= gamma <  2pi
@@ -251,9 +251,9 @@ module SpecialMatrix_
 		type(Matrix) :: u
 		real(8) :: rThetaPhi(3)
 		
-		call u.columnVector( 3, values=axesBegin.data(:,3) )
-		u = u.projectionOntoNewAxes( axesEnd )
-		rThetaPhi = Math_cart2Spher( u.data(:,1) )
+		call u%columnVector( 3, values=axesBegin%data(:,3) )
+		u = u%projectionOntoNewAxes( axesEnd )
+		rThetaPhi = Math_cart2Spher( u%data(:,1) )
 		
 		R = SpecialMatrix_rotation( rThetaPhi(3), rThetaPhi(2), 0.0_8 ) ! Ry(beta)*Rz(alpha)
 		
@@ -262,11 +262,11 @@ module SpecialMatrix_
 			angles(2) = rThetaPhi(2) ! beta
 		end if
 		
-		call u.columnVector( 3, values=axesBegin.data(:,1) )
-		u = u.projectionOntoNewAxes( axesEnd )
+		call u%columnVector( 3, values=axesBegin%data(:,1) )
+		u = u%projectionOntoNewAxes( axesEnd )
 		
 		u = R*u
-		rThetaPhi = Math_cart2Spher( u.data(:,1) )
+		rThetaPhi = Math_cart2Spher( u%data(:,1) )
 		
 		R = SpecialMatrix_zRotation( rThetaPhi(3) )*R  ! Rz(gamma)*( Ry(beta)*Rz(alpha) )
 		

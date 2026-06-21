@@ -77,11 +77,11 @@ program main
 	! -c
 	! -n
 	!-----------------------------------------------------------------
-	iFileName = parser.getString( "-i" )
-! 	oFileName = parser.getString( "-o" )
+	iFileName = parser%getString( "-i" )
+! 	oFileName = parser%getString( "-o" )
 	
-	strBuffer = parser.getString( "-c", def="1,2" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-c", def="1,2" )
+	call strBuffer%split( tokens, "," )
 	
 	if( size(tokens) == 3 ) then
 		allocate( columns(3) )
@@ -96,47 +96,47 @@ program main
 		stop
 	end if
 	
-	nPoints = parser.getInteger( "-n", def=-1 )
+	nPoints = parser%getInteger( "-n", def=-1 )
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	! Window parameters
 	! -m
 	!-----------------------------------------------------------------
-	sigma = parser.getReal( "-sigma", def=0.1_8 )
-	freq = parser.getInteger( "-freq", def=1 )
-	resolution = parser.getReal( "-resol", def=1.0_8 )
+	sigma = parser%getReal( "-sigma", def=0.1_8 )
+	freq = parser%getInteger( "-freq", def=1 )
+	resolution = parser%getReal( "-resol", def=1.0_8 )
 	
 	isXRange = .false.
-	strBuffer = parser.getString( "-x", def="" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-x", def="" )
+	call strBuffer%split( tokens, "," )
 	if( size(tokens) == 2 ) then
 		isXRange = .true.
 		xrange = [ FString_toReal(tokens(1)), FString_toReal(tokens(2)) ]
 	end if
 	!----------------------------------------------------------------------	
 	
-	call ifile.init( iFileName.fstr )
+	call ifile%init( iFileName%fstr )
 	nFunc = RNFunction( ifile, columns=columns )
-	call ifile.close()
+	call ifile%close()
 	
-	if( nPoints == -1 ) nPoints = nFunc.nPoints()
+	if( nPoints == -1 ) nPoints = nFunc%nPoints()
 	
-! 	oNFunc.init(  )
-	call integrator.init( nFunc2, NIntegrator_SIMPSON )
+! 	oNFunc%init(  )
+	call integrator%init( nFunc2, NIntegrator_SIMPSON )
 	
 	n = 1
-	t = nFunc.xGrid.min!+3.0_8*sigma
-	do while( t <= nFunc.xGrid.max )!-3.0_8*sigma )
+	t = nFunc%xGrid%min!+3.0_8*sigma
+	do while( t <= nFunc%xGrid%max )!-3.0_8*sigma )
 ! 		write(*,"(A,F20.6,A)", advance="no") "Generating ", t, " ... "
 		
-		nFuncWindow = RNFunction( nFunc.xGrid, window )
+		nFuncWindow = RNFunction( nFunc%xGrid, window )
 		
 		nFunc2 = nFuncWindow*nFunc
 		
-		write(*,*) t, integrator.evaluate()
+		write(*,*) t, integrator%evaluate()
 		
-		t = t + freq*nFunc.xGrid.stepSize
+		t = t + freq*nFunc%xGrid%stepSize
 		n = n + 1
 	end do
 

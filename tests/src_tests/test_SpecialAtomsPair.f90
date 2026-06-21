@@ -4,7 +4,7 @@ program test_SpecialAtomsPair
     implicit none
 		type(SpecialAtomsPair) :: pair1, pair2
 		
-		call pair1.init( "C  ", "H  ", 1.08_8, 1.20_8 )
+		call pair1%init( "C  ", "H  ", 1.08_8, 1.20_8 )
 		call assert_equal( pair1%symbol1, "C  ", "SpecialAtomsPair_test: symbol1" )
 		call assert_equal( pair1%symbol2, "H  ", "SpecialAtomsPair_test: symbol2" )
 		call assert_true( abs(pair1%bondCutoff - 1.08_8) < 1e-12_8, "SpecialAtomsPair_test: bondCutoff" )

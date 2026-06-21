@@ -81,24 +81,24 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i" )
+	iFileName = parser%getString( "-i" )
 	
-	strBuffer = parser.getString( "-c", def="1,2" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-c", def="1,2" )
+	call strBuffer%split( tokens, "," )
 	columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 	
-	smoothFactor = parser.getInteger( "-s", def=1 )
+	smoothFactor = parser%getInteger( "-s", def=1 )
 	
-	call ifile.init( iFileName.fstr )
+	call ifile%init( iFileName%fstr )
 	nFunc = RNFunction( ifile, columns=columns )
-	call ifile.close()
+	call ifile%close()
 	
-	a = parser.getReal( "-a", def=nFunc.min() )
-	b = parser.getReal( "-b", def=nFunc.max() )
+	a = parser%getReal( "-a", def=nFunc%min() )
+	b = parser%getReal( "-b", def=nFunc%max() )
 	
-	strBuffer = parser.getString( "-m", def="BOOLE" )
+	strBuffer = parser%getString( "-m", def="BOOLE" )
 	
-	select case( trim(strBuffer.fstr) )
+	select case( trim(strBuffer%fstr) )
 		case( "SIMPSON" )
 			idMethod = NIntegrator_SIMPSON
 		case( "EXTSIMPSON" )
@@ -119,17 +119,17 @@ program main
 			idMethod = -1
 	end select
 	
-	if( nFunc.xGrid.isEquallyspaced ) then
-		call integrator.init( nFunc, idMethod )
+	if( nFunc%xGrid%isEquallyspaced ) then
+		call integrator%init( nFunc, idMethod )
 	else
-		call nFuncSpline.init( nFunc )
-		nFuncSmooth = nFuncSpline.smooth( smoothFactor )
+		call nFuncSpline%init( nFunc )
+		nFuncSmooth = nFuncSpline%smooth( smoothFactor )
 		
-		call integrator.init( nFuncSmooth, idMethod )
-! 		write(*,*) integrator.evaluate( a, b )
+		call integrator%init( nFuncSmooth, idMethod )
+! 		write(*,*) integrator%evaluate( a, b )
 	end if
 	
-	value = integrator.evaluate( a, b )
+	value = integrator%evaluate( a, b )
 	
 	! Para evitar que imprima en formato raro, por ejemplo +E002
 	if( abs(value) > 1d-98 ) then
@@ -138,10 +138,10 @@ program main
 		write(*,"(E20.10)") 0.0_8
 	end if
 	
-! 	if( .not. nFunc.xGrid.isEquallyspaced ) then
+! 	if( .not. nFunc%xGrid%isEquallyspaced ) then
 ! 		write(*,*) ""
 ! 		write(*,*) ""
-! 		call nFuncSmooth.save( oFileName.fstr )
+! 		call nFuncSmooth%save( oFileName%fstr )
 ! 	end if
 	
 end program main

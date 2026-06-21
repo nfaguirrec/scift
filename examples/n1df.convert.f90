@@ -53,52 +53,52 @@ program main
 	integer :: fileType
 	logical :: describe
 	
-	iFileName = parser.getString( "-i" )
+	iFileName = parser%getString( "-i" )
 	
-! 	write(0,"(A)",advance="no") "Reading file "//trim(iFileName.fstr)//" ... "
+! 	write(0,"(A)",advance="no") "Reading file "//trim(iFileName%fstr)//" ... "
 	
-	fileType = CNFunction_checkTypeN1DF( iFileName.fstr )
+	fileType = CNFunction_checkTypeN1DF( iFileName%fstr )
 	
 	if( fileType == 0 ) then
-		rNFunc = RNFunction( iFileName.fstr )
+		rNFunc = RNFunction( iFileName%fstr )
 	else if( fileType == 1 ) then
-		cNFunc = CNFunction( iFileName.fstr )
+		cNFunc = CNFunction( iFileName%fstr )
 	else
-		write(0,*) "### ERROR ### unknown format for "//trim(iFileName.fstr)
+		write(0,*) "### ERROR ### unknown format for "//trim(iFileName%fstr)
 		stop
 	end if
 		
 ! 	write(0,"(A)") "OK"
 	
-	describe = parser.getLogical( "-s", def=.false. )
+	describe = parser%getLogical( "-s", def=.false. )
 	if( describe ) then
 		if( fileType == 0 ) then
-			write(*,*) "min  = ", rNFunc.min()
-			write(*,*) "max  = ", rNFunc.max()
-			write(*,*) "step = ", rNFunc.stepSize()
+			write(*,*) "min  = ", rNFunc%min()
+			write(*,*) "max  = ", rNFunc%max()
+			write(*,*) "step = ", rNFunc%stepSize()
 		else if( fileType == 1 ) then
-			write(*,*) "min  = ", cNFunc.min()
-			write(*,*) "max  = ", cNFunc.max()
-			write(*,*) "step = ", cNFunc.stepSize()
+			write(*,*) "min  = ", cNFunc%min()
+			write(*,*) "max  = ", cNFunc%max()
+			write(*,*) "step = ", cNFunc%stepSize()
 		else
-			write(0,*) "### ERROR ### unknown format for "//trim(iFileName.fstr)
+			write(0,*) "### ERROR ### unknown format for "//trim(iFileName%fstr)
 			stop
 		end if
 		
 		stop
 	end if
 	
-	oFileName = parser.getString( "-o" )
+	oFileName = parser%getString( "-o" )
 	
 	if( fileType == 0 ) then
 	
-! 		write(*,"(A)",advance="no") "Saving real part of the function to "//trim(oFileName.fstr)//".rcube ... "
-		call rNFunc.save( oFileName.fstr, format=AUTO_FORMAT )
+! 		write(*,"(A)",advance="no") "Saving real part of the function to "//trim(oFileName%fstr)//".rcube ... "
+		call rNFunc%save( oFileName%fstr, format=AUTO_FORMAT )
 ! 		write(*,"(A)") "OK"
 		
 	else if( fileType == 1 ) then
 	
-		call cNFunc.save( oFileName.fstr, format=AUTO_FORMAT )
+		call cNFunc%save( oFileName%fstr, format=AUTO_FORMAT )
 		
 	end if
 end program main

@@ -110,25 +110,25 @@ program main
 	write(*,"(A,L)")     "Use Edge Weights = ", useEdgeWeights
 	write(*,*) ""
 	
-	mol1 = Molecule( iFileName1.fstr )
-	mol2 = Molecule( iFileName2.fstr )
+	mol1 = Molecule( iFileName1%fstr )
+	mol2 = Molecule( iFileName2%fstr )
 	
 	write(*,"(A)", advance="no") "Chemical formula ... "
-	if( mol1.compareFormula( mol2, debug=debug ) ) then
+	if( mol1%compareFormula( mol2, debug=debug ) ) then
 		write(*,*) "OK"
 	else
 		write(*,*) "Failed"
 	end if
 	
 	write(*,"(A)", advance="no") "Geometry ... "
-	if( mol1.compareGeometry( mol2, useMassWeight=useMassWeight, useIm=useIm, thr=thr, debug=debug ) ) then
+	if( mol1%compareGeometry( mol2, useMassWeight=useMassWeight, useIm=useIm, thr=thr, debug=debug ) ) then
 		write(*,*) "OK"
 	else
 		write(*,*) "Failed"
 	end if
 	
 	write(*,"(A)", advance="no") "Connectivity ... "
-	if( mol1.compareConnectivity( mol2, alpha=alpha, thr=thr, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights, debug=debug ) ) then
+	if( mol1%compareConnectivity( mol2, alpha=alpha, thr=thr, useNodeWeights=useNodeWeights, useEdgeWeights=useEdgeWeights, debug=debug ) ) then
 		write(*,*) "OK"
 	else
 		write(*,*) "Failed"

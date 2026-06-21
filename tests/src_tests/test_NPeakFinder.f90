@@ -26,8 +26,8 @@ program test_NPeakFinder
 		end do
 		
 		func = RNFunction(x, y)
-		call peakFinder.init(func, method=NPeakFinder_MAX_DIST, windowSize=25, tolerance=1.0_8)
-		peaks = peakFinder.execute()
+		call peakFinder%init(func, method=NPeakFinder_MAX_DIST, windowSize=25, tolerance=1.0_8)
+		peaks = peakFinder%execute()
 		
 		! Verify we found exactly 3 peaks
 		call assert_equal(peaks%nPoints(), 3, "NPeakFinder_test: number of peaks")

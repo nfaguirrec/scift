@@ -122,7 +122,11 @@ module GridND_
 		integer :: i
 		
 		do i=1,3
-			call this.component(i).init( min(i), max(i), size(i), stepSize(i) )
+			if ( present(stepSize) ) then
+				call this%component(i)%init( min(i), max(i), stepSize=stepSize(i) )
+			else if ( present(size) ) then
+				call this%component(i)%init( min(i), max(i), nPoints=size(i) )
+			end if
 		end do
 	end subroutine initDefault
 	
@@ -135,9 +139,9 @@ module GridND_
 		type(Grid), intent(in) :: y
 		type(Grid), intent(in) :: z
 		
-		this.component(1) = x
-		this.component(2) = y
-		this.component(3) = z
+		this%component(1) = x
+		this%component(2) = y
+		this%component(3) = z
 	end subroutine fromComponents
 	
 	!>
@@ -149,9 +153,9 @@ module GridND_
 		real(8), intent(in) :: yArray(:)
 		real(8), intent(in) :: zArray(:)
 		
-		call this.component(1).fromArray( xArray )
-		call this.component(2).fromArray( yArray )
-		call this.component(3).fromArray( zArray )
+		call this%component(1)%fromArray( xArray )
+		call this%component(2)%fromArray( yArray )
+		call this%component(3)%fromArray( zArray )
 	end subroutine fromArray
 	
 	!>
@@ -175,7 +179,7 @@ module GridND_
 		end if
 		
 		do i=1,3
-			call this.component(i).fromFile( iFileName, columnsEff(i), tol=tol, cComments=cComments )
+			call this%component(i)%fromFile( iFileName, columnsEff(i), tol=tol, cComments=cComments )
 		end do
 	end subroutine fromFile
 	
@@ -189,7 +193,7 @@ module GridND_
 		integer :: i
 		
 		do i=1,3
-			this.component(i) = other.component(i)
+			this%component(i) = other%component(i)
 		end do
 	end subroutine copyGridND
 	
@@ -211,9 +215,9 @@ module GridND_
 		logical :: output
 		
 		output = &
-			this.component(1).isEqualTo( other.component(1), tol ) .and. &
-			this.component(2).isEqualTo( other.component(2), tol ) .and. &
-			this.component(3).isEqualTo( other.component(3), tol )
+			this%component(1)%isEqualTo( other%component(1), tol ) .and. &
+			this%component(2)%isEqualTo( other%component(2), tol ) .and. &
+			this%component(3)%isEqualTo( other%component(3), tol )
 	end function isEqualTo
 	
 	!>
@@ -224,9 +228,9 @@ module GridND_
 		logical :: output
 		
 		output = &
-			this.component(1).isEquallyspaced .and. &
-			this.component(2).isEquallyspaced .and. &
-			this.component(3).isEquallyspaced
+			this%component(1)%isEquallyspaced .and. &
+			this%component(2)%isEquallyspaced .and. &
+			this%component(3)%isEquallyspaced
 	end function isEquallyspaced
 
 	
@@ -240,15 +244,15 @@ module GridND_
 		
 		integer :: i
 		
-		if( this.size(1) /= other.size(1) .or. &
-		    this.size(2) /= other.size(2) .or. &
-		    this.size(3) /= other.size(3) ) then
+		if( this%size(1) /= other%size(1) .or. &
+		    this%size(2) /= other%size(2) .or. &
+		    this%size(3) /= other%size(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i) + other.component(i)
+			output%component(i) = this%component(i) + other%component(i)
 		end do
 	end function addition
 	
@@ -263,7 +267,7 @@ module GridND_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i) + constant
+			output%component(i) = this%component(i) + constant
 		end do
 	end function additionFC
 	
@@ -277,15 +281,15 @@ module GridND_
 		
 		integer :: i
 		
-		if( this.size(1) /= other.size(1) .or. &
-		    this.size(2) /= other.size(2) .or. &
-		    this.size(3) /= other.size(3) ) then
+		if( this%size(1) /= other%size(1) .or. &
+		    this%size(2) /= other%size(2) .or. &
+		    this%size(3) /= other%size(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i) - other.component(i)
+			output%component(i) = this%component(i) - other%component(i)
 		end do
 	end function subtraction
 	
@@ -300,7 +304,7 @@ module GridND_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i) + constant
+			output%component(i) = this%component(i) + constant
 		end do
 	end function subtractionFC
 	
@@ -314,15 +318,15 @@ module GridND_
 		
 		integer :: i
 		
-		if( this.size(1) /= other.size(1) .or. &
-		    this.size(2) /= other.size(2) .or. &
-		    this.size(3) /= other.size(3) ) then
+		if( this%size(1) /= other%size(1) .or. &
+		    this%size(2) /= other%size(2) .or. &
+		    this%size(3) /= other%size(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i)*other.component(i)
+			output%component(i) = this%component(i)*other%component(i)
 		end do
 	end function multiplication
 	
@@ -337,7 +341,7 @@ module GridND_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i)*constant
+			output%component(i) = this%component(i)*constant
 		end do
 	end function multiplicationFC
 	
@@ -351,15 +355,15 @@ module GridND_
 		
 		integer :: i
 		
-		if( this.size(1) /= other.size(1) .or. &
-		    this.size(2) /= other.size(2) .or. &
-		    this.size(3) /= other.size(3) ) then
+		if( this%size(1) /= other%size(1) .or. &
+		    this%size(2) /= other%size(2) .or. &
+		    this%size(3) /= other%size(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i)/other.component(i)
+			output%component(i) = this%component(i)/other%component(i)
 		end do
 	end function division
 	
@@ -374,7 +378,7 @@ module GridND_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i)/constant
+			output%component(i) = this%component(i)/constant
 		end do
 	end function divisionFC
 	
@@ -388,15 +392,15 @@ module GridND_
 		
 		integer :: i
 		
-		if( this.size(1) /= other.size(1) .or. &
-		    this.size(2) /= other.size(2) .or. &
-		    this.size(3) /= other.size(3) ) then
+		if( this%size(1) /= other%size(1) .or. &
+		    this%size(2) /= other%size(2) .or. &
+		    this%size(3) /= other%size(3) ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
 		do i=1,3
-			output.component(i) = this.component(i)**other.component(i)
+			output%component(i) = this%component(i)**other%component(i)
 		end do
 	end function exponentiation
 	
@@ -411,7 +415,7 @@ module GridND_
 		integer :: i
 		
 		do i=1,3
-			output.component(i) = this.component(i)**constant
+			output%component(i) = this%component(i)**constant
 		end do
 	end function exponentiationFC
 	
@@ -444,18 +448,18 @@ module GridND_
 #define ITEML(l,v) output = trim(output)//l; write(fstr, "(L3)") v; output = trim(output)//trim(adjustl(fstr))
 		
 			output = trim(output)//"<GridND:"
-			ITEMR( "min=(", this.component(1).min )
-			ITEMR( ";", this.component(2).min )
-			ITEMR( ";", this.component(3).min )
-			ITEMR( "),max=(", this.component(1).max )
-			ITEMR( ";", this.component(2).max )
-			ITEMR( ";", this.component(3).max )
-			ITEMI( "),nPoints=(", this.component(1).nPoints )
-			ITEMI( ";", this.component(2).nPoints )
-			ITEMI( ";", this.component(3).nPoints )
-			ITEML( "),isEquallyspaced=(", this.component(1).isEquallyspaced )
-			ITEML( ";", this.component(2).isEquallyspaced )
-			ITEML( ";", this.component(3).isEquallyspaced )
+			ITEMR( "min=(", this%component(1)%min )
+			ITEMR( ";", this%component(2)%min )
+			ITEMR( ";", this%component(3)%min )
+			ITEMR( "),max=(", this%component(1)%max )
+			ITEMR( ";", this%component(2)%max )
+			ITEMR( ";", this%component(3)%max )
+			ITEMI( "),nPoints=(", this%component(1)%nPoints )
+			ITEMI( ";", this%component(2)%nPoints )
+			ITEMI( ";", this%component(3)%nPoints )
+			ITEML( "),isEquallyspaced=(", this%component(1)%isEquallyspaced )
+			ITEML( ";", this%component(2)%isEquallyspaced )
+			ITEML( ";", this%component(3)%isEquallyspaced )
 			ITEMS( "", ")" )
 #undef ITEMS
 #undef ITEMI
@@ -470,8 +474,8 @@ module GridND_
 
 			LINE("GridND")
 			LINE("---------")
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 			LINE("")
 #undef LINE
 #undef ITEMS
@@ -512,13 +516,13 @@ module GridND_
 		type(OFStream) :: ofile
 		
 		if( present(units) .and. present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile, units )
-			call ofile.close()
+			call ofile%close()
 		else if( present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile )
-			call ofile.close()
+			call ofile%close()
 		else
 			call toFStream( this )
 		end if
@@ -538,7 +542,7 @@ module GridND_
 		integer :: i
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
@@ -553,7 +557,7 @@ module GridND_
 					write( unitEff, "(A)" ) "# Z"
 			end select
 			
-			call this.component(i).toFStream( ofile, units )
+			call this%component(i)%toFStream( ofile, units )
 			write( unitEff, * ) ""
 			write( unitEff, * ) ""
 		end do
@@ -569,7 +573,7 @@ module GridND_
 		integer :: i
 		
 		do i=1,3
-			call this.component(i).setUnits( unit )
+			call this%component(i)%setUnits( unit )
 		end do
 	end subroutine setUnits
 	
@@ -581,7 +585,7 @@ module GridND_
 		integer, intent(in) :: i
 		integer :: output
 		
-		output = this.component(i).nPoints
+		output = this%component(i)%nPoints
 	end function sizeInCoord
 	
 	!>
@@ -591,7 +595,7 @@ module GridND_
 		class(GridND), intent(in) :: this
 		integer :: output(3)
 		
-		output = [ this.component(1).nPoints, this.component(2).nPoints, this.component(3).nPoints ]
+		output = [ this%component(1)%nPoints, this%component(2)%nPoints, this%component(3)%nPoints ]
 	end function sizeVec
 	
 	!>
@@ -602,7 +606,7 @@ module GridND_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(i).min
+		output = this%component(i)%min
 	end function minInCoord
 	
 	!>
@@ -612,7 +616,7 @@ module GridND_
 		class(GridND), intent(in) :: this
 		real(8) :: output(3)
 		
-		output = [ this.component(1).min, this.component(2).min, this.component(3).min ]
+		output = [ this%component(1)%min, this%component(2)%min, this%component(3)%min ]
 	end function minVec
 	
 	!>
@@ -623,7 +627,7 @@ module GridND_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(i).max
+		output = this%component(i)%max
 	end function maxInCoord
 	
 	!>
@@ -633,7 +637,7 @@ module GridND_
 		class(GridND), intent(in) :: this
 		real(8) :: output(3)
 		
-		output = [ this.component(1).max, this.component(2).max, this.component(3).max ]
+		output = [ this%component(1)%max, this%component(2)%max, this%component(3)%max ]
 	end function maxVec
 	
 	!>
@@ -644,7 +648,7 @@ module GridND_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(i).stepSize
+		output = this%component(i)%stepSize
 	end function stepSizeInCoord
 	
 	!>
@@ -654,7 +658,7 @@ module GridND_
 		class(GridND), intent(in) :: this
 		real(8) :: output(3)
 		
-		output = [ this.component(1).stepSize, this.component(2).stepSize, this.component(3).stepSize ]
+		output = [ this%component(1)%stepSize, this%component(2)%stepSize, this%component(3)%stepSize ]
 	end function stepSizeVec
 	
 	!>
@@ -665,7 +669,7 @@ module GridND_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(1).data(i)
+		output = this%component(1)%data(i)
 	end function x
 	
 	!>
@@ -676,7 +680,7 @@ module GridND_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(2).data(i)
+		output = this%component(2)%data(i)
 	end function y
 	
 	!>
@@ -687,7 +691,7 @@ module GridND_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.component(3).data(i)
+		output = this%component(3)%data(i)
 	end function z
 	
 	!>
@@ -700,7 +704,7 @@ module GridND_
 		integer, intent(in) :: k
 		real(8) :: output(3)
 		
-		output = [ this.component(1).data(i), this.component(2).data(j), this.component(3).data(k) ]
+		output = [ this%component(1)%data(i), this%component(2)%data(j), this%component(3)%data(k) ]
 	end function at
 	
 	!>
@@ -710,7 +714,7 @@ module GridND_
 		class(GridND), intent(in) :: this
 		real(8) :: output
 		
-		output = this.component(1).stepSize*this.component(2).stepSize*this.component(3).stepSize
+		output = this%component(1)%stepSize*this%component(2)%stepSize*this%component(3)%stepSize
 	end function dV
 	
 	!>
@@ -734,8 +738,8 @@ module GridND_
 					write(*,*) "Z = "
 			end select
 			
-			do j=1,xyzGrid.size(i)
-				write(*,"(f10.5)", advance="no") xyzGrid.component(i).data(j)
+			do j=1,xyzGrid%size(i)
+				write(*,"(f10.5)", advance="no") xyzGrid%component(i)%data(j)
 				
 				if ( mod(j-1,10) == 9 ) then
 					write(*,"(A)") ""

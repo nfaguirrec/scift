@@ -92,11 +92,11 @@ program main
 	!---------------------------------------------
 	! Loading A
 	!---------------------------------------------
-	fileTypeA = cA.checkTypeN3DF( fileNameA )
+	fileTypeA = cA%checkTypeN3DF( fileNameA )
 	if( fileTypeA == 0 ) then
-		call rA.init( fileNameA )
+		call rA%init( fileNameA )
 	else if( fileTypeA == 1 ) then
-		call cA.init( fileNameA )
+		call cA%init( fileNameA )
 	else
 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameA)
 		stop
@@ -105,11 +105,11 @@ program main
 	!---------------------------------------------
 	! Loading B
 	!---------------------------------------------
-	fileTypeB = cA.checkTypeN3DF( fileNameB )
+	fileTypeB = cA%checkTypeN3DF( fileNameB )
 	if( fileTypeB == 0 ) then
-		call rB.init( fileNameB )
+		call rB%init( fileNameB )
 	else if( fileTypeB == 1 ) then
-		call cB.init( fileNameB )
+		call cB%init( fileNameB )
 	else
 		write(0,*) "### ERROR ### unknown format for "//trim(fileNameB)
 		stop
@@ -123,10 +123,10 @@ program main
 		stop
 	end if
 	
-	if( fileTypeA == 0 .and. .not. rA.checkBox( rB ) ) then
+	if( fileTypeA == 0 .and. .not. rA%checkBox( rB ) ) then
 		write(*,*) "### ERROR ### rFunctions have not the same box A != B"
 		stop
-	else if( fileTypeA == 1 .and. .not. cA.checkBox( cB ) ) then
+	else if( fileTypeA == 1 .and. .not. cA%checkBox( cB ) ) then
 		write(*,*) "### ERROR ### cFunctions have not the same box A != B"
 		stop
 	end if
@@ -169,9 +169,9 @@ program main
 	! Saving AB
 	!---------------------------------------------
 	if( fileTypeA == 0 ) then
-		call rAB.save( fileNameAB )
+		call rAB%save( fileNameAB )
 	else if( fileTypeA == 1 ) then
-		call cAB.save( fileNameAB )
+		call cAB%save( fileNameAB )
 	end if
 	
 end program main

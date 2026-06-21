@@ -41,7 +41,7 @@ module IntegerList_
 	
 
 !>
-!! This class use the List template declared into List.h90 file,
+!! This class use the List template declared into List%h90 file,
 !! please take a look to this file for details
 !!
 #define List IntegerList
@@ -80,12 +80,12 @@ module IntegerList_
 		if( .not. effFormatted ) then
 #define RFMT(v) int(log10(max(abs(v),1.0)))+merge(1,2,v>=0)
 #define ITEMS(l,v) output = trim(output)//effPrefix//trim(l)//trim(adjustl(v))
-#define ITEMI(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(i<fmt>)") v; output = trim(output)//trim(fstr)
-#define ITEMR(l,v) output = trim(output)//l; fmt = RFMT(v); write(fstr, "(f<fmt+7>.6)") v; output = trim(output)//trim(fstr)
+#define ITEMI(l,v) output = trim(output)//l; write(fstr, "(i0)") v; output = trim(output)//trim(fstr)
+#define ITEMR(l,v) output = trim(output)//l; write(fstr, "(f0.6)") v; output = trim(output)//trim(fstr)
 		
 			output = trim(output)//"<IntegerList:"
-! 			ITEMI( "min=", this.min )
-! 			ITEMR( ",size=", this.size )
+! 			ITEMI( "min=", this%min )
+! 			ITEMR( ",size=", this%size )
 #undef RFMT
 #undef ITEMS
 #undef ITEMI
@@ -99,8 +99,8 @@ module IntegerList_
 ! 
 ! 			LINE("List")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -122,18 +122,18 @@ module IntegerList_
 		type(IntegerListIterator), pointer :: iter
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while ( associated(iter) )
-			write(unitEff,"(I15)") iter.data
+			write(unitEff,"(I15)") iter%data
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 	end subroutine toFStream
 	
@@ -141,11 +141,11 @@ module IntegerList_
 		type(IntegerList) :: mylist
 		class(IntegerListIterator), pointer :: iter
 		
-		iter => mylist.begin
+		iter => mylist%begin
 		do while( associated(iter) )
-			write(*,"(I2,A)", advance="no") iter.data, "  --> "
+			write(*,"(I2,A)", advance="no") iter%data, "  --> "
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		write(*,*)
 	end subroutine showMyList

@@ -56,9 +56,9 @@ program main
 	call get_command_argument( 1, sBuffer )
 	iFileName = sBuffer
 	
-	mol = Molecule( iFileName.fstr )
-	call mol.orient()
-	Im = mol.inertiaTensor()
+	mol = Molecule( iFileName%fstr )
+	call mol%orient()
+	Im = mol%inertiaTensor()
 	
-	write(*,"(3F20.5)") Im.get(1,1), Im.get(2,2), Im.get(2,2)
+	write(*,"(3F20.5)") Im%get(1,1), Im%get(2,2), Im%get(2,2)
 end program main

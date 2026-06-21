@@ -64,23 +64,23 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i" )
-	oFileName = parser.getString( "-o" )
-	dx = parser.getReal( "-dx", def=0.0_8 )
-	dy = parser.getReal( "-dy", def=0.0_8 )
+	iFileName = parser%getString( "-i" )
+	oFileName = parser%getString( "-o" )
+	dx = parser%getReal( "-dx", def=0.0_8 )
+	dy = parser%getReal( "-dy", def=0.0_8 )
 	
-	fileType = RNFunction_checkTypeN1DF( iFileName.fstr )
+	fileType = RNFunction_checkTypeN1DF( iFileName%fstr )
 	
 	if( fileType == 0 ) then
-		rFunc = RNFunction( iFileName.fstr )
-		call rFunc.translate( dx=dx, dy=dy )
-		call rFunc.save( oFileName.fstr )
+		rFunc = RNFunction( iFileName%fstr )
+		call rFunc%translate( dx=dx, dy=dy )
+		call rFunc%save( oFileName%fstr )
 	else if( fileType == 1 ) then
-		cFunc = CNFunction( iFileName.fstr )
-		call cFunc.translate( dx=dx, dy=dy )
-		call cFunc.save( oFileName.fstr )
+		cFunc = CNFunction( iFileName%fstr )
+		call cFunc%translate( dx=dx, dy=dy )
+		call cFunc%save( oFileName%fstr )
 	else
-		write(0,*) "### ERROR ### unknown type for "//trim(iFileName.fstr)
+		write(0,*) "### ERROR ### unknown type for "//trim(iFileName%fstr)
 		stop
 	end if
 	

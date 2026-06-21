@@ -54,7 +54,7 @@ program main
 	call get_command_argument( 1, sBuffer )
 	iFileName = sBuffer
 	
-	mol = Molecule( iFileName.fstr )
+	mol = Molecule( iFileName%fstr )
 	
-	write(*,"(A)") trim(mol.chemicalFormula())
+	write(*,"(A)") trim(mol%chemicalFormula())
 end program main

@@ -14,94 +14,94 @@ program test_CNFunction
 		complex(8), allocatable :: data(:)
 		integer :: i
 		
-		call xGrid.init( 1.0_8, 10.0_8, 100 )
+		call xGrid%init( 1.0_8, 10.0_8, 100 )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test from function
 		nFunc = CNFunction( xGrid, func=funcTest )
-		call assert_equal( nFunc.nPoints(), 100, "nFunc from func nPoints" )
-		call assert_equal_real( nFunc.x(1), 1.0_8, 1e-10_8, "nFunc from func x(1)" )
-		call assert_equal_real( nFunc.x(100), 10.0_8, 1e-10_8, "nFunc from func x(100)" )
-		call assert_equal_real( real(nFunc.at(1)), real(funcTest(1.0_8)), 1e-10_8, "nFunc from func at(1) real" )
-		call assert_equal_real( aimag(nFunc.at(1)), aimag(funcTest(1.0_8)), 1e-10_8, "nFunc from func at(1) imag" )
-		call nFunc.save( "salida1", format=BLKS_FORMAT )
+		call assert_equal( nFunc%nPoints(), 100, "nFunc from func nPoints" )
+		call assert_equal_real( nFunc%x(1), 1.0_8, 1e-10_8, "nFunc from func x(1)" )
+		call assert_equal_real( nFunc%x(100), 10.0_8, 1e-10_8, "nFunc from func x(100)" )
+		call assert_equal_real( real(nFunc%at(1)), real(funcTest(1.0_8)), 1e-10_8, "nFunc from func at(1) real" )
+		call assert_equal_real( aimag(nFunc%at(1)), aimag(funcTest(1.0_8)), 1e-10_8, "nFunc from func at(1) imag" )
+		call nFunc%save( "salida1", format=BLKS_FORMAT )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test for copy constructor
-		call nFunc2.copy( nFunc )
-		call assert_equal( nFunc2.nPoints(), 100, "nFunc2 copy nPoints" )
-		call assert_equal_real( real(nFunc2.at(50)), real(nFunc.at(50)), 1e-10_8, "nFunc2 copy at(50) real" )
-		call assert_equal_real( aimag(nFunc2.at(50)), aimag(nFunc.at(50)), 1e-10_8, "nFunc2 copy at(50) imag" )
+		call nFunc2%copy( nFunc )
+		call assert_equal( nFunc2%nPoints(), 100, "nFunc2 copy nPoints" )
+		call assert_equal_real( real(nFunc2%at(50)), real(nFunc%at(50)), 1e-10_8, "nFunc2 copy at(50) real" )
+		call assert_equal_real( aimag(nFunc2%at(50)), aimag(nFunc%at(50)), 1e-10_8, "nFunc2 copy at(50) imag" )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test from array
-		allocate( data(xGrid.nPoints) )
-		do i=1,xGrid.nPoints
-			data(i) = funcTest( xGrid.data(i) )
+		allocate( data(xGrid%nPoints) )
+		do i=1,xGrid%nPoints
+			data(i) = funcTest( xGrid%data(i) )
 		end do
 		
 		nFunc = CNFunction( xGrid, fArray=data )
-		call assert_equal( nFunc.nPoints(), 100, "nFunc from array nPoints" )
-		call assert_equal_real( real(nFunc.at(30)), real(data(30)), 1e-10_8, "nFunc from array at(30) real" )
-		call nFunc.save( "salida3", format=BLKS_FORMAT )
+		call assert_equal( nFunc%nPoints(), 100, "nFunc from array nPoints" )
+		call assert_equal_real( real(nFunc%at(30)), real(data(30)), 1e-10_8, "nFunc from array at(30) real" )
+		call nFunc%save( "salida3", format=BLKS_FORMAT )
 		deallocate( data )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Test from IFStream
-		call ifile.init( "data/formats/TWO_COLUMNS" )
+		call ifile%init( "data/formats/TWO_COLUMNS" )
 		nFunc = CNFunction( ifile, columns=[1,2] )
-		call assert_equal( nFunc.nPoints(), 190, "nFunc from IFStream nPoints" )
-		call assert_equal_real( nFunc.x(1), 1.0_8, 1e-10_8, "nFunc from IFStream x(1)" )
-		call ifile.close()
-		call nFunc.save( "salidaF0", format=BLKS_FORMAT )
+		call assert_equal( nFunc%nPoints(), 190, "nFunc from IFStream nPoints" )
+		call assert_equal_real( nFunc%x(1), 1.0_8, 1e-10_8, "nFunc from IFStream x(1)" )
+		call ifile%close()
+		call nFunc%save( "salidaF0", format=BLKS_FORMAT )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! TESTING RESIZE
-		call xGrid.init( 1.0_8, 10.0_8, 10 )
+		call xGrid%init( 1.0_8, 10.0_8, 10 )
 		nFunc = CNFunction( xGrid, func=funcTest )
 		
 		! Testing resize grid 5, dir = -1
-		call nFunc.resize( 5, -1 )
-		call assert_equal( nFunc.nPoints(), 15, "nFunc resize(5,-1) nPoints" )
-		call assert_equal_real( nFunc.x(1), -4.0_8, 1e-10_8, "nFunc resize(5,-1) x(1)" )
-		call assert_equal_real( real(nFunc.at(6)), 0.45603_8, 1e-5_8, "nFunc resize(5,-1) at(6) real" )
-		call assert_equal_real( aimag(nFunc.at(6)), 0.54030_8, 1e-5_8, "nFunc resize(5,-1) at(6) imag" )
+		call nFunc%resize( 5, -1 )
+		call assert_equal( nFunc%nPoints(), 15, "nFunc resize(5,-1) nPoints" )
+		call assert_equal_real( nFunc%x(1), -4.0_8, 1e-10_8, "nFunc resize(5,-1) x(1)" )
+		call assert_equal_real( real(nFunc%at(6)), 0.45603_8, 1e-5_8, "nFunc resize(5,-1) at(6) real" )
+		call assert_equal_real( aimag(nFunc%at(6)), 0.54030_8, 1e-5_8, "nFunc resize(5,-1) at(6) imag" )
 		
 		! Testing resize grid -5, dir = -1
-		call nFunc.resize( -5, -1 )
-		call assert_equal( nFunc.nPoints(), 10, "nFunc resize(-5,-1) nPoints" )
-		call assert_equal_real( nFunc.x(1), 1.0_8, 1e-10_8, "nFunc resize(-5,-1) x(1)" )
+		call nFunc%resize( -5, -1 )
+		call assert_equal( nFunc%nPoints(), 10, "nFunc resize(-5,-1) nPoints" )
+		call assert_equal_real( nFunc%x(1), 1.0_8, 1e-10_8, "nFunc resize(-5,-1) x(1)" )
 		
-		call xGrid.init( 1.0_8, 10.0_8, 10 )
+		call xGrid%init( 1.0_8, 10.0_8, 10 )
 		nFunc = CNFunction( xGrid, func=funcTest )
 		
 		! Testing resize grid 5, dir = 0
-		call nFunc.resize( 5, 0 )
-		call assert_equal( nFunc.nPoints(), 20, "nFunc resize(5,0) nPoints" )
-		call assert_equal_real( nFunc.x(1), -4.0_8, 1e-10_8, "nFunc resize(5,0) x(1)" )
-		call assert_equal_real( nFunc.x(20), 15.0_8, 1e-10_8, "nFunc resize(5,0) x(20)" )
+		call nFunc%resize( 5, 0 )
+		call assert_equal( nFunc%nPoints(), 20, "nFunc resize(5,0) nPoints" )
+		call assert_equal_real( nFunc%x(1), -4.0_8, 1e-10_8, "nFunc resize(5,0) x(1)" )
+		call assert_equal_real( nFunc%x(20), 15.0_8, 1e-10_8, "nFunc resize(5,0) x(20)" )
 		
 		! Testing resize grid -5, dir = 0
-		call nFunc.resize( -5, 0 )
-		call assert_equal( nFunc.nPoints(), 10, "nFunc resize(-5,0) nPoints" )
-		call assert_equal_real( nFunc.x(1), 1.0_8, 1e-10_8, "nFunc resize(-5,0) x(1)" )
+		call nFunc%resize( -5, 0 )
+		call assert_equal( nFunc%nPoints(), 10, "nFunc resize(-5,0) nPoints" )
+		call assert_equal_real( nFunc%x(1), 1.0_8, 1e-10_8, "nFunc resize(-5,0) x(1)" )
 		
 		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		! Testing interpolation
-		call xGrid.init( 1.0_8, 10.0_8, 1000 )
+		call xGrid%init( 1.0_8, 10.0_8, 1000 )
 		nFunc = CNFunction( xGrid, func=funcTest )
-		call nFunc.save( "salidaFuncExact.dat" )
+		call nFunc%save( "salidaFuncExact.dat" )
 		
-		call xGrid.init( 1.0_8, 10.0_8, 21 )
+		call xGrid%init( 1.0_8, 10.0_8, 21 )
 		nFunc = CNFunction( xGrid, func=funcTest )
-		call nFunc.save( "salidaFunc.dat" )
+		call nFunc%save( "salidaFunc.dat" )
 		
-		call xGrid2.init( -2.0_8, 13.0_8, 41 )
-		nFunc2 = nFunc.interpolate( xGrid2 )
-		call assert_equal( nFunc2.nPoints(), 41, "Interpolation nPoints" )
-		call assert_equal_real( nFunc2.x(1), -2.0_8, 1e-10_8, "Interpolation x(1)" )
-		call assert_equal_real( nFunc2.x(41), 13.0_8, 1e-10_8, "Interpolation x(41)" )
-		call nFunc2.save( "salidaFunc2.dat" )
+		call xGrid2%init( -2.0_8, 13.0_8, 41 )
+		nFunc2 = nFunc%interpolate( xGrid2 )
+		call assert_equal( nFunc2%nPoints(), 41, "Interpolation nPoints" )
+		call assert_equal_real( nFunc2%x(1), -2.0_8, 1e-10_8, "Interpolation x(1)" )
+		call assert_equal_real( nFunc2%x(41), 13.0_8, 1e-10_8, "Interpolation x(41)" )
+		call nFunc2%save( "salidaFunc2.dat" )
 		
 		write(*,*) "All CNFunction tests PASSED"
 
@@ -131,16 +131,16 @@ program test_CNFunction
     ! 		character(255) :: date
     ! 		
     ! 		effUnit = IO_STDOUT
-    ! 		if( present(ofile) ) effUnit = ofile.unit
+    ! 		if( present(ofile) ) effUnit = ofile%unit
     ! 		
     ! 		effUnits = [1.0_8, 1.0_8]
     ! 		if( present(units) ) effUnits = units
     ! 		
-    ! 		effIXRange = [1,this.nPoints()]
+    ! 		effIXRange = [1,this%nPoints()]
     ! 		if( present(xrange) ) then
     ! 			effIXRange = [ &
-    ! 				floor( 1.0000001*(xrange(1)-this.xGrid.min)/this.xGrid.stepSize+1.0 ), &
-    ! 				floor( 1.0000001*(xrange(2)-this.xGrid.min)/this.xGrid.stepSize+1.0 ) ]
+    ! 				floor( 1.0000001*(xrange(1)-this%xGrid%min)/this%xGrid%stepSize+1.0 ), &
+    ! 				floor( 1.0000001*(xrange(2)-this%xGrid%min)/this%xGrid%stepSize+1.0 ) ]
     ! 		else if( present(ixrange) ) then
     ! 			effIXRange = ixrange
     ! 		end if
@@ -157,12 +157,12 @@ program test_CNFunction
     ! 		write(effUnit,"(A)") "# "//trim(date)
     ! 		
     ! 		do i=effIXRange(1),effIXRange(2),invResolution
-    ! 			if( abs(this.fArray( i )) > 1d-98 ) then
-    ! 				write(effUnit,"(A,E15.7,2E15.7)") trim(effBeforeLine), this.xGrid.data(i)/effUnits(1), &
-    ! 					real(this.fArray( i ))/effUnits(2), &
-    ! 					aimag(this.fArray( i ))/effUnits(2)
+    ! 			if( abs(this%fArray( i )) > 1d-98 ) then
+    ! 				write(effUnit,"(A,E15.7,2E15.7)") trim(effBeforeLine), this%xGrid%data(i)/effUnits(1), &
+    ! 					real(this%fArray( i ))/effUnits(2), &
+    ! 					aimag(this%fArray( i ))/effUnits(2)
     ! 			else
-    ! 				write(effUnit,"(A,E15.7,2E15.7)") trim(effBeforeLine), this.xGrid.data(i)/effUnits(1), 0.0_8, 0.0_8
+    ! 				write(effUnit,"(A,E15.7,2E15.7)") trim(effBeforeLine), this%xGrid%data(i)/effUnits(1), 0.0_8, 0.0_8
     ! 			end if
     ! 		end do
     ! 		

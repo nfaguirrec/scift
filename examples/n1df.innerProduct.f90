@@ -81,9 +81,9 @@ program main
 		rFuncA = RNFunction( fileNameA )
 		rFuncB = RNFunction( fileNameB )
 		
-		rFuncB = rFuncB.interpolate( rFuncA.xGrid )
+		rFuncB = rFuncB%interpolate( rFuncA%xGrid )
 		
-		rOverlap = rFuncA.innerProduct( rFuncB )
+		rOverlap = rFuncA%innerProduct( rFuncB )
 		
 		write(*,*) rOverlap
 		
@@ -92,9 +92,9 @@ program main
 		cFuncA = CNFunction( fileNameA )
 		cFuncB = CNFunction( fileNameB )
 		
-		cFuncB = cFuncB.interpolate( cFuncA.xGrid )
+		cFuncB = cFuncB%interpolate( cFuncA%xGrid )
 		
-		cOverlap = cFuncA.innerProduct( cFuncB )
+		cOverlap = cFuncA%innerProduct( cFuncB )
 		
 		if( norm ) then
 			write(*,*) abs( cOverlap )

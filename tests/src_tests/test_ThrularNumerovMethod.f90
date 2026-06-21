@@ -9,12 +9,12 @@ program test_ThrularNumerovMethod
 		type(RNFunction) :: potential
 		type(ThrularNumerovMethod) :: solver
 		
-		call rGrid.init( 1.0_8, 30.0_8, 1000 )
+		call rGrid%init( 1.0_8, 30.0_8, 1000 )
 		
 		potential = RNFunction( rGrid, funcTest )
 		
-		call solver.init( potential, rMass=5.0_8 )
-		call solver.run()
+		call solver%init( potential, rMass=5.0_8 )
+		call solver%run()
 		
 		call assert_equal( solver%nStates, 7, "ThrularNumerovMethod_test: nStates" )
 		call assert_equal_real( solver%rMass, 5.0_8, 1e-12_8, "ThrularNumerovMethod_test: rMass" )

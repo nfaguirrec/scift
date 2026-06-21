@@ -69,11 +69,11 @@ program main
 	! -c
 	! -t
 	!-----------------------------------------------------------------
-	iFileName = parser.getString( "-i" )
-	oFileName = parser.getString( "-o" )
+	iFileName = parser%getString( "-i" )
+	oFileName = parser%getString( "-o" )
 	
-	strBuffer = parser.getString( "-c", def="1,2,3" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-c", def="1,2,3" )
+	call strBuffer%split( tokens, "," )
 	
 	if( size(tokens) == 3 ) then
 		allocate( columns(3) )
@@ -86,19 +86,19 @@ program main
 		stop
 	end if
 	
-	filterName = parser.getString( "-t", def="LOW_PASS" ) ! HIGH_PASS, BAND_PASS
+	filterName = parser%getString( "-t", def="LOW_PASS" ) ! HIGH_PASS, BAND_PASS
 	
-	select case( trim(filterName.fstr) )
+	select case( trim(filterName%fstr) )
 		case( "LOW_PASS" )
-			frequencyCutoff = parser.getReal( "-f" )
+			frequencyCutoff = parser%getReal( "-f" )
 		case( "HIGH_PASS" )
-			frequencyCutoff = parser.getReal( "-f" )
+			frequencyCutoff = parser%getReal( "-f" )
 		case( "BAND_PASS" )
-			frequencyCutoffL = parser.getReal( "-fL" )
-			frequencyCutoffH = parser.getReal( "-fH" )
+			frequencyCutoffL = parser%getReal( "-fL" )
+			frequencyCutoffH = parser%getReal( "-fH" )
 		case( "BAND_STOP" )
-			frequencyCutoffL = parser.getReal( "-fL" )
-			frequencyCutoffH = parser.getReal( "-fH" )
+			frequencyCutoffL = parser%getReal( "-fL" )
+			frequencyCutoffH = parser%getReal( "-fH" )
 		case default
 			write(*,*) "### ERROR ### Bad value for parameter -t ( LOW_PASS | HIGH_PASS | BAND_PASS | BAND_STOP )"
 			stop
@@ -109,9 +109,9 @@ program main
 ! 	! Type of method
 ! 	! -m
 ! 	!-----------------------------------------------------------------
-! 	typeOfMethod = parser.getString( "-m", def="FFT" )
+! 	typeOfMethod = parser%getString( "-m", def="FFT" )
 ! 
-! 	select case( trim(typeOfMethod.fstr) )
+! 	select case( trim(typeOfMethod%fstr) )
 ! 		case( "FFT" )
 ! 			idTypeOfMethod = FourierTransform_FFT_METHOD
 ! 		case( "NUMERICAL" )
@@ -119,26 +119,26 @@ program main
 ! 	end select
 ! 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
-	call ifile.init( iFileName.fstr )
+	call ifile%init( iFileName%fstr )
 	nFunc = CNFunction( ifile, columns=columns )
-	call ifile.close()
+	call ifile%close()
 	
 	FnFunc = FourierTransform_fft( nFunc, sgn=FourierTransform_FORWARD )
 	
-	select case( trim(filterName.fstr) )
+	select case( trim(filterName%fstr) )
 		case( "LOW_PASS" )
-			FnFunc.fArray = merge( FnFunc.fArray, FnFunc.fArray*0.0_8, FnFunc.xGrid.data > frequencyCutoff )
+			FnFunc%fArray = merge( FnFunc%fArray, FnFunc%fArray*0.0_8, FnFunc%xGrid%data > frequencyCutoff )
 		case( "HIGH_PASS" )
-			FnFunc.fArray = merge( FnFunc.fArray, FnFunc.fArray*0.0_8, FnFunc.xGrid.data < frequencyCutoff )
+			FnFunc%fArray = merge( FnFunc%fArray, FnFunc%fArray*0.0_8, FnFunc%xGrid%data < frequencyCutoff )
 		case( "BAND_PASS" )
-			FnFunc.fArray = merge( FnFunc.fArray, FnFunc.fArray*0.0_8, FnFunc.xGrid.data > frequencyCutoffL .and. FnFunc.xGrid.data < frequencyCutoffH )
+			FnFunc%fArray = merge( FnFunc%fArray, FnFunc%fArray*0.0_8, FnFunc%xGrid%data > frequencyCutoffL .and. FnFunc%xGrid%data < frequencyCutoffH )
 		case( "BAND_STOP" )
-			FnFunc.fArray = merge( FnFunc.fArray, FnFunc.fArray*0.0_8, FnFunc.xGrid.data < frequencyCutoffL .or. FnFunc.xGrid.data > frequencyCutoffH )
+			FnFunc%fArray = merge( FnFunc%fArray, FnFunc%fArray*0.0_8, FnFunc%xGrid%data < frequencyCutoffL .or. FnFunc%xGrid%data > frequencyCutoffH )
 	end select
 	
 	nFunc = FourierTransform_fft( FnFunc, sgn=FourierTransform_FORWARD )
 	
-	call nFunc.save( oFileName.fstr )
+	call nFunc%save( oFileName%fstr )
 	
 	deallocate( columns )
 	

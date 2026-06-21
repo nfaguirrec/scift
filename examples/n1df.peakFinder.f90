@@ -73,29 +73,29 @@ program main
 			stop
 	end if
 	
-	method = parser.getInteger( "-m", def=0 )
-	windowSize = parser.getInteger( "-w", def=10 )
-	tolerance = parser.getReal( "-t", def=0.2_8 )
-	bandwidth = parser.getInteger( "-bw", def=5 )
-	test = parser.getLogical( "-test", def=.false. )
+	method = parser%getInteger( "-m", def=0 )
+	windowSize = parser%getInteger( "-w", def=10 )
+	tolerance = parser%getReal( "-t", def=0.2_8 )
+	bandwidth = parser%getInteger( "-bw", def=5 )
+	test = parser%getLogical( "-test", def=.false. )
 	
 	if( test ) then
 		nFunc = NPeakFinder_generateSignal( 0.0_8, 100.0_8, 0.1_8, 10, 0.1_8, 50.0_8, 0.1_8, 1.0_8 )
-		call nFunc.save()
+		call nFunc%save()
 	else
-		iFileName = parser.getString( "-i" )
-		oFileName = parser.getString( "-o" )
+		iFileName = parser%getString( "-i" )
+		oFileName = parser%getString( "-o" )
 		
-		strBuffer = parser.getString( "-c", def="1,2" )
-		call strBuffer.split( tokens, "," )
+		strBuffer = parser%getString( "-c", def="1,2" )
+		call strBuffer%split( tokens, "," )
 		columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 		
-		call iFile.init( iFileName.fstr )
+		call iFile%init( iFileName%fstr )
 		nFunc = RNFunction( iFile, columns=columns )
-		call iFile.close()
+		call iFile%close()
 	end if
 	
-	call pFinder.init( nFunc, method, windowSize, tolerance, bandwidth )
-	peaks = pFinder.execute()
-	call peaks.save( trim(oFileName.fstr) )
+	call pFinder%init( nFunc, method, windowSize, tolerance, bandwidth )
+	peaks = pFinder%execute()
+	call peaks%save( trim(oFileName%fstr) )
 end program main

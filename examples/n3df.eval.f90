@@ -70,36 +70,36 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i" )
+	iFileName = parser%getString( "-i" )
 	
-! 	write(0,"(A)",advance="no") "Reading file "//trim(iFileName.fstr)//" ... "
+! 	write(0,"(A)",advance="no") "Reading file "//trim(iFileName%fstr)//" ... "
 	
-! 	fileType = cNFunc.checkTypeN3DF( iFileName.fstr )
+! 	fileType = cNFunc%checkTypeN3DF( iFileName%fstr )
 	fileType = 0
 	
 ! 	if( fileType == 0 ) then
-		call rNFunc.init( iFileName.fstr )
+		call rNFunc%init( iFileName%fstr )
 ! 	else if( fileType == 1 ) then
-! 		call cNFunc.init( iFileName.fstr )
+! 		call cNFunc%init( iFileName%fstr )
 ! 	else
-! 		write(0,*) "### ERROR ### unknown format for "//trim(iFileName.fstr)
+! 		write(0,*) "### ERROR ### unknown format for "//trim(iFileName%fstr)
 ! 		stop
 ! 	end if
 		
 ! 	write(0,"(A)") "OK"
 	
-	describe = parser.getLogical( "-s", def=.false. )
+	describe = parser%getLogical( "-s", def=.false. )
 	if( describe ) then
 		if( fileType == 0 ) then
-			write(*,*) "min  = ", rNFunc.min()
-			write(*,*) "max  = ", rNFunc.max()
-			write(*,*) "step = ", rNFunc.stepSize()
+			write(*,*) "min  = ", rNFunc%min()
+			write(*,*) "max  = ", rNFunc%max()
+			write(*,*) "step = ", rNFunc%stepSize()
 		else if( fileType == 1 ) then
-			write(*,*) "min  = ", cNFunc.min()
-			write(*,*) "max  = ", cNFunc.max()
-			write(*,*) "step = ", cNFunc.stepSize()
+			write(*,*) "min  = ", cNFunc%min()
+			write(*,*) "max  = ", cNFunc%max()
+			write(*,*) "step = ", cNFunc%stepSize()
 		else
-			write(0,*) "### ERROR ### unknown format for "//trim(iFileName.fstr)
+			write(0,*) "### ERROR ### unknown format for "//trim(iFileName%fstr)
 			stop
 		end if
 		
@@ -112,48 +112,48 @@ program main
 ! 		write(0,"(A)") "Type = COMPLEX"
 ! 	end if
 	
-! 	strBuffer = parser.getString( "-prop", def="@@NONE@@" )
-! 	if( strBuffer.fstr == "@@NONE@@" ) then
+! 	strBuffer = parser%getString( "-prop", def="@@NONE@@" )
+! 	if( strBuffer%fstr == "@@NONE@@" ) then
 ! 		write(*,"(A40,3F15.5,A)") &
-! 			"min = ( ", cNFunc.xyzGrid.min(1), cNFunc.xyzGrid.min(2), cNFunc.xyzGrid.min(3), " ) A"
+! 			"min = ( ", cNFunc%xyzGrid%min(1), cNFunc%xyzGrid%min(2), cNFunc%xyzGrid%min(3), " ) A"
 ! 		write(*,"(A40,3F15.5,A)") &
-! 			"max = ( ", cNFunc.xyzGrid.max(1), cNFunc.xyzGrid.max(2), cNFunc.xyzGrid.max(3), " ) A"
+! 			"max = ( ", cNFunc%xyzGrid%max(1), cNFunc%xyzGrid%max(2), cNFunc%xyzGrid%max(3), " ) A"
 ! 		write(*,"(A40,3I15,A)") &
-! 			"size = ( ", cNFunc.xyzGrid.size(1), cNFunc.xyzGrid.size(2), cNFunc.xyzGrid.size(3), " ) A"
+! 			"size = ( ", cNFunc%xyzGrid%size(1), cNFunc%xyzGrid%size(2), cNFunc%xyzGrid%size(3), " ) A"
 ! 		write(*,"(A40,3F15.5,A)") &
-! 			"stepSize = ( ", cNFunc.xyzGrid.stepSize(1), cNFunc.xyzGrid.stepSize(2), cNFunc.xyzGrid.stepSize(3), " ) A"
+! 			"stepSize = ( ", cNFunc%xyzGrid%stepSize(1), cNFunc%xyzGrid%stepSize(2), cNFunc%xyzGrid%stepSize(3), " ) A"
 ! 		stop
 ! 	end if
 	
-	strBuffer = parser.getString( "-xyz", def="@@NONE@@" )
-	if( strBuffer.fstr /= "@@NONE@@" ) then
+	strBuffer = parser%getString( "-xyz", def="@@NONE@@" )
+	if( strBuffer%fstr /= "@@NONE@@" ) then
 ! 		write(0,"(A)") "RUN = point interpolation"
 		
-		call strBuffer.split( tokens, "," )
+		call strBuffer%split( tokens, "," )
 		xyz = [ FString_toReal(tokens(1)), FString_toReal(tokens(2)), FString_toReal(tokens(3)) ]
 		deallocate( tokens )
 		
 ! 		write(0,"(A,3F10.5)") "POINT = ", xyz
 		
 		if( fileType == 0 ) then
-			write(*,"(2E15.5)") rNFunc.interpolate( xyz(1), xyz(2), xyz(3) )
+			write(*,"(2E15.5)") rNFunc%interpolate( xyz(1), xyz(2), xyz(3) )
 		else if( fileType == 1 ) then
-			write(*,"(2E15.5)") cNFunc.interpolate( xyz(1), xyz(2), xyz(3) )
+			write(*,"(2E15.5)") cNFunc%interpolate( xyz(1), xyz(2), xyz(3) )
 		end if
 		
 		stop
 	end if
 	
-	strBuffer = parser.getString( "-line", def="@@NONE@@" )
+	strBuffer = parser%getString( "-line", def="@@NONE@@" )
 	if( strBuffer /= "@@NONE@@" ) then
 ! 		write(0,"(A)") "RUN = line interpolation"
 		
-		call strBuffer.split( tokens, "," )
+		call strBuffer%split( tokens, "," )
 		point = [ FString_toReal(tokens(1)), FString_toReal(tokens(2)) ]
 		dir = FString_toInteger(tokens(3))
 		deallocate( tokens )
 		
-		smooth = parser.getInteger( "-smooth", def=1 )
+		smooth = parser%getInteger( "-smooth", def=1 )
 		
 ! 		write(0,"(A,I5)") "SMOOTH = ", smooth
 ! 		write(0,"(A,2F10.5)") "LINE = ", point
@@ -161,23 +161,23 @@ program main
 		
 		if( fileType == 0 ) then
 			if( smooth /= 1 ) then
-				minDir = rNFunc.xyzGrid.component(dir).at( 2 )
-				maxDir = rNFunc.xyzGrid.component(dir).at( rNFunc.size(dir)-2 )
-				stepSizeDir = rNFunc.xyzGrid.stepSize(dir)/real(smooth,8)
+				minDir = rNFunc%xyzGrid%component(dir)%at( 2 )
+				maxDir = rNFunc%xyzGrid%component(dir)%at( rNFunc%size(dir)-2 )
+				stepSizeDir = rNFunc%xyzGrid%stepSize(dir)/real(smooth,8)
 			else
-				minDir = rNFunc.xyzGrid.component(dir).at( 1 )
-				maxDir = rNFunc.xyzGrid.component(dir).at( rNFunc.size(dir) )
-				stepSizeDir = rNFunc.xyzGrid.stepSize(dir)
+				minDir = rNFunc%xyzGrid%component(dir)%at( 1 )
+				maxDir = rNFunc%xyzGrid%component(dir)%at( rNFunc%size(dir) )
+				stepSizeDir = rNFunc%xyzGrid%stepSize(dir)
 			end if
 		else if( fileType == 1 ) then
 			if( smooth /= 1 ) then
-				minDir = cNFunc.xyzGrid.component(dir).at( 2 )
-				maxDir = cNFunc.xyzGrid.component(dir).at( cNFunc.size(dir)-2 )
-				stepSizeDir = cNFunc.xyzGrid.stepSize(dir)/real(smooth,8)
+				minDir = cNFunc%xyzGrid%component(dir)%at( 2 )
+				maxDir = cNFunc%xyzGrid%component(dir)%at( cNFunc%size(dir)-2 )
+				stepSizeDir = cNFunc%xyzGrid%stepSize(dir)/real(smooth,8)
 			else
-				minDir = cNFunc.xyzGrid.component(dir).at( 1 )
-				maxDir = cNFunc.xyzGrid.component(dir).at( cNFunc.size(dir) )
-				stepSizeDir = cNFunc.xyzGrid.stepSize(dir)
+				minDir = cNFunc%xyzGrid%component(dir)%at( 1 )
+				maxDir = cNFunc%xyzGrid%component(dir)%at( cNFunc%size(dir) )
+				stepSizeDir = cNFunc%xyzGrid%stepSize(dir)
 			end if
 		end if
 		
@@ -189,9 +189,9 @@ program main
 		do while( valDir <= maxDir )
 			if( fileType == 0 ) then
 				if( smooth /= 1 ) then
-					rValue = rNFunc.interpolate( point(1), point(2), valDir )
+					rValue = rNFunc%interpolate( point(1), point(2), valDir )
 				else
-					rValue = rNFunc.evaluateXYZ( point(1), point(2), valDir )
+					rValue = rNFunc%evaluateXYZ( point(1), point(2), valDir )
 				end if
 				
 				if( abs(rValue) > 1d-16 ) then
@@ -204,9 +204,9 @@ program main
 				ssum = ssum  + rValue**2
 			else if( fileType == 1 ) then
 				if( smooth /= 1 ) then
-					cValue = cNFunc.interpolate( point(1), point(2), valDir )
+					cValue = cNFunc%interpolate( point(1), point(2), valDir )
 				else
-					cValue = cNFunc.evaluateXYZ( point(1), point(2), valDir )
+					cValue = cNFunc%evaluateXYZ( point(1), point(2), valDir )
 				end if
 				
 				if( abs(cValue) > 1d-16 ) then

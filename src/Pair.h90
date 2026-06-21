@@ -36,10 +36,14 @@
 
 #ifndef PAIR_H90
 #define PAIR_H90 1
-	
 	type, public :: Pair
+#ifdef SwapPairLayout
+		__TYPE_ITEMSECOND__ :: second
+		__TYPE_ITEMFIRST__ :: first
+#else
 		__TYPE_ITEMFIRST__ :: first
 		__TYPE_ITEMSECOND__ :: second
+#endif
 		
 		__ADD_ATTRIBUTES__
 		
@@ -72,19 +76,19 @@
 		__TYPE_ITEMFIRST__ :: first
 		__TYPE_ITEMSECOND__ :: second
 		
-		this.first = first
-		this.second = second
+		this%first = first
+		this%second = second
 	end subroutine initDefault
 	
 	!>
 	!! @brief Copy constructor
 	!!
 	subroutine copyPair( this, other )
-		class(Pair), intent(out) :: this
+		class(Pair), intent(inout) :: this
 		type(Pair), intent(in) :: other
 		
-		this.first = other.first
-		this.second = other.second
+		this%first = other%first
+		this%second = other%second
 	end subroutine copyPair
 	
 	!>
@@ -96,7 +100,7 @@
 		logical :: output
 		
 		output = .false.
-		if( this.first == other.first .and. this.second == other.second ) then
+		if( this%first == other%first .and. this%second == other%second ) then
 			output = .true.
 		end if
 	end function equal

@@ -41,9 +41,9 @@ module String_
 	
 	character(1), public, parameter :: ENDL = achar(10)
 	! @todo Toca 100 porque en algunos casos len(FString_NULL) cambia al llamarla desde diferentes funciones y cuando cambia, cambia a 100
-	character(100), public, parameter :: FString_NULL = repeat(""C,100)
+	character(100), public, parameter :: FString_NULL = repeat(achar(0),100)
 
-! 	http://publib.boulder.ibm.com/infocenter/lnxpcomp/v9v111/index.jsp?topic=/com.ibm.xlf111.linux.doc/xlflr/generic_interface_blocks.htm
+! 	http://publib%boulder%ibm%com/infocenter/lnxpcomp/v9v111/index%jsp?topic=/com%ibm%xlf111%linux%doc/xlflr/generic_interface_blocks%htm
 ! module m
 !   type point
 !          character(20) label
@@ -218,8 +218,8 @@ module String_
 	subroutine initDefault( this )
 		class(String) :: this
 		
-		if( allocated(this.fstr) ) deallocate(this.fstr)
-		this.fstr = ""
+		if( allocated(this%fstr) ) deallocate(this%fstr)
+		this%fstr = ""
 	end subroutine initDefault
 	
 	!>
@@ -229,9 +229,9 @@ module String_
 		class(String), intent(out) :: this
 		character(*), intent(in) :: fstr
 		
-		if( allocated(this.fstr) ) deallocate(this.fstr)
-! 		this.fstr = adjustl(trim(fstr))
-		this.fstr = fstr
+		if( allocated(this%fstr) ) deallocate(this%fstr)
+! 		this%fstr = adjustl(trim(fstr))
+		this%fstr = fstr
 	end subroutine fromFString
 	
 	!>
@@ -241,8 +241,8 @@ module String_
 		class(String), intent(inout) :: this
 		type(String), intent(in) :: other
 		
-		if( allocated(this.fstr) ) deallocate(this.fstr)
-		this.fstr = other.fstr
+		if( allocated(this%fstr) ) deallocate(this%fstr)
+		this%fstr = other%fstr
 	end subroutine copy
 	
 	!>
@@ -251,7 +251,7 @@ module String_
 	subroutine destroy( this )
 		type(String) :: this
 		
-		if( allocated(this.fstr) ) deallocate(this.fstr)
+		if( allocated(this%fstr) ) deallocate(this%fstr)
 	end subroutine destroy
 	
 	!>
@@ -268,16 +268,16 @@ module String_
 		
 		output = trim(output)//"<String:"
 		
-		output = trim(output)//this.fstr
+		output = trim(output)//this%fstr
 		
 ! 		output = trim(output)//"min="
-! 		fmt = int(log10(this.min+1.0))+1
-! 		write(strBuffer, "(f<fmt+7>.6)") this.min
+! 		fmt = int(log10(this%min+1.0))+1
+! 		write(strBuffer, "(f<fmt+7>.6)") this%min
 ! 		output = trim(output)//trim(strBuffer)
 ! 		
 ! 		output = trim(output)//",size="
-! 		fmt = int(log10(float(this.size+1)))+1
-! 		write(strBuffer, "(i<fmt>)") this.size
+! 		fmt = int(log10(float(this%size+1)))+1
+! 		write(strBuffer, "(i<fmt>)") this%size
 ! 		output = trim(output)//trim(strBuffer)
 		
 		output = trim(output)//">"
@@ -298,7 +298,7 @@ module String_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -312,7 +312,7 @@ module String_
 ! 		integer, intent(out) :: iostat
 ! 		character(*), intent(inout) :: iomsg
 ! 
-! 		write(unit, *, iostat=iostat, iomsg=iomsg) trim(this.str())
+! 		write(unit, *, iostat=iostat, iomsg=iomsg) trim(this%str())
 ! 	end subroutine writeString
 	!>
 	!! @brief 
@@ -321,7 +321,7 @@ module String_
 		class(String), intent(in) :: this
 		logical :: output
 		
-		output = merge( .true., .false., len_trim(adjustl(this.fstr)) == 0 )
+		output = merge( .true., .false., len_trim(adjustl(this%fstr)) == 0 )
 	end function isEmpty
 	
 	!>
@@ -331,7 +331,7 @@ module String_
 		class(String), intent(in) :: this
 		integer :: output
 		
-		output = len_trim(this.fstr)
+		output = len_trim(this%fstr)
 	end function length
 	
 	!>
@@ -344,7 +344,7 @@ module String_
 		
 		character(:), allocatable :: buffer
 		
-		buffer = trim(this.fstr)
+		buffer = trim(this%fstr)
 		
 		output = buffer(pos:pos)
 	end function at	
@@ -357,7 +357,7 @@ module String_
 		class(String), intent(in) :: other
 		type(String) :: output
 		
-		output.fstr = this.fstr//other.fstr
+		output%fstr = this%fstr//other%fstr
 	end function add
 	
 	!>
@@ -368,7 +368,7 @@ module String_
 		character(*), intent(in) :: other
 		type(String) :: output
 		
-		output.fstr = this.fstr//other
+		output%fstr = this%fstr//other
 	end function addFStr
 	
 	!>
@@ -379,7 +379,7 @@ module String_
 		class(String), intent(in) :: other
 		logical :: output
 		
-		output = ( this.hashKey() < other.hashKey() )
+		output = ( this%hashKey() < other%hashKey() )
 	end function lt
 	
 	!>
@@ -390,7 +390,7 @@ module String_
 		class(String), intent(in) :: other
 		logical :: output
 		
-		output = ( this.hashKey() == other.hashKey() )
+		output = ( this%hashKey() == other%hashKey() )
 	end function eq
 	
 	!>
@@ -401,7 +401,7 @@ module String_
 		character(*), intent(in) :: other
 		logical :: output
 		
-		output = ( this.hashKey() == FString_hashKey(other) )
+		output = ( this%hashKey() == FString_hashKey(other) )
 	end function eqFStr
 	
 	!>
@@ -412,7 +412,7 @@ module String_
 		class(String), intent(in) :: other
 		logical :: output
 		
-		output = ( this.hashKey() /= other.hashKey() )
+		output = ( this%hashKey() /= other%hashKey() )
 	end function neq
 	
 	!>
@@ -423,7 +423,7 @@ module String_
 		character(*), intent(in) :: other
 		logical :: output
 		
-		output = ( this.hashKey() /= FString_hashKey(other) )
+		output = ( this%hashKey() /= FString_hashKey(other) )
 	end function neqFStr
 	
 	!>
@@ -434,7 +434,7 @@ module String_
 		character(*), allocatable, intent(out) :: tokens(:)
 		character(*), intent(in) :: delimiters
 		
-		call FString_split( this.fstr, tokens, delimiters )
+		call FString_split( this%fstr, tokens, delimiters )
 	end subroutine split
 	
 	!>
@@ -523,7 +523,7 @@ module String_
 		class(String), intent(in) :: this
 		logical :: output
 		
-		read( this.fstr, * ) output
+		read( this%fstr, * ) output
 	end function toLogical
 	
 	!>
@@ -532,8 +532,18 @@ module String_
 	function toInteger( this ) result( output )
 		class(String), intent(in) :: this
 		integer :: output
+		integer :: ios, ios2
+		real(8) :: temp_real
 		
-		read( this.fstr, * ) output
+		read( this%fstr, *, iostat=ios ) output
+		if ( ios /= 0 ) then
+			read( this%fstr, *, iostat=ios2 ) temp_real
+			if ( ios2 == 0 ) then
+				output = int( temp_real )
+			else
+				read( this%fstr, * ) output
+			end if
+		end if
 	end function toInteger
 	
 	!>
@@ -543,7 +553,7 @@ module String_
 		class(String), intent(in) :: this
 		real(8) :: output
 		
-		read( this.fstr, * ) output
+		read( this%fstr, * ) output
 	end function toReal
 	
 	!>
@@ -553,7 +563,7 @@ module String_
 		class(String), intent(in) :: this
 		complex(8) :: output
 		
-		read( this.fstr, * ) output
+		read( this%fstr, * ) output
 	end function toComplex
 	
 	!>
@@ -563,7 +573,7 @@ module String_
 	subroutine removeTabs( this )
 		class(String) :: this
 		
-		this = FString_removeTabs( this.fstr )
+		this = FString_removeTabs( this%fstr )
 	end subroutine removeTabs
 	
 	!>
@@ -582,8 +592,18 @@ module String_
 	function FString_toInteger( str ) result( output )
 		character(*), intent(in) :: str
 		integer :: output
+		integer :: ios, ios2
+		real(8) :: temp_real
 		
-		read( str, * ) output
+		read( str, *, iostat=ios ) output
+		if ( ios /= 0 ) then
+			read( str, *, iostat=ios2 ) temp_real
+			if ( ios2 == 0 ) then
+				output = int( temp_real )
+			else
+				read( str, * ) output
+			end if
+		end if
 	end function FString_toInteger
 	
 	!>
@@ -613,7 +633,7 @@ module String_
 		character(*), intent(in) :: str
 		type(String) :: output
 		
-		call output.fromFString( str )
+		call output%fromFString( str )
 	end function FString_toString
 	
 	!>
@@ -626,6 +646,8 @@ module String_
 		character(1000), allocatable :: tokens(:)
 		character(1000) :: strBuffer
 		integer :: i
+		integer :: ios, ios2
+		real(8) :: temp_real
 		
 		call FString_split( trim(adjustl(str)), tokens, "()[]" )
 		strBuffer = tokens(1)
@@ -635,7 +657,15 @@ module String_
 		allocate( output(size(tokens)) )
 		
 		do i=1,size(tokens)
-			read( tokens(i), * ) output(i)
+			read( tokens(i), *, iostat=ios ) output(i)
+			if ( ios /= 0 ) then
+				read( tokens(i), *, iostat=ios2 ) temp_real
+				if ( ios2 == 0 ) then
+					output(i) = int( temp_real )
+				else
+					read( tokens(i), * ) output(i)
+				end if
+			end if
 		end do
 		
 		deallocate(tokens)
@@ -681,7 +711,7 @@ module String_
 		type(String), intent(in) :: str
 		character(:), allocatable :: output
 		
-		output = str.fstr
+		output = str%fstr
 	end function FString_fromString
 	
 	!>
@@ -944,8 +974,8 @@ module String_
 ! 		logical, optional, intent(in) :: debug
 		integer :: output
 		
-! 		output = FString_hashKey( this.fstr, debug )
-		output = FString_hashKey( this.fstr )
+! 		output = FString_hashKey( this%fstr, debug )
+		output = FString_hashKey( this%fstr )
 	end function hashKey
 	
 	!>
@@ -956,7 +986,7 @@ module String_
 		class(String), intent(in) :: this
 		logical :: output
 		
-		output = FString_isInteger( this.fstr )
+		output = FString_isInteger( this%fstr )
 	end function isInteger
 	
 	!>
@@ -967,7 +997,7 @@ module String_
 		class(String), intent(in) :: this
 		logical :: output
 		
-		output = FString_isNumeric( this.fstr )
+		output = FString_isNumeric( this%fstr )
 	end function isNumeric
 	
 	!>
@@ -977,7 +1007,7 @@ module String_
 		class(String), intent(in) :: this
 		type(String) :: output
 		
-		output = FString_toUpper( this.fstr )
+		output = FString_toUpper( this%fstr )
 	end function toUpper
 	
 	!>
@@ -987,7 +1017,7 @@ module String_
 		class(String), intent(in) :: this
 		type(String) :: output
 		
-		output = FString_toLower( this.fstr )
+		output = FString_toLower( this%fstr )
 	end function toLower
 	
 	!>
@@ -1000,7 +1030,7 @@ module String_
 		logical, optional, intent(in) :: wholeWords
 		character(*), optional, intent(in) :: wordSeparators
 		
-		this = FString_replace( this.fstr, before, after, wholeWords, wordSeparators )
+		this = FString_replace( this%fstr, before, after, wholeWords, wordSeparators )
 	end subroutine replace
 	
 	!>
@@ -1013,7 +1043,7 @@ module String_
 		logical, optional, intent(in) :: wholeWords
 		character(*), optional, intent(in) :: wordSeparators
 		
-		this = FString_replaceByRealArr( this.fstr, varName, varValue, wholeWords, wordSeparators )
+		this = FString_replaceByRealArr( this%fstr, varName, varValue, wholeWords, wordSeparators )
 	end subroutine replaceByRealArr
 	
 	!>
@@ -1024,12 +1054,19 @@ module String_
 		type(String), optional :: extension
 		type(String) :: output
 		
-		output = FString_removeFileExtension( this.fstr, extension=extension.fstr )
+		character(:), allocatable :: tempExt
+		
+		if ( present(extension) ) then
+			output = FString_removeFileExtension( this%fstr, extension=tempExt )
+			extension = tempExt
+		else
+			output = FString_removeFileExtension( this%fstr )
+		end if
 	end function removeFileExtension
 	
 	!>
 	!! @brief 
-	!!   Taken from the java.lang.String hash function, it use 32 bits
+	!!   Taken from the java%lang%String hash function, it use 32 bits
 	!!
 ! 	function FString_hashKey( str, debug ) result( output )
 	function FString_hashKey( str ) result( output )
@@ -1172,7 +1209,7 @@ module String_
 		type(String), intent(in) :: str
 		logical :: output
 		
-		read( str.fstr, * ) output
+		read( str%fstr, * ) output
 	end function String_toLogical
 	
 	!>
@@ -1181,8 +1218,18 @@ module String_
 	function String_toInteger( str ) result( output )
 		type(String), intent(in) :: str
 		integer :: output
+		integer :: ios, ios2
+		real(8) :: temp_real
 		
-		read( str.fstr, * ) output
+		read( str%fstr, *, iostat=ios ) output
+		if ( ios /= 0 ) then
+			read( str%fstr, *, iostat=ios2 ) temp_real
+			if ( ios2 == 0 ) then
+				output = int( temp_real )
+			else
+				read( str%fstr, * ) output
+			end if
+		end if
 	end function String_toInteger
 	
 	!>
@@ -1192,7 +1239,7 @@ module String_
 		type(String), intent(in) :: str
 		real(8) :: output
 		
-		read( str.fstr, * ) output
+		read( str%fstr, * ) output
 	end function String_toReal
 	
 	!>
@@ -1202,7 +1249,7 @@ module String_
 		type(String), intent(in) :: str
 		complex(8) :: output
 		
-		read( str.fstr, * ) output
+		read( str%fstr, * ) output
 	end function String_toComplex
 	
 	!>
@@ -1213,7 +1260,7 @@ module String_
 		character(*), allocatable, intent(out) :: tokens(:)
 		character(*), intent(in) :: delimiters
 		
-		call FString_split( str.fstr, tokens, delimiters )
+		call FString_split( str%fstr, tokens, delimiters )
 	end subroutine String_split
 	
 end module String_

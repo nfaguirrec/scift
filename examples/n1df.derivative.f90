@@ -64,38 +64,38 @@ program main
 	integer :: smoothFactor
 	integer :: i
 	
-	iFileName = parser.getString( "-i" )
-	oFileName = parser.getString( "-o" )
+	iFileName = parser%getString( "-i" )
+	oFileName = parser%getString( "-o" )
 	
-	strBuffer = parser.getString( "-c", def="1,2" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-c", def="1,2" )
+	call strBuffer%split( tokens, "," )
 	columns = [ FString_toInteger(tokens(1)), FString_toInteger(tokens(2)) ]
 	
-	order = parser.getInteger( "-n", def=1 )
-	nPoints = parser.getInteger( "-p", def=5 )
-	smoothFactor = parser.getInteger( "-s", def=1 )
+	order = parser%getInteger( "-n", def=1 )
+	nPoints = parser%getInteger( "-p", def=5 )
+	smoothFactor = parser%getInteger( "-s", def=1 )
 	
-	call ifile.init( iFileName.fstr )
+	call ifile%init( iFileName%fstr )
 	nFunc = RNFunction( ifile, columns=columns )
-	call ifile.close()
+	call ifile%close()
 	
-	if( nFunc.xGrid.isEquallyspaced ) then
-		call derivator.init( nFunc, nPoints )
-		dnFunc = derivator.evaluate( order )
+	if( nFunc%xGrid%isEquallyspaced ) then
+		call derivator%init( nFunc, nPoints )
+		dnFunc = derivator%evaluate( order )
 	else
-		call nFuncSpline.init( nFunc )
-		nFuncSmooth = nFuncSpline.smooth( smoothFactor )
+		call nFuncSpline%init( nFunc )
+		nFuncSmooth = nFuncSpline%smooth( smoothFactor )
 		
-		call derivator.init( nFuncSmooth, nPoints )
-		dnFunc = derivator.evaluate( order )
+		call derivator%init( nFuncSmooth, nPoints )
+		dnFunc = derivator%evaluate( order )
 	end if
 	
-	call dnFunc.save( oFileName.fstr )
+	call dnFunc%save( oFileName%fstr )
 	
-! 	if( .not. nFunc.xGrid.isEquallyspaced ) then
+! 	if( .not. nFunc%xGrid%isEquallyspaced ) then
 ! 		write(*,*) ""
 ! 		write(*,*) ""
-! 		call nFuncSmooth.save( oFileName.fstr )
+! 		call nFuncSmooth%save( oFileName%fstr )
 ! 	end if
 	
 end program main

@@ -85,21 +85,21 @@ program main
 ! 	! -c
 ! 	! -n
 ! 	!-----------------------------------------------------------------
-! 	iFileName = parser.getString( "-i" )
-! 	oFileName = parser.getString( "-o" )
+! 	iFileName = parser%getString( "-i" )
+! 	oFileName = parser%getString( "-o" )
 ! 	
-! 	strBuffer = parser.getString( "-s", def="FORWARD" )
-! 	if( trim(strBuffer.fstr) == "FORWARD" ) then
+! 	strBuffer = parser%getString( "-s", def="FORWARD" )
+! 	if( trim(strBuffer%fstr) == "FORWARD" ) then
 ! 		fftSgn = FourierTransform_FORWARD
-! 	else if( trim(strBuffer.fstr) == "BACKWARD" ) then
+! 	else if( trim(strBuffer%fstr) == "BACKWARD" ) then
 ! 		fftSgn = FourierTransform_BACKWARD
 ! 	else
 ! 		write(*,*) "### ERROR ### Bad value for parameter -s (FORWARD|BACKWARD)"
 ! 		stop
 ! 	end if
 ! 	
-! 	strBuffer = parser.getString( "-c", def="1,2,3" )
-! 	call strBuffer.split( tokens, "," )
+! 	strBuffer = parser%getString( "-c", def="1,2,3" )
+! 	call strBuffer%split( tokens, "," )
 ! 	
 ! 	if( size(tokens) == 3 ) then
 ! 		allocate( columns(3) )
@@ -112,16 +112,16 @@ program main
 ! 		stop
 ! 	end if
 ! 	
-! 	nPoints = parser.getInteger( "-n", def=-1 )
+! 	nPoints = parser%getInteger( "-n", def=-1 )
 ! 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 	
 ! 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 	! Type of spectrum
 ! 	! -t
 ! 	!-----------------------------------------------------------------
-! 	typeOfSpectrum = parser.getString( "-t", def="NORM" )
+! 	typeOfSpectrum = parser%getString( "-t", def="NORM" )
 ! 
-! 	select case( trim(typeOfSpectrum.fstr) )
+! 	select case( trim(typeOfSpectrum%fstr) )
 ! 		case( "NORM" )
 ! 			idTypeOfSpectrum = FourierTransform_NORM_SPECTRUM
 ! 		case( "REALPART" )
@@ -139,9 +139,9 @@ program main
 ! 	! Type of method
 ! 	! -m
 ! 	!-----------------------------------------------------------------
-! 	typeOfMethod = parser.getString( "-m", def="FFT" )
+! 	typeOfMethod = parser%getString( "-m", def="FFT" )
 ! 
-! 	select case( trim(typeOfMethod.fstr) )
+! 	select case( trim(typeOfMethod%fstr) )
 ! 		case( "FFT" )
 ! 			idTypeOfMethod = FourierTransform_FFT_METHOD
 ! 		case( "NUMERICAL" )
@@ -153,30 +153,30 @@ program main
 ! 	! Window parameters
 ! 	! -m
 ! 	!-----------------------------------------------------------------
-! 	sigma = parser.getReal( "-s", def=0.1_8 )
-! 	freq = parser.getInteger( "-f", def=1 )
-! 	resolution = parser.getReal( "-r", def=1.0_8 )
+! 	sigma = parser%getReal( "-s", def=0.1_8 )
+! 	freq = parser%getInteger( "-f", def=1 )
+! 	resolution = parser%getReal( "-r", def=1.0_8 )
 ! 	
 ! 	isXRange = .false.
-! 	strBuffer = parser.getString( "-x", def="" )
-! 	call strBuffer.split( tokens, "," )
+! 	strBuffer = parser%getString( "-x", def="" )
+! 	call strBuffer%split( tokens, "," )
 ! 	if( size(tokens) == 2 ) then
 ! 		isXRange = .true.
 ! 		xrange = [ FString_toReal(tokens(1)), FString_toReal(tokens(2)) ]
 ! 	end if
 ! 	!----------------------------------------------------------------------	
 ! 	
-! ! 	dirName = this.cFunction(keyFunc).tFile.removeFileExtension( ext )
+! ! 	dirName = this%cFunction(keyFunc)%tFile%removeFileExtension( ext )
 ! 	dirName = "gabor"
-! 	inquire( directory=dirName.fstr, exist=exist, iostat=status )
+! 	inquire( directory=dirName%fstr, exist=exist, iostat=status )
 ! 	
-! 	if( status > 0 ) call GOptions_error( "Problems with directory "//trim(dirName.fstr), "n1df.gabor.main()" )
-! 	if( .not. exist ) ok = makedirqq( trim(dirName.fstr) )
+! 	if( status > 0 ) call GOptions_error( "Problems with directory "//trim(dirName%fstr), "n1df.gabor.main()" )
+! 	if( .not. exist ) ok = makedirqq( trim(dirName%fstr) )
 ! 	
 ! 	n = 1
-! 	t = cFunc.xGrid.min!+3.0_8*sigma
-! 	do while( t <= cFunc.xGrid.max )!-3.0_8*sigma )
-! 		call nFuncWindow.fromFunction( cFunc.xGrid, window )
+! 	t = cFunc%xGrid%min!+3.0_8*sigma
+! 	do while( t <= cFunc%xGrid%max )!-3.0_8*sigma )
+! 		call nFuncWindow%fromFunction( cFunc%xGrid, window )
 ! 		
 ! 		nFunc = nFuncWindow*cFunc
 ! ! 		spectrum = FourierTransform_spectrum( nFunc, sgn=fftSgn, ixrange=[1,nPoints] )
@@ -186,21 +186,23 @@ program main
 ! 		
 ! ! 		write(*,*) "### Error ### Code is not available yet"
 ! ! 		if( isXRange ) then
-! ! 			call spectrum.saveDAT( append=.true., xrange=xrange, beforeLine=FString_fromReal( t, "(F10.5)" ), resolution=resolution )
+! ! 			call spectrum%saveDAT( append=.true., xrange=xrange, beforeLine=FString_fromReal( t, "(F10.5)" ), resolution=resolution )
 ! ! 		else
-! ! 			call spectrum.saveDAT( append=.true., beforeLine=FString_fromReal( t, "(F10.5)" ), resolution=resolution )
+! ! 			call spectrum%saveDAT( append=.true., beforeLine=FString_fromReal( t, "(F10.5)" ), resolution=resolution )
 ! ! 		end if
 ! 
-! ! 		if( mod(n-1,this.cFunction(keyFunc).tFileFrequency) == 0 ) then
-! 			oFileName = trim(dirName.fstr)//"/"//trim(FString_fromInteger(n-1,format="(I0.5)"))//trim(ext.fstr)
-! 			call spectrum.save( oFileName.fstr, metadata="time = "//trim(FString_fromReal(t)) )
+! ! 		if( mod(n-1,this%cFunction(keyFunc)%tFileFrequency) == 0 ) then
+! 			oFileName = trim(dirName%fstr)//"/"//trim(FString_fromInteger(n-1,format="(I0.5)"))//trim(ext%fstr)
+! 			call spectrum%save( oFileName%fstr, metadata="time = "//trim(FString_fromReal(t)) )
 ! ! 		end if
 ! 		
-! 		t = t + freq*cFunc.xGrid.stepSize
+! 		t = t + freq*cFunc%xGrid%stepSize
 ! 		n = n + 1
 ! 	end do
 
+#ifndef __GFORTRAN__
 	use IFPORT   ! para llamar a makedirqq
+#endif
 	use GOptions_
 	use Math_
 	use IOStream_
@@ -252,21 +254,21 @@ program main
 	! -c
 	! -n
 	!-----------------------------------------------------------------
-	iFileName = parser.getString( "-i" )
-! 	oFileName = parser.getString( "-o" )
+	iFileName = parser%getString( "-i" )
+! 	oFileName = parser%getString( "-o" )
 	
-	strBuffer = parser.getString( "-s", def="FORWARD" )
-	if( trim(strBuffer.fstr) == "FORWARD" ) then
+	strBuffer = parser%getString( "-s", def="FORWARD" )
+	if( trim(strBuffer%fstr) == "FORWARD" ) then
 		fftSgn = FourierTransform_FORWARD
-	else if( trim(strBuffer.fstr) == "BACKWARD" ) then
+	else if( trim(strBuffer%fstr) == "BACKWARD" ) then
 		fftSgn = FourierTransform_BACKWARD
 	else
 		write(*,*) "### ERROR ### Bad value for parameter -s (FORWARD|BACKWARD)"
 		stop
 	end if
 	
-	strBuffer = parser.getString( "-c", def="1,2,3" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-c", def="1,2,3" )
+	call strBuffer%split( tokens, "," )
 	
 	if( size(tokens) == 3 ) then
 		allocate( columns(3) )
@@ -279,16 +281,16 @@ program main
 		stop
 	end if
 	
-	nPoints = parser.getInteger( "-n", def=-1 )
+	nPoints = parser%getInteger( "-n", def=-1 )
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	! Type of spectrum
 	! -t
 	!-----------------------------------------------------------------
-	typeOfSpectrum = parser.getString( "-t", def="NORM" )
+	typeOfSpectrum = parser%getString( "-t", def="NORM" )
 
-	select case( trim(typeOfSpectrum.fstr) )
+	select case( trim(typeOfSpectrum%fstr) )
 		case( "NORM" )
 			idTypeOfSpectrum = FourierTransform_NORM_SPECTRUM
 		case( "REALPART" )
@@ -306,9 +308,9 @@ program main
 	! Type of method
 	! -m
 	!-----------------------------------------------------------------
-	typeOfMethod = parser.getString( "-m", def="FFT" )
+	typeOfMethod = parser%getString( "-m", def="FFT" )
 
-	select case( trim(typeOfMethod.fstr) )
+	select case( trim(typeOfMethod%fstr) )
 		case( "FFT" )
 			idTypeOfMethod = FourierTransform_FFT_METHOD
 		case( "NUMERICAL" )
@@ -320,56 +322,67 @@ program main
 	! Window parameters
 	! -m
 	!-----------------------------------------------------------------
-	sigma = parser.getReal( "-sigma", def=0.1_8 )
-	freq = parser.getInteger( "-freq", def=1 )
-	resolution = parser.getReal( "-resol", def=1.0_8 )
+	sigma = parser%getReal( "-sigma", def=0.1_8 )
+	freq = parser%getInteger( "-freq", def=1 )
+	resolution = parser%getReal( "-resol", def=1.0_8 )
 	
 	isXRange = .false.
-	strBuffer = parser.getString( "-x", def="" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-x", def="" )
+	call strBuffer%split( tokens, "," )
 	if( size(tokens) == 2 ) then
 		isXRange = .true.
 		xrange = [ FString_toReal(tokens(1)), FString_toReal(tokens(2)) ]
 	end if
 	!----------------------------------------------------------------------	
 	
-	call ifile.init( iFileName.fstr )
+	call ifile%init( iFileName%fstr )
 	nFunc = CNFunction( ifile, columns=columns )
-	call ifile.close()
+	call ifile%close()
 	
-	if( nPoints == -1 ) nPoints = nFunc.nPoints()
+	if( nPoints == -1 ) nPoints = nFunc%nPoints()
 	
-! 	dirName = this.cFunction(keyFunc).tFile.removeFileExtension( ext )
+! 	dirName = this%cFunction(keyFunc)%tFile%removeFileExtension( ext )
 	ext = ".dat"
 	dirName = "gabor"
-	inquire( directory=dirName.fstr, exist=exist, iostat=status )
+#ifdef __GFORTRAN__
+	inquire( file=trim(dirName%fstr)//"/.", exist=exist, iostat=status )
+#else
+	inquire( directory=dirName%fstr, exist=exist, iostat=status )
+#endif
 	
-	if( status > 0 ) call GOptions_error( "Problems with directory "//trim(dirName.fstr), "n1df.gabor.main()" )
-	if( .not. exist ) ok = makedirqq( trim(dirName.fstr) )
+	if( status > 0 ) call GOptions_error( "Problems with directory "//trim(dirName%fstr), "n1df.gabor.main()" )
+#ifdef __GFORTRAN__
+	if( .not. exist ) then
+		call execute_command_line("mkdir -p " // trim(dirName%fstr), exitstat=status)
+		ok = (status == 0)
+	end if
+#else
+	if( .not. exist ) ok = makedirqq( trim(dirName%fstr) )
+#endif
 	
 	n = 1
-	t = nFunc.xGrid.min!+3.0_8*sigma
-	do while( t <= nFunc.xGrid.max )!-3.0_8*sigma )
+	t = nFunc%xGrid%min!+3.0_8*sigma
+	do while( t <= nFunc%xGrid%max )!-3.0_8*sigma )
 		write(*,"(A,F20.6,A)", advance="no") "Generating ", t, " ... "
 		
-		nFuncWindow = CNFunction( nFunc.xGrid, window )
+		nFuncWindow = CNFunction( nFunc%xGrid, window )
 		
 		nFunc2 = nFuncWindow*nFunc
 		
 		spectrum = FourierTransform_spectrum( nFunc2, sgn=fftSgn, type=idTypeOfSpectrum, method=idTypeOfMethod )
 		
-! 		if( mod(n-1,this.cFunction(keyFunc).tFileFrequency) == 0 ) then
-! 			oFileName = trim(dirName.fstr)//"/"//trim(FString_fromInteger(n-1,format="(I0.5)"))//trim(ext.fstr)
-			oFileName = trim(dirName.fstr)//"/"//trim(adjustl(FString_fromReal(t,format="(F20.6)")))//trim(ext.fstr)
+! 		if( mod(n-1,this%cFunction(keyFunc)%tFileFrequency) == 0 ) then
+! 			oFileName = trim(dirName%fstr)//"/"//trim(FString_fromInteger(n-1,format="(I0.5)"))//trim(ext%fstr)
+			oFileName = trim(dirName%fstr)//"/"//trim(adjustl(FString_fromReal(t,format="(F20.6)")))//trim(ext%fstr)
 			
 			if( isXRange ) then
-				call spectrum.save( oFileName.fstr, metadata="time = "//trim(FString_fromReal(t)), xrange=xrange )
+				call spectrum%save( oFileName%fstr, metadata="time = "//trim(FString_fromReal(t)), xrange=xrange )
 			else
-				call spectrum.save( oFileName.fstr, metadata="time = "//trim(FString_fromReal(t)) )
+				call spectrum%save( oFileName%fstr, metadata="time = "//trim(FString_fromReal(t)) )
 			end if
 ! 		end if
 		
-		t = t + freq*nFunc.xGrid.stepSize
+		t = t + freq*nFunc%xGrid%stepSize
 		n = n + 1
 		
 		write(*,"(A)") "OK"

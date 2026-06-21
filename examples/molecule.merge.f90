@@ -47,7 +47,7 @@ program main
 	type(Molecule), allocatable :: molecules(:)
 	type(Molecule) :: finalMolecule
 	integer :: i, j, k, nAtoms
-	real(8) :: center(3)
+	real(8) :: effCenter(3)
 	
 	if( command_argument_count() < 2 ) then
 		write(*,*) "usage: molecule.merge mol1 mol2 [ mol3 ... moln ]"
@@ -62,24 +62,24 @@ program main
 		molecules(i) = Molecule( sBuffer )
 		
 		if( i>1 ) then
-			center = molecules(i-1).center()
-			call molecules(i).setCenter( [ 0.0_8, 0.0_8, center(3) + 3*molecules(i-1).radius() ] )
+			effCenter = molecules(i-1)%center()
+			call molecules(i)%setCenter( [ 0.0_8, 0.0_8, effCenter(3) + 3*molecules(i-1)%radius() ] )
 		end if
 		
-		nAtoms = nAtoms + molecules(i).nAtoms()
+		nAtoms = nAtoms + molecules(i)%nAtoms()
 	end do
 	
 	finalMolecule = Molecule( nAtoms )
 	
 	k=1
 	do i=1,size(molecules)
-		do j=1,molecules(i).nAtoms()
-			call finalMolecule.set( k, molecules(i).atoms(j) )
+		do j=1,molecules(i)%nAtoms()
+			call finalMolecule%set( k, molecules(i)%atoms(j) )
 			k = k + 1
 		end do
 	end do
 	
-	call finalMolecule.save()
+	call finalMolecule%save()
 	
 	deallocate( molecules )
 end program main

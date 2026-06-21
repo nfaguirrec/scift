@@ -47,7 +47,7 @@ module StringIntegerMap_
 		
 #define Map StringIntegerMap
 ! #define __CLASS_ITEMMAP__ class(String)
-#define __CLASS_MAPITERATOR__  class(StringIntegerMapIterator)
+#define __CLASS_MAPITERATOR__  type(StringIntegerMapIterator)
 #define __TYPE_MAPLIST__       type(StringIntegerPairList)
 #define __MAPLIST__       StringIntegerPairList
 #define __TYPE_MAPPAIR__       type(StringIntegerPair)
@@ -81,7 +81,7 @@ module StringIntegerMap_
 		logical :: effFormatted
 		character(:), allocatable :: effPrefix
 		
-		class(StringIntegerMapIterator), pointer :: iter
+		type(StringIntegerMapIterator), pointer :: iter
 		type(StringIntegerPair) :: pair
 		integer :: fmt
 		character(200) :: fstr
@@ -99,7 +99,7 @@ module StringIntegerMap_
 		
 			output = trim(output)//"<Map:"
 		
-			ITEMI( "size=", this.size() )
+			ITEMI( "size=", this%size() )
 			
 #undef ITEMI
 			output = trim(output)//">"
@@ -111,8 +111,8 @@ module StringIntegerMap_
 ! 
 ! 			LINE("Map")
 ! 			LINE("---------")
-! ! 			ITEMI( "min=", this.min )
-! ! 			ITEMR( ",size=", this.size )
+! ! 			ITEMI( "min=", this%min )
+! ! 			ITEMR( ",size=", this%size )
 ! 			LINE("")
 ! #undef LINE
 ! #undef ITEMS
@@ -131,48 +131,56 @@ module StringIntegerMap_
 		
 		integer :: unitEff
 		integer :: maxLen
+#ifdef __GFORTRAN__
+		character(len=100) :: fmtStr
+#endif
 		
-		class(StringIntegerMapIterator), pointer :: iter
+		type(StringIntegerMapIterator), pointer :: iter
 		type(StringIntegerPair) :: pair
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
 		
 		maxLen = 0
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
-			pair = this.pair( iter )
-			if( len(pair.first.fstr) > maxLen ) maxLen = len(pair.first.fstr)
+			pair = this%pair( iter )
+			if( len(pair%first%fstr) > maxLen ) maxLen = len(pair%first%fstr)
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		iter => this.begin
+		iter => this%begin
 		do while( associated(iter) )
-			pair = this.pair( iter )
-			write(unitEff,"(A<maxLen>,I15)") pair.first.fstr, pair.second
+			pair = this%pair( iter )
+#ifdef __GFORTRAN__
+			write(fmtStr, "(A,I0,A)") "(A", maxLen, ",I15)"
+			write(unitEff,fmtStr) pair%first%fstr, pair%second
+#else
+			write(unitEff,"(A<maxLen>,I15)") pair%first%fstr, pair%second
+#endif
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 	end subroutine toFStream
 	
 	subroutine showMyMap( mymap )
 		type(StringIntegerMap) :: mymap
 		
-		class(StringIntegerMapIterator), pointer :: iter
+		type(StringIntegerMapIterator), pointer :: iter
 		type(StringIntegerPair) :: pair
 		
-		iter => mymap.begin
+		iter => mymap%begin
 		do while( associated(iter) )
-			pair = mymap.pair( iter )
-			write(*,"(I20,A15,I5)") pair.first.hashKey(), pair.first.fstr, pair.second
+			pair = mymap%pair( iter )
+			write(*,"(I20,A15,I5)") pair%first%hashKey(), pair%first%fstr, pair%second
 			
-			iter => iter.next
+			iter => iter%next
 		end do
 		write(*,*)
 	end subroutine

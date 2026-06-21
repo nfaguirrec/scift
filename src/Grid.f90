@@ -122,35 +122,35 @@ module Grid_
 		integer :: i
 		integer :: allocStat
 		
-		this.min = min
-		this.max = max
+		this%min = min
+		this%max = max
 		
 		if( present(stepSize) ) then
-			this.stepSize = stepSize
-			this.nPoints = nint( abs(max-min)/stepSize )+1
+			this%stepSize = stepSize
+			this%nPoints = nint( abs(max-min)/stepSize )+1
 		else if( present(nPoints) ) then
-			this.nPoints = nPoints
-			this.stepSize = abs(max-min)/real(nPoints-1,8)
+			this%nPoints = nPoints
+			this%stepSize = abs(max-min)/real(nPoints-1,8)
 		else
 			call GOptions_error( "nPoints or stepSize one of them are required parameters", "Grid.initDefault()" )
 		end if
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(this.nPoints), stat=allocStat )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(this%nPoints), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.initDefault()" )
 		
-		do i=1,this.nPoints
-			this.data( i ) = this.min+real(i-1,8)*this.stepSize
+		do i=1,this%nPoints
+			this%data( i ) = this%min+real(i-1,8)*this%stepSize
 		end do
 		
-		if( present(nPoints) .and. abs( this.data(this.nPoints) - this.max ) > GOptions_ZERO ) then
+		if( present(nPoints) .and. abs( this%data(this%nPoints) - this%max ) > GOptions_ZERO ) then
 			call GOptions_error( &
-				"lastPoint /= max ( "//FString_fromReal(this.data(this.nPoints))//" /= "//FString_fromReal(this.max)//" )", &
+				"lastPoint /= max ( "//FString_fromReal(this%data(this%nPoints))//" /= "//FString_fromReal(this%max)//" )", &
 				"Grid.initDefault(nPoints)" &
 			)
 		end if
 		
-		call this.checkEquallyspaced()
+		call this%checkEquallyspaced()
 	end subroutine initDefault
 	
 	!>
@@ -165,21 +165,21 @@ module Grid_
 		real(8) :: stepSize
 		integer :: allocStat
 		
-		this.min = minval(array)
-		this.max = maxval(array)
-		this.nPoints = size(array)
+		this%min = minval(array)
+		this%max = maxval(array)
+		this%nPoints = size(array)
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(this.nPoints), stat=allocStat )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(this%nPoints), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.fromArray()" )
 		
-		do i=1,this.nPoints
-			this.data( i ) = array( i )
+		do i=1,this%nPoints
+			this%data( i ) = array( i )
 		end do
 		
-		this.stepSize = this.data(2)-this.data(1)
+		this%stepSize = this%data(2)-this%data(1)
 		
-		call this.checkEquallyspaced( tol )  !< Calcula el tamaño de paso y determina si es o no equiespaciada
+		call this%checkEquallyspaced( tol )  !< Calcula el tamaño de paso y determina si es o no equiespaciada
 	end subroutine fromArray
 	
 	!>
@@ -213,18 +213,18 @@ module Grid_
 			cCommentsEff = cComments
 		end if
 		
-		call ifile.init( trim(iFileName) )
+		call ifile%init( trim(iFileName) )
 		
 		!! En el peor de los casos cada
 		!! línea es un valor
-		allocate( data(ifile.numberOfLines), stat=allocStat )
+		allocate( data(ifile%numberOfLines), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.fromFile()" )
 		
 		nData = 1
-		do while( .not. ifile.eof() )
-			buffer = ifile.readLine( cCommentsEff )
+		do while( .not. ifile%eof() )
+			buffer = ifile%readLine( cCommentsEff )
 			
-			call buffer.split( tokens, " " )
+			call buffer%split( tokens, " " )
 			
 			if( columnEff <= size(tokens) ) then
 				if( len(trim(tokens(columnEff))) /= 0 ) then
@@ -234,21 +234,21 @@ module Grid_
 			end if
 		end do
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(nData-1), stat=allocStat )
+		if( allocated(this%data) ) deallocate(this%data)
+		allocate( this%data(nData-1), stat=allocStat )
 		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.fromFile()" )
 		
-		this.data = data(1:nData-1)
+		this%data = data(1:nData-1)
 		
 		deallocate( data )
-		call ifile.close()
+		call ifile%close()
 		
-		this.min = minval(this.data)
-		this.max = maxval(this.data)
-		this.nPoints = size(this.data)
-		this.stepSize = this.data(2)-this.data(1)
+		this%min = minval(this%data)
+		this%max = maxval(this%data)
+		this%nPoints = size(this%data)
+		this%stepSize = this%data(2)-this%data(1)
 		
-		call this.checkEquallyspaced( tol )  !< Calcula el tamaño de paso y determina si es o no equiespaciada
+		call this%checkEquallyspaced( tol )  !< Calcula el tamaño de paso y determina si es o no equiespaciada
 		
 	end subroutine fromFile
 	
@@ -261,18 +261,19 @@ module Grid_
 		
 		integer :: allocStat
 		
-		this.min = other.min
-		this.max = other.max
-		this.stepSize = other.stepSize
-		this.nPoints = other.nPoints
-		this.isEquallyspaced = other.isEquallyspaced
+		this%min = other%min
+		this%max = other%max
+		this%stepSize = other%stepSize
+		this%nPoints = other%nPoints
+		this%isEquallyspaced = other%isEquallyspaced
 		
-		if( allocated(this.data) ) deallocate(this.data)
-		allocate( this.data(this.nPoints), stat=allocStat )
+		if( allocated(this%data) ) deallocate(this%data)
 		
-		if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.copyGrid()" )
-		
-		this.data = other.data
+		if ( allocated(other%data) ) then
+			allocate( this%data(this%nPoints), stat=allocStat )
+			if( allocStat /= 0 ) call GOptions_error( "Memory allocation error", "Grid.copyGrid()" )
+			this%data = other%data
+		end if
 	end subroutine copyGrid
 	
 	!>
@@ -281,13 +282,13 @@ module Grid_
 	subroutine destroy( this )
 		type(Grid) :: this
 		
-		this.min = 0.0_8
-		this.max = 0.0_8
-		this.nPoints = 0
-		this.stepSize = 0.0_8
-		this.isEquallyspaced = .false.
+		this%min = 0.0_8
+		this%max = 0.0_8
+		this%nPoints = 0
+		this%stepSize = 0.0_8
+		this%isEquallyspaced = .false.
 		
-		if( allocated( this.data ) ) deallocate( this.data )
+		if( allocated( this%data ) ) deallocate( this%data )
 	end subroutine destroy
 	
 	!>
@@ -307,17 +308,17 @@ module Grid_
 		output = .true.
 		
 		if( &
-			abs( this.min - other.min ) > effTol .or. &
-			abs( this.max - other.max ) > effTol .or. &
-			abs( this.stepSize - other.stepSize ) > effTol .or. &
-			this.nPoints /= other.nPoints .or. &
-			this.isEquallyspaced /= other.isEquallyspaced &
+			(abs( this%min - other%min ) > effTol) .or. &
+			(abs( this%max - other%max ) > effTol) .or. &
+			(abs( this%stepSize - other%stepSize ) > effTol) .or. &
+			(this%nPoints /= other%nPoints) .or. &
+			(this%isEquallyspaced .neqv. other%isEquallyspaced) &
 		) then
 			output = .false.
 			return
 		end if
 		
-		if( sum( abs(this.data - other.data)/this.nPoints ) > effTol )then
+		if( sum( abs(this%data - other%data)/this%nPoints ) > effTol )then
 			output = .false.
 			return
 		end if
@@ -338,14 +339,14 @@ module Grid_
 		effTol = 1d-6
 		if( present(tol) ) effTol = tol
 		
-		this.stepSize = this.data(2)-this.data(1)
-		this.isEquallyspaced = .true.
+		this%stepSize = this%data(2)-this%data(1)
+		this%isEquallyspaced = .true.
 		
-		if( this.nPoints <= 2 ) return
+		if( this%nPoints <= 2 ) return
 		
-		do i=2,this.nPoints
-			if( abs( abs(this.data(i)-this.data(i-1)) - this.stepSize) > effTol ) then
-				this.isEquallyspaced = .false.
+		do i=2,this%nPoints
+			if( abs( abs(this%data(i)-this%data(i-1)) - this%stepSize) > effTol ) then
+				this%isEquallyspaced = .false.
 				exit
 			end if
 		end do
@@ -359,13 +360,13 @@ module Grid_
 		class(Grid), intent(in) :: other
 		type(Grid) :: output
 		
-		if( this.nPoints /= other.nPoints ) then
+		if( this%nPoints /= other%nPoints ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
-		call output.copyGrid( this )
-		output.data = this.data + other.data
+		call output%copyGrid( this )
+		output%data = this%data + other%data
 	end function addition
 	
 	!>
@@ -376,8 +377,8 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copyGrid( this )
-		output.data = this.data+constant
+		call output%copyGrid( this )
+		output%data = this%data+constant
 	end function additionFC
 	
 	!>
@@ -388,13 +389,13 @@ module Grid_
 		type(Grid), intent(in) :: other
 		type(Grid) :: output
 		
-		if( this.nPoints /= other.nPoints ) then
+		if( this%nPoints /= other%nPoints ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
-		call output.copyGrid( this )
-		output.data = this.data - other.data
+		call output%copyGrid( this )
+		output%data = this%data - other%data
 	end function subtraction
 	
 	!>
@@ -405,8 +406,8 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copyGrid( this )
-		output.data = this.data-constant
+		call output%copyGrid( this )
+		output%data = this%data-constant
 	end function subtractionFC
 	
 	!>
@@ -417,13 +418,13 @@ module Grid_
 		type(Grid), intent(in) :: other
 		type(Grid) :: output
 		
-		if( this.nPoints /= other.nPoints ) then
+		if( this%nPoints /= other%nPoints ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
-		call output.copyGrid( this )
-		output.data = this.data*other.data
+		call output%copyGrid( this )
+		output%data = this%data*other%data
 		
 		! @todo Hay que hacer algo con el stepSize
 	end function multiplication
@@ -436,9 +437,9 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copyGrid( this )
-		output.data = this.data*constant
-		output.stepSize = this.stepSize*constant
+		call output%copyGrid( this )
+		output%data = this%data*constant
+		output%stepSize = this%stepSize*constant
 	end function multiplicationFC
 	
 	!>
@@ -449,13 +450,13 @@ module Grid_
 		type(Grid), intent(in) :: other
 		type(Grid) :: output
 		
-		if( this.nPoints /= other.nPoints ) then
+		if( this%nPoints /= other%nPoints ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
-		call output.copyGrid( this )
-		output.data = this.data/other.data
+		call output%copyGrid( this )
+		output%data = this%data/other%data
 	end function division
 	
 	!>
@@ -466,8 +467,8 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copyGrid( this )
-		output.data = this.data/constant
+		call output%copyGrid( this )
+		output%data = this%data/constant
 	end function divisionFC
 	
 	!>
@@ -478,13 +479,13 @@ module Grid_
 		type(Grid), intent(in) :: other
 		type(Grid) :: output
 		
-		if( this.nPoints /= other.nPoints ) then
+		if( this%nPoints /= other%nPoints ) then
 			write(*,*) "## ERROR ## the Grids have not the same size"
 			stop
 		end if
 		
-		call output.copyGrid( this )
-		output.data = this.data**other.data
+		call output%copyGrid( this )
+		output%data = this%data**other%data
 	end function exponentiation
 	
 	!>
@@ -495,8 +496,8 @@ module Grid_
 		real(8), intent(in) :: constant
 		type(Grid) :: output
 		
-		call output.copyGrid( this )
-		output.data = this.data**constant
+		call output%copyGrid( this )
+		output%data = this%data**constant
 	end function exponentiationFC
 	
 	!>
@@ -506,7 +507,7 @@ module Grid_
 		class(Grid), intent(in) :: this 
 		integer :: output
 		
-		output = this.nPoints
+		output = this%nPoints
 	end function ssize
 	
 	!>
@@ -590,8 +591,8 @@ module Grid_
 		integer :: newNPoints
 		real(8) :: newMin, newMax
 		
-		if( .not. this.isEquallyspaced ) then
-			call this.show()
+		if( .not. this%isEquallyspaced ) then
+			call this%show()
 			call GOptions_error( &
 				"This function is not available for grids wich are not equally spaced", &
 				"Grid.resize()" &
@@ -601,28 +602,28 @@ module Grid_
 		effDir = 1
 		if( present(dir) ) effDir = dir
 		
-		n = this.nPoints
+		n = this%nPoints
 		
 		if( effDir == 1 ) then
 			
 			newNPoints = n+m
 			
-			newMin = this.min
-			newMax = this.min + real(n+m-1,8)*this.stepSize
+			newMin = this%min
+			newMax = this%min + real(n+m-1,8)*this%stepSize
 
 		else if( effDir == -1 ) then
 			
 			newNPoints = n+m
 			
-			newMin = this.min - real(m,8)*this.stepSize
-			newMax = this.max
+			newMin = this%min - real(m,8)*this%stepSize
+			newMax = this%max
 			
 		else if( effDir == 0 ) then
 			
 			newNPoints = n + 2*m
 			
-			newMin = this.min - real(m,8)*this.stepSize
-			newMax = this.min + real(n+m-1,8)*this.stepSize
+			newMin = this%min - real(m,8)*this%stepSize
+			newMax = this%min + real(n+m-1,8)*this%stepSize
 			
 		else
 			call GOptions_error( &
@@ -631,7 +632,7 @@ module Grid_
 			)
 		end if
 		
-		call this.init( newMin, newMax, nPoints=newNPoints )
+		call this%init( newMin, newMax, nPoints=newNPoints )
 	end subroutine resize
 	
 	!>
@@ -643,11 +644,11 @@ module Grid_
 		real(8), optional, intent(in) :: delta
 		
 		if( present(delta) ) then
-			this.data = this.data + delta
+			this%data = this%data + delta
 		end if
 		
-		this.min = minval( this.data )
-		this.max = maxval( this.data )
+		this%min = minval( this%data )
+		this%max = maxval( this%data )
 	end subroutine translate
 	
 	!>
@@ -665,19 +666,19 @@ module Grid_
 		output = trim(output)//"<Grid:"
 		
 		output = trim(output)//"min="
-		output = trim(output)//trim(adjustl(FString_fromReal(this.min,"(F20.6)")))
+		output = trim(output)//trim(adjustl(FString_fromReal(this%min,"(F20.6)")))
 		
 		output = trim(output)//",max="
-		output = trim(output)//trim(adjustl(FString_fromReal(this.max,"(F20.6)")))
+		output = trim(output)//trim(adjustl(FString_fromReal(this%max,"(F20.6)")))
 		
 		output = trim(output)//",stepSize="
-		output = trim(output)//trim(adjustl(FString_fromReal(this.stepSize,"(F20.6)")))
+		output = trim(output)//trim(adjustl(FString_fromReal(this%stepSize,"(F20.6)")))
 		
 		output = trim(output)//",isEquallyspaced="
-		output = trim(output)//trim(adjustl(FString_fromLogical(this.isEquallyspaced)))
+		output = trim(output)//trim(adjustl(FString_fromLogical(this%isEquallyspaced)))
 		
 		output = trim(output)//",nPoints="
-		output = trim(output)//trim(adjustl(FString_fromInteger(this.nPoints,"(I20)")))
+		output = trim(output)//trim(adjustl(FString_fromInteger(this%nPoints,"(I20)")))
 		
 		output = trim(output)//">"
 	end function str
@@ -697,7 +698,7 @@ module Grid_
 			effunit = 6
 		end if
 		
-		write(effunit,"(a)") trim(this.str())
+		write(effunit,"(a)") trim(this%str())
 	end subroutine show
 	
 	!>
@@ -707,10 +708,10 @@ module Grid_
 		class(Grid) :: this
 		real(8), intent(in) :: unit
 		
-		this.min = this.min*unit
-		this.max = this.max*unit
-		this.stepSize = this.stepSize*unit
-		this.data = this.data*unit
+		this%min = this%min*unit
+		this%max = this%max*unit
+		this%stepSize = this%stepSize*unit
+		this%data = this%data*unit
 	end subroutine setUnits
 	
 	!>
@@ -725,13 +726,13 @@ module Grid_
 		type(OFStream) :: ofile
 		
 		if( present(units) .and. present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile, units )
-			call ofile.close()
+			call ofile%close()
 		else if( present(ofileName) ) then
-			call ofile.init( ofileName )
+			call ofile%init( ofileName )
 			call toFStream( this, ofile )
-			call ofile.close()
+			call ofile%close()
 		else
 			call toFStream( this )
 		end if
@@ -752,7 +753,7 @@ module Grid_
 		integer :: i
 		
 		if( present(ofile) ) then
-			unitEff = ofile.unit
+			unitEff = ofile%unit
 		else
 			unitEff = IO_STDOUT
 		end if
@@ -765,8 +766,8 @@ module Grid_
 		
 		write(unitEff,"(a)") "#"//trim(str(this))
 		
-		do i=1,this.nPoints
-			write(unitEff,"(e15.7,e15.7)") this.data(i)/unitsEff
+		do i=1,this%nPoints
+			write(unitEff,"(e15.7,e15.7)") this%data(i)/unitsEff
 		end do
 	end subroutine toFStream
 	
@@ -778,7 +779,7 @@ module Grid_
 		integer, intent(in) :: i
 		real(8) :: output
 		
-		output = this.data(i)
+		output = this%data(i)
 	end function at
 	
 	!>
@@ -789,8 +790,8 @@ module Grid_
 		real(8), intent(in) :: x
 		integer :: output
 		
-		output = floor( 1.0000001*(x-this.min)/this.stepSize+1.0 )
-! 		output = nint((x-this.min)/this.stepSize)+1
+		output = floor( 1.0000001*(x-this%min)/this%stepSize+1.0 )
+! 		output = nint((x-this%min)/this%stepSize)+1
 	end function pos
 	
 	!>
@@ -800,7 +801,7 @@ module Grid_
 		class(Grid), intent(in) :: this 
 		real(8) :: output
 		
-		output = this.data(1)
+		output = this%data(1)
 	end function first
 	
 	!>
@@ -810,7 +811,7 @@ module Grid_
 		class(Grid), intent(in) :: this 
 		real(8) :: output
 		
-		output = this.data( size(this.data) )
+		output = this%data( size(this%data) )
 	end function last
 	
 	!>
@@ -820,7 +821,7 @@ module Grid_
 		class(Grid), intent(in) :: this
 		real(8) :: output
 		
-		output = this.stepSize
+		output = this%stepSize
 	end function dV
 	
 	!>
@@ -830,7 +831,7 @@ module Grid_
 		class(Grid), intent(in) :: this
 		real(8) :: output
 		
-		output = real(this.nPoints-1,8)*this.stepSize
+		output = real(this%nPoints-1,8)*this%stepSize
 	end function lenght
 	
 	!>
@@ -841,7 +842,7 @@ module Grid_
 		integer, intent(in) :: i
 		real(8), intent(in) :: value
 		
-		this.data(i) = value
+		this%data(i) = value
 	end subroutine set
 	
 end module Grid_

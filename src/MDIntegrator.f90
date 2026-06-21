@@ -98,23 +98,23 @@ module MDIntegrator_
 		real(8) :: time0
 		real(8) :: timeStep
 		
-		this.positions => positions
-		this.velocities => velocities
-		this.accelerations => accelerations
+		this%positions => positions
+		this%velocities => velocities
+		this%accelerations => accelerations
 		
-		this.time = 0.0_8
-		this.timeStep = 1e-3
-		this.maxIter = 1000
-		this.step = 0
-		this.ttype = VELOCITY_VERLET
+		this%time = 0.0_8
+		this%timeStep = 1e-3
+		this%maxIter = 1000
+		this%step = 0
+		this%ttype = VELOCITY_VERLET
 		
 		if( allocated(posBufferT0) ) deallocate(posBufferT0)
 		if( allocated(accelBufferT0) ) deallocate(accelBufferT0)
 		if( allocated(accelBufferTm1) ) deallocate(accelBufferTm1)
 		
-		allocate( posBufferT0(this.nDimensions(),this.nParticles()) )
-		allocate( accelBufferT0(this.nDimensions(),this.nParticles()) )
-		allocate( accelBufferTm1(this.nDimensions(),this.nParticles()) )
+		allocate( posBufferT0(this%nDimensions(),this%nParticles()) )
+		allocate( accelBufferT0(this%nDimensions(),this%nParticles()) )
+		allocate( accelBufferTm1(this%nDimensions(),this%nParticles()) )
 		
 		posBufferT0 = 0.0_8
 		accelBufferT0 = 0.0_8
@@ -127,14 +127,14 @@ module MDIntegrator_
 	subroutine destroy( this )
 		type(MDIntegrator) :: this
 		
-		nullify( this.positions )
-		nullify( this.velocities )
-		nullify( this.accelerations )
+		nullify( this%positions )
+		nullify( this%velocities )
+		nullify( this%accelerations )
 		
-		this.time = 0.0_8
-		this.timeStep = 0.0_8
-		this.maxIter = 0
-		this.step = 0
+		this%time = 0.0_8
+		this%timeStep = 0.0_8
+		this%maxIter = 0
+		this%step = 0
 		
 		deallocate( posBufferT0 )
 		deallocate( accelBufferT0 )
@@ -158,7 +158,7 @@ module MDIntegrator_
 		class(MDIntegrator) :: this
 		integer :: output
 		
-		output = size(this.positions,dim=2)
+		output = size(this%positions,dim=2)
 	end function nParticles
 	
 	!>
@@ -168,7 +168,7 @@ module MDIntegrator_
 		class(MDIntegrator) :: this
 		integer :: output
 		
-		output = size(this.positions,dim=1)
+		output = size(this%positions,dim=1)
 	end function nDimensions
 	
 	!>
@@ -179,15 +179,15 @@ module MDIntegrator_
 		procedure(prototypeComputeForces) :: computeForces
 		
 #define x0 posBufferT0
-#define t this.time
-#define x this.positions
-#define v this.velocities
-#define a this.accelerations
+#define t this%time
+#define x this%positions
+#define v this%velocities
+#define a this%accelerations
 #define a0 accelBufferT0
 #define am1 accelBufferTm1
-#define dt this.timeStep
+#define dt this%timeStep
 		
-		select case( this.ttype )
+		select case( this%ttype )
 			case( VELOCITY_VERLET )
 				x = x + v*dt + 0.5_8*a*dt*dt
 				a0 = a
@@ -230,8 +230,8 @@ module MDIntegrator_
 #undef am1
 #undef dt
 		
-		this.step = this.step + 1
-		this.time = this.time + this.timeStep
+		this%step = this%step + 1
+		this%time = this%time + this%timeStep
 	end subroutine iterate
 	
 	!>

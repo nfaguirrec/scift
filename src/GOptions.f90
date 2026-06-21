@@ -191,6 +191,14 @@ module GOptions_
 	
 	contains
 	
+	subroutine write_indented( message, indent )
+		character(*), intent(in) :: message
+		integer, intent(in) :: indent
+		character(100) :: fmtStr
+		write(fmtStr, '("(",i0,"x,A)")') GOptions_indentLength*indent
+		write(IO_STDOUT, fmtStr) message
+	end subroutine write_indented
+
 	!>
 	!! @brief
 	!!
@@ -204,9 +212,9 @@ module GOptions_
 		if( present(indent) ) effIndent = indent
 		
 		write(IO_STDOUT,"(A)") ""
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "| "//trim(message)//" |"
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") "+"//repeat("-",len_trim(message)+2)//"+"
+		call write_indented( "+"//repeat("-",len_trim(message)+2)//"+", effIndent )
+		call write_indented( "| "//trim(message)//" |", effIndent )
+		call write_indented( "+"//repeat("-",len_trim(message)+2)//"+", effIndent )
 		write(IO_STDOUT,"(A)") ""
 	end subroutine GOptions_section
 	
@@ -223,9 +231,9 @@ module GOptions_
 		if( present(indent) ) effIndent = indent
 		
 		write(IO_STDOUT,"(A)") ""
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") " "//trim(message)//" "
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
+		call write_indented( repeat("-",len_trim(message)+2), effIndent )
+		call write_indented( " "//trim(message)//" ", effIndent )
+		call write_indented( repeat("-",len_trim(message)+2), effIndent )
 		write(IO_STDOUT,"(A)") ""
 	end subroutine GOptions_subsection
 
@@ -242,8 +250,8 @@ module GOptions_
 		if( present(indent) ) effIndent = indent
 		
 		write(IO_STDOUT,"(A)") ""
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") " "//trim(message)//" "
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A)") repeat("-",len_trim(message)+2)
+		call write_indented( " "//trim(message)//" ", effIndent )
+		call write_indented( repeat("-",len_trim(message)+2), effIndent )
 		write(IO_STDOUT,"(A)") ""
 	end subroutine GOptions_paragraph
 	
@@ -371,6 +379,8 @@ module GOptions_
 		character(100) :: effUnits
 		integer :: effIndent
 		
+		character(100) :: fmtStr
+		
 		effMessage = ""
 		if( present(message) ) effMessage = message
 		
@@ -380,7 +390,8 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,F20.5,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
+		write(fmtStr, '("(",i0,"x,A10,F20.5,A8,5X,A)")') GOptions_indentLength*effIndent
+		write(IO_STDOUT, fmtStr) trim(varName), value, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_rValueReport
 	
 	!>
@@ -397,6 +408,8 @@ module GOptions_
 		character(100) :: effUnits
 		integer :: effIndent
 		
+		character(100) :: fmtStr
+		
 		effMessage = ""
 		if( present(message) ) effMessage = message
 		
@@ -406,7 +419,8 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,L14,6X,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
+		write(fmtStr, '("(",i0,"x,A10,L14,6X,A8,5X,A)")') GOptions_indentLength*effIndent
+		write(IO_STDOUT, fmtStr) trim(varName), value, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_lValueReport
 	
 	!>
@@ -423,6 +437,8 @@ module GOptions_
 		character(100) :: effUnits
 		integer :: effIndent
 		
+		character(100) :: fmtStr
+		
 		effMessage = ""
 		if( present(message) ) effMessage = message
 		
@@ -432,7 +448,8 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,I14,6X,A8,5X,A)") trim(varName), value, trim(effUnits), trim(effMessage)
+		write(fmtStr, '("(",i0,"x,A10,I14,6X,A8,5X,A)")') GOptions_indentLength*effIndent
+		write(IO_STDOUT, fmtStr) trim(varName), value, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_iValueReport
 
 	!>
@@ -446,6 +463,7 @@ module GOptions_
 		
 		character(1000) :: effMessage
 		integer :: effIndent
+		character(100) :: fmtStr
 		
 		effMessage = ""
 		if( present(message) ) effMessage = message
@@ -453,7 +471,8 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,A20,A8,5X,A)") trim(varName), trim(value), trim(effMessage)
+		write(fmtStr, '("(",i0,"x,A10,A20,A8,5X,A)")') GOptions_indentLength*effIndent
+		write(IO_STDOUT, fmtStr) trim(varName), trim(value), trim(effMessage)
 	end subroutine GOptions_sValueReport
 	
 	!>
@@ -470,6 +489,8 @@ module GOptions_
 		character(100) :: effUnits
 		integer :: effIndent
 		
+		character(100) :: fmtStr
+		
 		effMessage = ""
 		if( present(message) ) effMessage = message
 		
@@ -479,7 +500,8 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(<GOptions_indentLength*effIndent>X,A10,<size(values)>F15.5,A8,5X,A)") trim(varName), values, trim(effUnits), trim(effMessage)
+		write(fmtStr, '("(",i0,"x,A10,",i0,"F15.5,A8,5X,A)")') GOptions_indentLength*effIndent, size(values)
+		write(IO_STDOUT, fmtStr) trim(varName), values, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_rArrValueReport
 	
 	!>
@@ -496,6 +518,8 @@ module GOptions_
 		character(100) :: effUnits
 		integer :: effIndent
 		
+		character(100) :: fmtStr
+		
 		effMessage = ""
 		if( present(message) ) effMessage = message
 		
@@ -505,7 +529,8 @@ module GOptions_
 		effIndent = 0
 		if( present(indent) ) effIndent = indent
 		
-		write(IO_STDOUT,"(A10,<size(values)>I15,A8,5X,A)") trim(varName), values, trim(effUnits), trim(effMessage)
+		write(fmtStr, '("(A10,",i0,"I15,A8,5X,A)")') size(values)
+		write(IO_STDOUT, fmtStr) trim(varName), values, trim(effUnits), trim(effMessage)
 	end subroutine GOptions_iArrValueReport
 	
 end module GOptions_

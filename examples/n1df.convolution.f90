@@ -38,13 +38,13 @@
 !! @brief Test program
 !!
 !! E0=0.05; omega=0.20279; t0=500.0; w=800.0; dw=100.0; tMax=1000.0
-!! echo "n=2**11; x0=0.0; h=$tMax/(n-1); do for [i=1:n] { x=x0+(i-1)*h; print sprintf( '%10.5f%10.5f', x, $E0*cos($omega*x)*erfhat(x,$t0,$w,$dw) ); }" | gnuplot 2> signalErfHat.dat
-!! ./fft1D -i signalErfHat.dat > fftErfHat.dat
+!! echo "n=2**11; x0=0.0; h=$tMax/(n-1); do for [i=1:n] { x=x0+(i-1)*h; print sprintf( '%10.5f%10.5f', x, $E0*cos($omega*x)*erfhat(x,$t0,$w,$dw) ); }" | gnuplot 2> signalErfHat%dat
+!! ./fft1D -i signalErfHat%dat > fftErfHat%dat
 !! plot "signalErfHat.dat" w lp pt 7 ps 0.5 lw 2
 !! plot [0:0.4] "fftErfHat.dat" w lp pt 7 ps 0.5 lw 2
 !!
-!! echo "n=2**11; x0=0.0; h=$tMax/(n-1); do for [i=1:n] { x=x0+(i-1)*h; print sprintf( '%10.5f%10.5f', x, $E0*cos($omega*x)*coshat(x,$t0,$w,$dw) ); }" | gnuplot 2> signalCosHat.dat
-!! ./fft1D -i signalCosHat.dat > fftCosHat.dat
+!! echo "n=2**11; x0=0.0; h=$tMax/(n-1); do for [i=1:n] { x=x0+(i-1)*h; print sprintf( '%10.5f%10.5f', x, $E0*cos($omega*x)*coshat(x,$t0,$w,$dw) ); }" | gnuplot 2> signalCosHat%dat
+!! ./fft1D -i signalCosHat%dat > fftCosHat%dat
 !! plot "signalCosHat.dat" w lp pt 7 ps 0.5 lw 2
 !! plot [0:0.4] "fftCosHat.dat" w lp pt 7 ps 0.5 lw 2
 !!
@@ -87,12 +87,12 @@ program main
 	! -c
 	! -n
 	!-----------------------------------------------------------------
-	iFileName1 = parser.getString( "-f1" )
-	iFileName2 = parser.getString( "-f2" )
-	oFileName = parser.getString( "-o" )
+	iFileName1 = parser%getString( "-f1" )
+	iFileName2 = parser%getString( "-f2" )
+	oFileName = parser%getString( "-o" )
 	
-	strBuffer = parser.getString( "-c1", def="1,2,3" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-c1", def="1,2,3" )
+	call strBuffer%split( tokens, "," )
 	
 	if( size(tokens) == 3 ) then
 		allocate( columns1(3) )
@@ -105,8 +105,8 @@ program main
 		stop
 	end if
 	
-	strBuffer = parser.getString( "-c2", def="1,2,3" )
-	call strBuffer.split( tokens, "," )
+	strBuffer = parser%getString( "-c2", def="1,2,3" )
+	call strBuffer%split( tokens, "," )
 	
 	if( size(tokens) == 3 ) then
 		allocate( columns2(3) )
@@ -125,9 +125,9 @@ program main
 	! Type of method
 	! -m
 	!-----------------------------------------------------------------
-	typeOfMethod = parser.getString( "-m", def="FFT" )
+	typeOfMethod = parser%getString( "-m", def="FFT" )
 
-	select case( trim(typeOfMethod.fstr) )
+	select case( trim(typeOfMethod%fstr) )
 		case( "FFT" )
 			idTypeOfMethod = FourierTransform_FFT_METHOD
 		case( "NUMERICAL" )
@@ -135,13 +135,13 @@ program main
 	end select
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
-	call ifile.init( iFileName1.fstr )
+	call ifile%init( iFileName1%fstr )
 	nFunc1 = CNFunction( ifile, columns=columns1 )
-	call ifile.close()
+	call ifile%close()
 	
-	call ifile.init( iFileName2.fstr )
+	call ifile%init( iFileName2%fstr )
 	nFunc2 = CNFunction( ifile, columns=columns2 )
-	call ifile.close()
+	call ifile%close()
 	
 	select case( idTypeOfMethod )
 		case( FourierTransform_FFT_METHOD )
@@ -152,7 +152,7 @@ program main
 			
 			ProdFunc = FourierTransform_fft( ProdFFunc, sgn=FourierTransform_BACKWARD )
 			
-			call ProdFunc.save( oFileName.fstr )
+			call ProdFunc%save( oFileName%fstr )
 		case( FourierTransform_NUMERICAL_METHOD )
 			FnFunc1 = FourierTransform_nft( nFunc1, sgn=FourierTransform_FORWARD )
 			FnFunc2 = FourierTransform_nft( nFunc2, sgn=FourierTransform_FORWARD )
@@ -161,9 +161,9 @@ program main
 			
 			ProdFunc = FourierTransform_fft( ProdFFunc, sgn=FourierTransform_FORWARD )
 			
-			call ProdFunc.save( oFileName.fstr )
+			call ProdFunc%save( oFileName%fstr )
 		case default
-			call GOptions_error( "The method = "//trim(typeOfMethod.fstr)//" is not available", "n1df.convolution.f90" )
+			call GOptions_error( "The method = "//trim(typeOfMethod%fstr)//" is not available", "n1df.convolution.f90" )
 	end select
 	
 	deallocate( columns1 )

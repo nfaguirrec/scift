@@ -69,33 +69,33 @@ program main
 		stop
 	end if
 	
-	iFileName = parser.getString( "-i" )
-	bFileName = parser.getString( "-b" )
-	oFileName = parser.getString( "-o" )
-	value = parser.getReal( "-v", def=0.0_8 )
-	stencil = parser.getInteger( "-s", def=3 )
+	iFileName = parser%getString( "-i" )
+	bFileName = parser%getString( "-b" )
+	oFileName = parser%getString( "-o" )
+	value = parser%getReal( "-v", def=0.0_8 )
+	stencil = parser%getInteger( "-s", def=3 )
 	
-	fileType = RNFunction_checkTypeN1DF( iFileName.fstr )
+	fileType = RNFunction_checkTypeN1DF( iFileName%fstr )
 	
 	if( fileType == 0 ) then
-		riFunc = RNFunction( iFileName.fstr )
+		riFunc = RNFunction( iFileName%fstr )
 		
-		if( .not. riFunc.xGrid.isEquallyspaced ) then
+		if( .not. riFunc%xGrid%isEquallyspaced ) then
 			!! Homogeniza el grid
-			call spl.init( riFunc )
-			riFunc = spl.smooth( 1 )
+			call spl%init( riFunc )
+			riFunc = spl%smooth( 1 )
 		end if
 		
-		call xGrid.init( bFileName.fstr, column=1 )
-		roFunc = riFunc.interpolate( xGrid, stencil=stencil, value=value )
-		call roFunc.save( oFileName.fstr )
+		call xGrid%init( bFileName%fstr, column=1 )
+		roFunc = riFunc%interpolate( xGrid, stencil=stencil, value=value )
+		call roFunc%save( oFileName%fstr )
 	else if( fileType == 1 ) then
-		ciFunc = CNFunction( iFileName.fstr )
-		call xGrid.init( bFileName.fstr, column=1 )
-		coFunc = ciFunc.interpolate( xGrid, stencil=stencil, value=dcmplx(value) )
-		call coFunc.save( oFileName.fstr )
+		ciFunc = CNFunction( iFileName%fstr )
+		call xGrid%init( bFileName%fstr, column=1 )
+		coFunc = ciFunc%interpolate( xGrid, stencil=stencil, value=dcmplx(value) )
+		call coFunc%save( oFileName%fstr )
 	else
-		write(0,*) "### ERROR ### unknown type for "//trim(iFileName.fstr)
+		write(0,*) "### ERROR ### unknown type for "//trim(iFileName%fstr)
 		stop
 	end if
 	
