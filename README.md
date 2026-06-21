@@ -71,6 +71,8 @@ To build the library, you can use either the GNU Fortran Compiler (`gfortran`) o
   ```
 
 If no compiler is specified, `make` will automatically use `ifort` if available, falling back to `gfortran`.
+
+```
 Building dependencies for Atom.f90 ... OK
 Building dependencies for AtomicElementsDB.f90 ... OK
 Building dependencies for BlocksIFileParser.f90 ... OK
@@ -169,6 +171,7 @@ It is compiled and executed as follows:
   ```
 
 For either compiler, the output is: 
+```
  Hello:fortran-string
            1     Hello
            2     fortran
