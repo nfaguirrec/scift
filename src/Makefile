@@ -1,7 +1,7 @@
 MAKEFLAGS = -s
 FC = gfortran
-GFCFLAGS = -w -I. -I/home/aguirre/Software/miniconda3/envs/python3.10/include -cpp -O3 -g -fPIC -fdec-structure -ffree-line-length-none
-GLDFLAGS = -L. -lscift -L/home/aguirre/Software/miniconda3/envs/python3.10/lib -Wl,-rpath,/home/aguirre/Software/miniconda3/envs/python3.10/lib -lfftw3 -lopenblas -llapack
+GFCFLAGS = -w -I. -I/home/aguirre/Software/miniconda3/envs/python3.10/include -I/usr/include -cpp -O3 -g -fPIC -fdec-structure -ffree-line-length-none
+GLDFLAGS = -L. -lscift -L/home/aguirre/Software/miniconda3/envs/python3.10/lib -L/usr/lib -Wl,-rpath,/home/aguirre/Software/miniconda3/envs/python3.10/lib -lfftw3 -lopenblas -llapack
 IFCFLAGS = -w -I. -O3 -g -fPIC -fpp -mkl
 ILDFLAGS = -L. -lscift
 TLIB = libscift.a

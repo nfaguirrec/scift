@@ -305,14 +305,17 @@ main()
 	conda_rpath=""
 	if [ -n "$CONDA_PREFIX" ]
 	then
-		conda_inc="-I${CONDA_PREFIX}/include "
-		conda_lib="-L${CONDA_PREFIX}/lib "
+		conda_inc="-I${CONDA_PREFIX}/include -I/usr/include "
+		conda_lib="-L${CONDA_PREFIX}/lib -L/usr/lib "
 		conda_rpath="-Wl,-rpath,${CONDA_PREFIX}/lib "
 	elif [ -d "/home/aguirre/Software/miniconda3/envs/python3.10" ]
 	then
-		conda_inc="-I/home/aguirre/Software/miniconda3/envs/python3.10/include "
-		conda_lib="-L/home/aguirre/Software/miniconda3/envs/python3.10/lib "
+		conda_inc="-I/home/aguirre/Software/miniconda3/envs/python3.10/include -I/usr/include "
+		conda_lib="-L/home/aguirre/Software/miniconda3/envs/python3.10/lib -L/usr/lib "
 		conda_rpath="-Wl,-rpath,/home/aguirre/Software/miniconda3/envs/python3.10/lib "
+	else
+		conda_inc="-I/usr/include "
+		conda_lib="-L/usr/lib "
 	fi
 
 	if [ -z "$FC" ]

@@ -1,8 +1,18 @@
 MAKEFLAGS = -s
 FC = gfortran
-FCFLAGS = -w -I. -I../src -I/home/aguirre/Software/miniconda3/envs/python3.10/include -cpp -O3 -g -fPIC -fdec-structure -ffree-line-length-none
-LDFLAGS = -L../src -lscift -L/home/aguirre/Software/miniconda3/envs/python3.10/lib -lfftw3 -lopenblas -llapack
+GFCFLAGS = -w -I. -I../src -I/home/aguirre/Software/miniconda3/envs/python3.10/include -I/usr/include -cpp -O3 -g -fPIC -fdec-structure -ffree-line-length-none
+GLDFLAGS = -L../src -lscift -L/home/aguirre/Software/miniconda3/envs/python3.10/lib -L/usr/lib -lfftw3 -lopenblas -llapack
+IFCFLAGS = -w -I. -O3 -g -fPIC -fpp -mkl
+ILDFLAGS = -L. -lscift
 TLIB = 
+
+ifeq ($(findstring gfortran,$(FC)),gfortran)
+    FCFLAGS = $(GFCFLAGS)
+    LDFLAGS = $(GLDFLAGS)
+else
+    FCFLAGS = $(IFCFLAGS)
+    LDFLAGS = $(ILDFLAGS)
+endif
 
 all:  $(TLIB) boundStates histogram molecule.angles molecule.atomicOverlapping molecule.chemicalFormula molecule.compare molecule.dihedrals molecule.distances molecule.distort molecule.duplicate molecule.fragments molecule.fv molecule.graph molecule.inertia molecule.isConnected molecule.isFragmentOf molecule.mass molecule.merge molecule.minMult molecule.move molecule.orient molecule.overlapping molecule.radius molecule.random molecule.rms molecule.rotate molecule.vrandom n1df.compare n1df.convert n1df.convolution n1df.cumulative n1df.derivative n1df.diagH n1df.evaluate n1df.filter n1df.fourier n1df.fourierFilter n1df.func n1df.gabor n1df.gsmooth n1df.init n1df.innerProduct n1df.integrate n1df.interp n1df.join n1df.norm n1df.oper n1df.peakFinder n1df.resize n1df.smooth n1df.transitionElement n1df.translate n3df.convert n3df.eval n3df.func n3df.oper 
 

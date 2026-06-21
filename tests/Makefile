@@ -1,8 +1,8 @@
 FC = gfortran
 
 ifeq ($(findstring gfortran,$(FC)),gfortran)
-    FCFLAGS = -w -I../src -I/home/aguirre/Software/miniconda3/envs/python3.10/include -cpp -g -ffree-line-length-none -fdec-structure
-    LDFLAGS = -L../src -lscift -L/home/aguirre/Software/miniconda3/envs/python3.10/lib -Wl,-rpath,/home/aguirre/Software/miniconda3/envs/python3.10/lib -lfftw3 -lopenblas -llapack
+    FCFLAGS = -w -I../src -I/home/aguirre/Software/miniconda3/envs/python3.10/include -I/usr/include -cpp -g -ffree-line-length-none -fdec-structure
+    LDFLAGS = -L../src -lscift -L/home/aguirre/Software/miniconda3/envs/python3.10/lib -Wl,-rpath,/home/aguirre/Software/miniconda3/envs/python3.10/lib -L/usr/lib -lfftw3 -lopenblas -llapack
 else
     FCFLAGS = -static -static-intel -static-libgcc -mkl -traceback -w -fpp -g -I../src
     LDFLAGS = -L../src -lscift
