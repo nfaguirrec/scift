@@ -139,21 +139,21 @@ program test
 	str1 = "Hello"
 	
 	str2 = str1+":fortran-string"
-	write(*,*) trim(str2.fstr)
+	write(*,*) trim(str2%fstr)
 	
-	call str2.split( tokens, ":-" )
+	call str2%split( tokens, ":-" )
 	do i=1,size(tokens)
 		write(*,*) i, "    ", trim(tokens(i))
 	end do
 	
-	call str2.replace( ":", " string " )
-	write(*,*) trim(str2.fstr)
+	call str2%replace( ":", " string " )
+	write(*,*) trim(str2%fstr)
 	
-	call str2.replace( "string", "fortran", wholeWords=.true. )
-	write(*,*) trim(str2.fstr)
+	call str2%replace( "string", "fortran", wholeWords=.true. )
+	write(*,*) trim(str2%fstr)
 	
-	str1 = str2.toUpper()
-	write(*,*) trim(str1.fstr)
+	str1 = str2%toUpper()
+	write(*,*) trim(str1%fstr)
 end program test
 ```
 It is compiled and executed as follows:
@@ -192,24 +192,24 @@ program test
 	type(RealList) :: mylist
 	class(RealListIterator), pointer :: iter
 	
-	call mylist.init()
+	call mylist%init()
 	
-	call mylist.append( 8.0_8 )
-	call mylist.append( 5.0_8 )
-	call mylist.append( 1.0_8 )
-	call mylist.prepend( 0.0_8 )
-	call mylist.append( [ 10.0_8, 11.0_8, 12.0_8 ] )
+	call mylist%append( 8.0_8 )
+	call mylist%append( 5.0_8 )
+	call mylist%append( 1.0_8 )
+	call mylist%prepend( 0.0_8 )
+	call mylist%append( [ 10.0_8, 11.0_8, 12.0_8 ] )
 	
-	iter => mylist.begin
-	iter => iter.next
+	iter => mylist%begin
+	iter => iter%next
 	
-	call mylist.insert( iter, 3.0_8 )
+	call mylist%insert( iter, 3.0_8 )
 	
-	iter => mylist.begin
+	iter => mylist%begin
 	do while( associated(iter) )
-		write(*,"(A,F6.3)", advance="no") " --> ", iter.data
+		write(*,"(A,F6.3)", advance="no") " --> ", iter%data
 		
-		iter => iter.next
+		iter => iter%next
 	end do
 end program test
 ```
@@ -245,7 +245,7 @@ module MyData_
 		class(MyData), intent(in) :: this, other
 		logical :: output
 		
-		output = ( this.id == other.id .and. this.name == other.name )
+		output = ( this%id == other%id .and. this%name == other%name )
 	end function MyData_eq
 end module MyData_
 
@@ -274,23 +274,23 @@ program test
 	type(MyList) :: list
 	class(MyListIterator), pointer :: iter
 	
-	call list.init()
+	call list%init()
 	
-	call list.append( MyData(1,"a") )
-	call list.append( MyData(5,"b") )
-	call list.prepend( MyData(0,"c") )
-	call list.append( [ MyData(0,"d"), MyData(1,"e"), MyData(2,"f") ] )
+	call list%append( MyData(1,"a") )
+	call list%append( MyData(5,"b") )
+	call list%prepend( MyData(0,"c") )
+	call list%append( [ MyData(0,"d"), MyData(1,"e"), MyData(2,"f") ] )
 	
-	iter => list.begin
-	iter => iter.next
+	iter => list%begin
+	iter => iter%next
 	
-	call list.insert( iter, MyData(3,"g") )
+	call list%insert( iter, MyData(3,"g") )
 	
-	iter => list.begin
+	iter => list%begin
 	do while( associated(iter) )
-		write(*,"(A,I2,A3,A)", advance="no") " --> (", iter.data.id, iter.data.name, ")"
+		write(*,"(A,I2,A3,A)", advance="no") " --> (", iter%data.id, iter%data.name, ")"
 		
-		iter => iter.next
+		iter => iter%next
 	end do
 end program test
 ```
@@ -317,18 +317,18 @@ program test
 	type(StringIntegerMap) :: mymap
 	class(StringIntegerMapIterator), pointer :: iter
 	
-	call mymap.init()
+	call mymap%init()
 	
-	call mymap.insert( String("John"), 27 )
-	call mymap.insert( String("Marie"), 22 )
-	call mymap.insert( String("Luna"), 24 )
+	call mymap%insert( String("John"), 27 )
+	call mymap%insert( String("Marie"), 22 )
+	call mymap%insert( String("Luna"), 24 )
 	
-	iter => mymap.begin
+	iter => mymap%begin
 	do while( associated(iter) )
-		pair = mymap.pair( iter )
-		write(*,"(A15,A,I2)") pair.first.fstr, " --> ", pair.second
+		pair = mymap%pair( iter )
+		write(*,"(A15,A,I2)") pair%first%fstr, " --> ", pair%second
 		
-		iter => iter.next
+		iter => iter%next
 	end do
 end program test
 ```
@@ -366,7 +366,7 @@ module MyData_
 		class(MyData), intent(in) :: this, other
 		logical :: output
 		
-		output = ( this.id == other.id .and. this.name == other.name )
+		output = ( this%id == other%id .and. this%name == other%name )
 	end function MyData_eq
 end module MyData_
 
@@ -460,19 +460,19 @@ program test
 	class(MyMapIterator), pointer :: iter
 	type(MyPair) :: pair
 	
-	call mmap.init()
+	call mmap%init()
 	
-	call mmap.insert( String("John"),  MyData(1,"a") )
-	call mmap.insert( String("Marie"), MyData(2,"b") )
-	call mmap.insert( String("Luna"),  MyData(3,"c") )
+	call mmap%insert( String("John"),  MyData(1,"a") )
+	call mmap%insert( String("Marie"), MyData(2,"b") )
+	call mmap%insert( String("Luna"),  MyData(3,"c") )
 	
-	iter => mmap.begin
+	iter => mmap%begin
 	do while( associated(iter) )
-			pair = mmap.pair( iter )
-			write(*,"(A15,A,I2,A3,A)") pair.first.fstr, &
-				" --> (", pair.second.id, pair.second.name, ")"
+			pair = mmap%pair( iter )
+			write(*,"(A15,A,I2,A3,A)") pair%first%fstr, &
+				" --> (", pair%second%id, pair%second%name, ")"
 				
-			iter => iter.next
+			iter => iter%next
 	end do
 end program test
 ```
@@ -495,7 +495,7 @@ program test
 	use IntegerGraph_
 	
 	type(IntegerGraph) :: mygraph
-	call mygraph.init( directed=.false. )
+	call mygraph%init( directed=.false. )
 	
 	!        (1)    
 	!         |     
@@ -505,16 +505,16 @@ program test
 	!       \   /   
 	!        (5)
 	
-	call mygraph.newNodes( 5 )
+	call mygraph%newNodes( 5 )
 	
-	call mygraph.newEdges( 1, [2] )
-	call mygraph.newEdges( 2, [1,3,4] )
-	call mygraph.newEdges( 3, [2,5] )
-	call mygraph.newEdges( 4, [2,5] )
-	call mygraph.newEdges( 5, [3,4] )
+	call mygraph%newEdges( 1, [2] )
+	call mygraph%newEdges( 2, [1,3,4] )
+	call mygraph%newEdges( 3, [2,5] )
+	call mygraph%newEdges( 4, [2,5] )
+	call mygraph%newEdges( 5, [3,4] )
 	
-	call mygraph.computeDijkstraPaths( 1 )
-	write(*,*) "distance from 1 to 5 = ", mygraph.distance(5)
+	call mygraph%computeDijkstraPaths( 1 )
+	write(*,*) "distance from 1 to 5 = ", mygraph%distance(5)
 end program test
 ```
 It is compiled an executed as follows (notice it requires the MKL library):
@@ -539,13 +539,13 @@ program test
 	type(Atom) :: atm
 	type(Molecule) :: mol
 	
-	call mol.init( 2, name="Hydrogen molecule" )
-	call atm.init( "H", 0.0_8, 0.0_8, 0.3561_8*angs ); mol.atoms(1) = atm
-	call atm.init( "H", 0.0_8, 0.0_8,-0.3561_8*angs ); mol.atoms(2) = atm
+	call mol%init( 2, name="Hydrogen molecule" )
+	call atm%init( "H", 0.0_8, 0.0_8, 0.3561_8*angs ); mol%atoms(1) = atm
+	call atm%init( "H", 0.0_8, 0.0_8,-0.3561_8*angs ); mol%atoms(2) = atm
 	
-	call mol.rotate( alpha=45.0*deg, beta=45.0*deg, gamma=0.0*deg )
+	call mol%rotate( alpha=45.0*deg, beta=45.0*deg, gamma=0.0*deg )
 	
-	call mol.save()
+	call mol%save()
 end program test
 ```
 It is compiled and executed as follows (notice it requires the MKL library):
@@ -570,26 +570,26 @@ program test
 	
 	type(Matrix) :: A, B, C
 	
-	call A.init(5,5)
-	A.data(1,:) = [  1.96,  -6.49,  -0.47,  -7.20,  -0.65 ]
-	A.data(2,:) = [ -6.49,   3.80,  -6.39,   1.50,  -6.34 ]
-	A.data(3,:) = [ -0.47,  -6.39,   4.17,  -1.51,   2.67 ]
-	A.data(4,:) = [ -7.20,   1.50,  -1.51,   5.70,   1.80 ]
-	A.data(5,:) = [ -0.65,  -6.34,   2.67,   1.80,  -7.10 ]
+	call A%init(5,5)
+	A%data(1,:) = [  1.96,  -6.49,  -0.47,  -7.20,  -0.65 ]
+	A%data(2,:) = [ -6.49,   3.80,  -6.39,   1.50,  -6.34 ]
+	A%data(3,:) = [ -0.47,  -6.39,   4.17,  -1.51,   2.67 ]
+	A%data(4,:) = [ -7.20,   1.50,  -1.51,   5.70,   1.80 ]
+	A%data(5,:) = [ -0.65,  -6.34,   2.67,   1.80,  -7.10 ]
 	
 	write(*,*) ""
 	write(*,*) "A ="
-	call A.show( formatted=.true. )
+	call A%show( formatted=.true. )
 	
-	call A.eigen( eVecs=B, eVals=C )
+	call A%eigen( eVecs=B, eVals=C )
 	
 	write(*,*) ""
 	write(*,*) "eigenvectors ="
-	call B.show( formatted=.true. )
+	call B%show( formatted=.true. )
 	
 	write(*,*) ""
 	write(*,*) "eigenvalues ="
-	call C.show( formatted=.true. )
+	call C%show( formatted=.true. )
 end program test
 ```
 
