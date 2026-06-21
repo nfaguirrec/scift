@@ -1,5 +1,7 @@
 ## SciFT (Scientific Fortran Tools)
 
+[![CI](https://github.com/nfaguirrec/scift/actions/workflows/ci.yml/badge.svg)](https://github.com/nfaguirrec/scift/actions/workflows/ci.yml)
+
 The Scientific Fortran Tools (SciFT) is a library specially oriented to scientific purposes for Fortran programmers. The library provides a wide range of mathematical routines such as random number generators, special functions, and high-level classes to manipulate strings, files parsing, matrices, grid-based numerical functions, data structures (lists, vectors, maps, graphs), and molecules.
 
 ## Prerequisites
