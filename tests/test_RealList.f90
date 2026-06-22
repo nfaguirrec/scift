@@ -4,7 +4,7 @@ program test_RealList
     use IOStream_
     implicit none
 		type(RealList) :: mylist, mylist2
-		class(RealListIterator), pointer :: iter
+		type(RealListIterator), pointer :: iter
 		
 		mylist = RealList()
 		

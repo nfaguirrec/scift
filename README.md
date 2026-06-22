@@ -54,69 +54,61 @@ docs      examples  LICENSE.FortranParser  README.md     src    VERSION
 doxyfile  LICENSE   Makefile               SCIFTvars.sh  utils
 ```
 
-Enter in the scift directory (`cd scift`).
+To build the library, use the modern **CMake** build system. CMake automatically handles Fortran module dependency tracking and finds math libraries (such as FFTW3, OpenBLAS, LAPACK, or Intel MKL) on your system or active Conda environments.
 
-To build the library, you can use either the GNU Fortran Compiler (`gfortran`) or the Intel Fortran Compiler (`ifort`/`ifx`). The build system dynamically configures flags and libraries based on the selected compiler.
+### Supported Build Configurations
 
-- **Using gfortran (with active Conda libraries)**:
-  ```bash
-  $ source SCIFTvars.sh
-  $ make FC=gfortran
-  ```
+Choose one of the following compilation configurations depending on your compiler and math library preferences:
 
-- **Using Intel Compiler**:
-  ```bash
-  $ source SCIFTvars.sh
-  $ make FC=ifort
-  ```
-
-If no compiler is specified, `make` will automatically use `ifort` if available, falling back to `gfortran`.
-
+#### 1. GNU Fortran (`gfortran`) + standard BLAS/LAPACK (e.g. OpenBLAS)
+This is the default configuration on most Linux/Conda environments:
+```bash
+$ FC=gfortran cmake -B build_gfortran -S .
+$ cmake --build build_gfortran -j$(nproc)
 ```
-Building dependencies for Atom.f90 ... OK
-Building dependencies for AtomicElementsDB.f90 ... OK
-Building dependencies for BlocksIFileParser.f90 ... OK
-...
-Building n3df.eval.f90 (0:00.79)
-Building n3df.func.f90 (0:00.63)
-Building n3df.oper.f90 (0:00.67)
+
+#### 2. GNU Fortran (`gfortran`) + Intel MKL
+Use this configuration to link high-performance Intel MKL math libraries using `gfortran`:
+```bash
+$ FC=gfortran cmake -B build_gfortran_mkl -S . -DWITH_MKL=ON
+$ cmake --build build_gfortran_mkl -j$(nproc)
 ```
+
+#### 3. Intel Fortran (`ifort`/`ifx`) + standard BLAS/LAPACK (e.g. OpenBLAS)
+Use this configuration to compile with Intel compiler tools linking standard LAPACK libraries:
+```bash
+$ FC=ifort cmake -B build_ifort -S . -DWITH_MKL=OFF
+$ cmake --build build_ifort -j$(nproc)
+```
+
+#### 4. Intel Fortran (`ifort`/`ifx`) + Intel MKL
+Use this configuration to build using Intel tools linking directly to Intel MKL (enabled automatically by default when configuring with `ifort` or `ifx`):
+```bash
+$ FC=ifort cmake -B build_ifort_mkl -S . -DWITH_MKL=ON
+$ cmake --build build_ifort_mkl -j$(nproc)
+```
+
+*(Note: The CMake setup automatically sets `MKL_INTERFACE=lp64` when using Intel MKL to ensure 32-bit default integer compatibility, avoiding type signature mismatch issues during compilation.)*
 
 ## Installing SciFT
 
 The basic environmental variables that SciFT needs can be loaded just adding the following command anywhere in the ~/.bashrc file:
 
 ```
-source <PATH_TO_SCIFT>/SCIFTvars.sh
+source <PATH_TO_SCIFT>/SCIFTvars.sh <build>
 ```
 
 ## Running Tests
 
-SciFT comes with a comprehensive suite of unit tests for its classes and routines. To compile and run the full test suite, perform the following steps:
-
-1. **Set Up the Environment**: Add the custom build tools to your path:
-   ```bash
-   export PATH=$PATH:<PATH_TO_SCIFT>/utils
-   ```
-2. **Compile the Library**: Rebuild/update the core library inside the `src` directory:
-   ```bash
-   cd <PATH_TO_SCIFT>/src
-   make
-   ```
-3. **Compile the Test Suite**: Go to the `tests` directory and compile all individual test executables and the test runner:
-   ```bash
-   cd <PATH_TO_SCIFT>/tests
-   make
-   ```
-4. **Execute All Tests**: Run the main test orchestrator:
-   ```bash
-   ./run_tests.exe
-   ```
-
-You can also run individual test suites directly from the `tests` directory, for example:
+SciFT includes a comprehensive suite of unit tests for its classes and routines. To execute the complete test suite:
 ```bash
-./src_tests/test_UnitsConverter.exe
-./src_tests/test_ElementsDB.exe
+$ ctest --test-dir build
+```
+
+You can also run individual test suites directly from the build directory, for example:
+```bash
+$ ./build/tests/test_UnitsConverter
+$ ./build/tests/test_ElementsDB
 ```
 
 ## Usage
@@ -160,13 +152,13 @@ It is compiled and executed as follows:
 
 - **Using Intel Compiler**:
   ```bash
-  $ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+  $ ifort test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift
   $ ./test
   ```
 
 - **Using gfortran (with conda libraries)**:
   ```bash
-  $ gfortran test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift -L${CONDA_PREFIX}/lib -lfftw3 -lopenblas -llapack
+  $ gfortran test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift -L${CONDA_PREFIX}/lib -lfftw3 -lopenblas -llapack
   $ ./test
   ```
 
@@ -190,25 +182,25 @@ program test
 	use RealList_
 
 	type(RealList) :: mylist
-	class(RealListIterator), pointer :: iter
-	
-	call mylist%init()
-	
+	type(RealListIterator), pointer :: iter
+
+	mylist = RealList()
+
 	call mylist%append( 8.0_8 )
 	call mylist%append( 5.0_8 )
 	call mylist%append( 1.0_8 )
 	call mylist%prepend( 0.0_8 )
 	call mylist%append( [ 10.0_8, 11.0_8, 12.0_8 ] )
-	
+
 	iter => mylist%begin
 	iter => iter%next
-	
+
 	call mylist%insert( iter, 3.0_8 )
-	
+
 	iter => mylist%begin
 	do while( associated(iter) )
 		write(*,"(A,F6.3)", advance="no") " --> ", iter%data
-		
+
 		iter => iter%next
 	end do
 end program test
@@ -216,7 +208,7 @@ end program test
 It is compiled an executed as follows:
 
 ```
-$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ifort test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift
 $ ./test 
  -->  0.000 -->  8.000 -->  3.000 -->  5.000 -->  1.000 --> 10.000 --> 11.000 --> 12.000
 ```
@@ -229,22 +221,22 @@ The following block (`test.f90`) is an example of how to specialize and use the 
 module MyData_
 	implicit none
 	private
-	
+
 	type, public :: MyData
 		integer :: id
 		character(2) :: name
-		
+
 		contains
 			generic :: operator(==) => MyData_eq
 			procedure :: MyData_eq
 	end type MyData
-	
+
 	contains
-	
+
 	function MyData_eq( this, other ) result( output )
 		class(MyData), intent(in) :: this, other
 		logical :: output
-		
+
 		output = ( this%id == other%id .and. this%name == other%name )
 	end function MyData_eq
 end module MyData_
@@ -252,15 +244,16 @@ end module MyData_
 module MyList_
 	use MyData_
 	implicit none
-	
+	private
+
 #define List MyList
-#define ListBasicInterface
 #define ListIterator MyListIterator
 #define __CLASS_ITEMLIST__ class(MyData)
 #define __TYPE_ITEMLIST__ type(MyData)
-#include "List.h90"
-#undef List
+#define ListBasicInterface
+#include <List.h90>
 #undef ListBasicInterface
+#undef List
 #undef ListIterator
 #undef __CLASS_ITEMLIST__
 #undef __TYPE_ITEMLIST__
@@ -270,26 +263,26 @@ end module MyList_
 program test
 	use MyData_
 	use MyList_
-	
+
 	type(MyList) :: list
-	class(MyListIterator), pointer :: iter
-	
-	call list%init()
-	
+	type(MyListIterator), pointer :: iter
+
+	list = MyList()
+
 	call list%append( MyData(1,"a") )
 	call list%append( MyData(5,"b") )
 	call list%prepend( MyData(0,"c") )
 	call list%append( [ MyData(0,"d"), MyData(1,"e"), MyData(2,"f") ] )
-	
+
 	iter => list%begin
 	iter => iter%next
-	
+
 	call list%insert( iter, MyData(3,"g") )
-	
+
 	iter => list%begin
 	do while( associated(iter) )
-		write(*,"(A,I2,A3,A)", advance="no") " --> (", iter%data.id, iter%data.name, ")"
-		
+		write(*,"(A,I2,A3,A)", advance="no") " --> (", iter%data%id, iter%data%name, ")"
+
 		iter => iter%next
 	end do
 end program test
@@ -297,7 +290,7 @@ end program test
 It is compiled an executed as follows (notice it requires the Fortran preprocessor, -fpp):
 
 ```
-$ ifort -fpp test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ifort -fpp test.f90 -o test -I${SCIFT_HOME}/include -L${SCIFT_HOME}/src -lscift
 $ ./test 
  --> ( 0 c ) --> ( 1 a ) --> ( 3 g ) --> ( 5 b ) --> ( 0 d ) --> ( 1 e ) --> ( 2 f )
 ```
@@ -312,22 +305,22 @@ program test
 	use StringIntegerPair_
 	use StringIntegerMap_
 	implicit none
-	
+
 	type(StringIntegerPair) :: pair
 	type(StringIntegerMap) :: mymap
 	class(StringIntegerMapIterator), pointer :: iter
-	
-	call mymap%init()
-	
+
+	mymap = StringIntegerMap()
+
 	call mymap%insert( String("John"), 27 )
 	call mymap%insert( String("Marie"), 22 )
 	call mymap%insert( String("Luna"), 24 )
-	
+
 	iter => mymap%begin
 	do while( associated(iter) )
 		pair = mymap%pair( iter )
 		write(*,"(A15,A,I2)") pair%first%fstr, " --> ", pair%second
-		
+
 		iter => iter%next
 	end do
 end program test
@@ -335,7 +328,7 @@ end program test
 It is compiled an executed as follows:
 
 ```
-$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ ifort test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift
 $ ./test 
            John --> 27
            Luna --> 24
@@ -350,22 +343,22 @@ The following block (`test.f90`) is an example of how to specialize and use the 
 module MyData_
 	implicit none
 	private
-	
+
 	type, public :: MyData
 		integer :: id
 		character(2) :: name
-		
+
 		contains
 			generic :: operator(==) => MyData_eq
 			procedure :: MyData_eq
 	end type MyData
-	
+
 	contains
-	
+
 	function MyData_eq( this, other ) result( output )
 		class(MyData), intent(in) :: this, other
 		logical :: output
-		
+
 		output = ( this%id == other%id .and. this%name == other%name )
 	end function MyData_eq
 end module MyData_
@@ -375,7 +368,7 @@ module MyPair_
 	use MyData_
 	implicit none
 	private
-	
+
 #define Pair MyPair
 #define PairBasicInterface
 #define __CLASS_ITEMFIRST__ class(String)
@@ -384,7 +377,7 @@ module MyPair_
 #define __TYPE_ITEMSECOND__  type(MyData)
 #define __ADD_ATTRIBUTES__
 #define __ADD_METHODS__
-#include "Pair.h90"
+#include <Pair.h90>
 #undef Pair
 #undef PairBasicInterface
 #undef __CLASS_ITEMFIRST__
@@ -393,7 +386,7 @@ module MyPair_
 #undef __TYPE_ITEMSECOND__
 #undef __ADD_ATTRIBUTES__
 #undef __ADD_METHODS__
-	
+
 end module MyPair_
 
 module MyPairList_
@@ -401,13 +394,13 @@ module MyPairList_
 	use MyPair_
 	implicit none
 	private
-	
+
 #define List MyPairList
 #define ListBasicInterface
 #define ListIterator MyPairListIterator
 #define __CLASS_ITEMLIST__ class(MyPair)
 #define __TYPE_ITEMLIST__ type(MyPair)
-#include "List.h90"
+#include <List.h90>
 #undef List
 #undef ListBasicInterface
 #undef ListIterator
@@ -424,29 +417,31 @@ module MyMap_
 	use MyPairList_, MyMapIterator => MyPairListIterator
 	implicit none
 	private
-	
+
 	public :: MyMapIterator
-	
+
 #define Map MyMap
 #define MapBasicInterface
-#define __CLASS_MAPITERATOR__  class(MyMapIterator)
+#define __CLASS_MAPITERATOR__  type(MyMapIterator)
+#define __MAPLIST__            MyPairList
 #define __TYPE_MAPLIST__       type(MyPairList)
 #define __TYPE_MAPPAIR__       type(MyPair)
 #define __CLASS_MAPPAIR__      class(MyPair)
 #define __CLASS_MAPVALUE__     class(MyData)
 #define __TYPE_MAPVALUE__     type(MyData)
 #define __ADD_METHODS__
-#include "Map.h90"
+#include <Map.h90>
 #undef Map
 #undef MapBasicInterface
 #undef __CLASS_MAPITERATOR__
+#undef __MAPLIST__
 #undef __TYPE_MAPLIST__
 #undef __TYPE_MAPPAIR__
 #undef __CLASS_MAPPAIR__
 #undef __CLASS_MAPVALUE__
 #undef __TYPE_MAPVALUE__
 #undef __ADD_METHODS__
-	
+
 end module MyMap_
 
 program test
@@ -455,32 +450,38 @@ program test
 	use MyPair_
 	use MyPairList_
 	use MyMap_
-	
+
 	type(MyMap) :: mmap
-	class(MyMapIterator), pointer :: iter
+	type(MyMapIterator), pointer :: iter
 	type(MyPair) :: pair
-	
-	call mmap%init()
-	
+
+	mmap = MyMap()
+
 	call mmap%insert( String("John"),  MyData(1,"a") )
 	call mmap%insert( String("Marie"), MyData(2,"b") )
 	call mmap%insert( String("Luna"),  MyData(3,"c") )
-	
+
 	iter => mmap%begin
 	do while( associated(iter) )
 			pair = mmap%pair( iter )
 			write(*,"(A15,A,I2,A3,A)") pair%first%fstr, &
 				" --> (", pair%second%id, pair%second%name, ")"
-				
+
 			iter => iter%next
 	end do
 end program test
 ```
-It is compiled an executed as follows (notice it requires the Fortran preprocessor, -fpp):
+It is compiled an executed as follows (notice it requires the Fortran preprocessor, -fpp for ifort or -cpp for gfortran):
 
 ```
-$ ifort -fpp test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift
+$ gfortran -cpp test.f90 -o test -I${SCIFT_HOME}/include -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift -ffree-line-length-none
 $ ./test 
+           John --> ( 1 a )
+           Luna --> ( 3 c )
+          Marie --> ( 2 b )
+
+$ ifort -fpp test.f90 -o test -I${SCIFT_HOME}/include -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift
+$ ./test
            John --> ( 1 a )
            Luna --> ( 3 c )
           Marie --> ( 2 b )
@@ -517,11 +518,15 @@ program test
 	write(*,*) "distance from 1 to 5 = ", mygraph%distance(5)
 end program test
 ```
-It is compiled an executed as follows (notice it requires the MKL library):
+It is compiled an executed as follows (notice it requires math libraries):
 
 ```
-$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift -mkl
+$ gfortran test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift -L${CONDA_PREFIX}/lib -Wl,-rpath,${CONDA_PREFIX}/lib -lfftw3 -lopenblas -llapack
 $ ./test 
+ distance from 1 to 5 =    3.00000000000000
+
+$ ifort test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift -qmkl
+$ ./test
  distance from 1 to 5 =    3.00000000000000
 ```
 
@@ -539,7 +544,7 @@ program test
 	type(Atom) :: atm
 	type(Molecule) :: mol
 	
-	call mol%init( 2, name="Hydrogen molecule" )
+	mol = Molecule( 2, name="Hydrogen molecule" )
 	call atm%init( "H", 0.0_8, 0.0_8, 0.3561_8*angs ); mol%atoms(1) = atm
 	call atm%init( "H", 0.0_8, 0.0_8,-0.3561_8*angs ); mol%atoms(2) = atm
 	
@@ -548,10 +553,17 @@ program test
 	call mol%save()
 end program test
 ```
-It is compiled and executed as follows (notice it requires the MKL library):
+It is compiled and executed as follows (notice it requires math libraries):
 
 ```
-$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift -mkl
+$ gfortran test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift -L${CONDA_PREFIX}/lib -Wl,-rpath,${CONDA_PREFIX}/lib -lfftw3 -lopenblas -llapack
+$ ./test
+           2
+Hydrogen molecule
+  H            0.17805000         -0.25180072          0.17805000
+  H           -0.17805000          0.25180072         -0.17805000
+
+$ ifort test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift -qmkl
 $ ./test 
            2
 Hydrogen molecule
@@ -593,10 +605,37 @@ program test
 end program test
 ```
 
-It is compiled and executed as follows (notice it requires the MKL library):
+It is compiled and executed as follows (notice it requires math libraries):
 
 ```
-$ ifort test.f90 -o test -I${SCIFT_HOME}/src -L${SCIFT_HOME}/src -lscift -mkl
+$ gfortran test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift -L${CONDA_PREFIX}/lib -Wl,-rpath,${CONDA_PREFIX}/lib -lfftw3 -lopenblas -llapack
+$ ./test
+
+ A =
+                1           2           3           4           5
+    1    1.960000   -6.490000   -0.470000   -7.200000   -0.650000
+    2   -6.490000    3.800000   -6.390000    1.500000   -6.340000
+    3   -0.470000   -6.390000    4.170000   -1.510000    2.670000
+    4   -7.200000    1.500000   -1.510000    5.700000    1.800000
+    5   -0.650000   -6.340000    2.670000    1.800000   -7.100000
+
+ eigenvectors =
+                1           2           3           4           5
+    1   -0.298067   -0.607513   -0.402620   -0.374481    0.489637
+    2   -0.507798   -0.287968    0.406586   -0.357169   -0.605255
+    3   -0.081606   -0.384320    0.659966    0.500764    0.399148
+    4   -0.003589   -0.446730   -0.455290    0.620365   -0.456375
+    5   -0.804130    0.448032   -0.172458    0.310768    0.162248
+
+ eigenvalues =
+                 1            2            3            4            5
+    1   -11.065575     0.000000     0.000000     0.000000     0.000000
+    2     0.000000    -6.228747     0.000000     0.000000     0.000000
+    3     0.000000     0.000000     0.864028     0.000000     0.000000
+    4     0.000000     0.000000     0.000000     8.865457     0.000000
+    5     0.000000     0.000000     0.000000     0.000000    16.094837
+
+$ ifort test.f90 -o test -I${SCIFT_HOME}/modules -L${SCIFT_HOME}/src -lscift -qmkl
 $ ./test 
  
  A =

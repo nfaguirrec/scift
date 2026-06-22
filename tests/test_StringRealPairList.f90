@@ -8,8 +8,8 @@ program test_StringRealPairList
 		type(String) :: str
 		type(StringRealPair) :: mypair
 		type(StringRealPairList) :: mylist
-		class(StringRealPairListIterator), pointer :: iter
-		class(StringRealPairListIterator), pointer :: iterPos
+		type(StringRealPairListIterator), pointer :: iter
+		type(StringRealPairListIterator), pointer :: iterPos
 		
 		mylist = StringRealPairList()
 		call assert_equal( mylist%size(), 0, "StringRealPairList_test: empty size" )

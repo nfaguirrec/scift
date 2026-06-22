@@ -12,8 +12,6 @@ jobs:
 
     env:
       FC: gfortran
-      SCIFT_HOME: ${{ github.workspace }}
-      LD_LIBRARY_PATH: ${{ github.workspace }}/src
 
     steps:
     - name: Checkout repository
@@ -24,17 +22,14 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gfortran libfftw3-dev libopenblas-dev liblapack-dev gawk
 
-    - name: Add utils to PATH
-      run: |
-        echo "${{ github.workspace }}/utils" >> $GITHUB_PATH
-        echo "${{ github.workspace }}/examples" >> $GITHUB_PATH
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-    - name: Compile library and examples
-      run: |
-        make
+    - name: Build
+      run: cmake --build build
 
-    - name: Compile and run tests
+    - name: Run tests
       run: |
-        cd tests
-        make
-        ./run_tests.exe
+        cd build
+        ctest --output-on-failure
+

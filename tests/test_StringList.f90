@@ -6,8 +6,8 @@ program test_StringList
     implicit none
 		type(String) :: str
 		type(StringList) :: mylist
-		class(StringListIterator), pointer :: iter
-		class(StringListIterator), pointer :: iterPos
+		type(StringListIterator), pointer :: iter
+		type(StringListIterator), pointer :: iterPos
 		
 		mylist = StringList()
 		call assert_equal( mylist%size(), 0, "StringList_test: empty size" )

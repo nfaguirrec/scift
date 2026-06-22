@@ -8,8 +8,8 @@ program test_StringIntegerPairList
 		type(String) :: str
 		type(StringIntegerPair) :: mypair
 		type(StringIntegerPairList) :: mylist
-		class(StringIntegerPairListIterator), pointer :: iter
-		class(StringIntegerPairListIterator), pointer :: iterPos
+		type(StringIntegerPairListIterator), pointer :: iter
+		type(StringIntegerPairListIterator), pointer :: iterPos
 		
 		mylist = StringIntegerPairList()
 		call assert_equal( mylist%size(), 0, "StringIntegerPairList_test: empty size" )

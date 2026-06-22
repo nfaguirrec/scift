@@ -11,8 +11,8 @@ program test_StringRealHistogramPairList
 		type(RealHistogram) :: hist
 		type(StringRealHistogramPair) :: mypair
 		type(StringRealHistogramPairList) :: mylist
-		class(StringRealHistogramPairListIterator), pointer :: iter
-		class(StringRealHistogramPairListIterator), pointer :: iterPos
+		type(StringRealHistogramPairListIterator), pointer :: iter
+		type(StringRealHistogramPairListIterator), pointer :: iterPos
 		
 		mylist = StringRealHistogramPairList()
 		call assert_equal( mylist%size(), 0, "StringRealHistogramPairList_test: empty size" )

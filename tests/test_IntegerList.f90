@@ -4,7 +4,7 @@ program test_IntegerList
     use IOStream_
     implicit none
 		type(IntegerList) :: mylist
-		class(IntegerListIterator), pointer :: iter
+		type(IntegerListIterator), pointer :: iter
 		
 		mylist = IntegerList()
 		

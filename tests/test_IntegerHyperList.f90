@@ -7,7 +7,7 @@ program test_IntegerHyperList
     use Matrix_
     implicit none
 		type(IntegerHyperList) :: hilist
-		class(IntegerHyperListIterator), pointer :: iter
+		type(IntegerHyperListIterator), pointer :: iter
 		type(IntegerList) :: ilist
 		
 		hilist = IntegerHyperList()
